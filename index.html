@@ -15,14 +15,9 @@
     input, textarea, [contenteditable] { user-select: text; cursor: none; }
     a, button, .btn, .nav-item, .magic-pin, .modern-close, input, textarea, select { cursor: none !important; }
 
-    .tropical-bg {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-      pointer-events: none;
-      background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
-    }
-    /* Солнце теперь точно доступно для клика */
-    .sun-container {
-      position: absolute; top: 25px; right: 70px; z-index: 100;
+    /* Солнце отдельно — гарантированно кликабельно */
+    #sun-wrapper {
+      position: fixed; top: 25px; right: 70px; z-index: 100;
       pointer-events: auto;
     }
     .sun {
@@ -64,7 +59,11 @@
     }
     .sun-blush.left { left: 20px; } .sun-blush.right { right: 20px; }
 
-    /* остальной CSS без изменений */
+    .tropical-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
+    }
     .ocean {
       position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
       background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
@@ -229,20 +228,22 @@
 </head>
 <body>
 
+<!-- Солнце вынесено наружу, поверх всех слоёв -->
+<div id="sun-wrapper" onclick="window.activateSun && window.activateSun()">
+  <div class="sun" id="sun">
+    <div class="sun-face" id="sunFace">
+      <div class="sun-eye left"></div><div class="sun-eye right"></div>
+      <div class="sun-mouth"></div>
+      <div class="sun-blush left"></div><div class="sun-blush right"></div>
+    </div>
+  </div>
+</div>
+
 <div id="flyingA" class="flying-a">А</div>
 <div id="customCursor"></div>
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
 <div class="tropical-bg">
-  <div class="sun-container" onclick="document.getElementById('sun').classList.add('alive'); setTimeout(function(){ document.getElementById('sun').classList.remove('alive'); }, 400); document.getElementById('sunFace').classList.add('visible'); playSound('laugh'); setTimeout(function(){ document.getElementById('sunFace').classList.remove('visible'); }, 1800);">
-    <div class="sun" id="sun">
-      <div class="sun-face" id="sunFace">
-        <div class="sun-eye left"></div><div class="sun-eye right"></div>
-        <div class="sun-mouth"></div>
-        <div class="sun-blush left"></div><div class="sun-blush right"></div>
-      </div>
-    </div>
-  </div>
   <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
   <div class="beach">
     <div class="palm-tree" style="left: 5%;">🌴</div>
@@ -292,11 +293,10 @@
   const PAGE_SIZE = 15;
   let ideasPage = PAGE_SIZE, backlogPage = PAGE_SIZE, prototypesPage = PAGE_SIZE, hrdnkPage = PAGE_SIZE;
 
-  // Звуки
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx;
   function getAudioCtx() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
-  function playSound(type) {
+  window.playSound = function(type) {  // чтобы солнце могло вызвать
     if (!soundEnabled) return;
     try {
       const ctx = getAudioCtx(), t = ctx.currentTime;
@@ -324,7 +324,19 @@
         });
       }
     } catch(e) {}
-  }
+  };
+
+  // Солнце
+  window.activateSun = function() {
+    const sunEl = document.getElementById('sun');
+    const sunFace = document.getElementById('sunFace');
+    if (!sunEl) return;
+    sunEl.classList.add('alive');
+    setTimeout(() => sunEl.classList.remove('alive'), 400);
+    sunFace.classList.add('visible');
+    if (window.playSound) window.playSound('laugh');
+    setTimeout(() => sunFace.classList.remove('visible'), 1800);
+  };
 
   // Курсор
   const wand = document.getElementById('customCursor');
@@ -347,7 +359,7 @@
   }
   animateStars();
   document.addEventListener('mousedown', () => {
-    playSound('magic');
+    window.playSound('magic');
     const burst = document.createElement('div'); burst.className = 'magic-burst'; burst.textContent = '✦';
     burst.style.left = wand.style.left; burst.style.top = wand.style.top;
     document.body.appendChild(burst); setTimeout(() => burst.remove(), 400);
@@ -357,11 +369,6 @@
       spark.style.animation = 'floatDust 0.6s ease-out forwards'; spark.style.fontSize = '10px';
       document.body.appendChild(spark); setTimeout(() => spark.remove(), 600);
     }
-  });
-
-  // Солнце: дополнительный обработчик для уверенности (основной в onclick)
-  document.getElementById('sun').addEventListener('click', function(e) {
-    // уже отработает onclick, но на всякий случай
   });
 
   // Летающая буква
@@ -380,7 +387,7 @@
       setTimeout(moveA, 2000+Math.random()*1000);
     };
     moveA();
-    flyingA.onclick = () => { aFlying = false; flyingA.style.display = 'none'; flyingA.style.transition = 'none'; lastA.style.visibility = 'visible'; playSound('catch'); };
+    flyingA.onclick = () => { aFlying = false; flyingA.style.display = 'none'; flyingA.style.transition = 'none'; lastA.style.visibility = 'visible'; window.playSound('catch'); };
   }
   setTimeout(() => { startAFlight(); setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000); }, 10000);
 
@@ -396,12 +403,8 @@
       if (json.status === 'success') {
         for (const key of Object.keys(state)) { if (key !== 'avatar' && json.data[key]) state[key] = json.data[key]; }
         if (!state.scheme.length) state.scheme.push({ id:1, title:'Артур Галкин', description:'Основатель и Генеральный директор', type:'founder', role:'Основатель и Генеральный директор' });
-      } else {
-        console.warn('API вернул ошибку при загрузке, продолжаем с локальными данными');
       }
-    } catch(e) {
-      console.warn('Сервер не отвечает, работаем оффлайн');
-    }
+    } catch(e) {}
     state.ideas.forEach(idea => {
       const audioData = localStorage.getItem(STORAGE_AUDIO_PREFIX + idea.id);
       if (audioData) idea.audio = audioData;
@@ -452,10 +455,9 @@
         newItem.id = result.id || tempId;
         if (params.audio && result.id) { localStorage.removeItem(STORAGE_AUDIO_PREFIX + tempId); localStorage.setItem(STORAGE_AUDIO_PREFIX + result.id, params.audio); newItem.id = result.id; }
       } else {
-        // Не показываем ошибку, просто продолжаем локально
-        console.warn('Не удалось сохранить в облаке, используем локальное хранилище');
+        state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId);
       }
-    } catch(e) { console.warn('Ошибка сети при сохранении'); }
+    } catch(e) { state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId); }
   }
 
   async function updateItem(sheet, id, params, pageId) {
@@ -467,9 +469,7 @@
     render(pageId);
     try {
       const result = await updateInCloud(sheet, id, params);
-      if (result.status !== 'success') {
-        state[sheet][index] = original; render(pageId);
-      }
+      if (result.status !== 'success') { state[sheet][index] = original; render(pageId); }
     } catch(e) { state[sheet][index] = original; render(pageId); }
   }
 
@@ -588,7 +588,7 @@
 
   let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
   function askDelete(sheet, id) {
-    playSound('tear');
+    window.playSound('tear');
     showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
       <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
       <div style="display:flex; gap:16px; margin-top:24px;">
