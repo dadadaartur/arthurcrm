@@ -8,19 +8,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', 'Comic Sans MS', sans-serif;
-            background: #fff4e6;
-            color: #1a2634;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none;
-            cursor: default;
+            background: #fff4e6; color: #1a2634;
+            display: flex; height: 100vh; overflow: hidden;
+            user-select: none; cursor: default;
         }
         input, textarea, [contenteditable] { user-select: text; cursor: text; }
-
         .tropical-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
             background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
         }
         .sun {
@@ -40,15 +35,9 @@
             border-radius: 30% 40% 0 0;
         }
         .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
-        .sailboat-horizon {
-            position: absolute; bottom: 55%; left: 70%; font-size: 40px;
-            animation: sailHorizon 95s linear infinite;
-        }
+        .sailboat-horizon { position: absolute; bottom: 55%; left: 70%; font-size: 40px; animation: sailHorizon 95s linear infinite; }
         @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
-        .airplane-group {
-            position: absolute; bottom: 25%; right: -5%;
-            animation: airplaneFly 180s linear infinite;
-        }
+        .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
         @keyframes airplaneFly {
             0% { right: -5%; bottom: 25%; }
             5% { bottom: 28%; }
@@ -56,17 +45,8 @@
             90% { right: 90%; bottom: 56%; }
             100% { right: 105%; bottom: 60%; }
         }
-        .airplane-dot {
-            width: 6px; height: 6px; background: white; border-radius: 50%;
-            position: absolute; top: -3px; right: 0;
-            box-shadow: 0 0 6px white;
-        }
-        .contrail-line {
-            position: absolute; top: 0; right: 6px; height: 2px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent);
-            border-radius: 2px;
-            animation: trailLength 180s linear infinite;
-        }
+        .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
+        .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
         @keyframes trailLength {
             0% { width: 0%; opacity: 0; }
             5% { width: 10%; opacity: 1; }
@@ -75,7 +55,6 @@
             100% { width: 0%; opacity: 0; }
         }
 
-        /* Прозрачный премиум-спиннер */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
@@ -84,8 +63,7 @@
         }
         .loading-overlay.active { visibility: visible; opacity: 1; }
         .premium-spinner {
-            width: 70px; height: 70px;
-            border-radius: 50%;
+            width: 70px; height: 70px; border-radius: 50%;
             background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
             -webkit-mask: radial-gradient(transparent 55%, black 56%);
             mask: radial-gradient(transparent 55%, black 56%);
@@ -94,17 +72,9 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .sidebar {
-            width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column;
-            padding: 32px 20px; z-index: 10; position: relative;
-        }
+        .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; position: relative; }
         .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; line-height: 1.2; letter-spacing: 1px; color: #2E3B2E; }
-        .nav-item {
-            padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px;
-            transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E;
-        }
+        .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
         .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
         .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
         .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
@@ -119,101 +89,41 @@
         .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
         .page { display: none; } .page.active { display: block; }
         .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-        .card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8));
-            backdrop-filter: blur(15px); border-radius: 24px;
-            padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06);
-            transition: all 0.2s ease;
-        }
+        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
         .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
-        .btn {
-            padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px;
-            cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex;
-            align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px;
-            background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
+        .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
         .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
-        .btn-primary {
-            background: linear-gradient(135deg, #A5D6A7, #FFB74D);
-            border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1;
-        }
-        .btn-primary::before {
-            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00);
-            background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35;
-        }
+        .btn-primary { background: linear-gradient(135deg, #A5D6A7, #FFB74D); border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1; }
+        .btn-primary::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00); background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35; }
         @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         .btn-edit { background: linear-gradient(135deg, #FFCC80, #FFAB91); }
-
-        .modern-close {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9));
-            border: 1px solid rgba(255,140,100,0.6);
-            position: relative; cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 0 12px rgba(255,140,0,0.3);
-        }
-        .modern-close::before, .modern-close::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 14px; height: 2px; background: #FF4500; border-radius: 2px;
-        }
+        .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
+        .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
         .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
         .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
         .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
-
-        .delete-card-btn {
-            width: 22px; height: 22px; border-radius: 50%;
-            background: linear-gradient(135deg, #FFAB91, #FFCDD2);
-            border: 1px solid rgba(255,80,80,0.5); position: relative; cursor: pointer;
-            transition: all 0.3s; box-shadow: 0 0 10px rgba(255,100,100,0.4);
-            display: inline-flex; align-items: center; justify-content: center;
-            margin-left: 8px;
-        }
-        .delete-card-btn::before, .delete-card-btn::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 10px; height: 2px; background: #C62828; border-radius: 2px;
-        }
+        .delete-card-btn { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FFAB91, #FFCDD2); border: 1px solid rgba(255,80,80,0.5); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 10px rgba(255,100,100,0.4); display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; }
+        .delete-card-btn::before, .delete-card-btn::after { content: ''; position: absolute; top: 50%; left: 50%; width: 10px; height: 2px; background: #C62828; border-radius: 2px; }
         .delete-card-btn::before { transform: translate(-50%, -50%) rotate(45deg); }
         .delete-card-btn::after { transform: translate(-50%, -50%) rotate(-45deg); }
         .delete-card-btn:hover { box-shadow: 0 0 20px #FF4500; transform: scale(1.2); }
-
-        input, textarea {
-            border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
-            font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
-            background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
-        }
+        input, textarea { border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px; font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px; background: rgba(255,255,255,0.85); color: #1a2634; outline: none; }
         textarea { resize: vertical; min-height: 90px; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal {
-            background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
-        }
-        .settings-avatar {
-            width: 80px; height: 80px; border-radius: 40px; background: rgba(0,0,0,0.08);
-            margin-bottom: 10px; background-size: cover; background-position: center;
-        }
+        .modal { background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634; }
+        .settings-avatar { width: 80px; height: 80px; border-radius: 40px; background: rgba(0,0,0,0.08); margin-bottom: 10px; background-size: cover; background-position: center; }
     </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="premium-spinner"></div>
-</div>
+<div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
 <div class="tropical-bg">
     <div class="sun"></div>
-    <div class="ocean">
-        <div class="sailboat-horizon">⛵</div>
-    </div>
+    <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
     <div class="beach">
         <div class="palm-tree" style="left: 5%;">🌴</div>
         <div class="palm-tree" style="left: 18%;">🌴</div>
@@ -248,72 +158,96 @@
 <script>
 (function() {
     const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
-
     const state = {
-        dashboard: [],
-        backlog: [],
-        scheme: [],
-        ideas: [],
-        prototypes: [],
-        hrdnk: [],
-        knowledge: [],
+        dashboard: [], backlog: [], scheme: [], ideas: [],
+        prototypes: [], hrdnk: [], knowledge: [],
         avatar: localStorage.getItem('arthurHubAvatar') || ''
     };
 
     const loader = document.getElementById('loadingOverlay');
-    function showLoading() { loader.classList.add('active'); }
-    function hideLoading() { loader.classList.remove('active'); }
+    function showLoader() { loader.classList.add('active'); }
+    function hideLoader() { loader.classList.remove('active'); }
 
-    // fetch с таймаутом и автопоказом загрузки
-    async function fetchWithLoading(url, timeoutMs = 15000) {
-        showLoading();
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const res = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeout);
-            return await res.json();
-        } catch (err) {
-            clearTimeout(timeout);
-            console.error('Ошибка запроса:', err);
-            throw err;
-        } finally {
-            hideLoading();
-        }
-    }
-
+    // Единая загрузка всех данных при старте
     async function loadAllData() {
-        const sheets = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
-        for (const sheet of sheets) {
-            try {
-                const result = await fetchWithLoading(`${API_URL}?sheet=${sheet}&action=read`);
-                if (result.status === 'success' && result.data) {
-                    state[sheet] = result.data;
+        showLoader();
+        try {
+            const res = await fetch(`${API_URL}?action=readAll`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                for (const [key, val] of Object.entries(json.data)) {
+                    if (state[key] !== undefined) state[key] = val;
                 }
-            } catch (e) {
-                alert(`Не удалось загрузить раздел "${sheet}". Проверьте соединение.`);
+            } else {
+                alert('Ошибка загрузки данных');
             }
+        } catch (e) {
+            alert('Сервер не отвечает, попробуйте позже.');
+        } finally {
+            hideLoader();
         }
     }
 
-    async function saveToCloud(sheet, params) {
+    // Быстрое обновление UI без задержек
+    async function quickFetch(url) {
+        showLoader();
+        try {
+            const res = await fetch(url);
+            return await res.json();
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // Создание (оптимистично)
+    async function createItem(sheet, params, pageId) {
+        const tempId = Date.now();
+        const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
+        if (sheet === 'knowledge') newItem.q = params.question; 
+        state[sheet].push(newItem);
+        render(pageId);
+
         const qs = new URLSearchParams({ sheet, action: 'create', ...params }).toString();
-        return await fetchWithLoading(`${API_URL}?${qs}`);
+        const result = await quickFetch(`${API_URL}?${qs}`);
+        if (result.status === 'success') {
+            newItem.id = result.id;
+        } else {
+            state[sheet] = state[sheet].filter(i => i.id !== tempId);
+            render(pageId);
+            alert('Ошибка сохранения');
+        }
     }
 
-    async function updateInCloud(sheet, id, params) {
+    async function updateItem(sheet, id, params, pageId) {
+        const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+        if (index === -1) return;
+        const original = {...state[sheet][index]};
+        Object.assign(state[sheet][index], params.title ? { title: params.title } : {}, params.description ? { description: params.description } : {});
+        if (sheet === 'knowledge') Object.assign(state[sheet][index], params.question ? { q: params.question } : {}, params.answer ? { a: params.answer } : {});
+        render(pageId);
+
         const qs = new URLSearchParams({ sheet, action: 'update', id, ...params }).toString();
-        return await fetchWithLoading(`${API_URL}?${qs}`);
+        const result = await quickFetch(`${API_URL}?${qs}`);
+        if (result.status !== 'success') {
+            state[sheet][index] = original;
+            render(pageId);
+            alert('Ошибка обновления');
+        }
     }
 
-    async function deleteFromCloud(sheet, id) {
+    async function deleteItem(sheet, id, pageId) {
+        const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+        if (index === -1) return;
+        const removed = state[sheet].splice(index, 1)[0];
+        render(pageId);
+
         const qs = new URLSearchParams({ sheet, action: 'delete', id }).toString();
-        return await fetchWithLoading(`${API_URL}?${qs}`);
-    }
-
-    function saveAvatarToLocal(dataUrl) {
-        state.avatar = dataUrl;
-        localStorage.setItem('arthurHubAvatar', dataUrl);
+        const result = await quickFetch(`${API_URL}?${qs}`);
+        if (result.status !== 'success') {
+            state[sheet].splice(index, 0, removed);
+            render(pageId);
+            alert('Ошибка удаления');
+        }
     }
 
     const pages = document.querySelectorAll('.nav-item');
@@ -327,7 +261,7 @@
         const closeBtn = modalContent.querySelector('.modern-close');
         if (closeBtn) closeBtn.addEventListener('click', () => modalOverlay.classList.remove('active'));
     }
-    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
 
     pages.forEach(p => p.addEventListener('click', () => {
         pages.forEach(pp => pp.classList.remove('active'));
@@ -336,25 +270,25 @@
     }));
 
     function card(item, key) {
-        const title = item.title || item.text || item.question || '';
-        const desc = item.desc || item.description || item.answer || '';
+        const title = item.title || item.text || item.q || '';
+        const desc = item.desc || item.description || item.answer || item.a || '';
         return `<div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div style="display:flex; justify-content:space-between;">
                 <div>
                     <h3>${title}</h3>
                     <p>${desc}</p>
                     ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <button class="btn btn-edit edit-${key}" data-id="${item.id || item.question}">Ред.</button>
-                    <button class="delete-card-btn delete-${key}" data-id="${item.id || item.question}" title="Удалить"></button>
+                    <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
+                    <button class="delete-card-btn delete-${key}" data-id="${item.id || item.q}"></button>
                 </div>
             </div>
         </div>`;
     }
 
     function editableGrid(pageId, title, items, addLabel) {
-        return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid" id="${pageId}List">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
+        return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
     }
 
     function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -389,12 +323,11 @@
     function prototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип'); }
     function hrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
     function knowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание'); }
-
     function settings() {
         return `<div class="page active"><h2 class="page-title">Настройки</h2>
             <div class="card">
                 <h3>Аватар</h3>
-                <div class="settings-avatar" id="settingsAvatar" style="background-image:url('${state.avatar}'); margin-bottom:12px;"></div>
+                <div class="settings-avatar" style="background-image:url('${state.avatar}');"></div>
                 <input type="file" id="avatarUpload" style="display:none;" accept="image/*">
                 <button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button>
             </div>
@@ -440,10 +373,8 @@
                         let params = { title };
                         if (key === 'knowledge') params = { question: title, answer: desc };
                         else if (key !== 'ideas') params.description = desc;
-                        await saveToCloud(key, params);
                         modalOverlay.classList.remove('active');
-                        await loadAllData();
-                        render(pageId);
+                        await createItem(key, params, pageId);
                     });
                 });
             }
@@ -451,11 +382,11 @@
             document.querySelectorAll(`.edit-${key}`).forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.dataset.id;
-                    let item = state[key].find(i => i.id == id || i.question == id);
+                    let item = state[key].find(i => i.id == id || i.q == id);
                     if (!item) item = state.scheme?.find(i => i.id == id);
                     if (!item) return;
-                    const title = item.title || item.text || item.question || '';
-                    const desc = item.desc || item.description || item.answer || '';
+                    const title = item.title || item.text || item.q || '';
+                    const desc = item.desc || item.description || item.a || '';
                     showModal(`
                         <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
                         <h3>Редактировать</h3>
@@ -470,10 +401,8 @@
                         let params = { title: newTitle };
                         if (key === 'knowledge') params = { question: newTitle, answer: newDesc };
                         else if (key !== 'ideas') params.description = newDesc;
-                        await updateInCloud(key, id, params);
                         modalOverlay.classList.remove('active');
-                        await loadAllData();
-                        render(pageId);
+                        await updateItem(key, id, params, pageId);
                     });
                 });
             });
@@ -487,50 +416,41 @@
                         <button class="btn btn-delete" id="confirmDelete">Да</button>
                     `);
                     document.getElementById('confirmDelete').addEventListener('click', async () => {
-                        await deleteFromCloud(key, id);
                         modalOverlay.classList.remove('active');
-                        await loadAllData();
-                        render(pageId);
+                        await deleteItem(key, id, pageId);
                     });
                 });
             });
         }
         if (pageId === 'settings') {
             document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
-            document.getElementById('avatarUpload')?.addEventListener('change', (e) => {
+            document.getElementById('avatarUpload')?.addEventListener('change', e => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = () => {
-                    saveAvatarToLocal(reader.result);
-                    document.getElementById('settingsAvatar').style.backgroundImage = `url(${reader.result})`;
+                    state.avatar = reader.result;
+                    localStorage.setItem('arthurHubAvatar', reader.result);
+                    const avatarDiv = document.querySelector('.settings-avatar');
+                    if (avatarDiv) avatarDiv.style.backgroundImage = `url(${reader.result})`;
                 };
                 reader.readAsDataURL(file);
             });
             document.getElementById('resetDataBtn')?.addEventListener('click', () => {
                 showModal(`
                     <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-                    <h3>Сбросить все данные?</h3>
+                    <h3>Сбросить данные?</h3>
                     <button class="btn btn-delete" id="confirmReset">Да</button>
                 `);
-                document.getElementById('confirmReset').addEventListener('click', () => {
-                    localStorage.clear();
-                    location.reload();
-                });
+                document.getElementById('confirmReset').addEventListener('click', () => { localStorage.clear(); location.reload(); });
             });
         }
     }
 
-    (async function init() {
-        try {
-            showLoading();
-            await loadAllData();
-        } catch (globalError) {
-            alert('Критическая ошибка загрузки. Обновите страницу.');
-        } finally {
-            hideLoading();
-            render('dashboard');
-        }
+    // Инициализация
+    (async function() {
+        await loadAllData();
+        render('dashboard');
     })();
 })();
 </script>
