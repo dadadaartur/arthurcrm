@@ -40,13 +40,11 @@
             border-radius: 30% 40% 0 0;
         }
         .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
-
         .sailboat-horizon {
             position: absolute; bottom: 55%; left: 70%; font-size: 40px;
             animation: sailHorizon 95s linear infinite;
         }
         @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
-
         .airplane-group {
             position: absolute; bottom: 25%; right: -5%;
             animation: airplaneFly 180s linear infinite;
@@ -213,9 +211,9 @@
 
 <script>
 // =============================================
-// 1. Google Sheets API (ваш URL)
+// 1. Google Sheets API (НОВЫЙ URL)
 // =============================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbxBBEYjo617Ken3YMN-yDrP0O8nyADy1zCqa7PmWUGUbVOJemXqq0t55W1qvkyqYVr7bw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
 
 async function callAPI(action, sheet, params = {}) {
     const url = new URL(API_URL);
@@ -230,28 +228,23 @@ async function callAPI(action, sheet, params = {}) {
     return json;
 }
 
-// Загрузить все записи листа (массив объектов)
 async function loadSheet(sheetName) {
     const res = await callAPI('read', sheetName);
     return res.data || [];
 }
 
-// Создать запись
 async function createRecord(sheetName, fields) {
     return await callAPI('create', sheetName, fields);
 }
 
-// Обновить запись по id
 async function updateRecord(sheetName, id, fields) {
     return await callAPI('update', sheetName, { id, ...fields });
 }
 
-// Удалить запись
 async function deleteRecord(sheetName, id) {
     return await callAPI('delete', sheetName, { id });
 }
 
-// Установить приоритет (только для backlog)
 async function setPriority(sheetName, id, priority) {
     return await callAPI('priority', sheetName, { id, priority });
 }
@@ -271,14 +264,12 @@ let appState = {
 };
 let currentPage = 'dashboard';
 
-// Функция загрузки всех данных из таблиц
 async function loadAllData() {
     try {
         const sheets = ['dashboard', 'backlog', 'scheme', 'ideas', 'prototypes', 'hrdnk', 'knowledge'];
         for (let sheet of sheets) {
             appState[sheet] = await loadSheet(sheet);
         }
-        // Аватар пока в localStorage (можно оставить)
         const storedAvatar = localStorage.getItem('arthurAvatar');
         if (storedAvatar) appState.avatar = storedAvatar;
     } catch(e) {
@@ -339,7 +330,7 @@ async function initSheets() {
 }
 
 // =============================================
-// 4. Отрисовка (полностью сохранена ваша логика, но использует appState)
+// 4. Отрисовка (полностью сохранена ваша логика)
 // =============================================
 function escapeHtml(str) {
     if (!str) return '';
@@ -476,7 +467,6 @@ async function attachEvents(pageId) {
         };
     }
 
-    // Редактирование
     document.querySelectorAll(`.edit-${key}`).forEach(btn => {
         btn.onclick = async () => {
             const id = parseInt(btn.dataset.id);
@@ -503,7 +493,6 @@ async function attachEvents(pageId) {
         };
     });
 
-    // Удаление
     document.querySelectorAll(`.delete-${key}`).forEach(btn => {
         btn.onclick = () => {
             const id = parseInt(btn.dataset.id);
@@ -542,7 +531,7 @@ async function attachEvents(pageId) {
 }
 
 // =============================================
-// 6. Голосовой ассистент (с красивым голосом)
+// 6. Голосовой ассистент (приятный, быстрый)
 // =============================================
 let recognition = null;
 let isListening = false;
@@ -555,18 +544,19 @@ function showVoiceFeedback(msg, isError = false) {
     setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
-function getBestRussianVoice() {
+let cachedVoice = null;
+async function getBestRussianVoice() {
     return new Promise((resolve) => {
         const synth = window.speechSynthesis;
         const check = () => {
             const voices = synth.getVoices();
-            const ruVoices = voices.filter(v => v.lang.startsWith('ru'));
+            const ruVoices = voices.filter(v => v.lang && v.lang.startsWith('ru'));
             if (ruVoices.length === 0) resolve(null);
-            // Приоритет: Google русский (часто "Google русский"), потом Microsoft Irina, потом Yuri/Milena, потом любой
             const priority = [
                 v => v.name.includes('Google') && v.lang === 'ru-RU',
                 v => v.name.includes('Microsoft Irina'),
                 v => v.name.includes('Yuri') || v.name.includes('Milena'),
+                v => v.name.includes('Google'),
                 v => true
             ];
             for (const test of priority) {
@@ -580,13 +570,12 @@ function getBestRussianVoice() {
     });
 }
 
-let cachedVoice = null;
 async function speak(text) {
     if (!window.speechSynthesis) return;
     if (!cachedVoice) cachedVoice = await getBestRussianVoice();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ru-RU';
-    utterance.rate = 0.9;
+    utterance.rate = 1.05;      // быстрее, приятнее
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     if (cachedVoice) utterance.voice = cachedVoice;
@@ -598,7 +587,6 @@ async function processVoiceCommand(command) {
     const lower = command.toLowerCase();
     const page = currentPage;
 
-    // Создание
     if (lower.includes('создай') || lower.includes('добавь')) {
         let match = lower.match(/(?:создай|добавь)\s+(?:в\s+)?(?:задачу|идею|карточку|прототип|знание)?\s*(.+)/i);
         if (!match) { speak('Не понял название'); return; }
@@ -627,7 +615,6 @@ async function processVoiceCommand(command) {
         return;
     }
 
-    // Редактирование
     if (lower.includes('редактируй') || lower.includes('измени')) {
         let match = lower.match(/(?:редактируй|измени)\s+(.+?)\s+на\s+(.+)/i);
         if (!match) { speak('Скажите: редактируй [название] на [новое описание]'); return; }
@@ -647,7 +634,6 @@ async function processVoiceCommand(command) {
         return;
     }
 
-    // Удаление
     if (lower.includes('удали')) {
         let match = lower.match(/удали\s+(.+)/i);
         if (!match) { speak('Что удалить?'); return; }
@@ -663,7 +649,6 @@ async function processVoiceCommand(command) {
         return;
     }
 
-    // Приоритет (только для бэклога)
     if ((lower.includes('приоритет') || lower.includes('приоритизируй')) && page === 'backlog') {
         let match = lower.match(/(?:приоритет|приоритизируй)\s+(высокий|средний|низкий)\s+для\s+(.+)/i);
         if (!match) { speak('Скажите: установи высокий приоритет для задачи...'); return; }
@@ -680,14 +665,12 @@ async function processVoiceCommand(command) {
         return;
     }
 
-    // Показать список
     if (lower.includes('покажи') || lower.includes('список') || lower.includes('что у меня')) {
         const count = appState[page]?.length || 0;
         speak(`В разделе ${page} ${count} элементов`);
         return;
     }
 
-    // Помощь
     if (lower.includes('помоги') || lower.includes('что ты умеешь')) {
         speak('Я умею создавать, редактировать, удалять карточки в текущем разделе. В бэклоге могу менять приоритет. Скажите, например: создай задачу: обновить сервер, или установи высокий приоритет для задачи...');
         return;
@@ -730,7 +713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    await initSheets();  // создаст таблицы и загрузит defaultState, если пусто
+    await initSheets();
     await render('dashboard');
 
     const navItems = document.querySelectorAll('.nav-item[data-page]');
