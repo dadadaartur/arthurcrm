@@ -67,19 +67,32 @@
     /* Кастомный курсор */
     #customCursor {
       position: fixed; pointer-events: none; z-index: 9999;
-      font-size: 32px; transform: translate(-10px, -15px);
+      font-size: 36px; transform: translate(-10px, -15px);
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      transition: transform 0.1s;
+      transition: transform 0.1s, color 0.2s;
     }
-    #customCursor.hammer { /* молоток */ }
-    #customCursor.hand { font-size: 36px; transform: translate(-8px, -12px); }
+    #customCursor.hammer {
+      font-size: 42px;
+      transform: translate(-15px, -20px) rotate(-20deg);
+    }
+    #customCursor.hand {
+      animation: rainbow 2s infinite;
+    }
+    @keyframes rainbow {
+      0% { color: #FF6347; }
+      20% { color: #FFA500; }
+      40% { color: #32CD32; }
+      60% { color: #1E90FF; }
+      80% { color: #9370DB; }
+      100% { color: #FF69B4; }
+    }
     #customCursor.bam {
       animation: hammerHit 0.3s ease;
     }
     @keyframes hammerHit {
-      0% { transform: translate(-10px, -15px) rotate(-30deg) scale(1); }
-      40% { transform: translate(-5px, -5px) rotate(0deg) scale(1.4); }
-      100% { transform: translate(-10px, -15px) rotate(-30deg) scale(1); }
+      0% { transform: translate(-15px, -20px) rotate(-20deg) scale(1); }
+      40% { transform: translate(-10px, -10px) rotate(0deg) scale(1.3); }
+      100% { transform: translate(-15px, -20px) rotate(-20deg) scale(1); }
     }
 
     /* Фейерверк */
@@ -87,8 +100,8 @@
       position: fixed; pointer-events: none; z-index: 10000;
     }
     .particle {
-      position: absolute; width: 8px; height: 8px; border-radius: 50%;
-      animation: particleFade 0.6s ease-out forwards;
+      position: absolute; width: 12px; height: 12px; border-radius: 50%;
+      animation: particleFade 1.2s ease-out forwards;
     }
     @keyframes particleFade {
       0% { opacity: 1; transform: translate(0,0) scale(1); }
@@ -145,23 +158,18 @@
     .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
     .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
 
-    /* Стили для отрывного удаления */
-    .tear-delete {
-      width: 22px; height: 22px; border-radius: 50%;
-      background: linear-gradient(135deg, #FFAB91, #FFCDD2);
-      border: 1px solid rgba(255,80,80,0.5);
-      position: relative; cursor: grab; transition: all 0.3s;
-      box-shadow: 0 0 10px rgba(255,100,100,0.4);
-      display: inline-flex; align-items: center; justify-content: center;
-      margin-left: 8px;
+    /* Премиальная закрепка (скрепка) */
+    .clip-delete {
+      width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-left: 8px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 12px 12px 4px 4px;
+      box-shadow: 0 2px 10px rgba(255,140,0,0.6), 0 0 5px rgba(0,0,0,0.2);
+      cursor: grab;
+      transition: transform 0.15s;
+      position: relative;
     }
-    .tear-delete::before, .tear-delete::after {
-      content: ''; position: absolute; top: 50%; left: 50%;
-      width: 10px; height: 2px; background: #C62828; border-radius: 2px;
-    }
-    .tear-delete::before { transform: translate(-50%, -50%) rotate(45deg); }
-    .tear-delete::after { transform: translate(-50%, -50%) rotate(-45deg); }
-    .tear-delete:active { cursor: grabbing; }
+    .clip-delete:active { cursor: grabbing; }
 
     input, textarea {
       border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
@@ -188,7 +196,7 @@
 <div id="flyingA" class="flying-a">А</div>
 
 <!-- Кастомный курсор -->
-<div id="customCursor" class="hammer">🔨</div>
+<div id="customCursor" class="hammer">🎈</div>
 
 <!-- Индикатор загрузки -->
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
@@ -211,7 +219,7 @@
 </div>
 
 <!-- Боковая панель -->
-<div class="sidebar">
+<div class="sidebar" id="sidebarArea">
   <div class="sidebar-header" id="sidebarHeader">
     <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
     <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
@@ -264,7 +272,7 @@
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       switch(type) {
-        case 'hammer': // глухой удар
+        case 'hammer':
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(80, t);
           osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
@@ -272,7 +280,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
           osc.start(t); osc.stop(t + 0.2);
           break;
-        case 'tear': // треск бумаги
+        case 'tear':
           osc.type = 'sawtooth';
           osc.frequency.setValueAtTime(200, t);
           osc.frequency.linearRampToValueAtTime(600, t + 0.1);
@@ -280,7 +288,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
           osc.start(t); osc.stop(t + 0.15);
           break;
-        case 'catch': // писк при поимке буквы
+        case 'catch':
           osc.type = 'sine';
           osc.frequency.setValueAtTime(400, t);
           osc.frequency.linearRampToValueAtTime(800, t + 0.1);
@@ -288,13 +296,13 @@
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
           osc.start(t); osc.stop(t + 0.2);
           break;
-        case 'firework': // фанфары
+        case 'firework':
           osc.type = 'square';
           osc.frequency.setValueAtTime(300, t);
-          osc.frequency.linearRampToValueAtTime(600, t + 0.2);
+          osc.frequency.linearRampToValueAtTime(600, t + 0.4);
           gain.gain.setValueAtTime(0.2, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
-          osc.start(t); osc.stop(t + 0.4);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+          osc.start(t); osc.stop(t + 0.6);
           break;
         default: break;
       }
@@ -303,28 +311,32 @@
 
   // ====== КАСТОМНЫЙ КУРСОР ======
   const cursor = document.getElementById('customCursor');
-  function setCursor(type) {
-    cursor.className = type; // 'hammer' или 'hand'
-    if (type === 'hand') {
-      cursor.textContent = '🖐️';
+  const sidebar = document.getElementById('sidebarArea');
+
+  function setCursorMode(mode) {
+    cursor.className = mode;
+    if (mode === 'hammer') {
+      cursor.textContent = '🎈';
     } else {
-      cursor.textContent = '🔨';
+      cursor.textContent = '🖐️';
     }
   }
-  setCursor('hammer');
+
   document.addEventListener('mousemove', e => {
     cursor.style.left = e.clientX + 'px';
     cursor.style.top = e.clientY + 'px';
-    // Определяем, над каким элементом мы находимся
+
     const target = document.elementFromPoint(e.clientX, e.clientY);
-    if (target && (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('.nav-item') || target.closest('.tear-delete') || target.closest('.modern-close'))) {
-      setCursor('hand');
+    const isOverSidebar = target && (target.closest('#sidebarArea') || target === sidebar);
+    if (isOverSidebar) {
+      setCursorMode('hammer');
     } else {
-      setCursor('hammer');
+      setCursorMode('hand');
     }
   });
-  document.addEventListener('mousedown', (e) => {
-    if (e.target.closest('button, .nav-item, .tear-delete, .modern-close')) {
+
+  document.addEventListener('mousedown', e => {
+    if (e.target.closest('button, .nav-item, .clip-delete, .modern-close')) {
       cursor.classList.add('bam');
       playSound('hammer');
       setTimeout(() => cursor.classList.remove('bam'), 300);
@@ -334,33 +346,37 @@
   // ====== ФЕЙЕРВЕРК ======
   let fireworkClicks = 0;
   let fireworkTimer = null;
+
   function launchFirework(x, y) {
-    const container = document.createElement('div');
-    container.className = 'firework';
-    container.style.left = x + 'px';
-    container.style.top = y + 'px';
-    document.body.appendChild(container);
-    playSound('firework');
-    const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32'];
-    for(let i=0; i<20; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      const angle = (Math.PI*2 * i)/20;
-      const distance = 40 + Math.random()*60;
-      const dx = Math.cos(angle)*distance;
-      const dy = Math.sin(angle)*distance;
-      particle.style.setProperty('--dx', dx+'px');
-      particle.style.setProperty('--dy', dy+'px');
-      particle.style.background = colors[Math.floor(Math.random()*colors.length)];
-      container.appendChild(particle);
+    const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
+    // Три залпа с задержкой
+    for (let burst = 0; burst < 3; burst++) {
+      setTimeout(() => {
+        const container = document.createElement('div');
+        container.className = 'firework';
+        container.style.left = (x + (Math.random()-0.5)*200) + 'px';
+        container.style.top = (y + (Math.random()-0.5)*200) + 'px';
+        document.body.appendChild(container);
+        playSound('firework');
+
+        for (let i = 0; i < 30; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          const angle = (Math.PI * 2 * i) / 30;
+          const distance = 80 + Math.random() * 150;
+          const dx = Math.cos(angle) * distance;
+          const dy = Math.sin(angle) * distance;
+          particle.style.setProperty('--dx', dx + 'px');
+          particle.style.setProperty('--dy', dy + 'px');
+          particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+          container.appendChild(particle);
+        }
+        setTimeout(() => container.remove(), 1300);
+      }, burst * 200);
     }
-    setTimeout(() => container.remove(), 700);
   }
 
-  // Обработка кликов по "Обзор"
-  document.getElementById('navDashboard').addEventListener('click', (e) => {
-    // Стандартный переход на раздел — он всё равно сработает
-    // Но дополнительно считаем клики для фейерверка
+  document.getElementById('navDashboard').addEventListener('click', e => {
     fireworkClicks++;
     if (fireworkClicks >= 5) {
       launchFirework(e.clientX, e.clientY);
@@ -376,7 +392,6 @@
   const flyingA = document.getElementById('flyingA');
   const lastA = document.querySelector('.last-a');
   let aFlying = false;
-  let aTimer = null;
 
   function startAFlight() {
     if (aFlying) return;
@@ -387,7 +402,6 @@
     flyingA.style.display = 'block';
     lastA.style.visibility = 'hidden';
 
-    // Случайное движение по экрану
     const moveA = () => {
       if (!aFlying) return;
       const maxX = window.innerWidth - 60;
@@ -397,11 +411,10 @@
       flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out';
       flyingA.style.left = newX + 'px';
       flyingA.style.top = newY + 'px';
-      setTimeout(moveA, 2000 + Math.random()*1000);
+      setTimeout(moveA, 2000 + Math.random() * 1000);
     };
     moveA();
 
-    // Обработчик клика для возврата
     flyingA.onclick = () => {
       aFlying = false;
       flyingA.style.display = 'none';
@@ -411,7 +424,7 @@
     };
   }
 
-  // Запуск раз в 15 минут (для теста — через 10 секунд после загрузки)
+  // Старт через 10 сек (демо), затем раз в 15 минут
   setTimeout(() => {
     startAFlight();
     setInterval(() => {
@@ -527,24 +540,19 @@
     }
   }
 
-  // ====== МОДАЛЬНЫЕ ОКНА ======
+  // ====== МОДАЛКИ ======
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
-
   function showModal(html) {
     modalContent.innerHTML = html;
     modalOverlay.classList.add('active');
     const closeBtn = modalContent.querySelector('.modern-close');
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
   }
-  function closeModal() {
-    modalOverlay.classList.remove('active');
-  }
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) closeModal();
-  });
+  function closeModal() { modalOverlay.classList.remove('active'); }
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  // ====== РЕНДЕР РАЗДЕЛОВ ======
+  // ====== РЕНДЕР ======
   const pages = document.querySelectorAll('.nav-item');
   const mainContent = document.getElementById('mainContent');
 
@@ -560,7 +568,7 @@
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
-          <div class="tear-delete delete-${key}" data-id="${item.id || item.q}"></div>
+          <div class="clip-delete delete-${key}" data-id="${item.id || item.q}">📎</div>
         </div>
       </div>
     </div>`;
@@ -585,14 +593,14 @@
           <h3>${i.title}</h3><p>${i.role}</p>
           <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
             <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="tear-delete delete-scheme" data-id="${i.id}"></div>
+            <div class="clip-delete delete-scheme" data-id="${i.id}">📎</div>
           </div>
         </div>`).join('')}
         ${depts.map(i => `<div class="card" style="width:200px;">
           <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
           <div style="display:flex; gap:12px; margin-top:12px;">
             <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="tear-delete delete-scheme" data-id="${i.id}"></div>
+            <div class="clip-delete delete-scheme" data-id="${i.id}">📎</div>
           </div>
         </div>`).join('')}
       </div>
@@ -641,7 +649,7 @@
     const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
     if (keys.includes(pageId)) {
       const key = pageId;
-      // Кнопка добавления
+      // Добавление
       const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
       if (addBtn) {
         addBtn.addEventListener('click', () => {
@@ -694,48 +702,72 @@
         });
       });
 
-      // Удаление отрывом
-      document.querySelectorAll(`.tear-delete`).forEach(btn => {
+      // Удаление через перетаскивание скрепки
+      document.querySelectorAll('.clip-delete').forEach(el => {
+        let clone = null;
         let startX, startY, moved = false;
-        btn.addEventListener('mousedown', e => {
-          startX = e.clientX; startY = e.clientY; moved = false;
-          e.stopPropagation();
+
+        el.addEventListener('mousedown', e => {
+          e.preventDefault();
+          startX = e.clientX;
+          startY = e.clientY;
+          moved = false;
+          clone = el.cloneNode(true);
+          clone.style.position = 'fixed';
+          clone.style.zIndex = '9998';
+          clone.style.pointerEvents = 'none';
+          clone.style.left = e.clientX + 'px';
+          clone.style.top = e.clientY + 'px';
+          clone.style.opacity = '0.8';
+          clone.style.transition = 'none';
+          document.body.appendChild(clone);
+          el.style.opacity = '0.3';
         });
-        btn.addEventListener('mousemove', e => {
-          if (!startX) return;
-          if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
+
+        const onMove = e => {
+          if (!clone) return;
+          if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
             moved = true;
           }
-        });
-        btn.addEventListener('mouseup', e => {
+          clone.style.left = e.clientX + 'px';
+          clone.style.top = e.clientY + 'px';
+          cursor.style.left = e.clientX + 'px';  // чтобы курсор следовал вместе с клоном
+          cursor.style.top = e.clientY + 'px';
+        };
+
+        const onUp = e => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          if (clone) {
+            clone.remove();
+            el.style.opacity = '1';
+          }
           if (moved) {
             playSound('tear');
-            btn.style.transition = 'transform 0.3s ease';
-            btn.style.transform = 'translate(40px, -30px) rotate(25deg)';
-            setTimeout(() => {
-              btn.style.transform = '';
-              const id = btn.dataset.id;
-              showModal(`
-                <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-                <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
-                <div style="display:flex; gap:16px; margin-top:24px;">
-                  <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
-                  <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
-                </div>
-              `);
-              document.getElementById('confirmTearYes').addEventListener('click', async () => {
-                closeModal();
-                await deleteItem(key, id, pageId);
-              });
-              document.getElementById('confirmTearNo').addEventListener('click', closeModal);
-            }, 300);
+            const id = el.dataset.id;
+            showModal(`
+              <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+              <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
+              <div style="display:flex; gap:16px; margin-top:24px;">
+                <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
+                <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
+              </div>
+            `);
+            document.getElementById('confirmTearYes').addEventListener('click', async () => {
+              closeModal();
+              await deleteItem(key, id, pageId);
+            });
+            document.getElementById('confirmTearNo').addEventListener('click', closeModal);
           }
-          startX = null; startY = null; moved = false;
-        });
+          clone = null;
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
       });
     }
 
-    // Обработчики для настроек
+    // Настройки
     if (pageId === 'settings') {
       document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
       document.getElementById('avatarUpload')?.addEventListener('change', e => {
@@ -749,13 +781,11 @@
         };
         reader.readAsDataURL(file);
       });
-
       document.getElementById('toggleSoundBtn')?.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         localStorage.setItem(STORAGE_SOUND_KEY, soundEnabled);
-        render('settings'); // обновить кнопку
+        render('settings');
       });
-
       document.getElementById('resetDataBtn')?.addEventListener('click', () => {
         showModal(`
           <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
@@ -770,7 +800,6 @@
     }
   }
 
-  // Переключение разделов
   pages.forEach(page => {
     page.addEventListener('click', () => {
       pages.forEach(p => p.classList.remove('active'));
