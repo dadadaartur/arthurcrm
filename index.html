@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Пульт управления — Артур Галкин</title>
+    <title>Центр управления — Кармический Банк</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -41,14 +41,12 @@
         }
         .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
 
-        /* Парусник на горизонте */
         .sailboat-horizon {
             position: absolute; bottom: 55%; left: 70%; font-size: 40px;
             animation: sailHorizon 95s linear infinite;
         }
         @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
 
-        /* Самолёт: точка ВПЕРЕДИ, за ней тянется шлейф, без задевания солнца */
         .airplane-group {
             position: absolute; bottom: 25%; right: -5%;
             animation: airplaneFly 180s linear infinite;
@@ -158,10 +156,6 @@
         }
         .modal .close-btn:hover { background: rgba(0,0,0,0.2); }
         .modal h3 { margin-bottom: 16px; font-size: 20px; }
-        .settings-avatar {
-            width: 80px; height: 80px; border-radius: 40px; background: rgba(0,0,0,0.08);
-            margin-bottom: 10px; background-size: cover; background-position: center;
-        }
     </style>
 </head>
 <body>
@@ -202,32 +196,88 @@
 
 <script>
 (function() {
-    const defaultState = {
-        dashboard: [
-            { id:1, title:'Кармический Банк', desc:'HR-экосистема с геймификацией, AI-тренером, CRM, магазином призов.' },
-            { id:2, title:'HRDNK', desc:'Цифровой паспорт специалиста.' },
-        ],
-        backlog: [ { id:1, title:'Cloud.ru SSL', status:'progress', desc:'Решить проблему подключения к БД' } ],
-        scheme: [
-            { id:1, title:'Артур Галкин', role:'Основатель и Генеральный директор', type:'founder' },
-            { id:2, title:'Исследования', desc:'Психометрия', type:'dept' },
-            { id:3, title:'Математики', desc:'Алгоритмы', type:'dept' },
-            { id:4, title:'Психология', desc:'Квест-типология', type:'dept' },
-            { id:5, title:'Разработка', desc:'FastAPI', type:'dept' },
-        ],
-        prototypes: [
-            { id:1, title:'Рабочий стол CRM', desc:'Воронка, активность, кнопки' },
-            { id:2, title:'Карточка сделки', desc:'Этапы, комментарии, начисления' },
-            { id:3, title:'Бильярд-дуэль', desc:'Физика, ИИ' },
-        ],
-        hrdnk: [ { id:1, title:'Концепция ЦПС', status:'ready', desc:'Цифровой паспорт специалиста' } ],
-        ideas: [ { id:1, text:'Система кармиков за здоровье' } ],
-        knowledge: [ { q:'проект', a:'Кармический Банк — HR-экосистема с геймификацией, AI-тренером, CRM.' } ],
+    // Apps Script URL — замените на ваш актуальный, если развернете новую версию
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
+
+    // Состояние приложения (кэш)
+    const state = {
+        dashboard: [],
+        backlog: [],
+        scheme: [],
+        ideas: [],
+        prototypes: [],
+        hrdnk: [],
+        knowledge: [],
         avatar: ''
     };
 
-    let state = JSON.parse(localStorage.getItem('arthurHubTropicsFinal')) || defaultState;
-    function save() { localStorage.setItem('arthurHubTropicsFinal', JSON.stringify(state)); }
+    // Загрузка всех данных с Google Sheets
+    async function loadAllData() {
+        const sheets = ['dashboard', 'backlog', 'scheme', 'ideas', 'prototypes', 'hrdnk', 'knowledge'];
+        for (const sheet of sheets) {
+            try {
+                const response = await fetch(`${API_URL}?sheet=${sheet}&action=read`);
+                const result = await response.json();
+                if (result.status === 'success' && result.data) {
+                    state[sheet] = result.data;
+                }
+            } catch (error) {
+                console.error(`Ошибка загрузки листа ${sheet}:`, error);
+                // Оставляем пустой массив
+            }
+        }
+    }
+
+    // Сохранение элемента в облаке
+    async function saveToCloud(sheetName, params) {
+        const queryString = new URLSearchParams({ sheet: sheetName, action: 'create', ...params }).toString();
+        try {
+            const response = await fetch(`${API_URL}?${queryString}`);
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error('Ошибка сохранения:', result);
+                alert('Не удалось сохранить данные в таблицу. Проверьте консоль.');
+            }
+            return result;
+        } catch (error) {
+            console.error('Ошибка сети:', error);
+            alert('Ошибка соединения с сервером.');
+        }
+    }
+
+    // Обновление элемента в облаке
+    async function updateInCloud(sheetName, id, params) {
+        const queryString = new URLSearchParams({ sheet: sheetName, action: 'update', id: id, ...params }).toString();
+        try {
+            const response = await fetch(`${API_URL}?${queryString}`);
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error('Ошибка обновления:', result);
+                alert('Не удалось обновить данные в таблице.');
+            }
+            return result;
+        } catch (error) {
+            console.error('Ошибка сети:', error);
+            alert('Ошибка соединения с сервером.');
+        }
+    }
+
+    // Удаление элемента из облака
+    async function deleteFromCloud(sheetName, id) {
+        const queryString = new URLSearchParams({ sheet: sheetName, action: 'delete', id: id }).toString();
+        try {
+            const response = await fetch(`${API_URL}?${queryString}`);
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error('Ошибка удаления:', result);
+                alert('Не удалось удалить данные из таблицы.');
+            }
+            return result;
+        } catch (error) {
+            console.error('Ошибка сети:', error);
+            alert('Ошибка соединения с сервером.');
+        }
+    }
 
     const pages = document.querySelectorAll('.nav-item');
     const main = document.getElementById('mainContent');
@@ -251,7 +301,7 @@
     function card(item, key) {
         let content = `<div class="card">
             <h3>${item.title || item.text || item.q}</h3>
-            <p>${item.desc || item.a || ''}</p>
+            <p>${item.desc || item.a || item.description || ''}</p>
             <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
                 <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Редактировать</button>
                 <button class="btn btn-delete delete-${key}" data-id="${item.id || item.q}">Удалить</button>
@@ -288,7 +338,7 @@
                     </div>`).join('')}
                 ${depts.map(i => `
                     <div class="card" style="width:200px;">
-                        <h4>${i.title}</h4><p>${i.desc}</p>
+                        <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
                         <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
                             <button class="btn btn-edit edit-scheme" data-id="${i.id}">Редактировать</button>
                             <button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button>
@@ -303,7 +353,6 @@
     function hrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
     function settings() {
         return `<div class="page active"><h2 class="page-title">Настройки</h2>
-            <div class="card"><h3>Аватар</h3><div class="settings-avatar" id="settingsAvatar" style="background-image:url('${state.avatar || ''}')"></div><input type="file" id="avatarUpload" style="display:none;" accept="image/*"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
             <div class="card"><button class="btn btn-delete" id="resetDataBtn">Сбросить данные</button></div>
         </div>`;
     }
@@ -332,14 +381,23 @@
             if (addBtn) {
                 addBtn.addEventListener('click', () => {
                     showModal(`<button class="close-btn">✕</button><h3>Добавить</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
-                    document.getElementById('saveModal').addEventListener('click', () => {
+                    document.getElementById('saveModal').addEventListener('click', async () => {
                         const title = document.getElementById('modalTitle').value.trim();
                         if (!title) return;
-                        if (key === 'ideas') state[key].push({ id: Date.now(), text: title });
-                        else if (key === 'knowledge') { const a = document.getElementById('modalDesc').value.trim(); if (a) state[key].push({ q: title, a }); }
-                        else if (key === 'scheme') { const desc = document.getElementById('modalDesc').value.trim(); state[key].push({ id: Date.now(), title, desc, type: 'dept' }); }
-                        else { const desc = document.getElementById('modalDesc').value.trim(); state[key].push({ id: Date.now(), title, desc, status: 'planned' }); }
-                        save(); modalOverlay.classList.remove('active'); render(pageId);
+                        const desc = document.getElementById('modalDesc').value.trim();
+                        
+                        let params = { title: title };
+                        if (key === 'knowledge') {
+                            params = { question: title, answer: desc };
+                        } else if (key !== 'ideas') {
+                            params.description = desc;
+                        }
+                        
+                        await saveToCloud(key, params);
+                        modalOverlay.classList.remove('active');
+                        // Перезагружаем данные после сохранения
+                        await loadAllData();
+                        render(pageId);
                     });
                 });
             }
@@ -351,15 +409,24 @@
                     if (!item) item = state.scheme?.find(i => i.id == id);
                     if (!item) return;
                     const title = item.title || item.text || item.q || '';
-                    const desc = item.desc || item.a || '';
+                    const desc = item.desc || item.a || item.description || '';
                     showModal(`<button class="close-btn">✕</button><h3>Редактировать</h3><input id="editTitle" value="${title}"><br><textarea id="editDesc">${desc}</textarea><br><button class="btn btn-primary" id="updateModal">Сохранить</button>`);
-                    document.getElementById('updateModal').addEventListener('click', () => {
+                    document.getElementById('updateModal').addEventListener('click', async () => {
                         const newTitle = document.getElementById('editTitle').value.trim();
                         if (!newTitle) return;
-                        if (key === 'ideas') item.text = newTitle;
-                        else if (key === 'knowledge') { item.q = newTitle; item.a = document.getElementById('editDesc').value.trim(); }
-                        else { item.title = newTitle; item.desc = document.getElementById('editDesc').value.trim(); }
-                        save(); modalOverlay.classList.remove('active'); render(pageId);
+                        const newDesc = document.getElementById('editDesc').value.trim();
+                        
+                        let params = { title: newTitle };
+                        if (key === 'knowledge') {
+                            params = { question: newTitle, answer: newDesc };
+                        } else if (key !== 'ideas') {
+                            params.description = newDesc;
+                        }
+                        
+                        await updateInCloud(key, id, params);
+                        modalOverlay.classList.remove('active');
+                        await loadAllData();
+                        render(pageId);
                     });
                 });
             });
@@ -368,23 +435,16 @@
                 btn.addEventListener('click', () => {
                     const id = btn.dataset.id;
                     showModal(`<button class="close-btn">✕</button><h3>Удалить?</h3><button class="btn btn-delete" id="confirmDelete">Да</button>`);
-                    document.getElementById('confirmDelete').addEventListener('click', () => {
-                        state[key] = state[key].filter(i => i.id != id && i.q != id);
-                        if (key === 'scheme') state.scheme = state.scheme.filter(i => i.id != id);
-                        save(); modalOverlay.classList.remove('active'); render(pageId);
+                    document.getElementById('confirmDelete').addEventListener('click', async () => {
+                        await deleteFromCloud(key, id);
+                        modalOverlay.classList.remove('active');
+                        await loadAllData();
+                        render(pageId);
                     });
                 });
             });
         }
         if (pageId === 'settings') {
-            document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
-            document.getElementById('avatarUpload')?.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => { state.avatar = reader.result; document.getElementById('settingsAvatar').style.backgroundImage = `url(${state.avatar})`; save(); };
-                reader.readAsDataURL(file);
-            });
             document.getElementById('resetDataBtn')?.addEventListener('click', () => {
                 showModal(`<button class="close-btn">✕</button><h3>Сбросить все данные?</h3><button class="btn btn-delete" id="confirmReset">Да</button>`);
                 document.getElementById('confirmReset').addEventListener('click', () => { localStorage.clear(); location.reload(); });
@@ -392,7 +452,12 @@
         }
     }
 
-    render('dashboard');
+    // Инициализация
+    (async function init() {
+        await loadAllData();
+        // Если есть данные в localStorage, можно их перенести (опционально)
+        render('dashboard');
+    })();
 })();
 </script>
 </body>
