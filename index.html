@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* предотвращает выделение текста при кликах, но не мешает голосу */
+            user-select: none;
         }
 
         body {
@@ -21,7 +21,6 @@
             overflow-x: hidden;
         }
 
-        /* Тропический пляж через ::before */
         body::before {
             content: "";
             position: fixed;
@@ -38,7 +37,6 @@
             pointer-events: none;
         }
 
-        /* Дополнительный слой с пальмами и самолётом (градиентная абстракция) */
         body::after {
             content: "";
             position: fixed;
@@ -56,7 +54,6 @@
             margin: 0 auto;
         }
 
-        /* Глассморфные карточки, голографические рамки */
         .card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
@@ -94,7 +91,6 @@
             text-shadow: none;
         }
 
-        /* Градиентные кнопки — без иконок, только текст */
         .btn {
             border: none;
             background: linear-gradient(105deg, #f9b43a, #fb6b2b);
@@ -124,7 +120,6 @@
             box-shadow: 0 0 12px rgba(232,93,4,0.5);
         }
 
-        /* Формы */
         input, textarea, select {
             width: 100%;
             background: rgba(255,255,245,0.85);
@@ -148,7 +143,6 @@
             box-shadow: 0 0 0 2px rgba(255,180,71,0.3);
         }
 
-        /* Списки карточек */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -182,12 +176,10 @@
             margin-top: 12px;
         }
 
-        /* Отключение мигающих курсоров */
         input, textarea, button, select {
             caret-color: #ffb347;
         }
 
-        /* Анимация слушания голоса */
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(232,93,4,0.6);}
             100% { box-shadow: 0 0 0 18px rgba(232,93,4,0);}
@@ -223,7 +215,6 @@
         <div class="status-text" id="voiceStatus">⚡ ИИ-помощник готов. Нажми на микрофон и скажи команду.</div>
     </div>
 
-    <!-- Форма создания карточки -->
     <div class="card">
         <h2>➕ Новая карточка сделки</h2>
         <input type="text" id="cardTitle" placeholder="Название, например: Переговоры с ИТ-директором" autocomplete="off">
@@ -237,7 +228,6 @@
         <button class="btn" id="createCardBtn">✨ Создать карточку</button>
     </div>
 
-    <!-- Список карточек из CRM -->
     <div class="card">
         <h2>📋 Сделки и кармики</h2>
         <div id="cardsList" class="cards-grid">
@@ -249,16 +239,14 @@
 </div>
 
 <script>
-    // ⚠️ ЗАМЕНИ НА СВОЙ URL ИЗ APPS SCRIPT
+    // ТВОЙ URL APPS SCRIPT (уже вставлен)
     const API_URL = 'https://script.google.com/macros/s/AKfycbxBBEYjo617Ken3YMN-yDrP0O8nyADy1zCqa7PmWUGUbVOJemXqq0t55W1qvkyqYVr7bw/exec';
 
-    // ---------- РАБОТА С API GOOGLE TABLES ----------
     async function fetchCards() {
         try {
             const response = await fetch(`${API_URL}?action=read`);
             const json = await response.json();
             if (json.data && json.data.length > 0) {
-                // Первая строка — заголовки, остальные — данные
                 const rows = json.data.slice(1);
                 return rows.map(row => ({
                     id: row[0],
@@ -329,7 +317,6 @@
         });
     }
 
-    // ----- ГОЛОСОВОЙ ИИ-АССИСТЕНТ -----
     let recognition = null;
     let isListening = false;
 
@@ -369,14 +356,11 @@
     }
 
     async function processVoiceCommand(command) {
-        // простая логика команд ИИ-помощника
         if (command.includes('создай карточку') || command.includes('новая карточка')) {
-            // извлекаем примерное название: после "создай карточку"
             let title = command.replace(/создай карточку|новая карточка/gi, '').trim();
             if (!title) {
                 speak('Скажите название карточки');
                 document.getElementById('voiceStatus').innerHTML = '🎙️ Скажите название карточки';
-                // можно запросить повторно, но для простоты — предлагаем заполнить вручную
                 return;
             }
             const description = 'создано голосом';
@@ -409,11 +393,10 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'ru-RU';
         utterance.rate = 0.95;
-        window.speechSynthesis.cancel(); // избегаем наложения
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
     }
 
-    // ----- ИНИЦИАЛИЗАЦИЯ и обработчики -----
     document.addEventListener('DOMContentLoaded', async () => {
         initSpeech();
         await renderCards();
