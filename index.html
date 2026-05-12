@@ -56,13 +56,11 @@
       100% { width: 0%; opacity: 0; }
     }
 
-    /* Летающая буква */
     .flying-a {
       position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
       text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer; display: none;
     }
 
-    /* Кастомный курсор */
     #customCursor {
       position: fixed; pointer-events: none; z-index: 9999;
       font-size: 40px; transform: translate(-15px, -15px);
@@ -89,7 +87,6 @@
     #customCursor.finger.pressing {
       font-size: 40px;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-      /* Замена на согнутый палец будет через JS */
     }
 
     .firework {
@@ -102,6 +99,12 @@
     @keyframes particleFade {
       0% { opacity: 1; transform: translate(0,0) scale(1); }
       100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+    }
+
+    @keyframes pulseWave {
+      0% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
+      50% { box-shadow: 0 0 50px #FFD700, 0 0 100px #FF8C00; }
+      100% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
     }
 
     .loading-overlay {
@@ -212,6 +215,15 @@
     <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
     <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
   </div>
+
+  <!-- Голосовой помощник -->
+  <div style="margin-bottom: 24px;">
+    <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
+      <span id="voiceIcon">🎙️</span> <span id="voiceText">Голосовой помощник</span>
+      <div id="voiceWaves" style="display:none; position:absolute; top:-8px; left:-8px; right:-8px; bottom:-8px; border-radius:36px; background:transparent; box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; animation:pulseWave 1s infinite;"></div>
+    </button>
+  </div>
+
   <div class="nav-item active" data-page="dashboard" id="navDashboard"><span>Обзор</span></div>
   <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
   <div class="nav-item" data-page="scheme"><span>Структура</span></div>
@@ -459,7 +471,6 @@
     return res.json();
   }
 
-  // Оптимистичные операции
   async function createItem(sheet, params, pageId) {
     const tempId = Date.now();
     const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
@@ -629,7 +640,7 @@
     attachEvents(pageId);
   }
 
-  // Перетаскивание скрепки (исправлено, без дублей)
+  // Перетаскивание скрепки
   let draggingClip = null;
   let dragClone = null;
   let dragStartX = 0, dragStartY = 0;
@@ -637,7 +648,7 @@
 
   function startDrag(e, el) {
     e.preventDefault();
-    if (draggingClip) return; // уже тащим
+    if (draggingClip) return;
     draggingClip = el;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
@@ -760,7 +771,6 @@
         });
       });
 
-      // Перетаскивание скрепок
       document.querySelectorAll('.clip-delete').forEach(el => {
         el.addEventListener('mousedown', e => startDrag(e, el));
       });
@@ -795,6 +805,151 @@
           location.reload();
         });
       });
+    }
+  }
+
+  // ===== ГОЛОСОВОЙ ПОМОЩНИК =====
+  const voiceBtn = document.getElementById('voiceBtn');
+  const voiceIcon = document.getElementById('voiceIcon');
+  const voiceText = document.getElementById('voiceText');
+  const voiceWaves = document.getElementById('voiceWaves');
+  let recognition;
+  let isListening = false;
+
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isListening = true;
+      voiceIcon.textContent = '🔴';
+      voiceText.textContent = 'Слушаю...';
+      voiceWaves.style.display = 'block';
+      playSound('shoot');
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      voiceIcon.textContent = '🎙️';
+      voiceText.textContent = 'Голосовой помощник';
+      voiceWaves.style.display = 'none';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.toLowerCase().trim();
+      console.log('Распознано:', transcript);
+      processVoiceCommand(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Ошибка распознавания:', event.error);
+      voiceIcon.textContent = '🎙️';
+      voiceText.textContent = 'Ошибка, попробуйте снова';
+      setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000);
+    };
+
+    voiceBtn.addEventListener('click', () => {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    });
+  } else {
+    voiceBtn.style.display = 'none';
+  }
+
+  function processVoiceCommand(command) {
+    const sectionMap = {
+      'обзор': 'dashboard',
+      'бэклог': 'backlog',
+      'структура': 'scheme',
+      'идеи': 'ideas',
+      'прототипы': 'prototypes',
+      'hrdnk': 'hrdnk',
+      'база знаний': 'knowledge',
+      'настройки': 'settings'
+    };
+
+    let matched = false;
+
+    for (const [name, pageId] of Object.entries(sectionMap)) {
+      if (command.includes(`открой ${name}`) || command.includes(`покажи ${name}`) || command.includes(`перейди в ${name}`)) {
+        navigateTo(pageId);
+        speak(`Открываю раздел ${name}`);
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched && command.includes('добавить')) {
+      const match = command.match(/добавить\s+(?:карточку|задачу|идею|прототип|знание)\s+(.+?)(?:\s+в\s+(.+))?$/);
+      if (match) {
+        const title = match[1].trim();
+        const section = match[2] ? sectionMap[match[2].toLowerCase()] : getCurrentPage();
+        if (section && state[section] !== undefined) {
+          const params = { title };
+          if (section === 'knowledge') params.question = title;
+          createItem(section, params, section);
+          speak(`Добавил "${title}" в раздел ${Object.keys(sectionMap).find(k => sectionMap[k] === section)}`);
+          matched = true;
+        }
+      }
+    }
+
+    if (!matched && command.includes('удали')) {
+      const match = command.match(/удали\s+(.+?)(?:\s+в\s+(.+))?$/);
+      if (match) {
+        const title = match[1].trim().toLowerCase();
+        const section = match[2] ? sectionMap[match[2].toLowerCase()] : getCurrentPage();
+        if (section && state[section]) {
+          const item = state[section].find(i => (i.title || i.q || '').toLowerCase().includes(title));
+          if (item) {
+            deleteItem(section, item.id, section);
+            speak(`Удалил "${item.title || item.q}"`);
+            matched = true;
+          } else {
+            speak('Не нашёл такой карточки');
+            matched = true;
+          }
+        }
+      }
+    }
+
+    if (!matched && (command.includes('шутка') || command.includes('анекдот'))) {
+      const jokes = [
+        'Почему программисты не ходят в лес? Там нет нормального интернета!',
+        'Кармический банк начисляет кармики даже за улыбку. Улыбнись!',
+        'Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.'
+      ];
+      speak(jokes[Math.floor(Math.random() * jokes.length)]);
+      matched = true;
+    }
+
+    if (!matched) {
+      speak('Я не понял команду. Попробуй: открой обзор, добавь задачу, удали, расскажи шутку.');
+    }
+  }
+
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ru-RU';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function navigateTo(pageId) {
+    const target = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+    if (target) {
+      document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active'));
+      target.classList.add('active');
+      render(pageId);
     }
   }
 
