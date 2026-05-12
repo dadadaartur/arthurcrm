@@ -9,7 +9,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
         }
 
         body {
@@ -21,6 +20,7 @@
             overflow-x: hidden;
         }
 
+        /* Тропический пляж */
         body::before {
             content: "";
             position: fixed;
@@ -32,11 +32,12 @@
             background-size: cover;
             background-position: center bottom;
             background-repeat: no-repeat;
-            opacity: 0.3;
+            opacity: 0.35;
             z-index: -2;
             pointer-events: none;
         }
 
+        /* Дополнительный слой с пальмами и отражением */
         body::after {
             content: "";
             position: fixed;
@@ -44,7 +45,7 @@
             left: 0;
             width: 100%;
             height: 200px;
-            background: linear-gradient(0deg, rgba(210, 180, 140, 0.2) 0%, rgba(135, 206, 235, 0) 100%);
+            background: linear-gradient(0deg, rgba(210, 180, 140, 0.25) 0%, rgba(135, 206, 235, 0) 100%);
             z-index: -1;
             pointer-events: none;
         }
@@ -54,14 +55,15 @@
             margin: 0 auto;
         }
 
+        /* Стеклянные карточки с голографической рамкой */
         .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(14px);
             border-radius: 48px;
-            padding: 24px 28px;
+            padding: 28px 32px;
             margin-bottom: 28px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 215, 150, 0.5);
             transition: all 0.2s ease;
         }
 
@@ -70,16 +72,16 @@
             justify-content: space-between;
             align-items: baseline;
             flex-wrap: wrap;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,240,0.3);
-            padding-bottom: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 240, 200, 0.3);
+            padding-bottom: 16px;
         }
 
         h1, h2, h3 {
             font-weight: 500;
             letter-spacing: -0.3px;
             color: #fff8f0;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         h1 {
@@ -91,6 +93,12 @@
             text-shadow: none;
         }
 
+        h2 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+        }
+
+        /* Градиентные кнопки — без иконок, только текст */
         .btn {
             border: none;
             background: linear-gradient(105deg, #f9b43a, #fb6b2b);
@@ -120,17 +128,19 @@
             box-shadow: 0 0 12px rgba(232,93,4,0.5);
         }
 
+        /* Поля ввода — мягкий скролл, без мигающих курсоров */
         input, textarea, select {
             width: 100%;
-            background: rgba(255,255,245,0.85);
+            background: rgba(255,255,245,0.9);
             border: 1px solid rgba(255,215,150,0.8);
             border-radius: 60px;
             padding: 12px 20px;
             font-size: 1rem;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             outline: none;
             transition: all 0.2s;
             font-family: inherit;
+            caret-color: #ffb347; /* стандартный курсор, но не мигающий агрессивно */
         }
 
         textarea {
@@ -143,6 +153,7 @@
             box-shadow: 0 0 0 2px rgba(255,180,71,0.3);
         }
 
+        /* Сетка карточек CRM */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -160,7 +171,7 @@
         }
 
         .crm-card h4 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             color: #ffecb3;
             margin-bottom: 8px;
         }
@@ -176,16 +187,13 @@
             margin-top: 12px;
         }
 
-        input, textarea, button, select {
-            caret-color: #ffb347;
-        }
-
-        @keyframes pulse {
+        /* Анимация при слушании голоса */
+        @keyframes pulseGlow {
             0% { box-shadow: 0 0 0 0 rgba(232,93,4,0.6);}
             100% { box-shadow: 0 0 0 18px rgba(232,93,4,0);}
         }
         .listening {
-            animation: pulse 1s infinite;
+            animation: pulseGlow 1s infinite;
         }
 
         .status-text {
@@ -199,25 +207,34 @@
             margin-top: 50px;
             padding: 20px;
             color: rgba(255,240,200,0.8);
+            font-size: 0.9rem;
+        }
+
+        /* Отключаем мигание */
+        input, textarea, button, select {
+            caret-color: #ffb347;
+        }
+        button:focus-visible, input:focus-visible {
+            outline: none;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Верхняя панель -->
     <div class="card">
         <div class="card-header">
-            <h1>🏝️ Кармический банк · Пульт</h1>
-            <div>
-                <button class="btn btn-voice" id="voiceBtn">🎙️ Включить голос</button>
-            </div>
+            <h1>Кармический банк – Пульт</h1>
+            <button class="btn btn-voice" id="voiceBtn">Голосовое управление</button>
         </div>
-        <div class="status-text" id="voiceStatus">⚡ ИИ-помощник готов. Нажми на микрофон и скажи команду.</div>
+        <div class="status-text" id="voiceStatus">ИИ-помощник готов. Нажмите «Голосовое управление» и скажите команду.</div>
     </div>
 
+    <!-- Форма создания карточки -->
     <div class="card">
-        <h2>➕ Новая карточка сделки</h2>
-        <input type="text" id="cardTitle" placeholder="Название, например: Переговоры с ИТ-директором" autocomplete="off">
+        <h2>Новая сделка</h2>
+        <input type="text" id="cardTitle" placeholder="Название сделки, например: Переговоры с ИТ-директором" autocomplete="off">
         <textarea id="cardDesc" rows="2" placeholder="Описание / детали"></textarea>
         <select id="cardStatus">
             <option value="Новый лид">Новый лид</option>
@@ -225,36 +242,38 @@
             <option value="Кармики начислены">Кармики начислены</option>
             <option value="Закрыто">Закрыто</option>
         </select>
-        <button class="btn" id="createCardBtn">✨ Создать карточку</button>
+        <button class="btn" id="createCardBtn">Создать карточку</button>
     </div>
 
+    <!-- Список карточек -->
     <div class="card">
-        <h2>📋 Сделки и кармики</h2>
+        <h2>Сделки и кармики</h2>
         <div id="cardsList" class="cards-grid">
             <div style="color: #ffecb3;">Загрузка карточек...</div>
         </div>
-        <button class="btn btn-secondary" id="refreshBtn" style="margin-top: 20px;">🔄 Обновить</button>
+        <button class="btn btn-secondary" id="refreshBtn" style="margin-top: 20px;">Обновить список</button>
     </div>
-    <footer>Кармический банк · HRDNK · данные временно в Google Sheets</footer>
+
+    <footer>Кармический банк · HRDNK · данные временно в Google Sheets · Скоро переход на Cloud.ru</footer>
 </div>
 
 <script>
-    // ТВОЙ URL APPS SCRIPT (уже вставлен)
+    // ТВОЙ URL GOOGLE APPS SCRIPT
     const API_URL = 'https://script.google.com/macros/s/AKfycbxBBEYjo617Ken3YMN-yDrP0O8nyADy1zCqa7PmWUGUbVOJemXqq0t55W1qvkyqYVr7bw/exec';
 
+    // ---------- РАБОТА С API (GOOGLE SHEETS) ----------
     async function fetchCards() {
         try {
             const response = await fetch(`${API_URL}?action=read`);
             const json = await response.json();
             if (json.data && json.data.length > 0) {
-                const rows = json.data.slice(1);
+                const rows = json.data.slice(1); // первая строка — заголовки
                 return rows.map(row => ({
                     id: row[0],
                     created_at: row[1],
                     title: row[2],
                     description: row[3],
                     status: row[4],
-                    cards: row[5]
                 }));
             }
             return [];
@@ -290,7 +309,7 @@
         container.innerHTML = '<div style="color: #ffecb3;">Загрузка...</div>';
         const cards = await fetchCards();
         if (cards.length === 0) {
-            container.innerHTML = '<div style="color: #ffecb3;">✨ Пока нет карточек. Создайте первую сделку!</div>';
+            container.innerHTML = '<div style="color: #ffecb3;">Пока нет карточек. Создайте первую сделку.</div>';
             return;
         }
         container.innerHTML = '';
@@ -298,8 +317,8 @@
             const cardDiv = document.createElement('div');
             cardDiv.className = 'crm-card';
             cardDiv.innerHTML = `
-                <h4>📌 ${escapeHtml(card.title || 'Без названия')}</h4>
-                <div><small>🕒 ${card.created_at || 'дата неизвестна'}</small></div>
+                <h4>${escapeHtml(card.title || 'Без названия')}</h4>
+                <div><small>${card.created_at || 'дата не указана'}</small></div>
                 <div style="margin: 10px 0;">${escapeHtml(card.description || '—')}</div>
                 <span class="status-badge">${escapeHtml(card.status || 'Новый лид')}</span>
             `;
@@ -317,12 +336,13 @@
         });
     }
 
+    // ---------- ГОЛОСОВОЙ ИИ-ПОМОЩНИК ----------
     let recognition = null;
     let isListening = false;
 
     function initSpeech() {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            document.getElementById('voiceStatus').innerText = '❌ Ваш браузер не поддерживает голосовое управление. Используйте Chrome/Edge/Safari.';
+            document.getElementById('voiceStatus').innerText = 'Ваш браузер не поддерживает голосовое управление. Используйте Chrome, Edge или Safari.';
             document.getElementById('voiceBtn').disabled = true;
             return;
         }
@@ -335,22 +355,22 @@
         recognition.onstart = () => {
             isListening = true;
             document.getElementById('voiceBtn').classList.add('listening');
-            document.getElementById('voiceStatus').innerHTML = '🎤 Слушаю... скажите команду';
+            document.getElementById('voiceStatus').innerHTML = 'Слушаю... скажите команду';
         };
         recognition.onend = () => {
             isListening = false;
             document.getElementById('voiceBtn').classList.remove('listening');
-            document.getElementById('voiceStatus').innerHTML = '⚡ Готов к голосовой команде. Нажмите кнопку.';
+            document.getElementById('voiceStatus').innerHTML = 'Готов к голосовой команде. Нажмите кнопку.';
         };
         recognition.onerror = (event) => {
             console.error('Ошибка речи', event);
-            document.getElementById('voiceStatus').innerHTML = `⚠️ Ошибка: ${event.error}. Попробуйте ещё раз.`;
+            document.getElementById('voiceStatus').innerHTML = `Ошибка: ${event.error}. Попробуйте ещё раз.`;
             isListening = false;
             document.getElementById('voiceBtn').classList.remove('listening');
         };
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript.toLowerCase();
-            document.getElementById('voiceStatus').innerHTML = `🧠 Распознано: "${transcript}" — обрабатываю...`;
+            document.getElementById('voiceStatus').innerHTML = `Распознано: "${transcript}" — обрабатываю...`;
             processVoiceCommand(transcript);
         };
     }
@@ -360,7 +380,7 @@
             let title = command.replace(/создай карточку|новая карточка/gi, '').trim();
             if (!title) {
                 speak('Скажите название карточки');
-                document.getElementById('voiceStatus').innerHTML = '🎙️ Скажите название карточки';
+                document.getElementById('voiceStatus').innerHTML = 'Скажите название карточки';
                 return;
             }
             const description = 'создано голосом';
@@ -385,7 +405,7 @@
         else {
             speak('Не понял команду. Скажите "создай карточку" или "покажи карточки"');
         }
-        document.getElementById('voiceStatus').innerHTML = '⚡ Команда обработана. Нажмите микрофон для новой.';
+        document.getElementById('voiceStatus').innerHTML = 'Команда обработана. Нажмите микрофон для новой.';
     }
 
     function speak(text) {
@@ -397,6 +417,7 @@
         window.speechSynthesis.speak(utterance);
     }
 
+    // ---------- ЗАПУСК ----------
     document.addEventListener('DOMContentLoaded', async () => {
         initSpeech();
         await renderCards();
