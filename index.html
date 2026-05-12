@@ -1,416 +1,790 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Пульт Артура — Кармический Банк</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', 'Comic Sans MS', sans-serif;
-            background: #fff4e6; color: #1a2634;
-            display: flex; height: 100vh; overflow: hidden;
-            user-select: none; cursor: none; /* скрываем системный курсор */
-        }
-        input, textarea, [contenteditable] { user-select: text; cursor: text; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Пульт Артура — Кармический Банк</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', 'Comic Sans MS', sans-serif;
+      background: #fff4e6; color: #1a2634;
+      display: flex; height: 100vh; overflow: hidden;
+      user-select: none; cursor: none;
+    }
+    input, textarea, [contenteditable] { user-select: text; cursor: text; }
 
-        /* Тропический фон */
-        .tropical-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-            pointer-events: none;
-            background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
-        }
-        .sun {
-            position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
-            background: #FFD700; border-radius: 50%;
-            box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00, 0 0 300px 100px rgba(255,140,0,0.4);
-        }
-        .ocean {
-            position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
-            background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
-            animation: wave 7s ease-in-out infinite;
-        }
-        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .beach {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 20%;
-            background: linear-gradient(180deg, #FFE4B5 0%, #FFDAB9 100%);
-            border-radius: 30% 40% 0 0;
-        }
-        .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
-        .sailboat-horizon { position: absolute; bottom: 55%; left: 70%; font-size: 40px; animation: sailHorizon 95s linear infinite; }
-        @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
-        .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
-        @keyframes airplaneFly {
-            0% { right: -5%; bottom: 25%; }
-            5% { bottom: 28%; }
-            50% { right: 65%; bottom: 44%; }
-            90% { right: 90%; bottom: 56%; }
-            100% { right: 105%; bottom: 60%; }
-        }
-        .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
-        .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
-        @keyframes trailLength {
-            0% { width: 0%; opacity: 0; }
-            5% { width: 10%; opacity: 1; }
-            50% { width: 60%; opacity: 1; }
-            90% { width: 30%; opacity: 0.8; }
-            100% { width: 0%; opacity: 0; }
-        }
+    /* Тропический фон */
+    .tropical-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
+    }
+    .sun {
+      position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
+      background: #FFD700; border-radius: 50%;
+      box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00, 0 0 300px 100px rgba(255,140,0,0.4);
+    }
+    .ocean {
+      position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
+      background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
+      animation: wave 7s ease-in-out infinite;
+    }
+    @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .beach {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 20%;
+      background: linear-gradient(180deg, #FFE4B5 0%, #FFDAB9 100%);
+      border-radius: 30% 40% 0 0;
+    }
+    .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
+    .sailboat-horizon { position: absolute; bottom: 55%; left: 70%; font-size: 40px; animation: sailHorizon 95s linear infinite; }
+    @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
+    .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
+    @keyframes airplaneFly {
+      0% { right: -5%; bottom: 25%; }
+      5% { bottom: 28%; }
+      50% { right: 65%; bottom: 44%; }
+      90% { right: 90%; bottom: 56%; }
+      100% { right: 105%; bottom: 60%; }
+    }
+    .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
+    .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
+    @keyframes trailLength {
+      0% { width: 0%; opacity: 0; }
+      5% { width: 10%; opacity: 1; }
+      50% { width: 60%; opacity: 1; }
+      90% { width: 30%; opacity: 0.8; }
+      100% { width: 0%; opacity: 0; }
+    }
 
-        /* Летающая буква */
-        .flying-a {
-            position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
-            text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer;
-            transition: transform 0.1s, left 0.1s, top 0.1s;
-            animation: flyAround 2s infinite alternate ease-in-out;
-        }
-        @keyframes flyAround {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(15px, -20px) rotate(10deg); }
-            100% { transform: translate(-15px, 10px) rotate(-5deg); }
-        }
+    /* Летающая буква */
+    .flying-a {
+      position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
+      text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer;
+      display: none;
+    }
 
-        /* Курсор-молоток */
-        .hammer-cursor {
-            position: fixed; pointer-events: none; z-index: 9999;
-            font-size: 36px; transform: translate(-10px, -20px) rotate(-30deg);
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-            transition: transform 0.15s;
-        }
-        .hammer-cursor.bam {
-            animation: hammerHit 0.3s ease;
-        }
-        @keyframes hammerHit {
-            0% { transform: translate(-10px, -20px) rotate(-30deg) scale(1); }
-            40% { transform: translate(-5px, -5px) rotate(0deg) scale(1.4); }
-            100% { transform: translate(-10px, -20px) rotate(-30deg) scale(1); }
-        }
+    /* Кастомный курсор */
+    #customCursor {
+      position: fixed; pointer-events: none; z-index: 9999;
+      font-size: 32px; transform: translate(-10px, -15px);
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+      transition: transform 0.1s;
+    }
+    #customCursor.hammer { /* молоток */ }
+    #customCursor.hand { font-size: 36px; transform: translate(-8px, -12px); }
+    #customCursor.bam {
+      animation: hammerHit 0.3s ease;
+    }
+    @keyframes hammerHit {
+      0% { transform: translate(-10px, -15px) rotate(-30deg) scale(1); }
+      40% { transform: translate(-5px, -5px) rotate(0deg) scale(1.4); }
+      100% { transform: translate(-10px, -15px) rotate(-30deg) scale(1); }
+    }
 
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 3000; visibility: hidden; opacity: 0; transition: 0.3s;
-        }
-        .loading-overlay.active { visibility: visible; opacity: 1; }
-        .premium-spinner {
-            width: 70px; height: 70px; border-radius: 50%;
-            background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
-            -webkit-mask: radial-gradient(transparent 55%, black 56%);
-            mask: radial-gradient(transparent 55%, black 56%);
-            animation: spin 0.8s linear infinite;
-            box-shadow: 0 0 40px #FFA500, 0 0 80px rgba(255,140,0,0.6);
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+    /* Фейерверк */
+    .firework {
+      position: fixed; pointer-events: none; z-index: 10000;
+    }
+    .particle {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      animation: particleFade 0.6s ease-out forwards;
+    }
+    @keyframes particleFade {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+    }
 
-        .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; position: relative; }
-        .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; line-height: 1.2; letter-spacing: 1px; color: #2E3B2E; }
-        .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
-        .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
-        .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
-        .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
-        .nav-item[data-page="ideas"] { background: linear-gradient(135deg, rgba(160,240,160,0.2), rgba(200,255,200,0.3)); }
-        .nav-item[data-page="prototypes"] { background: linear-gradient(135deg, rgba(255,150,200,0.2), rgba(255,190,220,0.3)); }
-        .nav-item[data-page="hrdnk"] { background: linear-gradient(135deg, rgba(200,160,255,0.2), rgba(220,190,255,0.3)); }
-        .nav-item[data-page="knowledge"] { background: linear-gradient(135deg, rgba(255,230,80,0.2), rgba(255,250,120,0.3)); }
-        .nav-item[data-page="settings"] { background: linear-gradient(135deg, rgba(210,190,250,0.2), rgba(240,220,255,0.3)); }
-        .nav-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.1); }
-        .nav-item.active { border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 3000; visibility: hidden; opacity: 0; transition: 0.3s;
+    }
+    .loading-overlay.active { visibility: visible; opacity: 1; }
+    .premium-spinner {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
+      -webkit-mask: radial-gradient(transparent 55%, black 56%);
+      mask: radial-gradient(transparent 55%, black 56%);
+      animation: spin 0.8s linear infinite;
+      box-shadow: 0 0 40px #FFA500, 0 0 80px rgba(255,140,0,0.6);
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
-        .page { display: none; } .page.active { display: block; }
-        .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; position: relative; }
-        .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; position: relative; }
+    .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; line-height: 1.2; letter-spacing: 1px; color: #2E3B2E; }
+    .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
+    .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
+    .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
+    .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
+    .nav-item[data-page="ideas"] { background: linear-gradient(135deg, rgba(160,240,160,0.2), rgba(200,255,200,0.3)); }
+    .nav-item[data-page="prototypes"] { background: linear-gradient(135deg, rgba(255,150,200,0.2), rgba(255,190,220,0.3)); }
+    .nav-item[data-page="hrdnk"] { background: linear-gradient(135deg, rgba(200,160,255,0.2), rgba(220,190,255,0.3)); }
+    .nav-item[data-page="knowledge"] { background: linear-gradient(135deg, rgba(255,230,80,0.2), rgba(255,250,120,0.3)); }
+    .nav-item[data-page="settings"] { background: linear-gradient(135deg, rgba(210,190,250,0.2), rgba(240,220,255,0.3)); }
+    .nav-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.1); }
+    .nav-item.active { border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
 
-        .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
-        .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
-        .btn-primary { background: linear-gradient(135deg, #A5D6A7, #FFB74D); border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1; }
-        .btn-primary::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00); background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35; }
-        @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
+    .page { display: none; } .page.active { display: block; }
+    .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; position: relative; }
+    .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
-        .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
-        .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
-        .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
-        .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
-        .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
+    .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
+    .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
+    .btn-primary { background: linear-gradient(135deg, #A5D6A7, #FFB74D); border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1; }
+    .btn-primary::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00); background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35; }
+    @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-        /* Стили для отрывного удаления */
-        .tear-delete {
-            width: 22px; height: 22px; border-radius: 50%;
-            background: linear-gradient(135deg, #FFAB91, #FFCDD2);
-            border: 1px solid rgba(255,80,80,0.5);
-            position: relative; cursor: grab; transition: all 0.3s;
-            box-shadow: 0 0 10px rgba(255,100,100,0.4);
-            display: inline-flex; align-items: center; justify-content: center;
-            margin-left: 8px;
-        }
-        .tear-delete::before, .tear-delete::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 10px; height: 2px; background: #C62828; border-radius: 2px;
-        }
-        .tear-delete::before { transform: translate(-50%, -50%) rotate(45deg); }
-        .tear-delete::after { transform: translate(-50%, -50%) rotate(-45deg); }
-        .tear-delete:active { cursor: grabbing; }
+    .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
+    .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
+    .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+    .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+    .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
 
-        input, textarea {
-            border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
-            font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
-            background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
-        }
-        textarea { resize: vertical; min-height: 90px; }
+    /* Стили для отрывного удаления */
+    .tear-delete {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: linear-gradient(135deg, #FFAB91, #FFCDD2);
+      border: 1px solid rgba(255,80,80,0.5);
+      position: relative; cursor: grab; transition: all 0.3s;
+      box-shadow: 0 0 10px rgba(255,100,100,0.4);
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: 8px;
+    }
+    .tear-delete::before, .tear-delete::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 10px; height: 2px; background: #C62828; border-radius: 2px;
+    }
+    .tear-delete::before { transform: translate(-50%, -50%) rotate(45deg); }
+    .tear-delete::after { transform: translate(-50%, -50%) rotate(-45deg); }
+    .tear-delete:active { cursor: grabbing; }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
-        }
-        .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal {
-            background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
-        }
-    </style>
+    input, textarea {
+      border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
+      font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
+      background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; }
+    .modal {
+      background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
+    }
+  </style>
 </head>
 <body>
 
 <!-- Летающая буква А -->
-<div id="flyingA" class="flying-a" style="display:none;">А</div>
+<div id="flyingA" class="flying-a">А</div>
 
-<!-- Кастомный курсор-молоток -->
-<div id="hammerCursor" class="hammer-cursor">🔨</div>
+<!-- Кастомный курсор -->
+<div id="customCursor" class="hammer">🔨</div>
 
+<!-- Индикатор загрузки -->
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
+<!-- Фон -->
 <div class="tropical-bg">
-    <div class="sun"></div>
-    <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
-    <div class="beach">
-        <div class="palm-tree" style="left: 5%;">🌴</div>
-        <div class="palm-tree" style="left: 18%;">🌴</div>
-        <div class="palm-tree" style="left: 38%;">🌴</div>
-        <div class="palm-tree" style="right: 28%;">🌴</div>
-        <div class="palm-tree" style="right: 12%;">🌴</div>
-    </div>
-    <div class="airplane-group">
-        <div class="airplane-dot"></div>
-        <div class="contrail-line"></div>
-    </div>
+  <div class="sun"></div>
+  <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
+  <div class="beach">
+    <div class="palm-tree" style="left: 5%;">🌴</div>
+    <div class="palm-tree" style="left: 18%;">🌴</div>
+    <div class="palm-tree" style="left: 38%;">🌴</div>
+    <div class="palm-tree" style="right: 28%;">🌴</div>
+    <div class="palm-tree" style="right: 12%;">🌴</div>
+  </div>
+  <div class="airplane-group">
+    <div class="airplane-dot"></div>
+    <div class="contrail-line"></div>
+  </div>
 </div>
 
+<!-- Боковая панель -->
 <div class="sidebar">
-    <div class="sidebar-header" id="sidebarHeader">
-        <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
-        <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
-    </div>
-    <div class="nav-item active" data-page="dashboard"><span>Обзор</span></div>
-    <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
-    <div class="nav-item" data-page="scheme"><span>Структура</span></div>
-    <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
-    <div class="nav-item" data-page="prototypes"><span>Прототипы</span></div>
-    <div class="nav-item" data-page="hrdnk"><span>HRDNK</span></div>
-    <div class="nav-item" data-page="knowledge"><span>База знаний</span></div>
-    <div class="nav-item" data-page="settings"><span>Настройки</span></div>
+  <div class="sidebar-header" id="sidebarHeader">
+    <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
+    <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
+  </div>
+  <div class="nav-item active" data-page="dashboard" id="navDashboard"><span>Обзор</span></div>
+  <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
+  <div class="nav-item" data-page="scheme"><span>Структура</span></div>
+  <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
+  <div class="nav-item" data-page="prototypes"><span>Прототипы</span></div>
+  <div class="nav-item" data-page="hrdnk"><span>HRDNK</span></div>
+  <div class="nav-item" data-page="knowledge"><span>База знаний</span></div>
+  <div class="nav-item" data-page="settings"><span>Настройки</span></div>
 </div>
 
+<!-- Главная область -->
 <div class="main-content" id="mainContent"></div>
+
+<!-- Модалки -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 
 <script>
-(() => {
-    // === КОНФИГУРАЦИЯ ===
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
-    const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
+(function() {
+  // ====== КОНФИГУРАЦИЯ ======
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
+  const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
+  const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
 
-    // Состояние
-    const state = {
-        dashboard: [], backlog: [], scheme: [], ideas: [],
-        prototypes: [], hrdnk: [], knowledge: [],
-        avatar: localStorage.getItem('arthurHubAvatar') || ''
+  // ====== СОСТОЯНИЕ ======
+  const state = {
+    dashboard: [], backlog: [], scheme: [], ideas: [],
+    prototypes: [], hrdnk: [], knowledge: [],
+    avatar: localStorage.getItem(STORAGE_AVATAR_KEY) || ''
+  };
+  let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
+
+  // ====== АУДИО ======
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+      const ctx = getAudioCtx();
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      switch(type) {
+        case 'hammer': // глухой удар
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(80, t);
+          osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+          gain.gain.setValueAtTime(0.4, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+          osc.start(t); osc.stop(t + 0.2);
+          break;
+        case 'tear': // треск бумаги
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(200, t);
+          osc.frequency.linearRampToValueAtTime(600, t + 0.1);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+          osc.start(t); osc.stop(t + 0.15);
+          break;
+        case 'catch': // писк при поимке буквы
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, t);
+          osc.frequency.linearRampToValueAtTime(800, t + 0.1);
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+          osc.start(t); osc.stop(t + 0.2);
+          break;
+        case 'firework': // фанфары
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(300, t);
+          osc.frequency.linearRampToValueAtTime(600, t + 0.2);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+          osc.start(t); osc.stop(t + 0.4);
+          break;
+        default: break;
+      }
+    } catch(e) { console.warn('Audio error:', e); }
+  }
+
+  // ====== КАСТОМНЫЙ КУРСОР ======
+  const cursor = document.getElementById('customCursor');
+  function setCursor(type) {
+    cursor.className = type; // 'hammer' или 'hand'
+    if (type === 'hand') {
+      cursor.textContent = '🖐️';
+    } else {
+      cursor.textContent = '🔨';
+    }
+  }
+  setCursor('hammer');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    // Определяем, над каким элементом мы находимся
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target && (target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('.nav-item') || target.closest('.tear-delete') || target.closest('.modern-close'))) {
+      setCursor('hand');
+    } else {
+      setCursor('hammer');
+    }
+  });
+  document.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button, .nav-item, .tear-delete, .modern-close')) {
+      cursor.classList.add('bam');
+      playSound('hammer');
+      setTimeout(() => cursor.classList.remove('bam'), 300);
+    }
+  });
+
+  // ====== ФЕЙЕРВЕРК ======
+  let fireworkClicks = 0;
+  let fireworkTimer = null;
+  function launchFirework(x, y) {
+    const container = document.createElement('div');
+    container.className = 'firework';
+    container.style.left = x + 'px';
+    container.style.top = y + 'px';
+    document.body.appendChild(container);
+    playSound('firework');
+    const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32'];
+    for(let i=0; i<20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      const angle = (Math.PI*2 * i)/20;
+      const distance = 40 + Math.random()*60;
+      const dx = Math.cos(angle)*distance;
+      const dy = Math.sin(angle)*distance;
+      particle.style.setProperty('--dx', dx+'px');
+      particle.style.setProperty('--dy', dy+'px');
+      particle.style.background = colors[Math.floor(Math.random()*colors.length)];
+      container.appendChild(particle);
+    }
+    setTimeout(() => container.remove(), 700);
+  }
+
+  // Обработка кликов по "Обзор"
+  document.getElementById('navDashboard').addEventListener('click', (e) => {
+    // Стандартный переход на раздел — он всё равно сработает
+    // Но дополнительно считаем клики для фейерверка
+    fireworkClicks++;
+    if (fireworkClicks >= 5) {
+      launchFirework(e.clientX, e.clientY);
+      fireworkClicks = 0;
+      if (fireworkTimer) clearTimeout(fireworkTimer);
+    } else {
+      if (fireworkTimer) clearTimeout(fireworkTimer);
+      fireworkTimer = setTimeout(() => { fireworkClicks = 0; }, 800);
+    }
+  });
+
+  // ====== ЛЕТАЮЩАЯ БУКВА ======
+  const flyingA = document.getElementById('flyingA');
+  const lastA = document.querySelector('.last-a');
+  let aFlying = false;
+  let aTimer = null;
+
+  function startAFlight() {
+    if (aFlying) return;
+    aFlying = true;
+    const rect = lastA.getBoundingClientRect();
+    flyingA.style.left = rect.left + 'px';
+    flyingA.style.top = rect.top + 'px';
+    flyingA.style.display = 'block';
+    lastA.style.visibility = 'hidden';
+
+    // Случайное движение по экрану
+    const moveA = () => {
+      if (!aFlying) return;
+      const maxX = window.innerWidth - 60;
+      const maxY = window.innerHeight - 60;
+      const newX = Math.random() * maxX;
+      const newY = Math.random() * maxY;
+      flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out';
+      flyingA.style.left = newX + 'px';
+      flyingA.style.top = newY + 'px';
+      setTimeout(moveA, 2000 + Math.random()*1000);
     };
-    let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false'; // по умолчанию вкл
+    moveA();
 
-    // === АУДИО ДВИЖОК ===
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(type) {
-        if (!soundEnabled) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const t = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        switch(type) {
-            case 'hammer': // глухой удар
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(80, t);
-                osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-                gain.gain.setValueAtTime(0.4, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-                osc.start(t); osc.stop(t + 0.2);
-                break;
-            case 'tear': // треск бумаги
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, t);
-                osc.frequency.linearRampToValueAtTime(600, t + 0.1);
-                gain.gain.setValueAtTime(0.2, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-                osc.start(t); osc.stop(t + 0.15);
-                break;
-            case 'catch': // смешной писк при поимке буквы
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, t);
-                osc.frequency.linearRampToValueAtTime(800, t + 0.1);
-                gain.gain.setValueAtTime(0.15, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-                osc.start(t); osc.stop(t + 0.2);
-                break;
-            default: break;
+    // Обработчик клика для возврата
+    flyingA.onclick = () => {
+      aFlying = false;
+      flyingA.style.display = 'none';
+      flyingA.style.transition = 'none';
+      lastA.style.visibility = 'visible';
+      playSound('catch');
+    };
+  }
+
+  // Запуск раз в 15 минут (для теста — через 10 секунд после загрузки)
+  setTimeout(() => {
+    startAFlight();
+    setInterval(() => {
+      if (!aFlying) startAFlight();
+    }, 15 * 60 * 1000);
+  }, 10000);
+
+  // ====== ИНДИКАТОР ЗАГРУЗКИ ======
+  const loader = document.getElementById('loadingOverlay');
+  function showLoader() { loader.classList.add('active'); }
+  function hideLoader() { loader.classList.remove('active'); }
+
+  // ====== РАБОТА С API ======
+  async function loadAllData() {
+    showLoader();
+    try {
+      const res = await fetch(`${API_URL}?action=readAll`);
+      const json = await res.json();
+      if (json.status === 'success') {
+        for (const key of Object.keys(state)) {
+          if (key !== 'avatar' && json.data[key]) state[key] = json.data[key];
         }
+      } else {
+        alert('Ошибка загрузки данных');
+      }
+    } catch(e) {
+      alert('Сервер не отвечает');
+    } finally {
+      hideLoader();
     }
+  }
 
-    // === КАСТОМНЫЙ КУРСОР-МОЛОТОК ===
-    const hammer = document.getElementById('hammerCursor');
-    let mouseX = 0, mouseY = 0;
-    document.addEventListener('mousemove', e => {
-        mouseX = e.clientX; mouseY = e.clientY;
-        hammer.style.left = mouseX + 'px';
-        hammer.style.top = mouseY + 'px';
-    });
-    document.addEventListener('mousedown', (e) => {
-        if (e.target.closest('button, .nav-item, .tear-delete, .modern-close')) {
-            hammer.classList.add('bam');
-            playSound('hammer');
-            setTimeout(() => hammer.classList.remove('bam'), 300);
-        }
-    });
+  async function saveToCloud(sheet, params) {
+    const qs = new URLSearchParams({ sheet, action: 'create', ...params }).toString();
+    const res = await fetch(`${API_URL}?${qs}`);
+    return res.json();
+  }
 
-    // === БУКВА «А» В ПОЛЁТЕ ===
-    const flyingA = document.getElementById('flyingA');
-    const lastA = document.querySelector('.last-a');
-    let aFlying = false;
-    function startAFlight() {
-        if (aFlying) return;
-        aFlying = true;
-        const startX = lastA.getBoundingClientRect().left;
-        const startY = lastA.getBoundingClientRect().top;
-        flyingA.style.left = startX + 'px';
-        flyingA.style.top = startY + 'px';
-        flyingA.style.display = 'block';
-        lastA.style.visibility = 'hidden';
-        // анимируем движение
-        const centerX = window.innerWidth/2, centerY = window.innerHeight/2;
-        flyingA.animate([
-            { left: startX+'px', top: startY+'px', opacity:1 },
-            { left: centerX+'px', top: centerY-80+'px', opacity:1, offset: 0.3 },
-            { left: window.innerWidth-80+'px', top: centerY+60+'px', opacity:1, offset: 0.6 },
-            { left: centerX-60+'px', top: window.innerHeight-80+'px', opacity:1 }
-        ], { duration: 4000, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
-        // клик — поймать
-        flyingA.onclick = () => {
-            flyingA.style.display = 'none';
-            lastA.style.visibility = 'visible';
-            aFlying = false;
-            playSound('catch');
-            // возвращаем на место
-            flyingA.style.left = startX+'px';
-            flyingA.style.top = startY+'px';
-        };
+  async function updateInCloud(sheet, id, params) {
+    const qs = new URLSearchParams({ sheet, action: 'update', id, ...params }).toString();
+    const res = await fetch(`${API_URL}?${qs}`);
+    return res.json();
+  }
+
+  async function deleteFromCloud(sheet, id) {
+    const qs = new URLSearchParams({ sheet, action: 'delete', id }).toString();
+    const res = await fetch(`${API_URL}?${qs}`);
+    return res.json();
+  }
+
+  // ====== ОПТИМИСТИЧНЫЕ ОПЕРАЦИИ ======
+  async function createItem(sheet, params, pageId) {
+    const tempId = Date.now();
+    const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
+    if (sheet === 'knowledge') newItem.q = params.question;
+    state[sheet].push(newItem);
+    render(pageId);
+
+    try {
+      const result = await saveToCloud(sheet, params);
+      if (result.status === 'success') {
+        newItem.id = result.id;
+      } else {
+        state[sheet] = state[sheet].filter(i => i.id !== tempId);
+        render(pageId);
+        alert('Ошибка сохранения');
+      }
+    } catch(e) {
+      state[sheet] = state[sheet].filter(i => i.id !== tempId);
+      render(pageId);
+      alert('Ошибка сети');
     }
-    // Первый запуск через 15 мин (для теста — 10 сек)
-    setTimeout(() => {
-        setInterval(startAFlight, 15 * 60 * 1000);
-        startAFlight(); // сразу запустим для демонстрации
-    }, 5000);
+  }
 
-    // === УДАЛЕНИЕ ОТРЫВОМ ===
-    function attachTearDelete(selector, sheet, pageId) {
-        document.querySelectorAll(selector).forEach(btn => {
-            let startX, startY, moved = false;
-            btn.addEventListener('mousedown', e => {
-                startX = e.clientX; startY = e.clientY; moved = false;
-                e.stopPropagation();
-            });
-            btn.addEventListener('mousemove', e => {
-                if (!startX) return;
-                const dx = e.clientX - startX, dy = e.clientY - startY;
-                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) moved = true;
-            });
-            btn.addEventListener('mouseup', e => {
-                if (moved) {
-                    playSound('tear');
-                    // анимация отрыва
-                    btn.style.transition = 'transform 0.3s ease';
-                    btn.style.transform = 'translate(40px, -30px) rotate(25deg)';
-                    setTimeout(() => {
-                        btn.style.transform = '';
-                        showTearConfirmModal(sheet, parseInt(btn.dataset.id), pageId);
-                    }, 300);
-                }
-                startX = null; startY = null; moved = false;
-            });
-        });
+  async function updateItem(sheet, id, params, pageId) {
+    const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+    if (index === -1) return;
+    const original = { ...state[sheet][index] };
+    Object.assign(state[sheet][index], params);
+    render(pageId);
+
+    try {
+      const result = await updateInCloud(sheet, id, params);
+      if (result.status !== 'success') {
+        state[sheet][index] = original;
+        render(pageId);
+        alert('Ошибка обновления');
+      }
+    } catch(e) {
+      state[sheet][index] = original;
+      render(pageId);
+      alert('Ошибка сети');
     }
+  }
 
-    function showTearConfirmModal(sheet, id, pageId) {
-        const modalHtml = `
+  async function deleteItem(sheet, id, pageId) {
+    const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+    if (index === -1) return;
+    const removed = state[sheet].splice(index, 1)[0];
+    render(pageId);
+
+    try {
+      const result = await deleteFromCloud(sheet, id);
+      if (result.status !== 'success') {
+        state[sheet].splice(index, 0, removed);
+        render(pageId);
+        alert('Ошибка удаления');
+      }
+    } catch(e) {
+      state[sheet].splice(index, 0, removed);
+      render(pageId);
+      alert('Ошибка сети');
+    }
+  }
+
+  // ====== МОДАЛЬНЫЕ ОКНА ======
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalContent = document.getElementById('modalContent');
+
+  function showModal(html) {
+    modalContent.innerHTML = html;
+    modalOverlay.classList.add('active');
+    const closeBtn = modalContent.querySelector('.modern-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  }
+  function closeModal() {
+    modalOverlay.classList.remove('active');
+  }
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  // ====== РЕНДЕР РАЗДЕЛОВ ======
+  const pages = document.querySelectorAll('.nav-item');
+  const mainContent = document.getElementById('mainContent');
+
+  function card(item, key) {
+    const title = item.title || item.text || item.q || '';
+    const desc = item.desc || item.description || item.a || item.answer || '';
+    return `<div class="card">
+      <div style="display:flex; justify-content:space-between;">
+        <div>
+          <h3>${title}</h3>
+          <p>${desc}</p>
+          ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
+          <div class="tear-delete delete-${key}" data-id="${item.id || item.q}"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function editableGrid(pageId, title, items, addLabel) {
+    return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function renderDashboard() { return editableGrid('dashboard', 'Обзор проектов', state.dashboard, 'Добавить карточку'); }
+  function renderBacklog() { return editableGrid('backlog', 'Бэклог', state.backlog, 'Добавить задачу'); }
+  function renderScheme() {
+    const founder = state.scheme.filter(i => i.type === 'founder');
+    const depts = state.scheme.filter(i => i.type === 'dept');
+    return `<div class="page active">
+      <h2 class="page-title">Структура компании</h2>
+      <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
+      <div style="display:flex; flex-wrap:wrap; gap:20px;">
+        ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
+          <h3>${i.title}</h3><p>${i.role}</p>
+          <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
+            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+            <div class="tear-delete delete-scheme" data-id="${i.id}"></div>
+          </div>
+        </div>`).join('')}
+        ${depts.map(i => `<div class="card" style="width:200px;">
+          <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
+          <div style="display:flex; gap:12px; margin-top:12px;">
+            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+            <div class="tear-delete delete-scheme" data-id="${i.id}"></div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  function renderIdeas() { return editableGrid('ideas', 'Идеи', state.ideas, 'Добавить идею'); }
+  function renderPrototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип'); }
+  function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
+  function renderKnowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание'); }
+  function renderSettings() {
+    const soundStatus = soundEnabled ? 'Включены 🔊' : 'Выключены 🔇';
+    return `<div class="page active">
+      <h2 class="page-title">Настройки</h2>
+      <div class="card">
+        <h3>Аватар</h3>
+        <div class="settings-avatar" style="background-image:url('${state.avatar}'); width:80px; height:80px; border-radius:40px; background-size:cover; margin-bottom:12px;"></div>
+        <input type="file" id="avatarUpload" style="display:none;" accept="image/*">
+        <button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button>
+      </div>
+      <div class="card" style="display:flex; align-items:center; gap:16px;">
+        <span>Звуки: ${soundStatus}</span>
+        <button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled ? 'Выкл' : 'Вкл'}</button>
+      </div>
+      <div class="card"><button class="btn" style="background:#EF9A9A;" id="resetDataBtn">Сбросить данные</button></div>
+    </div>`;
+  }
+
+  function render(pageId) {
+    let html;
+    switch(pageId) {
+      case 'dashboard': html = renderDashboard(); break;
+      case 'backlog': html = renderBacklog(); break;
+      case 'scheme': html = renderScheme(); break;
+      case 'ideas': html = renderIdeas(); break;
+      case 'prototypes': html = renderPrototypes(); break;
+      case 'hrdnk': html = renderHrdnk(); break;
+      case 'knowledge': html = renderKnowledge(); break;
+      case 'settings': html = renderSettings(); break;
+      default: html = renderDashboard();
+    }
+    mainContent.innerHTML = html;
+    attachEvents(pageId);
+  }
+
+  function attachEvents(pageId) {
+    const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
+    if (keys.includes(pageId)) {
+      const key = pageId;
+      // Кнопка добавления
+      const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
+      if (addBtn) {
+        addBtn.addEventListener('click', () => {
+          showModal(`
             <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-            <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
-            <div style="display:flex; gap:16px; margin-top:24px;">
-                <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
-                <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
-            </div>`;
-        showModal(modalHtml);
-        document.getElementById('confirmTearYes').addEventListener('click', async () => {
+            <h3>Добавить</h3>
+            <input id="modalTitle" placeholder="Название"><br>
+            <textarea id="modalDesc" placeholder="Описание"></textarea><br>
+            <button class="btn btn-primary" id="saveModal">Сохранить</button>
+          `);
+          document.getElementById('saveModal').addEventListener('click', async () => {
+            const title = document.getElementById('modalTitle').value.trim();
+            if (!title) return;
+            const desc = document.getElementById('modalDesc').value.trim();
+            let params = { title };
+            if (key === 'knowledge') params = { question: title, answer: desc };
+            else if (key !== 'ideas') params.description = desc;
             closeModal();
-            await deleteItem(sheet, id, pageId);
+            await createItem(key, params, pageId);
+          });
         });
-        document.getElementById('confirmTearNo').addEventListener('click', closeModal);
+      }
+
+      // Редактирование
+      document.querySelectorAll(`.edit-${key}`).forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          let item = state[key].find(i => i.id == id || i.q == id);
+          if (!item) item = state.scheme?.find(i => i.id == id);
+          if (!item) return;
+          const title = item.title || item.text || item.q || '';
+          const desc = item.desc || item.description || item.a || item.answer || '';
+          showModal(`
+            <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+            <h3>Редактировать</h3>
+            <input id="editTitle" value="${title}"><br>
+            <textarea id="editDesc">${desc}</textarea><br>
+            <button class="btn btn-primary" id="updateModal">Сохранить</button>
+          `);
+          document.getElementById('updateModal').addEventListener('click', async () => {
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (!newTitle) return;
+            const newDesc = document.getElementById('editDesc').value.trim();
+            let params = { title: newTitle };
+            if (key === 'knowledge') params = { question: newTitle, answer: newDesc };
+            else if (key !== 'ideas') params.description = newDesc;
+            closeModal();
+            await updateItem(key, id, params, pageId);
+          });
+        });
+      });
+
+      // Удаление отрывом
+      document.querySelectorAll(`.tear-delete`).forEach(btn => {
+        let startX, startY, moved = false;
+        btn.addEventListener('mousedown', e => {
+          startX = e.clientX; startY = e.clientY; moved = false;
+          e.stopPropagation();
+        });
+        btn.addEventListener('mousemove', e => {
+          if (!startX) return;
+          if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
+            moved = true;
+          }
+        });
+        btn.addEventListener('mouseup', e => {
+          if (moved) {
+            playSound('tear');
+            btn.style.transition = 'transform 0.3s ease';
+            btn.style.transform = 'translate(40px, -30px) rotate(25deg)';
+            setTimeout(() => {
+              btn.style.transform = '';
+              const id = btn.dataset.id;
+              showModal(`
+                <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+                <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
+                <div style="display:flex; gap:16px; margin-top:24px;">
+                  <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
+                  <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
+                </div>
+              `);
+              document.getElementById('confirmTearYes').addEventListener('click', async () => {
+                closeModal();
+                await deleteItem(key, id, pageId);
+              });
+              document.getElementById('confirmTearNo').addEventListener('click', closeModal);
+            }, 300);
+          }
+          startX = null; startY = null; moved = false;
+        });
+      });
     }
 
-    // === ЗВУК В НАСТРОЙКАХ ===
-    function renderSettingsSoundToggle() {
-        const status = soundEnabled ? 'Включены 🔊' : 'Выключены 🔇';
-        return `<div class="card" style="display:flex; align-items:center; gap:16px;">
-            <span>Звуки: ${status}</span>
-            <button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled ? 'Выкл' : 'Вкл'}</button>
-        </div>`;
+    // Обработчики для настроек
+    if (pageId === 'settings') {
+      document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
+      document.getElementById('avatarUpload')?.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.avatar = reader.result;
+          localStorage.setItem(STORAGE_AVATAR_KEY, reader.result);
+          document.querySelector('.settings-avatar').style.backgroundImage = `url(${reader.result})`;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('toggleSoundBtn')?.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        localStorage.setItem(STORAGE_SOUND_KEY, soundEnabled);
+        render('settings'); // обновить кнопку
+      });
+
+      document.getElementById('resetDataBtn')?.addEventListener('click', () => {
+        showModal(`
+          <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+          <h3>Сбросить все данные?</h3>
+          <button class="btn" style="background:#EF9A9A;" id="confirmReset">Да</button>
+        `);
+        document.getElementById('confirmReset').addEventListener('click', () => {
+          localStorage.clear();
+          location.reload();
+        });
+      });
     }
+  }
 
-    // === ЛОГИКА ДАННЫХ (оптимизировано) ===
-    const loader = document.getElementById('loadingOverlay');
-    function showLoader() { loader.classList.add('active'); }
-    function hideLoader() { loader.classList.remove('active'); }
+  // Переключение разделов
+  pages.forEach(page => {
+    page.addEventListener('click', () => {
+      pages.forEach(p => p.classList.remove('active'));
+      page.classList.add('active');
+      render(page.dataset.page);
+    });
+  });
 
-    async function loadAllData() {
-        showLoader();
-        try {
-            const res = await fetch(`${API_URL}?action=readAll`);
-            const json = await res.json();
-            if (json.status === 'success') {
-                Object.assign(state, json.data);
-            }
-        } catch(e) { alert('Ошибка загрузки данных'); }
-        finally { hideLoader(); }
-    }
+  // Инициализация
+  (async function init() {
+    await loadAllData();
+    render('dashboard');
+  })();
 
-    async function saveToCloud(sheet, params) {
-        const qs = new URLSearchParams({ sheet, action: 'create', ...params });
-        const res = await fetch(`${API_URL}?${qs}`);
-        return res.json();
-    }
-    // ... остальные функции аналогичны, но с quickFetch и оптимистичным обновлением
-
-    // Упрощенный рендер (без изменений, только добавляем tearDelete и настройки звука)
-    // ... (весь рендер как раньше, но с новыми элементами)
-
-    // Инициализация
-    (async function init() {
-        await loadAllData();
-        render('dashboard');
-        // переподключаем отрывные кнопки после каждого рендера
-        // это будет внутри attachEvents
-    })();
 })();
 </script>
 </body>
