@@ -3,461 +3,683 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Кармический банк — Пульт управления</title>
+    <title>Пульт управления — Артур Галкин</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            min-height: 100vh;
-            background: linear-gradient(145deg, #1a5f7a 0%, #0d3b4f 100%);
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
+            font-family: 'Inter', 'Comic Sans MS', sans-serif;
+            background: #fff4e6;
+            color: #1a2634;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            cursor: default;
         }
+        input, textarea, [contenteditable] { user-select: text; cursor: text; }
 
-        /* Тропический пляж */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://images.pexels.com/photos/753626/pexels-photo-753626.jpeg?auto=compress&cs=tinysrgb&w=1600');
-            background-size: cover;
-            background-position: center bottom;
-            background-repeat: no-repeat;
-            opacity: 0.35;
-            z-index: -2;
+        .tropical-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
             pointer-events: none;
+            background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
+        }
+        .sun {
+            position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
+            background: #FFD700; border-radius: 50%;
+            box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00, 0 0 300px 100px rgba(255,140,0,0.4);
+        }
+        .ocean {
+            position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
+            background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
+            animation: wave 7s ease-in-out infinite;
+        }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .beach {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 20%;
+            background: linear-gradient(180deg, #FFE4B5 0%, #FFDAB9 100%);
+            border-radius: 30% 40% 0 0;
+        }
+        .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
+
+        .sailboat-horizon {
+            position: absolute; bottom: 55%; left: 70%; font-size: 40px;
+            animation: sailHorizon 95s linear infinite;
+        }
+        @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
+
+        .airplane-group {
+            position: absolute; bottom: 25%; right: -5%;
+            animation: airplaneFly 180s linear infinite;
+        }
+        @keyframes airplaneFly {
+            0% { right: -5%; bottom: 25%; }
+            5% { bottom: 28%; }
+            50% { right: 65%; bottom: 44%; }
+            90% { right: 90%; bottom: 56%; }
+            100% { right: 105%; bottom: 60%; }
+        }
+        .airplane-dot {
+            width: 6px; height: 6px; background: white; border-radius: 50%;
+            position: absolute; top: -3px; right: 0;
+            box-shadow: 0 0 6px white;
+        }
+        .contrail-line {
+            position: absolute; top: 0; right: 6px; height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent);
+            border-radius: 2px;
+            animation: trailLength 180s linear infinite;
+        }
+        @keyframes trailLength {
+            0% { width: 0%; opacity: 0; }
+            5% { width: 10%; opacity: 1; }
+            50% { width: 60%; opacity: 1; }
+            90% { width: 30%; opacity: 0.8; }
+            100% { width: 0%; opacity: 0; }
         }
 
-        /* Дополнительный слой с пальмами и отражением */
-        body::after {
-            content: "";
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(0deg, rgba(210, 180, 140, 0.25) 0%, rgba(135, 206, 235, 0) 100%);
-            z-index: -1;
-            pointer-events: none;
+        .sidebar {
+            width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column;
+            padding: 32px 20px; z-index: 10; position: relative;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; line-height: 1.2; letter-spacing: 1px; color: #2E3B2E; }
+        .nav-item {
+            padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px;
+            transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E;
         }
+        .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
+        .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
+        .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
+        .nav-item[data-page="ideas"] { background: linear-gradient(135deg, rgba(160,240,160,0.2), rgba(200,255,200,0.3)); }
+        .nav-item[data-page="prototypes"] { background: linear-gradient(135deg, rgba(255,150,200,0.2), rgba(255,190,220,0.3)); }
+        .nav-item[data-page="hrdnk"] { background: linear-gradient(135deg, rgba(200,160,255,0.2), rgba(220,190,255,0.3)); }
+        .nav-item[data-page="knowledge"] { background: linear-gradient(135deg, rgba(255,230,80,0.2), rgba(255,250,120,0.3)); }
+        .nav-item[data-page="settings"] { background: linear-gradient(135deg, rgba(210,190,250,0.2), rgba(240,220,255,0.3)); }
+        .nav-item.voice-nav { background: linear-gradient(135deg, rgba(255,120,160,0.3), rgba(255,80,120,0.4)); border: 1px solid rgba(255,80,80,0.3); margin-top: 20px; }
+        .nav-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.1); }
+        .nav-item.active { border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
 
-        /* Стеклянные карточки с голографической рамкой */
+        .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
+        .page { display: none; } .page.active { display: block; }
+        .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
         .card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(14px);
-            border-radius: 48px;
-            padding: 28px 32px;
-            margin-bottom: 28px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 215, 150, 0.5);
+            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8));
+            backdrop-filter: blur(15px); border-radius: 24px;
+            padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06);
             transition: all 0.2s ease;
         }
+        .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-            border-bottom: 1px solid rgba(255, 240, 200, 0.3);
-            padding-bottom: 16px;
-        }
-
-        h1, h2, h3 {
-            font-weight: 500;
-            letter-spacing: -0.3px;
-            color: #fff8f0;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        h1 {
-            font-size: 2.8rem;
-            background: linear-gradient(135deg, #FFE6B0, #FFB347);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: none;
-        }
-
-        h2 {
-            font-size: 1.6rem;
-            margin-bottom: 20px;
-        }
-
-        /* Градиентные кнопки — без иконок, только текст */
         .btn {
-            border: none;
-            background: linear-gradient(105deg, #f9b43a, #fb6b2b);
-            padding: 12px 28px;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1e2a32;
-            cursor: pointer;
-            transition: transform 0.1s ease, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            font-family: inherit;
+            padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px;
+            cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex;
+            align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px;
+            background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
         }
+        .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
+        .btn-primary {
+            background: linear-gradient(135deg, #A5D6A7, #FFB74D);
+            border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1;
+        }
+        .btn-primary::before {
+            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00);
+            background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35;
+        }
+        @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .btn-edit { background: linear-gradient(135deg, #FFCC80, #FFAB91); }
+        .btn-delete { background: linear-gradient(135deg, #EF9A9A, #FFCDD2); }
 
-        .btn:hover {
-            transform: scale(0.97);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        input, textarea {
+            border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
+            font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
+            background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
         }
+        textarea { resize: vertical; min-height: 90px; }
 
-        .btn-secondary {
-            background: linear-gradient(105deg, #3b9eff, #2b6eff);
-            color: white;
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
         }
-
-        .btn-voice {
-            background: linear-gradient(105deg, #d6409f, #e85d04);
-            box-shadow: 0 0 12px rgba(232,93,4,0.5);
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal {
+            background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
         }
-
-        /* Поля ввода — мягкий скролл, без мигающих курсоров */
-        input, textarea, select {
-            width: 100%;
-            background: rgba(255,255,245,0.9);
-            border: 1px solid rgba(255,215,150,0.8);
-            border-radius: 60px;
-            padding: 12px 20px;
-            font-size: 1rem;
-            margin-bottom: 18px;
-            outline: none;
-            transition: all 0.2s;
-            font-family: inherit;
-            caret-color: #ffb347; /* стандартный курсор, но не мигающий агрессивно */
+        .modal .close-btn {
+            position: absolute; top: 14px; right: 14px; width: 28px; height: 28px;
+            border-radius: 50%; background: rgba(0,0,0,0.1); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; color: #555;
         }
-
-        textarea {
-            border-radius: 32px;
-            resize: vertical;
+        .modal .close-btn:hover { background: rgba(0,0,0,0.2); }
+        .modal h3 { margin-bottom: 16px; font-size: 20px; }
+        .settings-avatar {
+            width: 80px; height: 80px; border-radius: 40px; background: rgba(0,0,0,0.08);
+            margin-bottom: 10px; background-size: cover; background-position: center;
         }
-
-        input:focus, textarea:focus, select:focus {
-            border-color: #ffb347;
-            box-shadow: 0 0 0 2px rgba(255,180,71,0.3);
-        }
-
-        /* Сетка карточек CRM */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-            margin-top: 20px;
-        }
-
-        .crm-card {
-            background: rgba(30, 40, 50, 0.6);
-            backdrop-filter: blur(8px);
-            border-radius: 32px;
-            padding: 20px;
-            border-left: 6px solid #ffb347;
-            transition: 0.1s linear;
-        }
-
-        .crm-card h4 {
-            font-size: 1.3rem;
-            color: #ffecb3;
-            margin-bottom: 8px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            background: #2c5f7a;
-            padding: 4px 14px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: white;
-            margin-top: 12px;
-        }
-
-        /* Анимация при слушании голоса */
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(232,93,4,0.6);}
-            100% { box-shadow: 0 0 0 18px rgba(232,93,4,0);}
-        }
-        .listening {
-            animation: pulseGlow 1s infinite;
-        }
-
-        .status-text {
-            color: #ffe2b5;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 20px;
-            color: rgba(255,240,200,0.8);
-            font-size: 0.9rem;
-        }
-
-        /* Отключаем мигание */
-        input, textarea, button, select {
-            caret-color: #ffb347;
-        }
-        button:focus-visible, input:focus-visible {
-            outline: none;
+        .voice-feedback {
+            position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white;
+            padding: 8px 16px; border-radius: 40px; font-size: 14px; z-index: 1000;
+            backdrop-filter: blur(8px); pointer-events: none; font-family: monospace;
         }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <!-- Верхняя панель -->
-    <div class="card">
-        <div class="card-header">
-            <h1>Кармический банк – Пульт</h1>
-            <button class="btn btn-voice" id="voiceBtn">Голосовое управление</button>
-        </div>
-        <div class="status-text" id="voiceStatus">ИИ-помощник готов. Нажмите «Голосовое управление» и скажите команду.</div>
+<div class="tropical-bg">
+    <div class="sun"></div>
+    <div class="ocean">
+        <div class="sailboat-horizon">⛵</div>
     </div>
-
-    <!-- Форма создания карточки -->
-    <div class="card">
-        <h2>Новая сделка</h2>
-        <input type="text" id="cardTitle" placeholder="Название сделки, например: Переговоры с ИТ-директором" autocomplete="off">
-        <textarea id="cardDesc" rows="2" placeholder="Описание / детали"></textarea>
-        <select id="cardStatus">
-            <option value="Новый лид">Новый лид</option>
-            <option value="В работе">В работе</option>
-            <option value="Кармики начислены">Кармики начислены</option>
-            <option value="Закрыто">Закрыто</option>
-        </select>
-        <button class="btn" id="createCardBtn">Создать карточку</button>
+    <div class="beach">
+        <div class="palm-tree" style="left: 5%;">🌴</div>
+        <div class="palm-tree" style="left: 18%;">🌴</div>
+        <div class="palm-tree" style="left: 38%;">🌴</div>
+        <div class="palm-tree" style="right: 28%;">🌴</div>
+        <div class="palm-tree" style="right: 12%;">🌴</div>
     </div>
-
-    <!-- Список карточек -->
-    <div class="card">
-        <h2>Сделки и кармики</h2>
-        <div id="cardsList" class="cards-grid">
-            <div style="color: #ffecb3;">Загрузка карточек...</div>
-        </div>
-        <button class="btn btn-secondary" id="refreshBtn" style="margin-top: 20px;">Обновить список</button>
+    <div class="airplane-group">
+        <div class="airplane-dot"></div>
+        <div class="contrail-line"></div>
     </div>
-
-    <footer>Кармический банк · HRDNK · данные временно в Google Sheets · Скоро переход на Cloud.ru</footer>
 </div>
 
+<div class="sidebar">
+    <div class="sidebar-header">
+        <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>  <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span style="color:#9370DB;">а</span>
+    </div>
+    <div class="nav-item active" data-page="dashboard"><span>Обзор</span></div>
+    <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
+    <div class="nav-item" data-page="scheme"><span>Структура</span></div>
+    <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
+    <div class="nav-item" data-page="prototypes"><span>Прототипы</span></div>
+    <div class="nav-item" data-page="hrdnk"><span>HRDNK</span></div>
+    <div class="nav-item" data-page="knowledge"><span>База знаний</span></div>
+    <div class="nav-item" data-page="settings"><span>Настройки</span></div>
+    <div class="nav-item voice-nav" id="voiceAssistantBtn"><span>🎙️ Голос</span></div>
+</div>
+
+<div class="main-content" id="mainContent"></div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
+<div id="voiceFeedback" class="voice-feedback" style="display: none;">🎤 Готов</div>
+
 <script>
-    // ТВОЙ URL GOOGLE APPS SCRIPT
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxBBEYjo617Ken3YMN-yDrP0O8nyADy1zCqa7PmWUGUbVOJemXqq0t55W1qvkyqYVr7bw/exec';
+// ======================== GOOGLE SHEETS API (твой URL) ========================
+const API_URL = 'https://script.google.com/macros/s/AKfycbxBBEYjo617Ken3YMN-yDrP0O8nyADy1zCqa7PmWUGUbVOJemXqq0t55W1qvkyqYVr7bw/exec';
 
-    // ---------- РАБОТА С API (GOOGLE SHEETS) ----------
-    async function fetchCards() {
-        try {
-            const response = await fetch(`${API_URL}?action=read`);
-            const json = await response.json();
-            if (json.data && json.data.length > 0) {
-                const rows = json.data.slice(1); // первая строка — заголовки
-                return rows.map(row => ({
-                    id: row[0],
-                    created_at: row[1],
-                    title: row[2],
-                    description: row[3],
-                    status: row[4],
-                }));
-            }
-            return [];
-        } catch (error) {
-            console.error('Ошибка чтения:', error);
-            return [];
-        }
+// Универсальная функция запроса к API
+async function callAPI(action, sheet, data = {}) {
+    const params = new URLSearchParams({ action, sheet, ...data });
+    const url = `${API_URL}?${params.toString()}`;
+    try {
+        const response = await fetch(url);
+        const json = await response.json();
+        if (json.status === 'success') return json;
+        else throw new Error(json.error || 'Unknown error');
+    } catch (e) {
+        console.error('API error:', e);
+        throw e;
     }
+}
 
-    async function createCard(title, description, status) {
-        if (!title.trim()) {
-            alert('Введите название карточки');
-            return false;
+// Загрузить все строки листа (без заголовка)
+async function loadSheet(sheetName) {
+    const res = await callAPI('read', sheetName);
+    return res.data || [];
+}
+
+// Создать запись
+async function createRecord(sheetName, fields) {
+    return await callAPI('create', sheetName, fields);
+}
+
+// Обновить запись по id
+async function updateRecord(sheetName, id, fields) {
+    return await callAPI('update', sheetName, { id, ...fields });
+}
+
+// Удалить запись
+async function deleteRecord(sheetName, id) {
+    return await callAPI('delete', sheetName, { id });
+}
+
+// Обновить приоритет (для backlog)
+async function setPriority(sheetName, id, priority) {
+    return await callAPI('priority', sheetName, { id, priority });
+}
+
+// ======================== Глобальный state (кеш, но источник - таблица) ========================
+let appState = {
+    dashboard: [],
+    backlog: [],
+    scheme: [],
+    ideas: [],
+    prototypes: [],
+    hrdnk: [],
+    knowledge: [],
+    avatar: ''
+};
+
+let currentPage = 'dashboard';
+
+// Функция загрузки всех данных из таблиц
+async function loadAllData() {
+    try {
+        const sheets = ['dashboard', 'backlog', 'scheme', 'ideas', 'prototypes', 'hrdnk', 'knowledge'];
+        for (let sheet of sheets) {
+            appState[sheet] = await loadSheet(sheet);
         }
-        const url = `${API_URL}?action=create&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&status=${encodeURIComponent(status)}`;
-        try {
-            const response = await fetch(url);
-            const json = await response.json();
-            if (json.status === 'success') {
-                return true;
-            } else {
-                alert('Ошибка создания: ' + JSON.stringify(json));
-                return false;
-            }
-        } catch (err) {
-            alert('Сетевая ошибка: ' + err.message);
-            return false;
-        }
+        // avatar пока в localStorage (опционально, можно потом в отдельный лист)
+        const storedAvatar = localStorage.getItem('arthurAvatar');
+        if (storedAvatar) appState.avatar = storedAvatar;
+    } catch(e) {
+        console.error('Ошибка загрузки данных из Google Sheets:', e);
+        showVoiceFeedback('Ошибка загрузки данных из таблицы', true);
     }
+}
 
-    async function renderCards() {
-        const container = document.getElementById('cardsList');
-        container.innerHTML = '<div style="color: #ffecb3;">Загрузка...</div>';
-        const cards = await fetchCards();
-        if (cards.length === 0) {
-            container.innerHTML = '<div style="color: #ffecb3;">Пока нет карточек. Создайте первую сделку.</div>';
-            return;
-        }
-        container.innerHTML = '';
-        cards.forEach(card => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'crm-card';
-            cardDiv.innerHTML = `
-                <h4>${escapeHtml(card.title || 'Без названия')}</h4>
-                <div><small>${card.created_at || 'дата не указана'}</small></div>
-                <div style="margin: 10px 0;">${escapeHtml(card.description || '—')}</div>
-                <span class="status-badge">${escapeHtml(card.status || 'Новый лид')}</span>
-            `;
-            container.appendChild(cardDiv);
-        });
+// Сохранить аватар в localStorage (временное решение)
+function saveAvatar(base64) {
+    appState.avatar = base64;
+    localStorage.setItem('arthurAvatar', base64);
+}
+
+// ======================== Отрисовка (твой оригинальный код, адаптированный под appState) ========================
+function card(item, key) {
+    let content = `<div class="card" data-id="${item.id}" data-type="${key}">
+        <h3>${escapeHtml(item.title || item.text || item.question || '')}</h3>
+        <p>${escapeHtml(item.description || item.answer || item.desc || '')}</p>
+        <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+            <button class="btn btn-edit edit-${key}" data-id="${item.id}">Редактировать</button>
+            <button class="btn btn-delete delete-${key}" data-id="${item.id}">Удалить</button>
+        </div>`;
+    if (item.role) content += `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${escapeHtml(item.role)}</p>`;
+    if (item.priority) content += `<div style="margin-top:8px;"><span style="background:#ffd966; padding:2px 8px; border-radius:20px;">Приоритет: ${item.priority}</span></div>`;
+    content += `</div>`;
+    return content;
+}
+
+function editableGrid(pageId, title, items, addLabel) {
+    const key = pageId;
+    return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid" id="${key}List">${items.map(i => card(i, key)).join('')}</div><button class="btn btn-primary" id="add${capitalize(key)}Btn">${addLabel}</button></div>`;
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function dashboard() { return editableGrid('dashboard', 'Обзор проектов', appState.dashboard, 'Добавить карточку'); }
+function backlog() { 
+    const sorted = [...appState.backlog].sort((a,b) => {
+        const pOrder = {'high':1, 'medium':2, 'low':3};
+        return (pOrder[a.priority] || 2) - (pOrder[b.priority] || 2);
+    });
+    return editableGrid('backlog', 'Бэклог', sorted, 'Добавить задачу'); 
+}
+function scheme() {
+    const founder = appState.scheme.filter(i => i.type === 'founder');
+    const depts = appState.scheme.filter(i => i.type === 'dept');
+    return `<div class="page active">
+        <h2 class="page-title">Структура компании</h2>
+        <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
+        <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:flex-start; align-items:flex-start;">
+            ${founder.map(i => `
+                <div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
+                    <h3>${escapeHtml(i.title)}</h3><p>${escapeHtml(i.role || '')}</p>
+                    <div style="display:flex; gap:12px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Редактировать</button>
+                        <button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button>
+                    </div>
+                </div>`).join('')}
+            ${depts.map(i => `
+                <div class="card" style="width:200px;">
+                    <h4>${escapeHtml(i.title)}</h4><p>${escapeHtml(i.description || '')}</p>
+                    <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Редактировать</button>
+                        <button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button>
+                    </div>
+                </div>`).join('')}
+        </div>
+    </div>`;
+}
+function ideas() { return editableGrid('ideas', 'Идеи', appState.ideas, 'Добавить идею'); }
+function prototypes() { return editableGrid('prototypes', 'Прототипы', appState.prototypes, 'Добавить прототип'); }
+function knowledge() { return editableGrid('knowledge', 'База знаний', appState.knowledge, 'Добавить знание'); }
+function hrdnk() { return editableGrid('hrdnk', 'HRDNK', appState.hrdnk, 'Добавить задачу'); }
+function settings() {
+    return `<div class="page active"><h2 class="page-title">Настройки</h2>
+        <div class="card"><h3>Аватар</h3><div class="settings-avatar" id="settingsAvatar" style="background-image:url('${appState.avatar || ''}')"></div><input type="file" id="avatarUpload" style="display:none;" accept="image/*"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
+        <div class="card"><button class="btn btn-delete" id="resetDataBtn">Сбросить локальные настройки</button></div>
+    </div>`;
+}
+
+async function render(pageId) {
+    currentPage = pageId;
+    let html = '';
+    switch(pageId) {
+        case 'dashboard': html = dashboard(); break;
+        case 'backlog': html = backlog(); break;
+        case 'scheme': html = scheme(); break;
+        case 'ideas': html = ideas(); break;
+        case 'prototypes': html = prototypes(); break;
+        case 'hrdnk': html = hrdnk(); break;
+        case 'knowledge': html = knowledge(); break;
+        case 'settings': html = settings(); break;
     }
+    document.getElementById('mainContent').innerHTML = html;
+    attachEvents(pageId);
+}
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
 
-    // ---------- ГОЛОСОВОЙ ИИ-ПОМОЩНИК ----------
-    let recognition = null;
-    let isListening = false;
-
-    function initSpeech() {
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            document.getElementById('voiceStatus').innerText = 'Ваш браузер не поддерживает голосовое управление. Используйте Chrome, Edge или Safari.';
-            document.getElementById('voiceBtn').disabled = true;
-            return;
-        }
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'ru-RU';
-
-        recognition.onstart = () => {
-            isListening = true;
-            document.getElementById('voiceBtn').classList.add('listening');
-            document.getElementById('voiceStatus').innerHTML = 'Слушаю... скажите команду';
-        };
-        recognition.onend = () => {
-            isListening = false;
-            document.getElementById('voiceBtn').classList.remove('listening');
-            document.getElementById('voiceStatus').innerHTML = 'Готов к голосовой команде. Нажмите кнопку.';
-        };
-        recognition.onerror = (event) => {
-            console.error('Ошибка речи', event);
-            document.getElementById('voiceStatus').innerHTML = `Ошибка: ${event.error}. Попробуйте ещё раз.`;
-            isListening = false;
-            document.getElementById('voiceBtn').classList.remove('listening');
-        };
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript.toLowerCase();
-            document.getElementById('voiceStatus').innerHTML = `Распознано: "${transcript}" — обрабатываю...`;
-            processVoiceCommand(transcript);
-        };
-    }
-
-    async function processVoiceCommand(command) {
-        if (command.includes('создай карточку') || command.includes('новая карточка')) {
-            let title = command.replace(/создай карточку|новая карточка/gi, '').trim();
-            if (!title) {
-                speak('Скажите название карточки');
-                document.getElementById('voiceStatus').innerHTML = 'Скажите название карточки';
-                return;
-            }
-            const description = 'создано голосом';
-            const status = 'Новый лид';
-            const success = await createCard(title, description, status);
-            if (success) {
-                speak(`Карточка "${title}" создана`);
-                await renderCards();
-                document.getElementById('cardTitle').value = '';
-                document.getElementById('cardDesc').value = '';
-            } else {
-                speak('Не удалось создать карточку');
-            }
-        } 
-        else if (command.includes('покажи карточки') || command.includes('список') || command.includes('обнови')) {
-            speak('Обновляю список карточек');
-            await renderCards();
-        }
-        else if (command.includes('помоги') || command.includes('что ты умеешь')) {
-            speak('Я умею создавать карточки сделок и показывать список. Скажите: создай карточку переговоры с заказчиком, или покажи карточки');
-        }
-        else {
-            speak('Не понял команду. Скажите "создай карточку" или "покажи карточки"');
-        }
-        document.getElementById('voiceStatus').innerHTML = 'Команда обработана. Нажмите микрофон для новой.';
-    }
-
-    function speak(text) {
-        if (!window.speechSynthesis) return;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ru-RU';
-        utterance.rate = 0.95;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-    }
-
-    // ---------- ЗАПУСК ----------
-    document.addEventListener('DOMContentLoaded', async () => {
-        initSpeech();
-        await renderCards();
-
-        document.getElementById('createCardBtn').onclick = async () => {
-            const title = document.getElementById('cardTitle').value;
-            const desc = document.getElementById('cardDesc').value;
-            const status = document.getElementById('cardStatus').value;
-            const ok = await createCard(title, desc, status);
-            if (ok) {
-                await renderCards();
-                document.getElementById('cardTitle').value = '';
-                document.getElementById('cardDesc').value = '';
-                speak('Карточка создана');
-            } else {
-                speak('Ошибка при создании');
-            }
-        };
-
-        document.getElementById('refreshBtn').onclick = async () => {
-            await renderCards();
-            speak('Список обновлён');
-        };
-
-        document.getElementById('voiceBtn').onclick = () => {
-            if (!recognition) {
-                alert('Голосовое распознавание не поддерживается');
-                return;
-            }
-            if (isListening) {
-                recognition.stop();
-            } else {
+// ======================== Обработчики кнопок (CRUD через API) ========================
+async function attachEvents(pageId) {
+    const key = pageId;
+    const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
+    if (addBtn) {
+        addBtn.onclick = () => {
+            showModal(`<button class="close-btn">✕</button><h3>Добавить в ${key}</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
+            document.getElementById('saveModal').onclick = async () => {
+                const title = document.getElementById('modalTitle').value.trim();
+                if (!title) return;
+                const desc = document.getElementById('modalDesc').value.trim();
+                let fields = { title, description: desc };
+                if (key === 'knowledge') fields = { question: title, answer: desc };
+                if (key === 'scheme') fields = { title, description: desc, type: 'dept' };
                 try {
-                    recognition.start();
-                } catch(e) {
-                    console.warn(e);
-                }
-            }
+                    await createRecord(key, fields);
+                    await loadAllData();
+                    await render(currentPage);
+                    modalOverlay.classList.remove('active');
+                    showVoiceFeedback(`Добавлено в ${key}`);
+                } catch(e) { alert('Ошибка: '+e.message); }
+            };
+        };
+    }
+
+    // Редактирование
+    document.querySelectorAll(`.edit-${key}`).forEach(btn => {
+        btn.onclick = async () => {
+            const id = parseInt(btn.dataset.id);
+            let item = appState[key].find(i => i.id === id);
+            if (!item) return;
+            const title = item.title || item.question || '';
+            const desc = item.description || item.answer || '';
+            showModal(`<button class="close-btn">✕</button><h3>Редактировать</h3><input id="editTitle" value="${escapeHtml(title)}"><br><textarea id="editDesc">${escapeHtml(desc)}</textarea><br><button class="btn btn-primary" id="updateModal">Сохранить</button>`);
+            document.getElementById('updateModal').onclick = async () => {
+                const newTitle = document.getElementById('editTitle').value.trim();
+                if (!newTitle) return;
+                const newDesc = document.getElementById('editDesc').value.trim();
+                let updateFields = {};
+                if (key === 'knowledge') { updateFields = { question: newTitle, answer: newDesc }; }
+                else { updateFields = { title: newTitle, description: newDesc }; }
+                try {
+                    await updateRecord(key, id, updateFields);
+                    await loadAllData();
+                    await render(currentPage);
+                    modalOverlay.classList.remove('active');
+                    showVoiceFeedback(`Обновлено в ${key}`);
+                } catch(e) { alert('Ошибка: '+e.message); }
+            };
         };
     });
+
+    // Удаление
+    document.querySelectorAll(`.delete-${key}`).forEach(btn => {
+        btn.onclick = () => {
+            const id = parseInt(btn.dataset.id);
+            showModal(`<button class="close-btn">✕</button><h3>Удалить?</h3><button class="btn btn-delete" id="confirmDelete">Да</button>`);
+            document.getElementById('confirmDelete').onclick = async () => {
+                try {
+                    await deleteRecord(key, id);
+                    await loadAllData();
+                    await render(currentPage);
+                    modalOverlay.classList.remove('active');
+                    showVoiceFeedback(`Удалено из ${key}`);
+                } catch(e) { alert('Ошибка: '+e.message); }
+            };
+        };
+    });
+
+    if (pageId === 'settings') {
+        document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
+        document.getElementById('avatarUpload')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => { saveAvatar(reader.result); document.getElementById('settingsAvatar').style.backgroundImage = `url(${reader.result})`; };
+            reader.readAsDataURL(file);
+        });
+        document.getElementById('resetDataBtn')?.addEventListener('click', () => {
+            showModal(`<button class="close-btn">✕</button><h3>Сбросить локальные настройки (аватар)?</h3><button class="btn btn-delete" id="confirmReset">Да</button>`);
+            document.getElementById('confirmReset').addEventListener('click', () => {
+                localStorage.removeItem('arthurAvatar');
+                appState.avatar = '';
+                render('settings');
+                modalOverlay.classList.remove('active');
+            });
+        });
+    }
+}
+
+// Модалка
+function showModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('active');
+    const closeBtn = document.querySelector('#modalContent .close-btn');
+    if (closeBtn) closeBtn.onclick = () => document.getElementById('modalOverlay').classList.remove('active');
+}
+document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('active'); });
+
+// ======================== ГОЛОСОВОЙ АССИСТЕНТ (работает с API) ========================
+let recognition = null;
+let isListening = false;
+
+function showVoiceFeedback(msg, isError = false) {
+    const el = document.getElementById('voiceFeedback');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.background = isError ? 'rgba(200,0,0,0.8)' : 'rgba(0,0,0,0.7)';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function speak(text) {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 0.9;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+}
+
+async function processVoiceCommand(command) {
+    console.log('Command:', command);
+    const lower = command.toLowerCase();
+    // Определяем текущую страницу
+    const page = currentPage; // 'dashboard','backlog',...
+
+    // Создать карточку (на текущей странице)
+    if (lower.includes('создай') || lower.includes('добавь')) {
+        let match = lower.match(/(?:создай|добавь)\s+(?:карточку|задачу|идею|прототип|знание)\s+(.+)/i);
+        if (!match) {
+            speak('Не понял название. Скажите, например: создай задачу: обновить сервер');
+            return;
+        }
+        let title = match[1].trim();
+        let description = '';
+        if (title.includes(' с описанием ')) {
+            let parts = title.split(' с описанием ');
+            title = parts[0];
+            description = parts[1];
+        }
+        try {
+            let fields = { title, description };
+            if (page === 'knowledge') fields = { question: title, answer: description };
+            await createRecord(page, fields);
+            await loadAllData();
+            await render(currentPage);
+            speak(`Создано в разделе ${page}: ${title}`);
+            showVoiceFeedback(`Создано: ${title}`);
+        } catch(e) {
+            speak('Ошибка при создании');
+            showVoiceFeedback('Ошибка', true);
+        }
+        return;
+    }
+
+    // Редактировать
+    if (lower.includes('редактируй') || lower.includes('измени')) {
+        let match = lower.match(/(?:редактируй|измени)\s+(.+?)\s+на\s+(.+)/i);
+        if (!match) {
+            speak('Скажите: редактируй [название] на [новое описание]');
+            return;
+        }
+        let oldTitle = match[1].trim();
+        let newDesc = match[2].trim();
+        let item = appState[page].find(i => (i.title || i.question || '').toLowerCase().includes(oldTitle.toLowerCase()));
+        if (!item) {
+            speak('Не найдено');
+            return;
+        }
+        try {
+            let fields = { description: newDesc };
+            if (page === 'knowledge') fields = { answer: newDesc };
+            await updateRecord(page, item.id, fields);
+            await loadAllData();
+            await render(currentPage);
+            speak('Обновлено');
+        } catch(e) { speak('Ошибка'); }
+        return;
+    }
+
+    // Удалить
+    if (lower.includes('удали')) {
+        let match = lower.match(/удали\s+(.+)/i);
+        if (!match) { speak('Что удалить?'); return; }
+        let title = match[1].trim();
+        let item = appState[page].find(i => (i.title || i.question || '').toLowerCase().includes(title.toLowerCase()));
+        if (!item) { speak('Не найдено'); return; }
+        try {
+            await deleteRecord(page, item.id);
+            await loadAllData();
+            await render(currentPage);
+            speak(`Удалено: ${title}`);
+        } catch(e) { speak('Ошибка удаления'); }
+        return;
+    }
+
+    // Приоритет (только для бэклога)
+    if ((lower.includes('приоритет') || lower.includes('приоритизируй')) && page === 'backlog') {
+        let match = lower.match(/(?:приоритет|приоритизируй)\s+(высокий|средний|низкий)\s+для\s+(.+)/i);
+        if (!match) {
+            speak('Скажите, например: установи высокий приоритет для задачи “обновить SSL”');
+            return;
+        }
+        let priority = match[1].toLowerCase() === 'высокий' ? 'high' : (match[1].toLowerCase() === 'средний' ? 'medium' : 'low');
+        let taskName = match[2].trim();
+        let item = appState.backlog.find(i => (i.title || '').toLowerCase().includes(taskName.toLowerCase()));
+        if (!item) { speak('Задача не найдена'); return; }
+        try {
+            await setPriority('backlog', item.id, priority);
+            await loadAllData();
+            await render('backlog');
+            speak(`Приоритет ${match[1]} установлен`);
+        } catch(e) { speak('Ошибка'); }
+        return;
+    }
+
+    // Показать список
+    if (lower.includes('покажи') || lower.includes('список') || lower.includes('что у меня')) {
+        let items = appState[page];
+        if (items.length === 0) speak(`В разделе ${page} ничего нет`);
+        else speak(`В разделе ${page} ${items.length} элементов`);
+        return;
+    }
+
+    // Помощь
+    if (lower.includes('помоги') || lower.includes('что ты умеешь')) {
+        speak('Я умею создавать, редактировать, удалять карточки в текущем разделе. В бэклоге могу менять приоритет. Скажите, например: создай задачу: обновить сервер, или установи высокий приоритет для задачи...');
+        return;
+    }
+
+    speak('Не понял команду. Скажите “помощь” для списка команд.');
+}
+
+function initVoice() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showVoiceFeedback('Голос не поддерживается', true);
+        return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'ru-RU';
+
+    recognition.onstart = () => {
+        isListening = true;
+        showVoiceFeedback('🎤 Слушаю...');
+    };
+    recognition.onend = () => {
+        isListening = false;
+        showVoiceFeedback('Готов');
+    };
+    recognition.onerror = (event) => {
+        console.error(event);
+        showVoiceFeedback('Ошибка распознавания', true);
+        isListening = false;
+    };
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        showVoiceFeedback(`Распознано: ${text}`);
+        processVoiceCommand(text);
+    };
+}
+
+// ======================== ИНИЦИАЛИЗАЦИЯ ========================
+document.addEventListener('DOMContentLoaded', async () => {
+    initVoice();
+    const voiceBtn = document.getElementById('voiceAssistantBtn');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', () => {
+            if (!recognition) { alert('Голос не поддерживается'); return; }
+            if (isListening) recognition.stop();
+            else recognition.start();
+        });
+    }
+    // Загружаем данные из таблиц
+    await loadAllData();
+    // Добавляем схему по умолчанию, если таблица пуста (founder)
+    if (appState.scheme.length === 0) {
+        try {
+            await createRecord('scheme', { title: 'Артур Галкин', role: 'Основатель и Генеральный директор', type: 'founder' });
+            await createRecord('scheme', { title: 'Исследования', description: 'Психометрия', type: 'dept' });
+            await createRecord('scheme', { title: 'Математики', description: 'Алгоритмы', type: 'dept' });
+            await createRecord('scheme', { title: 'Психология', description: 'Квест-типология', type: 'dept' });
+            await createRecord('scheme', { title: 'Разработка', description: 'FastAPI', type: 'dept' });
+            await loadAllData();
+        } catch(e) { console.error(e); }
+    }
+    await render('dashboard');
+    // Навигация
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+        item.addEventListener('click', async () => {
+            const page = item.dataset.page;
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            await render(page);
+        });
+    });
+});
 </script>
 </body>
 </html>
