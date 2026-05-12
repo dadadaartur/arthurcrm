@@ -40,11 +40,13 @@
             border-radius: 30% 40% 0 0;
         }
         .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
+
         .sailboat-horizon {
             position: absolute; bottom: 55%; left: 70%; font-size: 40px;
             animation: sailHorizon 95s linear infinite;
         }
         @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
+
         .airplane-group {
             position: absolute; bottom: 25%; right: -5%;
             animation: airplaneFly 180s linear infinite;
@@ -169,6 +171,29 @@
             z-index: 1000; backdrop-filter: blur(8px); font-family: monospace;
             pointer-events: none;
         }
+        .radio-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            overflow: hidden;
+            width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .radio-container iframe {
+            display: block;
+            width: 100%;
+            height: 120px;
+            border: none;
+        }
+        @media (max-width: 700px) {
+            .radio-container { width: 260px; bottom: 10px; left: 10px; }
+            .radio-container iframe { height: 100px; }
+        }
     </style>
 </head>
 <body>
@@ -209,6 +234,11 @@
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 <div id="voiceFeedback" class="voice-feedback" style="display: none;">🎤 Готов</div>
 
+<!-- РАДИО: iframe с плеером volnorez -->
+<div class="radio-container">
+    <iframe src="https://volnorez.com/xit-fm-aleksin" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+</div>
+
 <script>
 // =============================================
 // 1. Google Sheets API (НОВЫЙ URL)
@@ -227,55 +257,39 @@ async function callAPI(action, sheet, params = {}) {
     if (!json || json.status !== 'success') throw new Error(json?.error || 'API error');
     return json;
 }
-
 async function loadSheet(sheetName) {
     const res = await callAPI('read', sheetName);
     return res.data || [];
 }
-
 async function createRecord(sheetName, fields) {
     return await callAPI('create', sheetName, fields);
 }
-
 async function updateRecord(sheetName, id, fields) {
     return await callAPI('update', sheetName, { id, ...fields });
 }
-
 async function deleteRecord(sheetName, id) {
     return await callAPI('delete', sheetName, { id });
 }
-
 async function setPriority(sheetName, id, priority) {
     return await callAPI('priority', sheetName, { id, priority });
 }
 
 // =============================================
-// 2. Глобальные данные и состояние
+// 2. Данные
 // =============================================
 let appState = {
-    dashboard: [],
-    backlog: [],
-    scheme: [],
-    ideas: [],
-    prototypes: [],
-    hrdnk: [],
-    knowledge: [],
-    avatar: ''
+    dashboard: [], backlog: [], scheme: [], ideas: [],
+    prototypes: [], hrdnk: [], knowledge: [], avatar: ''
 };
 let currentPage = 'dashboard';
 
 async function loadAllData() {
     try {
         const sheets = ['dashboard', 'backlog', 'scheme', 'ideas', 'prototypes', 'hrdnk', 'knowledge'];
-        for (let sheet of sheets) {
-            appState[sheet] = await loadSheet(sheet);
-        }
+        for (let s of sheets) appState[s] = await loadSheet(s);
         const storedAvatar = localStorage.getItem('arthurAvatar');
         if (storedAvatar) appState.avatar = storedAvatar;
-    } catch(e) {
-        console.error('Ошибка загрузки из Google Sheets:', e);
-        showVoiceFeedback('Ошибка соединения с таблицей', true);
-    }
+    } catch(e) { console.error(e); showVoiceFeedback('Ошибка связи с таблицей', true); }
 }
 
 function saveAvatar(base64) {
@@ -283,9 +297,7 @@ function saveAvatar(base64) {
     localStorage.setItem('arthurAvatar', base64);
 }
 
-// =============================================
-// 3. Инициализация таблиц (если пустые — заполнить defaultState)
-// =============================================
+// Дефолтные данные для инициализации
 const defaultState = {
     dashboard: [
         { id:1, title:'Кармический Банк', desc:'HR-экосистема с геймификацией, AI-тренером, CRM, магазином призов.' },
@@ -330,18 +342,12 @@ async function initSheets() {
 }
 
 // =============================================
-// 4. Отрисовка (полностью сохранена ваша логика)
+// 3. Отрисовка (оригинальная логика)
 // =============================================
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
 }
-
 function card(item, key) {
     let content = `<div class="card" data-id="${item.id}">
         <h3>${escapeHtml(item.title || item.text || item.question || '')}</h3>
@@ -351,24 +357,17 @@ function card(item, key) {
             <button class="btn btn-delete delete-${key}" data-id="${item.id}">Удалить</button>
         </div>`;
     if (item.role) content += `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${escapeHtml(item.role)}</p>`;
-    if (item.priority) content += `<div style="margin-top:8px;"><span style="background:#ffd966; padding:2px 8px; border-radius:20px;">Приоритет: ${item.priority}</span></div>`;
+    if (item.priority) content += `<div><span style="background:#ffd966; padding:2px 8px; border-radius:20px;">Приоритет: ${item.priority}</span></div>`;
     content += `</div>`;
     return content;
 }
-
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
 function editableGrid(pageId, title, items, addLabel) {
-    const key = pageId;
-    return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid" id="${key}List">${items.map(i => card(i, key)).join('')}</div><button class="btn btn-primary" id="add${capitalize(key)}Btn">${addLabel}</button></div>`;
+    return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid" id="${pageId}List">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
 }
-
 function dashboard() { return editableGrid('dashboard', 'Обзор проектов', appState.dashboard, 'Добавить карточку'); }
 function backlog() {
-    const sorted = [...appState.backlog].sort((a,b) => {
-        const pOrder = {'high':1, 'medium':2, 'low':3};
-        return (pOrder[a.priority] || 2) - (pOrder[b.priority] || 2);
-    });
+    const sorted = [...appState.backlog].sort((a,b) => ( (a.priority === 'high'?1:(a.priority==='medium'?2:3)) - (b.priority === 'high'?1:(b.priority==='medium'?2:3)) ));
     return editableGrid('backlog', 'Бэклог', sorted, 'Добавить задачу');
 }
 function scheme() {
@@ -377,23 +376,9 @@ function scheme() {
     return `<div class="page active">
         <h2 class="page-title">Структура компании</h2>
         <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
-        <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:flex-start; align-items:flex-start;">
-            ${founder.map(i => `
-                <div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
-                    <h3>${escapeHtml(i.title)}</h3><p>${escapeHtml(i.role || '')}</p>
-                    <div style="display:flex; gap:12px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
-                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Редактировать</button>
-                        <button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button>
-                    </div>
-                </div>`).join('')}
-            ${depts.map(i => `
-                <div class="card" style="width:200px;">
-                    <h4>${escapeHtml(i.title)}</h4><p>${escapeHtml(i.description || '')}</p>
-                    <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
-                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Редактировать</button>
-                        <button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button>
-                    </div>
-                </div>`).join('')}
+        <div style="display:flex; flex-wrap:wrap; gap:20px;">
+            ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); text-align:center;"><h3>${escapeHtml(i.title)}</h3><p>${escapeHtml(i.role)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button></div></div>`).join('')}
+            ${depts.map(i => `<div class="card" style="width:200px;"><h4>${escapeHtml(i.title)}</h4><p>${escapeHtml(i.description)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button></div></div>`).join('')}
         </div>
     </div>`;
 }
@@ -403,11 +388,10 @@ function knowledge() { return editableGrid('knowledge', 'База знаний',
 function hrdnk() { return editableGrid('hrdnk', 'HRDNK', appState.hrdnk, 'Добавить задачу'); }
 function settings() {
     return `<div class="page active"><h2 class="page-title">Настройки</h2>
-        <div class="card"><h3>Аватар</h3><div class="settings-avatar" id="settingsAvatar" style="background-image:url('${appState.avatar || ''}')"></div><input type="file" id="avatarUpload" style="display:none;" accept="image/*"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
+        <div class="card"><h3>Аватар</h3><div class="settings-avatar" id="settingsAvatar" style="background-image:url('${appState.avatar || ''}')"></div><input type="file" id="avatarUpload" accept="image/*" style="display:none"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
         <div class="card"><button class="btn btn-delete" id="resetDataBtn">Сбросить локальные настройки</button></div>
     </div>`;
 }
-
 async function render(pageId) {
     currentPage = pageId;
     let html = '';
@@ -425,18 +409,15 @@ async function render(pageId) {
     attachEvents(pageId);
 }
 
-// =============================================
-// 5. Обработчики кнопок (CRUD через API)
-// =============================================
 const modalOverlay = document.getElementById('modalOverlay');
 const modalContent = document.getElementById('modalContent');
 function showModal(innerHtml) {
     modalContent.innerHTML = innerHtml;
     modalOverlay.classList.add('active');
-    const closeBtn = modalContent.querySelector('.close-btn');
-    if (closeBtn) closeBtn.onclick = () => modalOverlay.classList.remove('active');
+    const close = modalContent.querySelector('.close-btn');
+    if (close) close.onclick = () => modalOverlay.classList.remove('active');
 }
-modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) modalOverlay.classList.remove('active'); });
 
 async function attachEvents(pageId) {
     const key = pageId;
@@ -458,15 +439,13 @@ async function attachEvents(pageId) {
                 else if (key === 'knowledge') fields = { question: title, answer: desc };
                 try {
                     await createRecord(key, fields);
-                    await loadAllData();
-                    await render(currentPage);
+                    await loadAllData(); await render(currentPage);
                     modalOverlay.classList.remove('active');
-                    speak(`Добавлено в ${key}`);
+                    speak(`Добавлено`);
                 } catch(e) { alert('Ошибка: '+e.message); }
             };
         };
     }
-
     document.querySelectorAll(`.edit-${key}`).forEach(btn => {
         btn.onclick = async () => {
             const id = parseInt(btn.dataset.id);
@@ -479,20 +458,16 @@ async function attachEvents(pageId) {
                 const newTitle = document.getElementById('editTitle').value.trim();
                 if (!newTitle) return;
                 const newDesc = document.getElementById('editDesc').value.trim();
-                let fields = {};
-                if (key === 'knowledge') fields = { question: newTitle, answer: newDesc };
-                else fields = { title: newTitle, description: newDesc };
+                let fields = key === 'knowledge' ? { question: newTitle, answer: newDesc } : { title: newTitle, description: newDesc };
                 try {
                     await updateRecord(key, id, fields);
-                    await loadAllData();
-                    await render(currentPage);
+                    await loadAllData(); await render(currentPage);
                     modalOverlay.classList.remove('active');
                     speak('Обновлено');
-                } catch(e) { alert('Ошибка: '+e.message); }
+                } catch(e) { alert('Ошибка'); }
             };
         };
     });
-
     document.querySelectorAll(`.delete-${key}`).forEach(btn => {
         btn.onclick = () => {
             const id = parseInt(btn.dataset.id);
@@ -500,18 +475,16 @@ async function attachEvents(pageId) {
             document.getElementById('confirmDelete').onclick = async () => {
                 try {
                     await deleteRecord(key, id);
-                    await loadAllData();
-                    await render(currentPage);
+                    await loadAllData(); await render(currentPage);
                     modalOverlay.classList.remove('active');
                     speak('Удалено');
-                } catch(e) { alert('Ошибка: '+e.message); }
+                } catch(e) { alert('Ошибка'); }
             };
         };
     });
-
     if (pageId === 'settings') {
         document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
-        document.getElementById('avatarUpload')?.addEventListener('change', (e) => {
+        document.getElementById('avatarUpload')?.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -519,210 +492,162 @@ async function attachEvents(pageId) {
             reader.readAsDataURL(file);
         });
         document.getElementById('resetDataBtn')?.addEventListener('click', () => {
-            showModal(`<button class="close-btn">✕</button><h3>Сбросить локальные настройки (аватар)?</h3><button class="btn btn-delete" id="confirmReset">Да</button>`);
-            document.getElementById('confirmReset').onclick = () => {
-                localStorage.removeItem('arthurAvatar');
-                appState.avatar = '';
-                render('settings');
-                modalOverlay.classList.remove('active');
-            };
+            showModal(`<button class="close-btn">✕</button><h3>Сбросить аватар?</h3><button class="btn btn-delete" id="confirmReset">Да</button>`);
+            document.getElementById('confirmReset').onclick = () => { localStorage.removeItem('arthurAvatar'); appState.avatar = ''; render('settings'); modalOverlay.classList.remove('active'); };
         });
     }
 }
 
 // =============================================
-// 6. Голосовой ассистент (приятный, быстрый)
+// 4. Голосовой помощник (приятный голос, команды)
 // =============================================
-let recognition = null;
-let isListening = false;
-
+let recognition = null, isListening = false;
 function showVoiceFeedback(msg, isError = false) {
     const el = document.getElementById('voiceFeedback');
     el.textContent = msg;
     el.style.display = 'block';
-    el.style.background = isError ? 'rgba(200,0,0,0.8)' : 'rgba(0,0,0,0.7)';
-    setTimeout(() => { el.style.display = 'none'; }, 3000);
+    el.style.background = isError ? '#c00' : '#000';
+    setTimeout(() => el.style.display = 'none', 3000);
 }
-
-let cachedVoice = null;
-async function getBestRussianVoice() {
-    return new Promise((resolve) => {
+function getBestRussianVoice() {
+    return new Promise(resolve => {
         const synth = window.speechSynthesis;
         const check = () => {
-            const voices = synth.getVoices();
-            const ruVoices = voices.filter(v => v.lang && v.lang.startsWith('ru'));
-            if (ruVoices.length === 0) resolve(null);
-            const priority = [
-                v => v.name.includes('Google') && v.lang === 'ru-RU',
-                v => v.name.includes('Microsoft Irina'),
-                v => v.name.includes('Yuri') || v.name.includes('Milena'),
-                v => v.name.includes('Google'),
-                v => true
-            ];
-            for (const test of priority) {
-                const found = ruVoices.find(test);
-                if (found) { resolve(found); return; }
-            }
-            resolve(ruVoices[0]);
+            let voices = synth.getVoices().filter(v => v.lang.startsWith('ru'));
+            if (!voices.length) resolve(null);
+            const google = voices.find(v => v.name.includes('Google'));
+            if (google) resolve(google);
+            const irina = voices.find(v => v.name.includes('Irina'));
+            if (irina) resolve(irina);
+            resolve(voices[0]);
         };
         if (synth.getVoices().length) check();
         else synth.addEventListener('voiceschanged', check, { once: true });
     });
 }
-
+let cachedVoice = null;
 async function speak(text) {
     if (!window.speechSynthesis) return;
     if (!cachedVoice) cachedVoice = await getBestRussianVoice();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ru-RU';
-    utterance.rate = 1.05;      // быстрее, приятнее
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    if (cachedVoice) utterance.voice = cachedVoice;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ru-RU';
+    utter.rate = 0.85;
+    utter.pitch = 1.0;
+    if (cachedVoice) utter.voice = cachedVoice;
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utter);
 }
-
 async function processVoiceCommand(command) {
     const lower = command.toLowerCase();
     const page = currentPage;
-
+    // создать
     if (lower.includes('создай') || lower.includes('добавь')) {
         let match = lower.match(/(?:создай|добавь)\s+(?:в\s+)?(?:задачу|идею|карточку|прототип|знание)?\s*(.+)/i);
         if (!match) { speak('Не понял название'); return; }
         let title = match[1].trim();
-        let description = '';
-        if (title.includes(' с описанием ')) {
-            const parts = title.split(' с описанием ');
-            title = parts[0];
-            description = parts[1];
-        }
+        let desc = '';
+        if (title.includes(' с описанием ')) { let parts = title.split(' с описанием '); title = parts[0]; desc = parts[1]; }
         let fields = {};
-        if (page === 'dashboard') fields = { title, description };
-        else if (page === 'backlog') fields = { title, description, status: 'active', priority: 'medium' };
-        else if (page === 'ideas') fields = { title, description };
-        else if (page === 'prototypes') fields = { title, description };
-        else if (page === 'hrdnk') fields = { title, description, status: 'active' };
-        else if (page === 'knowledge') fields = { question: title, answer: description };
-        else if (page === 'scheme') fields = { title, description, type: 'dept' };
-        else { speak('На этой странице создание не поддерживается'); return; }
+        if (page === 'dashboard') fields = { title, description: desc };
+        else if (page === 'backlog') fields = { title, description: desc, status: 'active', priority: 'medium' };
+        else if (page === 'ideas') fields = { title, description: desc };
+        else if (page === 'prototypes') fields = { title, description: desc };
+        else if (page === 'hrdnk') fields = { title, description: desc, status: 'active' };
+        else if (page === 'knowledge') fields = { question: title, answer: desc };
+        else if (page === 'scheme') fields = { title, description: desc, type: 'dept' };
+        else { speak('На этой странице нельзя создать'); return; }
         try {
             await createRecord(page, fields);
-            await loadAllData();
-            await render(currentPage);
+            await loadAllData(); await render(currentPage);
             speak(`Создано: ${title}`);
         } catch(e) { speak('Ошибка создания'); }
         return;
     }
-
+    // редактировать
     if (lower.includes('редактируй') || lower.includes('измени')) {
         let match = lower.match(/(?:редактируй|измени)\s+(.+?)\s+на\s+(.+)/i);
         if (!match) { speak('Скажите: редактируй [название] на [новое описание]'); return; }
-        let oldTitle = match[1].trim();
-        let newDesc = match[2].trim();
-        const item = appState[page]?.find(i => (i.title || i.question || '').toLowerCase().includes(oldTitle.toLowerCase()));
+        let oldTitle = match[1].trim(), newDesc = match[2].trim();
+        let item = appState[page]?.find(i => (i.title || i.question || '').toLowerCase().includes(oldTitle.toLowerCase()));
         if (!item) { speak('Не найдено'); return; }
-        let fields = {};
-        if (page === 'knowledge') fields = { answer: newDesc };
-        else fields = { description: newDesc };
+        let fields = page === 'knowledge' ? { answer: newDesc } : { description: newDesc };
         try {
             await updateRecord(page, item.id, fields);
-            await loadAllData();
-            await render(currentPage);
+            await loadAllData(); await render(currentPage);
             speak('Обновлено');
         } catch(e) { speak('Ошибка'); }
         return;
     }
-
+    // удалить
     if (lower.includes('удали')) {
         let match = lower.match(/удали\s+(.+)/i);
         if (!match) { speak('Что удалить?'); return; }
         let title = match[1].trim();
-        const item = appState[page]?.find(i => (i.title || i.question || '').toLowerCase().includes(title.toLowerCase()));
+        let item = appState[page]?.find(i => (i.title || i.question || '').toLowerCase().includes(title.toLowerCase()));
         if (!item) { speak('Не найдено'); return; }
         try {
             await deleteRecord(page, item.id);
-            await loadAllData();
-            await render(currentPage);
+            await loadAllData(); await render(currentPage);
             speak('Удалено');
         } catch(e) { speak('Ошибка удаления'); }
         return;
     }
-
+    // приоритет (только бэклог)
     if ((lower.includes('приоритет') || lower.includes('приоритизируй')) && page === 'backlog') {
         let match = lower.match(/(?:приоритет|приоритизируй)\s+(высокий|средний|низкий)\s+для\s+(.+)/i);
         if (!match) { speak('Скажите: установи высокий приоритет для задачи...'); return; }
         let priority = match[1] === 'высокий' ? 'high' : (match[1] === 'средний' ? 'medium' : 'low');
         let taskName = match[2].trim();
-        const item = appState.backlog.find(i => i.title.toLowerCase().includes(taskName.toLowerCase()));
+        let item = appState.backlog.find(i => i.title.toLowerCase().includes(taskName.toLowerCase()));
         if (!item) { speak('Задача не найдена'); return; }
         try {
             await setPriority('backlog', item.id, priority);
-            await loadAllData();
-            await render('backlog');
+            await loadAllData(); await render('backlog');
             speak(`Приоритет ${match[1]} установлен`);
         } catch(e) { speak('Ошибка'); }
         return;
     }
-
     if (lower.includes('покажи') || lower.includes('список') || lower.includes('что у меня')) {
-        const count = appState[page]?.length || 0;
+        let count = appState[page]?.length || 0;
         speak(`В разделе ${page} ${count} элементов`);
         return;
     }
-
     if (lower.includes('помоги') || lower.includes('что ты умеешь')) {
-        speak('Я умею создавать, редактировать, удалять карточки в текущем разделе. В бэклоге могу менять приоритет. Скажите, например: создай задачу: обновить сервер, или установи высокий приоритет для задачи...');
+        speak('Я умею создавать, редактировать, удалять карточки. В бэклоге могу менять приоритет. Скажите: создай задачу: обновить сервер');
         return;
     }
-
-    speak('Не понял команду. Скажите “помоги” для списка.');
+    speak('Не понял. Скажите "помоги"');
 }
-
 function initVoice() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showVoiceFeedback('Голос не поддерживается', true);
-        return;
-    }
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'ru-RU';
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { showVoiceFeedback('Голос не поддерживается', true); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'ru-RU';
     recognition.onstart = () => { isListening = true; showVoiceFeedback('🎤 Слушаю...'); };
     recognition.onend = () => { isListening = false; showVoiceFeedback('Готов'); };
-    recognition.onerror = (event) => { console.error(event); showVoiceFeedback('Ошибка', true); isListening = false; };
-    recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
+    recognition.onerror = () => { showVoiceFeedback('Ошибка', true); isListening = false; };
+    recognition.onresult = (e) => {
+        let text = e.results[0][0].transcript;
         showVoiceFeedback(`Распознано: ${text}`);
         processVoiceCommand(text);
     };
 }
-
 // =============================================
-// 7. Запуск и навигация
+// 5. Старт
 // =============================================
 document.addEventListener('DOMContentLoaded', async () => {
     initVoice();
-    const voiceBtn = document.getElementById('voiceAssistantBtn');
-    if (voiceBtn) {
-        voiceBtn.addEventListener('click', () => {
-            if (!recognition) { alert('Голос не поддерживается'); return; }
-            if (isListening) recognition.stop();
-            else recognition.start();
-        });
-    }
-
+    document.getElementById('voiceAssistantBtn')?.addEventListener('click', () => {
+        if (!recognition) { alert('Голос не поддерживается'); return; }
+        if (isListening) recognition.stop(); else recognition.start();
+    });
     await initSheets();
     await render('dashboard');
-
-    const navItems = document.querySelectorAll('.nav-item[data-page]');
-    navItems.forEach(item => {
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
         item.addEventListener('click', async (e) => {
-            const page = item.dataset.page;
-            navItems.forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
-            await render(page);
+            await render(item.dataset.page);
         });
     });
 });
