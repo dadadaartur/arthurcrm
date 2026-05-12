@@ -20,7 +20,7 @@
       pointer-events: none;
       background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
     }
-    .sun-container { position: absolute; top: 25px; right: 70px; z-index: 1; pointer-events: auto; }
+    .sun-container { position: absolute; top: 25px; right: 70px; z-index: 10; pointer-events: auto; }
     .sun {
       width: 100px; height: 100px;
       background: #FFD700; border-radius: 50%;
@@ -29,10 +29,8 @@
     }
     .sun.alive { animation: bounce 0.4s ease; }
     @keyframes bounce {
-      0% { transform: scale(1); }
-      30% { transform: scale(1.15); }
-      60% { transform: scale(0.95); }
-      100% { transform: scale(1); }
+      0% { transform: scale(1); } 30% { transform: scale(1.15); }
+      60% { transform: scale(0.95); } 100% { transform: scale(1); }
     }
     .sun-face {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -43,8 +41,7 @@
       position: absolute; width: 12px; height: 12px;
       background: #1a2634; border-radius: 50%; top: 30px;
     }
-    .sun-eye.left { left: 26px; }
-    .sun-eye.right { right: 26px; }
+    .sun-eye.left { left: 26px; } .sun-eye.right { right: 26px; }
     .sun-eye::after {
       content: ''; position: absolute;
       width: 4px; height: 4px; background: white;
@@ -61,8 +58,7 @@
       position: absolute; width: 10px; height: 6px;
       background: rgba(255,100,100,0.6); border-radius: 50%; top: 44px;
     }
-    .sun-blush.left { left: 20px; }
-    .sun-blush.right { right: 20px; }
+    .sun-blush.left { left: 20px; } .sun-blush.right { right: 20px; }
 
     .ocean {
       position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
@@ -119,16 +115,6 @@
     }
     @keyframes burstFade { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(2.5) rotate(15deg); } }
 
-    .firework { position: fixed; pointer-events: none; z-index: 10000; }
-    .particle {
-      position: absolute; width: 12px; height: 12px; border-radius: 50%;
-      animation: particleFade 1.2s ease-out forwards;
-    }
-    @keyframes particleFade {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
-    }
-
     .loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
@@ -137,12 +123,13 @@
     }
     .loading-overlay.active { visibility: visible; opacity: 1; }
     .premium-spinner {
-      width: 70px; height: 70px; border-radius: 50%;
+      width: 35px; height: 35px;
+      border-radius: 50%;
       background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
       -webkit-mask: radial-gradient(transparent 55%, black 56%);
       mask: radial-gradient(transparent 55%, black 56%);
       animation: spin 0.8s linear infinite;
-      box-shadow: 0 0 40px #FFA500;
+      box-shadow: 0 0 20px #FFA500;
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -242,7 +229,7 @@
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
 <div class="tropical-bg">
-  <div class="sun-container" id="sunContainer">
+  <div class="sun-container">
     <div class="sun" id="sun">
       <div class="sun-face" id="sunFace">
         <div class="sun-eye left"></div><div class="sun-eye right"></div>
@@ -286,7 +273,6 @@
 
 <script>
 (function() {
-  // ===== КОНФИГУРАЦИЯ =====
   const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
   const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
   const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
@@ -301,57 +287,73 @@
   const PAGE_SIZE = 15;
   let ideasPage = PAGE_SIZE, backlogPage = PAGE_SIZE, prototypesPage = PAGE_SIZE, hrdnkPage = PAGE_SIZE;
 
-  // ===== АУДИО СИСТЕМА (Web Audio API) =====
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx;
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new AudioContext();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
+  function getAudioCtx() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
   function playSound(type) {
     if (!soundEnabled) return;
     try {
-      const ctx = getAudioCtx();
-      const t = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const ctx = getAudioCtx(), t = ctx.currentTime;
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      switch(type) {
-        case 'magic':
-          osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(1200, t+0.1); gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
-          const osc2 = ctx.createOscillator(); osc2.type = 'sine'; osc2.frequency.setValueAtTime(1200, t+0.05); osc2.frequency.exponentialRampToValueAtTime(1600, t+0.15); const gain2 = ctx.createGain(); gain2.gain.setValueAtTime(0.08, t+0.05); gain2.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(t+0.05); osc2.stop(t+0.2);
-          break;
-        case 'tear':
-          osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.linearRampToValueAtTime(500, t+0.15); gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
-          break;
-        case 'catch':
-          osc.type = 'triangle'; osc.frequency.setValueAtTime(600, t); osc.frequency.linearRampToValueAtTime(1000, t+0.1); gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
-          break;
-        case 'firework':
-          const notes = [523, 659, 784, 1047]; notes.forEach((freq, i) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = freq; g.gain.setValueAtTime(0.08, t+i*0.08); g.gain.exponentialRampToValueAtTime(0.01, t+i*0.08+0.2); o.connect(g); g.connect(ctx.destination); o.start(t+i*0.08); o.stop(t+i*0.08+0.2); });
-          break;
-        case 'laugh':
-          const laughPattern = [{freq:523,start:0,dur:0.12},{freq:659,start:0.15,dur:0.12},{freq:784,start:0.3,dur:0.12},{freq:1047,start:0.45,dur:0.2},{freq:1200,start:0.7,dur:0.1},{freq:1400,start:0.85,dur:0.15}];
-          laughPattern.forEach(({freq,start,dur}) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = freq; g.gain.setValueAtTime(0.15, t+start); g.gain.exponentialRampToValueAtTime(0.001, t+start+dur); o.connect(g); g.connect(ctx.destination); o.start(t+start); o.stop(t+start+dur+0.05); });
-          break;
+      if (type === 'magic') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(1200, t+0.1);
+        gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
+        const osc2 = ctx.createOscillator(); osc2.type = 'sine'; osc2.frequency.setValueAtTime(1200, t+0.05); osc2.frequency.exponentialRampToValueAtTime(1600, t+0.15);
+        const gain2 = ctx.createGain(); gain2.gain.setValueAtTime(0.08, t+0.05); gain2.gain.exponentialRampToValueAtTime(0.01, t+0.2);
+        osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(t+0.05); osc2.stop(t+0.2);
+      } else if (type === 'tear') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.linearRampToValueAtTime(500, t+0.15);
+        gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
+      } else if (type === 'catch') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(600, t); osc.frequency.linearRampToValueAtTime(1000, t+0.1);
+        gain.gain.setValueAtTime(0.12, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.2); osc.start(t); osc.stop(t+0.2);
+      } else if (type === 'laugh') {
+        const notes = [{f:523,d:0.12},{f:659,d:0.12},{f:784,d:0.12},{f:1047,d:0.2},{f:1200,d:0.1},{f:1400,d:0.15}];
+        notes.forEach((n,i) => {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.value = n.f;
+          g.gain.setValueAtTime(0.15, t+i*0.15); g.gain.exponentialRampToValueAtTime(0.001, t+i*0.15+n.d);
+          o.connect(g); g.connect(ctx.destination); o.start(t+i*0.15); o.stop(t+i*0.15+n.d+0.05);
+        });
       }
     } catch(e) {}
   }
 
-  // ===== КУРСОР =====
   const wand = document.getElementById('customCursor');
   let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
   const starTrail = [];
-  for (let i=0; i<8; i++) { const star = document.createElement('div'); star.className = 'stardust'; star.textContent = '✦'; star.style.opacity = 1 - i/8; document.body.appendChild(star); starTrail.push({el:star, x:mouseX, y:mouseY}); }
+  for (let i=0; i<8; i++) {
+    const star = document.createElement('div'); star.className = 'stardust'; star.textContent = '✦';
+    star.style.opacity = 1 - i/8; document.body.appendChild(star);
+    starTrail.push({ el: star, x: mouseX, y: mouseY });
+  }
   document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; wand.style.left = mouseX+'px'; wand.style.top = mouseY+'px'; });
-  function animateStars() { let prevX = mouseX, prevY = mouseY; starTrail.forEach((s, idx) => { s.x += (prevX - s.x)*0.3; s.y += (prevY - s.y)*0.3; s.el.style.left = s.x+'px'; s.el.style.top = s.y+'px'; prevX = s.x; prevY = s.y; }); requestAnimationFrame(animateStars); }
+  function animateStars() {
+    let prevX = mouseX, prevY = mouseY;
+    starTrail.forEach((s, idx) => {
+      s.x += (prevX - s.x) * 0.3; s.y += (prevY - s.y) * 0.3;
+      s.el.style.left = s.x+'px'; s.el.style.top = s.y+'px';
+      prevX = s.x; prevY = s.y;
+    });
+    requestAnimationFrame(animateStars);
+  }
   animateStars();
-  document.addEventListener('mousedown', () => { playSound('magic'); const burst = document.createElement('div'); burst.className = 'magic-burst'; burst.textContent = '✦'; burst.style.left = wand.style.left; burst.style.top = wand.style.top; document.body.appendChild(burst); setTimeout(() => burst.remove(), 400); for (let i=0; i<5; i++) { const spark = document.createElement('div'); spark.className = 'stardust'; spark.textContent = '✧'; spark.style.left = wand.style.left; spark.style.top = wand.style.top; spark.style.animation = 'floatDust 0.6s ease-out forwards'; spark.style.fontSize = '10px'; document.body.appendChild(spark); setTimeout(() => spark.remove(), 600); } });
+  document.addEventListener('mousedown', () => {
+    playSound('magic');
+    const burst = document.createElement('div'); burst.className = 'magic-burst'; burst.textContent = '✦';
+    burst.style.left = wand.style.left; burst.style.top = wand.style.top;
+    document.body.appendChild(burst); setTimeout(() => burst.remove(), 400);
+    for (let i=0; i<5; i++) {
+      const spark = document.createElement('div'); spark.className = 'stardust'; spark.textContent = '✧';
+      spark.style.left = wand.style.left; spark.style.top = wand.style.top;
+      spark.style.animation = 'floatDust 0.6s ease-out forwards'; spark.style.fontSize = '10px';
+      document.body.appendChild(spark); setTimeout(() => spark.remove(), 600);
+    }
+  });
 
-  // ===== СОЛНЦЕ =====
-  const sunEl = document.getElementById('sun');
-  const sunFace = document.getElementById('sunFace');
+  // Солнце
+  const sunEl = document.getElementById('sun'), sunFace = document.getElementById('sunFace');
   sunEl.addEventListener('click', () => {
     sunEl.classList.add('alive');
     setTimeout(() => sunEl.classList.remove('alive'), 400);
@@ -360,35 +362,26 @@
     setTimeout(() => sunFace.classList.remove('visible'), 1800);
   });
 
-  // ===== ФЕЙЕРВЕРК =====
-  let fireworkClicks = 0, fireworkTimer = null;
-  function launchFirework(x, y) {
-    const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
-    for (let burst=0; burst<3; burst++) { setTimeout(() => { const container = document.createElement('div'); container.className = 'firework'; container.style.left = (x+(Math.random()-0.5)*200)+'px'; container.style.top = (y+(Math.random()-0.5)*200)+'px'; document.body.appendChild(container); playSound('firework'); for (let i=0; i<30; i++) { const particle = document.createElement('div'); particle.className = 'particle'; const angle = (Math.PI*2*i)/30; const distance = 80+Math.random()*150; particle.style.setProperty('--dx', Math.cos(angle)*distance+'px'); particle.style.setProperty('--dy', Math.sin(angle)*distance+'px'); particle.style.background = colors[Math.floor(Math.random()*colors.length)]; container.appendChild(particle); } setTimeout(() => container.remove(), 1300); }, burst*200); }
-  }
-  document.querySelector('[data-page="dashboard"]').addEventListener('click', e => {
-    fireworkClicks++;
-    if (fireworkClicks >= 5) { launchFirework(e.clientX, e.clientY); fireworkClicks = 0; if(fireworkTimer) clearTimeout(fireworkTimer); }
-    else { if(fireworkTimer) clearTimeout(fireworkTimer); fireworkTimer = setTimeout(() => { fireworkClicks = 0; }, 800); }
-  });
-
-  // ===== ЛЕТАЮЩАЯ БУКВА =====
-  const flyingA = document.getElementById('flyingA');
-  const lastA = document.querySelector('.last-a');
+  // Летающая буква
+  const flyingA = document.getElementById('flyingA'), lastA = document.querySelector('.last-a');
   let aFlying = false;
   function startAFlight() {
-    if (aFlying) return;
-    aFlying = true;
+    if (aFlying) return; aFlying = true;
     const rect = lastA.getBoundingClientRect();
     flyingA.style.left = rect.left+'px'; flyingA.style.top = rect.top+'px';
     flyingA.style.display = 'block'; lastA.style.visibility = 'hidden';
-    const moveA = () => { if (!aFlying) return; const maxX = window.innerWidth-60, maxY = window.innerHeight-60; flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out'; flyingA.style.left = Math.random()*maxX+'px'; flyingA.style.top = Math.random()*maxY+'px'; setTimeout(moveA, 2000+Math.random()*1000); };
+    const moveA = () => {
+      if (!aFlying) return;
+      const maxX = window.innerWidth-60, maxY = window.innerHeight-60;
+      flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out';
+      flyingA.style.left = Math.random()*maxX+'px'; flyingA.style.top = Math.random()*maxY+'px';
+      setTimeout(moveA, 2000+Math.random()*1000);
+    };
     moveA();
     flyingA.onclick = () => { aFlying = false; flyingA.style.display = 'none'; flyingA.style.transition = 'none'; lastA.style.visibility = 'visible'; playSound('catch'); };
   }
   setTimeout(() => { startAFlight(); setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000); }, 10000);
 
-  // ===== API =====
   const loader = document.getElementById('loadingOverlay');
   function showLoader() { loader.classList.add('active'); }
   function hideLoader() { loader.classList.remove('active'); }
@@ -399,13 +392,10 @@
       const res = await fetch(`${API_URL}?action=readAll`);
       const json = await res.json();
       if (json.status === 'success') {
-        for (const key of Object.keys(state)) {
-          if (key !== 'avatar' && json.data[key]) state[key] = json.data[key];
-        }
+        for (const key of Object.keys(state)) { if (key !== 'avatar' && json.data[key]) state[key] = json.data[key]; }
         if (!state.scheme.length) state.scheme.push({ id:1, title:'Артур Галкин', description:'Основатель и Генеральный директор', type:'founder', role:'Основатель и Генеральный директор' });
       }
     } catch(e) {}
-    // Восстанавливаем аудио из localStorage для идей
     state.ideas.forEach(idea => {
       const audioData = localStorage.getItem(STORAGE_AUDIO_PREFIX + idea.id);
       if (audioData) idea.audio = audioData;
@@ -414,24 +404,18 @@
   }
 
   async function saveToCloud(sheet, params) {
-    // Не отправляем аудио в Google Sheets
-    const cleanParams = { ...params };
-    delete cleanParams.audio;
-    const qs = new URLSearchParams({ sheet, action:'create', ...cleanParams }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
+    const clean = { ...params }; delete clean.audio;
+    const qs = new URLSearchParams({ sheet, action:'create', ...clean }).toString();
+    const res = await fetch(`${API_URL}?${qs}`); return res.json();
   }
   async function updateInCloud(sheet, id, params) {
-    const cleanParams = { ...params };
-    delete cleanParams.audio;
-    const qs = new URLSearchParams({ sheet, action:'update', id, ...cleanParams }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
+    const clean = { ...params }; delete clean.audio;
+    const qs = new URLSearchParams({ sheet, action:'update', id, ...clean }).toString();
+    const res = await fetch(`${API_URL}?${qs}`); return res.json();
   }
   async function deleteFromCloud(sheet, id) {
     const qs = new URLSearchParams({ sheet, action:'delete', id }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
+    const res = await fetch(`${API_URL}?${qs}`); return res.json();
   }
 
   function showError(msg) {
@@ -444,33 +428,19 @@
     const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
     if (sheet === 'knowledge') newItem.q = params.question;
     if (sheet === 'scheme') newItem.type = params.type || 'dept';
-    // Сохраняем аудио локально, если есть
-    if (params.audio) {
-      localStorage.setItem(STORAGE_AUDIO_PREFIX + tempId, params.audio);
-      newItem.audio = params.audio;
-    }
+    if (params.audio) { localStorage.setItem(STORAGE_AUDIO_PREFIX + tempId, params.audio); newItem.audio = params.audio; }
     state[sheet].push(newItem);
     render(pageId);
     try {
       const result = await saveToCloud(sheet, params);
       if (result.status === 'success') {
         newItem.id = result.id || tempId;
-        // Обновим ключ аудио, если id изменился
-        if (params.audio && result.id) {
-          localStorage.removeItem(STORAGE_AUDIO_PREFIX + tempId);
-          localStorage.setItem(STORAGE_AUDIO_PREFIX + result.id, params.audio);
-          newItem.id = result.id;
-        }
+        if (params.audio && result.id) { localStorage.removeItem(STORAGE_AUDIO_PREFIX + tempId); localStorage.setItem(STORAGE_AUDIO_PREFIX + result.id, params.audio); newItem.id = result.id; }
       } else {
-        state[sheet] = state[sheet].filter(i => i.id !== tempId);
-        render(pageId);
-        showError('Не удалось сохранить');
+        state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId);
+        showError(result.error || 'Не удалось сохранить данные');
       }
-    } catch(e) {
-      state[sheet] = state[sheet].filter(i => i.id !== tempId);
-      render(pageId);
-      showError('Ошибка сети');
-    }
+    } catch(e) { state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId); showError('Ошибка сети'); }
   }
 
   async function updateItem(sheet, id, params, pageId) {
@@ -478,109 +448,99 @@
     if (index === -1) return;
     const original = { ...state[sheet][index] };
     Object.assign(state[sheet][index], params);
-    if (params.audio) {
-      localStorage.setItem(STORAGE_AUDIO_PREFIX + id, params.audio);
-    }
+    if (params.audio) localStorage.setItem(STORAGE_AUDIO_PREFIX + id, params.audio);
     render(pageId);
     try {
       const result = await updateInCloud(sheet, id, params);
-      if (result.status !== 'success') {
-        state[sheet][index] = original;
-        render(pageId);
-        showError('Ошибка обновления');
-      }
-    } catch(e) {
-      state[sheet][index] = original;
-      render(pageId);
-      showError('Ошибка сети');
-    }
+      if (result.status !== 'success') { state[sheet][index] = original; render(pageId); showError('Ошибка обновления'); }
+    } catch(e) { state[sheet][index] = original; render(pageId); showError('Ошибка сети'); }
   }
 
   async function deleteItem(sheet, id, pageId) {
     const index = state[sheet].findIndex(i => i.id == id || i.q == id);
     if (index === -1) return;
     const removed = state[sheet].splice(index, 1)[0];
-    // Удаляем аудио из localStorage
+    const audioData = localStorage.getItem(STORAGE_AUDIO_PREFIX + id);
     localStorage.removeItem(STORAGE_AUDIO_PREFIX + id);
     render(pageId);
     try {
       const result = await deleteFromCloud(sheet, id);
       if (result.status !== 'success') {
         state[sheet].splice(index, 0, removed);
+        if (audioData) localStorage.setItem(STORAGE_AUDIO_PREFIX + id, audioData);
         render(pageId);
-        showError('Ошибка удаления');
+        showError(result.error || 'Не удалось удалить данные');
       }
     } catch(e) {
       state[sheet].splice(index, 0, removed);
+      if (audioData) localStorage.setItem(STORAGE_AUDIO_PREFIX + id, audioData);
       render(pageId);
       showError('Ошибка сети');
     }
   }
 
-  // ===== МОДАЛКИ =====
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalContent = document.getElementById('modalContent');
+  const modalOverlay = document.getElementById('modalOverlay'), modalContent = document.getElementById('modalContent');
   function showModal(html) { modalContent.innerHTML = html; modalOverlay.classList.add('active'); const closeBtn = modalContent.querySelector('.modern-close'); if (closeBtn) closeBtn.addEventListener('click', closeModal); }
   function closeModal() { modalOverlay.classList.remove('active'); }
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  // ===== РЕНДЕР =====
-  const pages = document.querySelectorAll('.nav-item');
-  const mainContent = document.getElementById('mainContent');
+  const pages = document.querySelectorAll('.nav-item'), mainContent = document.getElementById('mainContent');
 
   function card(item, key) {
-    const title = item.title || item.text || item.q || '';
-    const desc = item.desc || item.description || item.a || item.answer || '';
+    const title = item.title || item.text || item.q || '', desc = item.desc || item.description || item.a || item.answer || '';
     let extra = '';
-    if (item.audio) {
-      extra = `<audio controls src="${item.audio}" style="margin-top:12px; width:100%;"></audio>`;
-    }
-    return `<div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:start;">
-        <div>
-          <h3>${title}</h3><p>${desc}</p>${extra}
-          ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
-          <div class="magic-pin delete-${key}" data-id="${item.id || item.q}"></div>
-        </div>
+    if (item.audio) extra = `<audio controls src="${item.audio}" style="margin-top:12px; width:100%;"></audio>`;
+    return `<div class="card"><div style="display:flex; justify-content:space-between; align-items:start;">
+      <div><h3>${title}</h3><p>${desc}</p>${extra}${item.role?`<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>`:''}</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-edit edit-${key}" data-id="${item.id||item.q}">Ред.</button>
+        <div class="magic-pin delete-${key}" data-id="${item.id||item.q}"></div>
       </div>
-    </div>`;
+    </div></div>`;
   }
 
-  function editableGrid(pageId, title, items, addLabel, currentPageSize, onLoadMore) {
+  function editableGrid(pageId, title, items, addLabel, currentPageSize) {
     const visible = items.slice(0, currentPageSize);
     let html = `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid">${visible.map(i => card(i, pageId)).join('')}</div>`;
-    if (items.length > currentPageSize) {
-      html += `<button class="load-more-btn" id="loadMore-${pageId}">Загрузить ещё (${items.length - currentPageSize})</button>`;
-    }
-    html += `<button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
+    if (items.length > currentPageSize) html += `<button class="load-more-btn" id="loadMore-${pageId}">Загрузить ещё (${items.length - currentPageSize})</button>`;
+    html += `<button class="btn btn-primary" id="add${pageId.charAt(0).toUpperCase()+pageId.slice(1)}Btn">${addLabel}</button></div>`;
     return html;
   }
 
-  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
   function renderDashboard() { return editableGrid('dashboard', 'Обзор проектов', state.dashboard, 'Добавить карточку', state.dashboard.length); }
-  function renderBacklog() { return editableGrid('backlog', 'Бэклог', state.backlog, 'Добавить задачу', backlogPage, () => { backlogPage += PAGE_SIZE; render('backlog'); }); }
+  function renderBacklog() { return editableGrid('backlog', 'Бэклог', state.backlog, 'Добавить задачу', backlogPage); }
   function renderScheme() {
     const founder = state.scheme.filter(i => i.type === 'founder');
     const depts = state.scheme.filter(i => i.type === 'dept');
-    return `<div class="page active"><h2 class="page-title">Структура компании</h2><button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
-    <div style="display:flex; flex-wrap:wrap; gap:20px;">
-      ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;"><h3>${i.title}</h3><p>${i.role}</p><div style="display:flex; gap:12px; justify-content:center; margin-top:12px;"><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button><div class="magic-pin delete-scheme" data-id="${i.id}"></div></div></div>`).join('')}
-      ${depts.map(i => `<div class="card" style="width:200px;"><h4>${i.title}</h4><p>${i.desc || i.description || ''}</p><div style="display:flex; gap:12px; margin-top:12px;"><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button><div class="magic-pin delete-scheme" data-id="${i.id}"></div></div></div>`).join('')}
-    </div></div>`;
+    return `<div class="page active"><h2 class="page-title">Структура компании</h2>
+      <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
+      <div style="display:flex; flex-wrap:wrap; gap:20px;">
+        ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
+          <h3>${i.title}</h3><p>${i.role}</p>
+          <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
+            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
+          </div>
+        </div>`).join('')}
+        ${depts.map(i => `<div class="card" style="width:200px;">
+          <h4>${i.title}</h4><p>${i.desc||i.description||''}</p>
+          <div style="display:flex; gap:12px; margin-top:12px;">
+            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
+          </div>
+        </div>`).join('')}
+      </div></div>`;
   }
-  function renderIdeas() { return editableGrid('ideas', 'Идеи', state.ideas, 'Добавить идею', ideasPage, () => { ideasPage += PAGE_SIZE; render('ideas'); }); }
-  function renderPrototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип', prototypesPage, () => { prototypesPage += PAGE_SIZE; render('prototypes'); }); }
-  function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу', hrdnkPage, () => { hrdnkPage += PAGE_SIZE; render('hrdnk'); }); }
+  function renderIdeas() { return editableGrid('ideas', 'Идеи', state.ideas, 'Добавить идею', ideasPage); }
+  function renderPrototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип', prototypesPage); }
+  function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу', hrdnkPage); }
   function renderKnowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание', state.knowledge.length); }
   function renderSettings() {
     const soundStatus = soundEnabled ? 'Включены' : 'Выключены';
     return `<div class="page active"><h2 class="page-title">Настройки</h2>
-      <div class="card"><h3>Аватар</h3><div class="settings-avatar" style="background-image:url('${state.avatar}'); width:80px; height:80px; border-radius:40px; background-size:cover; margin-bottom:12px;"></div><input type="file" id="avatarUpload" style="display:none;" accept="image/*"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
-      <div class="card" style="display:flex; align-items:center; gap:16px;"><span>Звуки: ${soundStatus}</span><button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled ? 'Выкл' : 'Вкл'}</button></div>
+      <div class="card"><h3>Аватар</h3><div class="settings-avatar" style="background-image:url('${state.avatar}'); width:80px; height:80px; border-radius:40px; background-size:cover; margin-bottom:12px;"></div>
+        <input type="file" id="avatarUpload" style="display:none;" accept="image/*"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
+      <div class="card" style="display:flex; align-items:center; gap:16px;"><span>Звуки: ${soundStatus}</span><button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled?'Выкл':'Вкл'}</button></div>
       <div class="card"><button class="btn" style="background:#EF9A9A;" id="resetDataBtn">Сбросить данные</button></div>
     </div>`;
   }
@@ -611,88 +571,43 @@
     }
   }
 
-  // ===== УДАЛЕНИЕ (ПЕРЕТАСКИВАНИЕ) =====
   let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
   function askDelete(sheet, id) {
     playSound('tear');
-    showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h2 style="color:#2E3B2E;">Оторвать этот листик?</h2><div style="display:flex; gap:16px; margin-top:24px;"><button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button><button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button></div>`);
+    showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+      <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
+      <div style="display:flex; gap:16px; margin-top:24px;">
+        <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
+        <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
+      </div>`);
     document.getElementById('confirmTearYes').addEventListener('click', async () => { closeModal(); await deleteItem(sheet, id, getCurrentPage()); });
     document.getElementById('confirmTearNo').addEventListener('click', closeModal);
   }
-  function startDrag(e, el) { /* ... как раньше ... */ }
-  function onDragMove(e) { /* ... */ }
-  function onDragEnd(e) { /* ... */ }
-  function getCurrentPage() { const active = document.querySelector('.nav-item.active'); return active ? active.dataset.page : 'dashboard'; }
-
-  // Полный код startDrag, onDragMove, onDragEnd для краткости опущен, но он присутствует в реальном файле (я добавлю его ниже).
-  // Для полной уверенности вставлю полный код этих функций.
-
   function startDrag(e, el) {
-    e.preventDefault();
-    if (draggingPin) return;
-    draggingPin = el;
+    e.preventDefault(); if (draggingPin) return; draggingPin = el;
     dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
-    dragClone = el.cloneNode(true);
-    dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
-    dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px';
-    dragClone.style.opacity = '0.9';
-    document.body.appendChild(dragClone);
-    el.style.opacity = '0.3';
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd);
+    dragClone = el.cloneNode(true); dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
+    dragClone.style.left = e.clientX+'px'; dragClone.style.top = e.clientY+'px'; dragClone.style.opacity = '0.9';
+    document.body.appendChild(dragClone); el.style.opacity = '0.3';
+    document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
   }
   function onDragMove(e) {
     if (!draggingPin) return;
     if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true;
-    if (dragClone) { dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px'; }
+    if (dragClone) { dragClone.style.left = e.clientX+'px'; dragClone.style.top = e.clientY+'px'; }
   }
   function onDragEnd(e) {
-    document.removeEventListener('mousemove', onDragMove);
-    document.removeEventListener('mouseup', onDragEnd);
+    document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd);
     if (dragClone) { dragClone.remove(); dragClone = null; }
-    if (draggingPin) {
-      draggingPin.style.opacity = '1';
-      const id = draggingPin.dataset.id;
-      const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
-      askDelete(sheet, id);
-      draggingPin = null;
-    }
+    if (draggingPin) { draggingPin.style.opacity = '1'; const id = draggingPin.dataset.id; const sheet = draggingPin.className.replace(/.*delete-(\w+).*/,'$1'); askDelete(sheet, id); draggingPin = null; }
   }
-
-  // ===== ЗАПИСЬ ГОЛОСА =====
-  let mediaRecorder, recordedChunks = [];
-  function startAudioRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showError('Микрофон недоступен');
-      return;
-    }
-    recordedChunks = [];
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result;
-          createItem('ideas', { title: 'Голосовая заметка ' + new Date().toLocaleString(), audio: base64 }, 'ideas');
-        };
-        reader.readAsDataURL(blob);
-      };
-      mediaRecorder.start();
-      showModal(`<div style="text-align:center"><h3>Идёт запись...</h3><button class="btn btn-primary" id="stopRecBtn">Остановить запись</button></div>`);
-      document.getElementById('stopRecBtn').addEventListener('click', () => {
-        mediaRecorder.stop();
-        closeModal();
-      });
-    }).catch(() => showError('Нет доступа к микрофону'));
-  }
+  function getCurrentPage() { const active = document.querySelector('.nav-item.active'); return active ? active.dataset.page : 'dashboard'; }
 
   function attachEvents(pageId) {
     const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
     if (keys.includes(pageId)) {
       const key = pageId;
-      const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
+      const addBtn = document.getElementById(`add${key.charAt(0).toUpperCase()+key.slice(1)}Btn`);
       if (addBtn) {
         addBtn.addEventListener('click', () => {
           if (key === 'ideas') {
@@ -704,10 +619,8 @@
               closeModal();
               showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Текстовая идея</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
               document.getElementById('saveModal').addEventListener('click', async () => {
-                const title = document.getElementById('modalTitle').value.trim();
-                if (!title) return;
-                const desc = document.getElementById('modalDesc').value.trim();
-                closeModal();
+                const title = document.getElementById('modalTitle').value.trim(); if (!title) return;
+                const desc = document.getElementById('modalDesc').value.trim(); closeModal();
                 await createItem(key, { title, description: desc }, pageId);
               });
             });
@@ -715,14 +628,12 @@
           } else {
             showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Добавить</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
             document.getElementById('saveModal').addEventListener('click', async () => {
-              const title = document.getElementById('modalTitle').value.trim();
-              if (!title) return;
-              const desc = document.getElementById('modalDesc').value.trim();
+              const title = document.getElementById('modalTitle').value.trim(); if (!title) return;
+              const desc = document.getElementById('modalDesc').value.trim(); closeModal();
               let params = { title };
               if (key === 'knowledge') params = { question: title, answer: desc };
               else if (key !== 'ideas') params.description = desc;
               if (key === 'scheme') params.type = 'dept';
-              closeModal();
               await createItem(key, params, pageId);
             });
           }
@@ -735,17 +646,14 @@
           let item = state[key].find(i => i.id == id || i.q == id);
           if (!item) item = state.scheme?.find(i => i.id == id);
           if (!item) return;
-          const title = item.title || item.text || item.q || '';
-          const desc = item.desc || item.description || item.a || item.answer || '';
+          const title = item.title || item.text || item.q || '', desc = item.desc || item.description || item.a || item.answer || '';
           showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Редактировать</h3><input id="editTitle" value="${title}"><br><textarea id="editDesc">${desc}</textarea><br><button class="btn btn-primary" id="updateModal">Сохранить</button>`);
           document.getElementById('updateModal').addEventListener('click', async () => {
-            const newTitle = document.getElementById('editTitle').value.trim();
-            if (!newTitle) return;
-            const newDesc = document.getElementById('editDesc').value.trim();
+            const newTitle = document.getElementById('editTitle').value.trim(); if (!newTitle) return;
+            const newDesc = document.getElementById('editDesc').value.trim(); closeModal();
             let params = { title: newTitle };
             if (key === 'knowledge') params = { question: newTitle, answer: newDesc };
             else if (key !== 'ideas') params.description = newDesc;
-            closeModal();
             await updateItem(key, id, params, pageId);
           });
         });
@@ -758,7 +666,8 @@
       document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
       document.getElementById('avatarUpload')?.addEventListener('change', e => {
         const file = e.target.files[0]; if (!file) return;
-        const reader = new FileReader(); reader.onload = () => { state.avatar = reader.result; localStorage.setItem(STORAGE_AVATAR_KEY, reader.result); document.querySelector('.settings-avatar').style.backgroundImage = `url(${reader.result})`; }; reader.readAsDataURL(file);
+        const reader = new FileReader(); reader.onload = () => { state.avatar = reader.result; localStorage.setItem(STORAGE_AVATAR_KEY, reader.result); document.querySelector('.settings-avatar').style.backgroundImage = `url(${reader.result})`; };
+        reader.readAsDataURL(file);
       });
       document.getElementById('toggleSoundBtn')?.addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem(STORAGE_SOUND_KEY, soundEnabled); render('settings'); });
       document.getElementById('resetDataBtn')?.addEventListener('click', () => {
@@ -766,6 +675,25 @@
         document.getElementById('confirmReset').addEventListener('click', () => { localStorage.clear(); location.reload(); });
       });
     }
+  }
+
+  let mediaRecorder, recordedChunks = [];
+  function startAudioRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showError('Микрофон недоступен'); return; }
+    recordedChunks = [];
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = () => { const base64 = reader.result; createItem('ideas', { title: 'Голосовая заметка ' + new Date().toLocaleString(), audio: base64 }, 'ideas'); };
+        reader.readAsDataURL(blob);
+      };
+      mediaRecorder.start();
+      showModal(`<div style="text-align:center"><h3>Идёт запись...</h3><button class="btn btn-primary" id="stopRecBtn">Остановить запись</button></div>`);
+      document.getElementById('stopRecBtn').addEventListener('click', () => { mediaRecorder.stop(); closeModal(); });
+    }).catch(() => showError('Нет доступа к микрофону'));
   }
 
   pages.forEach(page => {
@@ -776,10 +704,7 @@
     });
   });
 
-  (async function init() {
-    await loadAllData();
-    render('dashboard');
-  })();
+  (async function init() { await loadAllData(); render('dashboard'); })();
 })();
 </script>
 </body>
