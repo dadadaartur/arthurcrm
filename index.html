@@ -1,279 +1,321 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Центр управления — Кармический Банк</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', 'Comic Sans MS', sans-serif;
-      background: #fff4e6; color: #1a2634;
-      display: flex; height: 100vh; overflow: hidden;
-      user-select: none; cursor: none;
-    }
-    input, textarea, [contenteditable] { user-select: text; cursor: none; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Центр управления — Кармический Банк</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Comic Sans MS', sans-serif;
+            background: #fff4e6; color: #1a2634;
+            display: flex; height: 100vh; overflow: hidden;
+            user-select: none; cursor: none;
+        }
+        input, textarea, [contenteditable] { user-select: text; cursor: none; }
 
-    a, button, .btn, .nav-item, .magic-pin, .modern-close, input, textarea, select {
-      cursor: none !important;
-    }
+        a, button, .btn, .nav-item, .magic-pin, .modern-close, input, textarea, select {
+            cursor: none !important;
+        }
 
-    .tropical-bg {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-      pointer-events: none;
-      background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
-    }
-    .sun {
-      position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
-      background: #FFD700; border-radius: 50%;
-      box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00;
-    }
-    .ocean {
-      position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
-      background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
-      animation: wave 7s ease-in-out infinite;
-    }
-    @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-    .beach {
-      position: absolute; bottom: 0; left: 0; width: 100%; height: 20%;
-      background: linear-gradient(180deg, #FFE4B5 0%, #FFDAB9 100%);
-      border-radius: 30% 40% 0 0;
-    }
-    .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
-    .sailboat-horizon { position: absolute; bottom: 55%; left: 70%; font-size: 40px; animation: sailHorizon 95s linear infinite; }
-    @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
-    .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
-    @keyframes airplaneFly {
-      0% { right: -5%; bottom: 25%; } 5% { bottom: 28%; }
-      50% { right: 65%; bottom: 44%; } 90% { right: 90%; bottom: 56%; }
-      100% { right: 105%; bottom: 60%; }
-    }
-    .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
-    .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
+        .tropical-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
+        }
+        .sun {
+            position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
+            background: #FFD700; border-radius: 50%;
+            box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00;
+            cursor: pointer;
+        }
+        .ocean {
+            position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
+            background: linear-gradient(180deg, #40E0D0 0%, #00CED1 50%, #20B2AA 100%);
+            animation: wave 7s ease-in-out infinite;
+        }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .beach {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 20%;
+            background: linear-gradient(180deg, #FFE4B5 0%, #FFDAB9 100%);
+            border-radius: 30% 40% 0 0;
+        }
+        .palm-tree { position: absolute; bottom: 8%; font-size: 80px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
+        .sailboat-horizon { position: absolute; bottom: 55%; left: 70%; font-size: 40px; animation: sailHorizon 95s linear infinite; }
+        @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
+        .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
+        @keyframes airplaneFly {
+            0% { right: -5%; bottom: 25%; } 5% { bottom: 28%; }
+            50% { right: 65%; bottom: 44%; } 90% { right: 90%; bottom: 56%; }
+            100% { right: 105%; bottom: 60%; }
+        }
+        .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
+        .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
 
-    .flying-a {
-      position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
-      text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer; display: none;
-    }
+        .flying-a {
+            position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
+            text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer; display: none;
+        }
 
-    /* Курсор-звездочка */
-    #customCursor {
-      position: fixed; pointer-events: none; z-index: 9999;
-      width: 10px; height: 10px;
-      transform: translate(-50%, -50%);
-    }
-    #customCursor::after {
-      content: '✦';
-      position: absolute;
-      top: -10px; left: -10px;
-      font-size: 24px;
-      color: #FFD700;
-      text-shadow: 0 0 15px #FFA500, 0 0 30px #FF8C00;
-      animation: sparklePulse 1.5s infinite alternate;
-    }
-    @keyframes sparklePulse {
-      0% { transform: scale(1); opacity: 0.9; }
-      100% { transform: scale(1.3); opacity: 1; }
-    }
+        #customCursor {
+            position: fixed; pointer-events: none; z-index: 9999;
+            width: 10px; height: 10px;
+            transform: translate(-50%, -50%);
+        }
+        #customCursor::after {
+            content: '✦';
+            position: absolute;
+            top: -10px; left: -10px;
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 0 0 15px #FFA500, 0 0 30px #FF8C00;
+            animation: sparklePulse 1.5s infinite alternate;
+        }
+        @keyframes sparklePulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.3); opacity: 1; }
+        }
 
-    .stardust {
-      position: fixed; pointer-events: none; z-index: 9998;
-      font-size: 12px;
-      color: #FFD700;
-      text-shadow: 0 0 12px #FFA500, 0 0 25px #FF8C00;
-      animation: floatDust 2s infinite alternate ease-in-out;
-    }
-    @keyframes floatDust {
-      0% { transform: translate(0,0); opacity: 0.7; }
-      100% { transform: translate(6px, -10px); opacity: 1; }
-    }
+        .stardust {
+            position: fixed; pointer-events: none; z-index: 9998;
+            font-size: 12px;
+            color: #FFD700;
+            text-shadow: 0 0 12px #FFA500, 0 0 25px #FF8C00;
+            animation: floatDust 2s infinite alternate ease-in-out;
+        }
+        @keyframes floatDust {
+            0% { transform: translate(0,0); opacity: 0.7; }
+            100% { transform: translate(6px, -10px); opacity: 1; }
+        }
 
-    .magic-burst {
-      position: fixed; pointer-events: none; z-index: 10001;
-      font-size: 28px; color: #FFD700;
-      text-shadow: 0 0 30px #FF8C00;
-      animation: burstFade 0.4s ease-out forwards;
-    }
-    @keyframes burstFade {
-      0% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(2.5) rotate(15deg); }
-    }
+        .magic-burst {
+            position: fixed; pointer-events: none; z-index: 10001;
+            font-size: 28px; color: #FFD700;
+            text-shadow: 0 0 30px #FF8C00;
+            animation: burstFade 0.4s ease-out forwards;
+        }
+        @keyframes burstFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(2.5) rotate(15deg); }
+        }
 
-    .firework { position: fixed; pointer-events: none; z-index: 10000; }
-    .particle {
-      position: absolute; width: 12px; height: 12px; border-radius: 50%;
-      animation: particleFade 1.2s ease-out forwards;
-    }
-    @keyframes particleFade {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
-    }
+        .firework { position: fixed; pointer-events: none; z-index: 10000; }
+        .particle {
+            position: absolute; width: 12px; height: 12px; border-radius: 50%;
+            animation: particleFade 1.2s ease-out forwards;
+        }
+        @keyframes particleFade {
+            0% { opacity: 1; transform: translate(0,0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+        }
 
-    .loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 3000; visibility: hidden; opacity: 0; transition: 0.3s;
-    }
-    .loading-overlay.active { visibility: visible; opacity: 1; }
-    .premium-spinner {
-      width: 70px; height: 70px; border-radius: 50%;
-      background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
-      -webkit-mask: radial-gradient(transparent 55%, black 56%);
-      mask: radial-gradient(transparent 55%, black 56%);
-      animation: spin 0.8s linear infinite;
-      box-shadow: 0 0 40px #FFA500;
-    }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 3000; visibility: hidden; opacity: 0; transition: 0.3s;
+        }
+        .loading-overlay.active { visibility: visible; opacity: 1; }
+        .premium-spinner {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: conic-gradient(from 0deg, #FFD700, #FF8C00, #FFD700);
+            -webkit-mask: radial-gradient(transparent 55%, black 56%);
+            mask: radial-gradient(transparent 55%, black 56%);
+            animation: spin 0.8s linear infinite;
+            box-shadow: 0 0 40px #FFA500;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; }
-    .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; color: #2E3B2E; }
-    .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
-    .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
-    .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
-    .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
-    .nav-item[data-page="ideas"] { background: linear-gradient(135deg, rgba(160,240,160,0.2), rgba(200,255,200,0.3)); }
-    .nav-item[data-page="prototypes"] { background: linear-gradient(135deg, rgba(255,150,200,0.2), rgba(255,190,220,0.3)); }
-    .nav-item[data-page="hrdnk"] { background: linear-gradient(135deg, rgba(200,160,255,0.2), rgba(220,190,255,0.3)); }
-    .nav-item[data-page="knowledge"] { background: linear-gradient(135deg, rgba(255,230,80,0.2), rgba(255,250,120,0.3)); }
-    .nav-item[data-page="settings"] { background: linear-gradient(135deg, rgba(210,190,250,0.2), rgba(240,220,255,0.3)); }
-    .nav-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.1); }
-    .nav-item.active { border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
+        .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; }
+        .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; color: #2E3B2E; }
+        .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
+        .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
+        .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
+        .nav-item[data-page="scheme"] { background: linear-gradient(135deg, rgba(130,180,255,0.2), rgba(180,210,255,0.3)); }
+        .nav-item[data-page="ideas"] { background: linear-gradient(135deg, rgba(160,240,160,0.2), rgba(200,255,200,0.3)); }
+        .nav-item[data-page="prototypes"] { background: linear-gradient(135deg, rgba(255,150,200,0.2), rgba(255,190,220,0.3)); }
+        .nav-item[data-page="hrdnk"] { background: linear-gradient(135deg, rgba(200,160,255,0.2), rgba(220,190,255,0.3)); }
+        .nav-item[data-page="knowledge"] { background: linear-gradient(135deg, rgba(255,230,80,0.2), rgba(255,250,120,0.3)); }
+        .nav-item[data-page="settings"] { background: linear-gradient(135deg, rgba(210,190,250,0.2), rgba(240,220,255,0.3)); }
+        .nav-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.1); }
+        .nav-item.active { border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
 
-    .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
-    .page { display: none; } .page.active { display: block; }
-    .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-    .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
-    .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
+        .page { display: none; } .page.active { display: block; }
+        .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
+        .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
-    .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
-    .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
-    .btn-primary {
-      background: linear-gradient(135deg, #A5D6A7, #FFB74D);
-      border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1;
-    }
-    .btn-primary::before {
-      content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
-      border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00);
-      background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35;
-    }
-    @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
+        .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
+        .btn-primary {
+            background: linear-gradient(135deg, #A5D6A7, #FFB74D);
+            border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1;
+        }
+        .btn-primary::before {
+            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00);
+            background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35;
+        }
+        @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    .btn-edit {
-      background: rgba(255,255,255,0.95);
-      border: 1px solid #FFD700;
-      box-shadow: 0 0 15px rgba(255,215,0,0.4);
-      color: #2E3B2E;
-    }
-    .btn-edit:hover {
-      background: white;
-      box-shadow: 0 0 25px #FFD700, 0 0 15px #FFA500;
-    }
+        .btn-edit {
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #FFD700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.4);
+            color: #2E3B2E;
+        }
+        .btn-edit:hover { background: white; box-shadow: 0 0 25px #FFD700, 0 0 15px #FFA500; }
 
-    .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
-    .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
-    .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
-    .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+        .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
+        .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
+        .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+        .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
 
-    /* Премиальная заколочка */
-    .magic-pin {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; margin-left: 8px;
-      background: radial-gradient(circle at 30% 30%, #FFF0F5, #E6E6FA);
-      border: 2px solid #FFD700;
-      border-radius: 50%;
-      box-shadow: 0 0 18px #DDA0DD, 0 4px 8px rgba(0,0,0,0.15);
-      cursor: grab;
-      position: relative;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .magic-pin::before {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px; right: 3px; bottom: 3px;
-      background: radial-gradient(circle, #FFD700 10%, #FFA500 50%, transparent 70%);
-      border-radius: 50%;
-      opacity: 0.8;
-      box-shadow: 0 0 12px #FFD700;
-    }
-    .magic-pin:active { cursor: grabbing; transform: scale(0.9); }
-    .magic-pin:hover { box-shadow: 0 0 30px #FF00FF, 0 0 20px #FFD700; }
+        .magic-pin {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; margin-left: 8px;
+            background: radial-gradient(circle at 30% 30%, #FFF0F5, #E6E6FA);
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 18px #DDA0DD, 0 4px 8px rgba(0,0,0,0.15);
+            cursor: grab;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .magic-pin::before {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px; right: 3px; bottom: 3px;
+            background: radial-gradient(circle, #FFD700 10%, #FFA500 50%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.8;
+            box-shadow: 0 0 12px #FFD700;
+        }
+        .magic-pin:active { cursor: grabbing; transform: scale(0.9); }
+        .magic-pin:hover { box-shadow: 0 0 30px #FF00FF, 0 0 20px #FFD700; }
 
-    input, textarea {
-      border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
-      font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
-      background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
-    }
-    textarea { resize: vertical; min-height: 90px; }
+        input, textarea {
+            border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
+            font-size: 15px; font-family: inherit; width: 100%; margin-bottom: 8px;
+            background: rgba(255,255,255,0.85); color: #1a2634; outline: none;
+        }
+        textarea { resize: vertical; min-height: 90px; }
 
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-      z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
-    }
-    .modal-overlay.active { visibility: visible; opacity: 1; }
-    .modal {
-      background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
-    }
-    .card h3, .card h4 { word-break: break-word; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 2000; visibility: hidden; opacity: 0; transition: 0.25s;
+        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal {
+            background: white; border-radius: 32px; padding: 28px; width: 420px; max-width: 90vw;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
+        }
+        .card h3, .card h4 { word-break: break-word; }
 
-    /* Стиль для отображения распознанного текста */
-    #voiceText {
-      display: inline-block;
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  </style>
+        /* Лицо солнышка */
+        .sun-face {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .sun-face.visible { opacity: 1; }
+        .sun-eye {
+            position: absolute;
+            width: 12px; height: 12px;
+            background: #1a2634;
+            border-radius: 50%;
+            top: 30px;
+        }
+        .sun-eye.left { left: 26px; }
+        .sun-eye.right { right: 26px; }
+        .sun-eye::after {
+            content: '';
+            position: absolute;
+            width: 4px; height: 4px;
+            background: white;
+            border-radius: 50%;
+            top: 3px; left: 3px;
+        }
+        .sun-mouth {
+            position: absolute;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px; height: 14px;
+            border-bottom: 3px solid #1a2634;
+            border-radius: 0 0 14px 14px;
+        }
+        .sun-blush {
+            position: absolute;
+            width: 10px; height: 6px;
+            background: rgba(255,100,100,0.6);
+            border-radius: 50%;
+            top: 44px;
+        }
+        .sun-blush.left { left: 20px; }
+        .sun-blush.right { right: 20px; }
+
+        @keyframes pulseWave {
+            0% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
+            50% { box-shadow: 0 0 50px #FFD700, 0 0 100px #FF8C00; }
+            100% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
+        }
+    </style>
 </head>
 <body>
 
 <div id="flyingA" class="flying-a">А</div>
 <div id="customCursor"></div>
-
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
 <div class="tropical-bg">
-  <div class="sun"></div>
-  <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
-  <div class="beach">
-    <div class="palm-tree" style="left: 5%;">🌴</div>
-    <div class="palm-tree" style="left: 18%;">🌴</div>
-    <div class="palm-tree" style="left: 38%;">🌴</div>
-    <div class="palm-tree" style="right: 28%;">🌴</div>
-    <div class="palm-tree" style="right: 12%;">🌴</div>
-  </div>
-  <div class="airplane-group">
-    <div class="airplane-dot"></div>
-    <div class="contrail-line"></div>
-  </div>
+    <div class="sun" id="sun">
+        <div class="sun-face" id="sunFace">
+            <div class="sun-eye left"></div>
+            <div class="sun-eye right"></div>
+            <div class="sun-mouth"></div>
+            <div class="sun-blush left"></div>
+            <div class="sun-blush right"></div>
+        </div>
+    </div>
+    <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
+    <div class="beach">
+        <div class="palm-tree" style="left: 5%;">🌴</div>
+        <div class="palm-tree" style="left: 18%;">🌴</div>
+        <div class="palm-tree" style="left: 38%;">🌴</div>
+        <div class="palm-tree" style="right: 28%;">🌴</div>
+        <div class="palm-tree" style="right: 12%;">🌴</div>
+    </div>
+    <div class="airplane-group">
+        <div class="airplane-dot"></div>
+        <div class="contrail-line"></div>
+    </div>
 </div>
 
 <div class="sidebar" id="sidebarArea">
-  <div class="sidebar-header" id="sidebarHeader">
-    <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
-    <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
-  </div>
+    <div class="sidebar-header" id="sidebarHeader">
+        <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
+        <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
+    </div>
 
-  <!-- Голосовой помощник -->
-  <div style="margin-bottom: 24px;">
-    <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
-      <span id="voiceText">Голосовой помощник</span>
-      <div id="voiceWaves" style="display:none; position:absolute; top:-8px; left:-8px; right:-8px; bottom:-8px; border-radius:36px; background:transparent; box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; animation:pulseWave 1s infinite;"></div>
-    </button>
-  </div>
+    <div style="margin-bottom: 24px;">
+        <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
+            <span id="voiceText">Голосовой помощник</span>
+            <div id="voiceWaves" style="display:none; position:absolute; top:-8px; left:-8px; right:-8px; bottom:-8px; border-radius:36px; background:transparent; box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; animation:pulseWave 1s infinite;"></div>
+        </button>
+    </div>
 
-  <div class="nav-item active" data-page="dashboard" id="navDashboard"><span>Обзор</span></div>
-  <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
-  <div class="nav-item" data-page="scheme"><span>Структура</span></div>
-  <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
-  <div class="nav-item" data-page="prototypes"><span>Прототипы</span></div>
-  <div class="nav-item" data-page="hrdnk"><span>HRDNK</span></div>
-  <div class="nav-item" data-page="knowledge"><span>База знаний</span></div>
-  <div class="nav-item" data-page="settings"><span>Настройки</span></div>
+    <div class="nav-item active" data-page="dashboard" id="navDashboard"><span>Обзор</span></div>
+    <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
+    <div class="nav-item" data-page="scheme"><span>Структура</span></div>
+    <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
+    <div class="nav-item" data-page="prototypes"><span>Прототипы</span></div>
+    <div class="nav-item" data-page="hrdnk"><span>HRDNK</span></div>
+    <div class="nav-item" data-page="knowledge"><span>База знаний</span></div>
+    <div class="nav-item" data-page="settings"><span>Настройки</span></div>
 </div>
 
 <div class="main-content" id="mainContent"></div>
@@ -281,738 +323,775 @@
 
 <script>
 (function() {
-  // ===== Конфигурация =====
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
-  const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
-  const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
+    const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
+    const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
 
-  const state = {
-    dashboard: [], backlog: [], scheme: [], ideas: [],
-    prototypes: [], hrdnk: [], knowledge: [],
-    avatar: localStorage.getItem(STORAGE_AVATAR_KEY) || ''
-  };
-  let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
+    const state = {
+        dashboard: [], backlog: [], scheme: [], ideas: [],
+        prototypes: [], hrdnk: [], knowledge: [],
+        avatar: localStorage.getItem(STORAGE_AVATAR_KEY) || ''
+    };
+    let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
 
-  // ===== Аудио =====
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  let audioCtx;
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new AudioContext();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
-  function playSound(type) {
-    if (!soundEnabled) return;
-    try {
-      const ctx = getAudioCtx();
-      const t = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      switch(type) {
-        case 'magic':
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(800, t);
-          osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
-          gain.gain.setValueAtTime(0.12, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          osc.start(t); osc.stop(t + 0.2);
-          const osc2 = ctx.createOscillator();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1200, t + 0.05);
-          osc2.frequency.exponentialRampToValueAtTime(1600, t + 0.15);
-          const gain2 = ctx.createGain();
-          gain2.gain.setValueAtTime(0.08, t + 0.05);
-          gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          osc2.connect(gain2); gain2.connect(ctx.destination);
-          osc2.start(t + 0.05); osc2.stop(t + 0.2);
-          break;
-        case 'tear':
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(300, t);
-          osc.frequency.linearRampToValueAtTime(500, t + 0.15);
-          gain.gain.setValueAtTime(0.1, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          osc.start(t); osc.stop(t + 0.2);
-          break;
-        case 'catch':
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(600, t);
-          osc.frequency.linearRampToValueAtTime(1000, t + 0.1);
-          gain.gain.setValueAtTime(0.12, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          osc.start(t); osc.stop(t + 0.2);
-          break;
-        case 'firework':
-          const notes = [523, 659, 784, 1047];
-          notes.forEach((freq, i) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.type = 'sine';
-            o.frequency.value = freq;
-            g.gain.setValueAtTime(0.08, t + i*0.08);
-            g.gain.exponentialRampToValueAtTime(0.01, t + i*0.08 + 0.2);
-            o.connect(g); g.connect(ctx.destination);
-            o.start(t + i*0.08); o.stop(t + i*0.08 + 0.2);
-          });
-          break;
-      }
-    } catch(e) {}
-  }
+    // Аудио
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    function getAudioCtx() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+    }
+    function playSound(type) {
+        if (!soundEnabled) return;
+        try {
+            const ctx = getAudioCtx();
+            const t = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            switch(type) {
+                case 'magic':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, t);
+                    osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
+                    gain.gain.setValueAtTime(0.12, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc.start(t); osc.stop(t + 0.2);
+                    const osc2 = ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(1200, t + 0.05);
+                    osc2.frequency.exponentialRampToValueAtTime(1600, t + 0.15);
+                    const gain2 = ctx.createGain();
+                    gain2.gain.setValueAtTime(0.08, t + 0.05);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc2.connect(gain2); gain2.connect(ctx.destination);
+                    osc2.start(t + 0.05); osc2.stop(t + 0.2);
+                    break;
+                case 'tear':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, t);
+                    osc.frequency.linearRampToValueAtTime(500, t + 0.15);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc.start(t); osc.stop(t + 0.2);
+                    break;
+                case 'catch':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, t);
+                    osc.frequency.linearRampToValueAtTime(1000, t + 0.1);
+                    gain.gain.setValueAtTime(0.12, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc.start(t); osc.stop(t + 0.2);
+                    break;
+                case 'firework':
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.type = 'sine';
+                        o.frequency.value = freq;
+                        g.gain.setValueAtTime(0.08, t + i*0.08);
+                        g.gain.exponentialRampToValueAtTime(0.01, t + i*0.08 + 0.2);
+                        o.connect(g); g.connect(ctx.destination);
+                        o.start(t + i*0.08); o.stop(t + i*0.08 + 0.2);
+                    });
+                    break;
+                case 'laugh':
+                    const laughPattern = [
+                        { freq: 523, start: 0, dur: 0.12 },
+                        { freq: 659, start: 0.15, dur: 0.12 },
+                        { freq: 784, start: 0.3, dur: 0.12 },
+                        { freq: 1047, start: 0.45, dur: 0.2 },
+                        { freq: 1200, start: 0.7, dur: 0.1 },
+                        { freq: 1400, start: 0.85, dur: 0.15 },
+                    ];
+                    laughPattern.forEach(({ freq, start, dur }) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.type = 'sine';
+                        o.frequency.value = freq;
+                        g.gain.setValueAtTime(0.15, t + start);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + start + dur);
+                        o.connect(g); g.connect(ctx.destination);
+                        o.start(t + start); o.stop(t + start + dur + 0.05);
+                    });
+                    break;
+            }
+        } catch(e) {}
+    }
 
-  // ===== Курсор =====
-  const wand = document.getElementById('customCursor');
-  let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
-  const starTrail = [];
-  for (let i=0; i<8; i++) {
-    const star = document.createElement('div');
-    star.className = 'stardust';
-    star.textContent = '✦';
-    star.style.opacity = 1 - i/8;
-    document.body.appendChild(star);
-    starTrail.push({ el: star, x: mouseX, y: mouseY });
-  }
-  document.addEventListener('mousemove', e => {
-    mouseX = e.clientX; mouseY = e.clientY;
-    wand.style.left = mouseX + 'px'; wand.style.top = mouseY + 'px';
-  });
-  function animateStars() {
-    let prevX = mouseX, prevY = mouseY;
-    starTrail.forEach((s, idx) => {
-      s.x += (prevX - s.x) * 0.3;
-      s.y += (prevY - s.y) * 0.3;
-      s.el.style.left = s.x + 'px';
-      s.el.style.top = s.y + 'px';
-      prevX = s.x; prevY = s.y;
+    // ===== Курсор =====
+    const wand = document.getElementById('customCursor');
+    let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+    const starTrail = [];
+    for (let i=0; i<8; i++) {
+        const star = document.createElement('div');
+        star.className = 'stardust';
+        star.textContent = '✦';
+        star.style.opacity = 1 - i/8;
+        document.body.appendChild(star);
+        starTrail.push({ el: star, x: mouseX, y: mouseY });
+    }
+    document.addEventListener('mousemove', e => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        wand.style.left = mouseX + 'px'; wand.style.top = mouseY + 'px';
     });
-    requestAnimationFrame(animateStars);
-  }
-  animateStars();
-  document.addEventListener('mousedown', () => {
-    playSound('magic');
-    const burst = document.createElement('div');
-    burst.className = 'magic-burst';
-    burst.textContent = '✦';
-    burst.style.left = wand.style.left;
-    burst.style.top = wand.style.top;
-    document.body.appendChild(burst);
-    setTimeout(() => burst.remove(), 400);
-    for (let i=0; i<5; i++) {
-      const spark = document.createElement('div');
-      spark.className = 'stardust';
-      spark.textContent = '✧';
-      spark.style.left = wand.style.left;
-      spark.style.top = wand.style.top;
-      spark.style.animation = 'floatDust 0.6s ease-out forwards';
-      spark.style.fontSize = '10px';
-      document.body.appendChild(spark);
-      setTimeout(() => spark.remove(), 600);
-    }
-  });
-
-  // ===== Фейерверк =====
-  let fireworkClicks = 0, fireworkTimer = null;
-  function launchFirework(x, y) {
-    const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
-    for (let burst = 0; burst < 3; burst++) {
-      setTimeout(() => {
-        const container = document.createElement('div');
-        container.className = 'firework';
-        container.style.left = (x + (Math.random()-0.5)*200) + 'px';
-        container.style.top = (y + (Math.random()-0.5)*200) + 'px';
-        document.body.appendChild(container);
-        playSound('firework');
-        for (let i = 0; i < 30; i++) {
-          const particle = document.createElement('div');
-          particle.className = 'particle';
-          const angle = (Math.PI*2*i)/30;
-          const distance = 80 + Math.random()*150;
-          particle.style.setProperty('--dx', Math.cos(angle)*distance + 'px');
-          particle.style.setProperty('--dy', Math.sin(angle)*distance + 'px');
-          particle.style.background = colors[Math.floor(Math.random()*colors.length)];
-          container.appendChild(particle);
-        }
-        setTimeout(() => container.remove(), 1300);
-      }, burst*200);
-    }
-  }
-  document.getElementById('navDashboard').addEventListener('click', e => {
-    fireworkClicks++;
-    if (fireworkClicks >= 5) {
-      launchFirework(e.clientX, e.clientY);
-      fireworkClicks = 0;
-      if (fireworkTimer) clearTimeout(fireworkTimer);
-    } else {
-      if (fireworkTimer) clearTimeout(fireworkTimer);
-      fireworkTimer = setTimeout(() => { fireworkClicks = 0; }, 800);
-    }
-  });
-
-  // ===== Летающая буква =====
-  const flyingA = document.getElementById('flyingA');
-  const lastA = document.querySelector('.last-a');
-  let aFlying = false;
-  function startAFlight() {
-    if (aFlying) return;
-    aFlying = true;
-    const rect = lastA.getBoundingClientRect();
-    flyingA.style.left = rect.left + 'px';
-    flyingA.style.top = rect.top + 'px';
-    flyingA.style.display = 'block';
-    lastA.style.visibility = 'hidden';
-    const moveA = () => {
-      if (!aFlying) return;
-      const maxX = window.innerWidth-60, maxY = window.innerHeight-60;
-      flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out';
-      flyingA.style.left = Math.random()*maxX + 'px';
-      flyingA.style.top = Math.random()*maxY + 'px';
-      setTimeout(moveA, 2000+Math.random()*1000);
-    };
-    moveA();
-    flyingA.onclick = () => {
-      aFlying = false;
-      flyingA.style.display = 'none';
-      flyingA.style.transition = 'none';
-      lastA.style.visibility = 'visible';
-      playSound('catch');
-    };
-  }
-  setTimeout(() => {
-    startAFlight();
-    setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000);
-  }, 10000);
-
-  // ===== API =====
-  const loader = document.getElementById('loadingOverlay');
-  function showLoader() { loader.classList.add('active'); }
-  function hideLoader() { loader.classList.remove('active'); }
-
-  async function loadAllData() {
-    showLoader();
-    try {
-      const res = await fetch(`${API_URL}?action=readAll`);
-      const json = await res.json();
-      if (json.status === 'success') {
-        for (const key of Object.keys(state)) {
-          if (key !== 'avatar' && json.data[key]) state[key] = json.data[key];
-        }
-        if (!state.scheme.length) {
-          state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
-        }
-      } else {
-        if (!state.scheme.length) {
-          state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
-        }
-      }
-    } catch(e) {
-      if (!state.scheme.length) {
-        state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
-      }
-    } finally { hideLoader(); }
-  }
-
-  async function saveToCloud(sheet, params) {
-    const qs = new URLSearchParams({ sheet, action: 'create', ...params }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
-  }
-  async function updateInCloud(sheet, id, params) {
-    const qs = new URLSearchParams({ sheet, action: 'update', id, ...params }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
-  }
-  async function deleteFromCloud(sheet, id) {
-    const qs = new URLSearchParams({ sheet, action: 'delete', id }).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
-  }
-
-  function showError(message) {
-    showModal(`
-      <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-      <h3 style="color:#FF4500;">Упс!</h3>
-      <p style="margin:16px 0; color:#2E3B2E;">${message}</p>
-      <button class="btn btn-primary" id="errorOkBtn">Понятно</button>
-    `);
-    document.getElementById('errorOkBtn').addEventListener('click', closeModal);
-  }
-
-  async function createItem(sheet, params, pageId) {
-    const tempId = Date.now();
-    const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
-    if (sheet === 'knowledge') newItem.q = params.question;
-    if (sheet === 'scheme') newItem.type = params.type || 'dept';
-    state[sheet].push(newItem);
-    render(pageId);
-    try {
-      const result = await saveToCloud(sheet, params);
-      if (result.status === 'success') newItem.id = result.id;
-      else {
-        state[sheet] = state[sheet].filter(i => i.id !== tempId);
-        render(pageId);
-        showError(result.error || 'Не удалось сохранить данные. Проверьте Google Таблицу.');
-      }
-    } catch(e) {
-      state[sheet] = state[sheet].filter(i => i.id !== tempId);
-      render(pageId);
-      showError('Ошибка соединения с сервером.');
-    }
-  }
-
-  async function updateItem(sheet, id, params, pageId) {
-    const index = state[sheet].findIndex(i => i.id == id || i.q == id);
-    if (index === -1) return;
-    const original = { ...state[sheet][index] };
-    Object.assign(state[sheet][index], params);
-    render(pageId);
-    try {
-      const result = await updateInCloud(sheet, id, params);
-      if (result.status !== 'success') {
-        state[sheet][index] = original;
-        render(pageId);
-        showError('Не удалось обновить данные.');
-      }
-    } catch(e) {
-      state[sheet][index] = original;
-      render(pageId);
-      showError('Ошибка соединения с сервером.');
-    }
-  }
-
-  async function deleteItem(sheet, id, pageId) {
-    const index = state[sheet].findIndex(i => i.id == id || i.q == id);
-    if (index === -1) return;
-    const removed = state[sheet].splice(index, 1)[0];
-    render(pageId);
-    try {
-      const result = await deleteFromCloud(sheet, id);
-      if (result.status !== 'success') {
-        state[sheet].splice(index, 0, removed);
-        render(pageId);
-        showError('Не удалось удалить данные.');
-      }
-    } catch(e) {
-      state[sheet].splice(index, 0, removed);
-      render(pageId);
-      showError('Ошибка соединения с сервером.');
-    }
-  }
-
-  // ===== Модалки =====
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalContent = document.getElementById('modalContent');
-  function showModal(html) {
-    modalContent.innerHTML = html;
-    modalOverlay.classList.add('active');
-    const closeBtn = modalContent.querySelector('.modern-close');
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-  }
-  function closeModal() { modalOverlay.classList.remove('active'); }
-  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
-
-  // ===== Рендер =====
-  const pages = document.querySelectorAll('.nav-item');
-  const mainContent = document.getElementById('mainContent');
-
-  function card(item, key) {
-    const title = item.title || item.text || item.q || '';
-    const desc = item.desc || item.description || item.a || item.answer || '';
-    return `<div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:start;">
-        <div>
-          <h3>${title}</h3>
-          <p>${desc}</p>
-          ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
-          <div class="magic-pin delete-${key}" data-id="${item.id || item.q}"></div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  function editableGrid(pageId, title, items, addLabel) {
-    return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
-  }
-  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-  function renderDashboard() { return editableGrid('dashboard', 'Обзор проектов', state.dashboard, 'Добавить карточку'); }
-  function renderBacklog() { return editableGrid('backlog', 'Бэклог', state.backlog, 'Добавить задачу'); }
-  function renderScheme() {
-    const founder = state.scheme.filter(i => i.type === 'founder');
-    const depts = state.scheme.filter(i => i.type === 'dept');
-    return `<div class="page active">
-      <h2 class="page-title">Структура компании</h2>
-      <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
-      <div style="display:flex; flex-wrap:wrap; gap:20px;">
-        ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
-          <h3>${i.title}</h3><p>${i.role}</p>
-          <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
-            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
-          </div>
-        </div>`).join('')}
-        ${depts.map(i => `<div class="card" style="width:200px;">
-          <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
-          <div style="display:flex; gap:12px; margin-top:12px;">
-            <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
-          </div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
-  function renderIdeas() { return editableGrid('ideas', 'Идеи', state.ideas, 'Добавить идею'); }
-  function renderPrototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип'); }
-  function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
-  function renderKnowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание'); }
-  function renderSettings() {
-    const soundStatus = soundEnabled ? 'Включены' : 'Выключены';
-    return `<div class="page active">
-      <h2 class="page-title">Настройки</h2>
-      <div class="card">
-        <h3>Аватар</h3>
-        <div class="settings-avatar" style="background-image:url('${state.avatar}'); width:80px; height:80px; border-radius:40px; background-size:cover; margin-bottom:12px;"></div>
-        <input type="file" id="avatarUpload" style="display:none;" accept="image/*">
-        <button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button>
-      </div>
-      <div class="card" style="display:flex; align-items:center; gap:16px;">
-        <span>Звуки: ${soundStatus}</span>
-        <button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled ? 'Выкл' : 'Вкл'}</button>
-      </div>
-      <div class="card"><button class="btn" style="background:#EF9A9A;" id="resetDataBtn">Сбросить данные</button></div>
-    </div>`;
-  }
-
-  function render(pageId) {
-    let html;
-    switch(pageId) {
-      case 'dashboard': html = renderDashboard(); break;
-      case 'backlog': html = renderBacklog(); break;
-      case 'scheme': html = renderScheme(); break;
-      case 'ideas': html = renderIdeas(); break;
-      case 'prototypes': html = renderPrototypes(); break;
-      case 'hrdnk': html = renderHrdnk(); break;
-      case 'knowledge': html = renderKnowledge(); break;
-      case 'settings': html = renderSettings(); break;
-      default: html = renderDashboard();
-    }
-    mainContent.innerHTML = html;
-    attachEvents(pageId);
-  }
-
-  // ===== Перетаскивание и удаление =====
-  let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
-
-  function askDelete(sheet, id) {
-    playSound('tear');
-    showModal(`
-      <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-      <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
-      <div style="display:flex; gap:16px; margin-top:24px;">
-        <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
-        <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
-      </div>
-    `);
-    document.getElementById('confirmTearYes').addEventListener('click', async () => { closeModal(); await deleteItem(sheet, id, getCurrentPage()); });
-    document.getElementById('confirmTearNo').addEventListener('click', closeModal);
-  }
-
-  function startDrag(e, el) {
-    e.preventDefault();
-    if (draggingPin) return;
-    draggingPin = el;
-    dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
-    dragClone = el.cloneNode(true);
-    dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
-    dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px';
-    dragClone.style.opacity = '0.9';
-    document.body.appendChild(dragClone);
-    el.style.opacity = '0.3';
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd);
-  }
-  function onDragMove(e) {
-    if (!draggingPin) return;
-    if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true;
-    if (dragClone) { dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px'; }
-  }
-  function onDragEnd(e) {
-    document.removeEventListener('mousemove', onDragMove);
-    document.removeEventListener('mouseup', onDragEnd);
-    if (dragClone) { dragClone.remove(); dragClone = null; }
-    if (draggingPin) {
-      draggingPin.style.opacity = '1';
-      if (dragMoved || !dragMoved) { // по клику или перетаскиванию – показываем запрос
-        const id = draggingPin.dataset.id;
-        const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
-        askDelete(sheet, id);
-      }
-      draggingPin = null;
-    }
-  }
-
-  function getCurrentPage() {
-    const active = document.querySelector('.nav-item.active');
-    return active ? active.dataset.page : 'dashboard';
-  }
-
-  function attachEvents(pageId) {
-    const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
-    if (keys.includes(pageId)) {
-      const key = pageId;
-      const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
-      if (addBtn) {
-        addBtn.addEventListener('click', () => {
-          showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Добавить</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
-          document.getElementById('saveModal').addEventListener('click', async () => {
-            const title = document.getElementById('modalTitle').value.trim();
-            if (!title) return;
-            const desc = document.getElementById('modalDesc').value.trim();
-            let params = { title };
-            if (key === 'knowledge') params = { question: title, answer: desc };
-            else if (key !== 'ideas') params.description = desc;
-            if (key === 'scheme') params.type = 'dept';
-            closeModal();
-            await createItem(key, params, pageId);
-          });
+    function animateStars() {
+        let prevX = mouseX, prevY = mouseY;
+        starTrail.forEach((s, idx) => {
+            s.x += (prevX - s.x) * 0.3;
+            s.y += (prevY - s.y) * 0.3;
+            s.el.style.left = s.x + 'px';
+            s.el.style.top = s.y + 'px';
+            prevX = s.x; prevY = s.y;
         });
-      }
-
-      document.querySelectorAll(`.edit-${key}`).forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          let item = state[key].find(i => i.id == id || i.q == id);
-          if (!item) item = state.scheme?.find(i => i.id == id);
-          if (!item) return;
-          const title = item.title || item.text || item.q || '';
-          const desc = item.desc || item.description || item.a || item.answer || '';
-          showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Редактировать</h3><input id="editTitle" value="${title}"><br><textarea id="editDesc">${desc}</textarea><br><button class="btn btn-primary" id="updateModal">Сохранить</button>`);
-          document.getElementById('updateModal').addEventListener('click', async () => {
-            const newTitle = document.getElementById('editTitle').value.trim();
-            if (!newTitle) return;
-            const newDesc = document.getElementById('editDesc').value.trim();
-            let params = { title: newTitle };
-            if (key === 'knowledge') params = { question: newTitle, answer: newDesc };
-            else if (key !== 'ideas') params.description = newDesc;
-            closeModal();
-            await updateItem(key, id, params, pageId);
-          });
-        });
-      });
-
-      document.querySelectorAll('.magic-pin').forEach(el => {
-        el.addEventListener('mousedown', e => startDrag(e, el));
-      });
+        requestAnimationFrame(animateStars);
     }
+    animateStars();
+    document.addEventListener('mousedown', () => {
+        playSound('magic');
+        const burst = document.createElement('div');
+        burst.className = 'magic-burst';
+        burst.textContent = '✦';
+        burst.style.left = wand.style.left;
+        burst.style.top = wand.style.top;
+        document.body.appendChild(burst);
+        setTimeout(() => burst.remove(), 400);
+        for (let i=0; i<5; i++) {
+            const spark = document.createElement('div');
+            spark.className = 'stardust';
+            spark.textContent = '✧';
+            spark.style.left = wand.style.left;
+            spark.style.top = wand.style.top;
+            spark.style.animation = 'floatDust 0.6s ease-out forwards';
+            spark.style.fontSize = '10px';
+            document.body.appendChild(spark);
+            setTimeout(() => spark.remove(), 600);
+        }
+    });
 
-    if (pageId === 'settings') {
-      document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
-      document.getElementById('avatarUpload')?.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => { state.avatar = reader.result; localStorage.setItem(STORAGE_AVATAR_KEY, reader.result); document.querySelector('.settings-avatar').style.backgroundImage = `url(${reader.result})`; };
-        reader.readAsDataURL(file);
-      });
-      document.getElementById('toggleSoundBtn')?.addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem(STORAGE_SOUND_KEY, soundEnabled); render('settings'); });
-      document.getElementById('resetDataBtn')?.addEventListener('click', () => {
-        showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Сбросить все данные?</h3><button class="btn" style="background:#EF9A9A;" id="confirmReset">Да</button>`);
-        document.getElementById('confirmReset').addEventListener('click', () => { localStorage.clear(); location.reload(); });
-      });
+    // ===== Солнышко с лицом =====
+    const sunEl = document.getElementById('sun');
+    const sunFace = document.getElementById('sunFace');
+    sunEl.addEventListener('click', () => {
+        sunEl.style.animation = 'bounce 0.4s ease';
+        setTimeout(() => sunEl.style.animation = '', 400);
+        sunFace.classList.add('visible');
+        playSound('laugh');
+        setTimeout(() => sunFace.classList.remove('visible'), 1800);
+    });
+
+    // ===== Фейерверк =====
+    let fireworkClicks = 0, fireworkTimer = null;
+    function launchFirework(x, y) {
+        const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
+        for (let burst = 0; burst < 3; burst++) {
+            setTimeout(() => {
+                const container = document.createElement('div');
+                container.className = 'firework';
+                container.style.left = (x + (Math.random()-0.5)*200) + 'px';
+                container.style.top = (y + (Math.random()-0.5)*200) + 'px';
+                document.body.appendChild(container);
+                playSound('firework');
+                for (let i = 0; i < 30; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    const angle = (Math.PI*2*i)/30;
+                    const distance = 80 + Math.random()*150;
+                    particle.style.setProperty('--dx', Math.cos(angle)*distance + 'px');
+                    particle.style.setProperty('--dy', Math.sin(angle)*distance + 'px');
+                    particle.style.background = colors[Math.floor(Math.random()*colors.length)];
+                    container.appendChild(particle);
+                }
+                setTimeout(() => container.remove(), 1300);
+            }, burst*200);
+        }
     }
-  }
+    document.getElementById('navDashboard').addEventListener('click', e => {
+        fireworkClicks++;
+        if (fireworkClicks >= 5) {
+            launchFirework(e.clientX, e.clientY);
+            fireworkClicks = 0;
+            if (fireworkTimer) clearTimeout(fireworkTimer);
+        } else {
+            if (fireworkTimer) clearTimeout(fireworkTimer);
+            fireworkTimer = setTimeout(() => { fireworkClicks = 0; }, 800);
+        }
+    });
 
-  // ===== ГОЛОСОВОЙ ПОМОЩНИК =====
-  const voiceBtn = document.getElementById('voiceBtn');
-  const voiceText = document.getElementById('voiceText');
-  const voiceWaves = document.getElementById('voiceWaves');
-  let recognition, isListening = false, ignoreRecognition = false;
-
-  // Функция для выбора лучшего русского голоса
-  function getBestVoice() {
-    return new Promise((resolve) => {
-      const voices = speechSynthesis.getVoices();
-      if (voices.length) {
-        const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
-                        voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
-                        voices.find(v => v.lang.startsWith('ru'));
-        resolve(ruVoice || voices[0]);
-      } else {
-        speechSynthesis.onvoiceschanged = () => {
-          const voices = speechSynthesis.getVoices();
-          const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
-                          voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
-                          voices.find(v => v.lang.startsWith('ru'));
-          resolve(ruVoice || voices[0]);
+    // ===== Летающая буква =====
+    const flyingA = document.getElementById('flyingA');
+    const lastA = document.querySelector('.last-a');
+    let aFlying = false;
+    function startAFlight() {
+        if (aFlying) return;
+        aFlying = true;
+        const rect = lastA.getBoundingClientRect();
+        flyingA.style.left = rect.left + 'px';
+        flyingA.style.top = rect.top + 'px';
+        flyingA.style.display = 'block';
+        lastA.style.visibility = 'hidden';
+        const moveA = () => {
+            if (!aFlying) return;
+            const maxX = window.innerWidth-60, maxY = window.innerHeight-60;
+            flyingA.style.transition = 'left 2s ease-in-out, top 2s ease-in-out';
+            flyingA.style.left = Math.random()*maxX + 'px';
+            flyingA.style.top = Math.random()*maxY + 'px';
+            setTimeout(moveA, 2000+Math.random()*1000);
         };
-      }
-    });
-  }
-
-  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'ru-RU';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      isListening = true;
-      voiceText.textContent = '🎤 Говорите...';
-      voiceWaves.style.display = 'block';
-      playSound('magic');
-    };
-
-    recognition.onend = () => {
-      isListening = false;
-      voiceText.textContent = 'Голосовой помощник';
-      voiceWaves.style.display = 'none';
-      ignoreRecognition = false;
-    };
-
-    recognition.onresult = async (event) => {
-      if (ignoreRecognition) return;
-      const transcript = event.results[0][0].transcript.trim();
-      voiceText.textContent = transcript.length > 18 ? transcript.substring(0,15)+'…' : transcript;
-      processVoiceCommand(transcript.toLowerCase());
-    };
-
-    recognition.onerror = (event) => {
-      console.warn('Speech error:', event.error);
-      voiceText.textContent = 'Ошибка, попробуйте снова';
-      setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000);
-    };
-
-    voiceBtn.addEventListener('click', () => {
-      if (isListening) {
-        recognition.stop();
-      } else {
-        recognition.start();
-      }
-    });
-  } else {
-    voiceBtn.style.display = 'none';
-  }
-
-  async function speak(text) {
-    if ('speechSynthesis' in window) {
-      ignoreRecognition = true;
-      if (isListening) recognition.stop();
-      voiceText.textContent = 'Отвечаю...';
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU';
-      utterance.rate = 1.2;          // быстрее стандартного
-      utterance.pitch = 1.1;        // приятный тон
-      const bestVoice = await getBestVoice();
-      if (bestVoice) utterance.voice = bestVoice;
-      utterance.onend = () => {
-        ignoreRecognition = false;
-        voiceText.textContent = 'Голосовой помощник';
-      };
-      utterance.onerror = () => {
-        ignoreRecognition = false;
-        voiceText.textContent = 'Голосовой помощник';
-      };
-      window.speechSynthesis.speak(utterance);
+        moveA();
+        flyingA.onclick = () => {
+            aFlying = false;
+            flyingA.style.display = 'none';
+            flyingA.style.transition = 'none';
+            lastA.style.visibility = 'visible';
+            playSound('catch');
+        };
     }
-  }
+    setTimeout(() => {
+        startAFlight();
+        setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000);
+    }, 10000);
 
-  function processVoiceCommand(command) {
-    const sectionMap = {
-      'обзор': 'dashboard', 'обзора': 'dashboard', 'обзоре': 'dashboard',
-      'бэклог': 'backlog', 'бэклога': 'backlog', 'бэклоге': 'backlog',
-      'структуру': 'scheme', 'структура': 'scheme', 'структуре': 'scheme',
-      'идеи': 'ideas', 'идей': 'ideas', 'идеях': 'ideas',
-      'прототипы': 'prototypes', 'прототипов': 'prototypes', 'прототипах': 'prototypes',
-      'hrdnk': 'hrdnk',
-      'базу знаний': 'knowledge', 'базы знаний': 'knowledge',
-      'настройки': 'settings', 'настроек': 'settings'
-    };
-    const navVerbs = ['открой', 'покажи', 'перейди в', 'открыть', 'показать', 'перейти в'];
+    // ===== API =====
+    const loader = document.getElementById('loadingOverlay');
+    function showLoader() { loader.classList.add('active'); }
+    function hideLoader() { loader.classList.remove('active'); }
 
-    let matched = false;
-
-    // Навигация
-    for (const [name, pageId] of Object.entries(sectionMap)) {
-      if (navVerbs.some(verb => command.includes(verb + ' ' + name))) {
-        navigateTo(pageId);
-        speak(`Открываю раздел ${name}`);
-        matched = true; break;
-      }
+    async function loadAllData() {
+        showLoader();
+        try {
+            const res = await fetch(`${API_URL}?action=readAll`);
+            const json = await res.json();
+            if (json.status === 'success') {
+                for (const key of Object.keys(state)) {
+                    if (key !== 'avatar' && json.data[key]) state[key] = json.data[key];
+                }
+                if (!state.scheme.length) {
+                    state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
+                }
+            } else {
+                if (!state.scheme.length) {
+                    state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
+                }
+            }
+        } catch(e) {
+            if (!state.scheme.length) {
+                state.scheme.push({ id: 1, title: 'Артур Галкин', description: 'Основатель и Генеральный директор', type: 'founder', role: 'Основатель и Генеральный директор' });
+            }
+        } finally { hideLoader(); }
     }
 
-    // Добавление
-    if (!matched && (command.includes('добавить') || command.includes('создать') || command.includes('занеси'))) {
-      const match = command.match(/(?:добавить|создать|занеси)\s+(?:карточку|задачу|идею|прототип|знание|отдел)?\s*(.+?)(?:\s+в\s+(.+))?$/);
-      if (match) {
-        const title = match[1].trim();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
-        if (state[section] !== undefined) {
-          const params = { title };
-          if (section === 'knowledge') params.question = title;
-          if (section === 'scheme') params.type = 'dept';
-          createItem(section, params, section);
-          speak(`Добавил "${title}" в раздел ${section}`);
-          matched = true;
+    async function saveToCloud(sheet, params) {
+        const qs = new URLSearchParams({ sheet, action: 'create', ...params }).toString();
+        const res = await fetch(`${API_URL}?${qs}`);
+        return res.json();
+    }
+    async function updateInCloud(sheet, id, params) {
+        const qs = new URLSearchParams({ sheet, action: 'update', id, ...params }).toString();
+        const res = await fetch(`${API_URL}?${qs}`);
+        return res.json();
+    }
+    async function deleteFromCloud(sheet, id) {
+        const qs = new URLSearchParams({ sheet, action: 'delete', id }).toString();
+        const res = await fetch(`${API_URL}?${qs}`);
+        return res.json();
+    }
+
+    function showError(message) {
+        showModal(`
+            <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+            <h3 style="color:#FF4500;">Упс!</h3>
+            <p style="margin:16px 0; color:#2E3B2E;">${message}</p>
+            <button class="btn btn-primary" id="errorOkBtn">Понятно</button>
+        `);
+        document.getElementById('errorOkBtn').addEventListener('click', closeModal);
+    }
+
+    async function createItem(sheet, params, pageId) {
+        const tempId = Date.now();
+        const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
+        if (sheet === 'knowledge') newItem.q = params.question;
+        if (sheet === 'scheme') newItem.type = params.type || 'dept';
+        state[sheet].push(newItem);
+        render(pageId);
+        try {
+            const result = await saveToCloud(sheet, params);
+            if (result.status === 'success') newItem.id = result.id;
+            else {
+                state[sheet] = state[sheet].filter(i => i.id !== tempId);
+                render(pageId);
+                showError(result.error || 'Не удалось сохранить данные. Проверьте Google Таблицу.');
+            }
+        } catch(e) {
+            state[sheet] = state[sheet].filter(i => i.id !== tempId);
+            render(pageId);
+            showError('Ошибка соединения с сервером.');
         }
-      }
     }
 
-    // Удаление
-    if (!matched && (command.includes('удали') || command.includes('убрать') || command.includes('сотри'))) {
-      const match = command.match(/(?:удали|убрав|сотри)\s+(?:карточку|задачу|листик)?\s*(.+?)(?:\s+в\s+(.+))?$/);
-      if (match) {
-        const title = match[1].trim().toLowerCase();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
-        if (state[section]) {
-          const item = state[section].find(i => (i.title || i.q || '').toLowerCase().includes(title));
-          if (item) {
-            deleteItem(section, item.id, section);
-            speak(`Удалил "${item.title || item.q}"`);
-            matched = true;
-          } else {
-            speak(`Не нашёл "${title}" в разделе ${section}`);
-            matched = true;
-          }
+    async function updateItem(sheet, id, params, pageId) {
+        const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+        if (index === -1) return;
+        const original = { ...state[sheet][index] };
+        Object.assign(state[sheet][index], params);
+        render(pageId);
+        try {
+            const result = await updateInCloud(sheet, id, params);
+            if (result.status !== 'success') {
+                state[sheet][index] = original;
+                render(pageId);
+                showError('Не удалось обновить данные.');
+            }
+        } catch(e) {
+            state[sheet][index] = original;
+            render(pageId);
+            showError('Ошибка соединения с сервером.');
         }
-      }
     }
 
-    // Шутка
-    if (!matched && (command.includes('шутка') || command.includes('анекдот') || command.includes('пошути'))) {
-      const jokes = ['Почему программисты не ходят в лес? Там нет нормального интернета!', 'Кармический банк начисляет кармики даже за улыбку. Улыбнись!', 'Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.'];
-      speak(jokes[Math.floor(Math.random() * jokes.length)]);
-      matched = true;
+    async function deleteItem(sheet, id, pageId) {
+        const index = state[sheet].findIndex(i => i.id == id || i.q == id);
+        if (index === -1) return;
+        const removed = state[sheet].splice(index, 1)[0];
+        render(pageId);
+        try {
+            const result = await deleteFromCloud(sheet, id);
+            if (result.status !== 'success') {
+                state[sheet].splice(index, 0, removed);
+                render(pageId);
+                showError('Не удалось удалить данные.');
+            }
+        } catch(e) {
+            state[sheet].splice(index, 0, removed);
+            render(pageId);
+            showError('Ошибка соединения с сервером.');
+        }
     }
 
-    if (!matched) {
-      speak('Я не поняла команду. Попробуйте: "открой обзор", "добавь задачу привет в бэклог", "удали привет", "расскажи шутку".');
+    // ===== Модалки =====
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalContent = document.getElementById('modalContent');
+    function showModal(html) {
+        modalContent.innerHTML = html;
+        modalOverlay.classList.add('active');
+        const closeBtn = modalContent.querySelector('.modern-close');
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
     }
-  }
+    function closeModal() { modalOverlay.classList.remove('active'); }
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  function navigateTo(pageId) {
-    const target = document.querySelector(`.nav-item[data-page="${pageId}"]`);
-    if (target) {
-      document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active'));
-      target.classList.add('active');
-      render(pageId);
+    // ===== Рендер =====
+    const pages = document.querySelectorAll('.nav-item');
+    const mainContent = document.getElementById('mainContent');
+
+    function card(item, key) {
+        const title = item.title || item.text || item.q || '';
+        const desc = item.desc || item.description || item.a || item.answer || '';
+        return `<div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <div>
+                    <h3>${title}</h3>
+                    <p>${desc}</p>
+                    ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
+                    <div class="magic-pin delete-${key}" data-id="${item.id || item.q}"></div>
+                </div>
+            </div>
+        </div>`;
     }
-  }
 
-  pages.forEach(page => {
-    page.addEventListener('click', () => {
-      pages.forEach(p => p.classList.remove('active'));
-      page.classList.add('active');
-      render(page.dataset.page);
+    function editableGrid(pageId, title, items, addLabel) {
+        return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
+    }
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function renderDashboard() { return editableGrid('dashboard', 'Обзор проектов', state.dashboard, 'Добавить карточку'); }
+    function renderBacklog() { return editableGrid('backlog', 'Бэклог', state.backlog, 'Добавить задачу'); }
+    function renderScheme() {
+        const founder = state.scheme.filter(i => i.type === 'founder');
+        const depts = state.scheme.filter(i => i.type === 'dept');
+        return `<div class="page active">
+            <h2 class="page-title">Структура компании</h2>
+            <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
+            <div style="display:flex; flex-wrap:wrap; gap:20px;">
+                ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); color:#1a1a1a; text-align:center;">
+                    <h3>${i.title}</h3><p>${i.role}</p>
+                    <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
+                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+                        <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
+                    </div>
+                </div>`).join('')}
+                ${depts.map(i => `<div class="card" style="width:200px;">
+                    <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
+                    <div style="display:flex; gap:12px; margin-top:12px;">
+                        <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
+                        <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
+                    </div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    }
+    function renderIdeas() { return editableGrid('ideas', 'Идеи', state.ideas, 'Добавить идею'); }
+    function renderPrototypes() { return editableGrid('prototypes', 'Прототипы', state.prototypes, 'Добавить прототип'); }
+    function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
+    function renderKnowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание'); }
+    function renderSettings() {
+        const soundStatus = soundEnabled ? 'Включены' : 'Выключены';
+        return `<div class="page active">
+            <h2 class="page-title">Настройки</h2>
+            <div class="card">
+                <h3>Аватар</h3>
+                <div class="settings-avatar" style="background-image:url('${state.avatar}'); width:80px; height:80px; border-radius:40px; background-size:cover; margin-bottom:12px;"></div>
+                <input type="file" id="avatarUpload" style="display:none;" accept="image/*">
+                <button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button>
+            </div>
+            <div class="card" style="display:flex; align-items:center; gap:16px;">
+                <span>Звуки: ${soundStatus}</span>
+                <button class="btn btn-primary" id="toggleSoundBtn">${soundEnabled ? 'Выкл' : 'Вкл'}</button>
+            </div>
+            <div class="card"><button class="btn" style="background:#EF9A9A;" id="resetDataBtn">Сбросить данные</button></div>
+        </div>`;
+    }
+
+    function render(pageId) {
+        let html;
+        switch(pageId) {
+            case 'dashboard': html = renderDashboard(); break;
+            case 'backlog': html = renderBacklog(); break;
+            case 'scheme': html = renderScheme(); break;
+            case 'ideas': html = renderIdeas(); break;
+            case 'prototypes': html = renderPrototypes(); break;
+            case 'hrdnk': html = renderHrdnk(); break;
+            case 'knowledge': html = renderKnowledge(); break;
+            case 'settings': html = renderSettings(); break;
+            default: html = renderDashboard();
+        }
+        mainContent.innerHTML = html;
+        attachEvents(pageId);
+    }
+
+    // ===== Удаление =====
+    let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
+
+    function askDelete(sheet, id) {
+        playSound('tear');
+        showModal(`
+            <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+            <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
+            <div style="display:flex; gap:16px; margin-top:24px;">
+                <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
+                <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
+            </div>
+        `);
+        document.getElementById('confirmTearYes').addEventListener('click', async () => { closeModal(); await deleteItem(sheet, id, getCurrentPage()); });
+        document.getElementById('confirmTearNo').addEventListener('click', closeModal);
+    }
+
+    function startDrag(e, el) {
+        e.preventDefault();
+        if (draggingPin) return;
+        draggingPin = el;
+        dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
+        dragClone = el.cloneNode(true);
+        dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
+        dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px';
+        dragClone.style.opacity = '0.9';
+        document.body.appendChild(dragClone);
+        el.style.opacity = '0.3';
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+    }
+    function onDragMove(e) {
+        if (!draggingPin) return;
+        if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true;
+        if (dragClone) { dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px'; }
+    }
+    function onDragEnd(e) {
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        if (dragClone) { dragClone.remove(); dragClone = null; }
+        if (draggingPin) {
+            draggingPin.style.opacity = '1';
+            const id = draggingPin.dataset.id;
+            const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
+            askDelete(sheet, id);
+            draggingPin = null;
+        }
+    }
+
+    function getCurrentPage() {
+        const active = document.querySelector('.nav-item.active');
+        return active ? active.dataset.page : 'dashboard';
+    }
+
+    function attachEvents(pageId) {
+        const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
+        if (keys.includes(pageId)) {
+            const key = pageId;
+            const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Добавить</h3><input id="modalTitle" placeholder="Название"><br><textarea id="modalDesc" placeholder="Описание"></textarea><br><button class="btn btn-primary" id="saveModal">Сохранить</button>`);
+                    document.getElementById('saveModal').addEventListener('click', async () => {
+                        const title = document.getElementById('modalTitle').value.trim();
+                        if (!title) return;
+                        const desc = document.getElementById('modalDesc').value.trim();
+                        let params = { title };
+                        if (key === 'knowledge') params = { question: title, answer: desc };
+                        else if (key !== 'ideas') params.description = desc;
+                        if (key === 'scheme') params.type = 'dept';
+                        closeModal();
+                        await createItem(key, params, pageId);
+                    });
+                });
+            }
+
+            document.querySelectorAll(`.edit-${key}`).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    let item = state[key].find(i => i.id == id || i.q == id);
+                    if (!item) item = state.scheme?.find(i => i.id == id);
+                    if (!item) return;
+                    const title = item.title || item.text || item.q || '';
+                    const desc = item.desc || item.description || item.a || item.answer || '';
+                    showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Редактировать</h3><input id="editTitle" value="${title}"><br><textarea id="editDesc">${desc}</textarea><br><button class="btn btn-primary" id="updateModal">Сохранить</button>`);
+                    document.getElementById('updateModal').addEventListener('click', async () => {
+                        const newTitle = document.getElementById('editTitle').value.trim();
+                        if (!newTitle) return;
+                        const newDesc = document.getElementById('editDesc').value.trim();
+                        let params = { title: newTitle };
+                        if (key === 'knowledge') params = { question: newTitle, answer: newDesc };
+                        else if (key !== 'ideas') params.description = newDesc;
+                        closeModal();
+                        await updateItem(key, id, params, pageId);
+                    });
+                });
+            });
+
+            document.querySelectorAll('.magic-pin').forEach(el => {
+                el.addEventListener('mousedown', e => startDrag(e, el));
+            });
+        }
+
+        if (pageId === 'settings') {
+            document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
+            document.getElementById('avatarUpload')?.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => { state.avatar = reader.result; localStorage.setItem(STORAGE_AVATAR_KEY, reader.result); document.querySelector('.settings-avatar').style.backgroundImage = `url(${reader.result})`; };
+                reader.readAsDataURL(file);
+            });
+            document.getElementById('toggleSoundBtn')?.addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem(STORAGE_SOUND_KEY, soundEnabled); render('settings'); });
+            document.getElementById('resetDataBtn')?.addEventListener('click', () => {
+                showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button><h3>Сбросить все данные?</h3><button class="btn" style="background:#EF9A9A;" id="confirmReset">Да</button>`);
+                document.getElementById('confirmReset').addEventListener('click', () => { localStorage.clear(); location.reload(); });
+            });
+        }
+    }
+
+    // ===== ГОЛОСОВОЙ ПОМОЩНИК (полностью рабочий) =====
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceText = document.getElementById('voiceText');
+    const voiceWaves = document.getElementById('voiceWaves');
+    let recognition, isListening = false, microphoneAllowed = false;
+
+    async function requestMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop()); // сразу отпускаем, нам нужно только разрешение
+            return true;
+        } catch (e) {
+            console.warn('Микрофон отклонён или недоступен');
+            return false;
+        }
+    }
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ru-RU';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            isListening = true;
+            voiceText.textContent = '🎤 Говорите...';
+            voiceWaves.style.display = 'block';
+            console.log('Распознавание началось');
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            voiceText.textContent = 'Голосовой помощник';
+            voiceWaves.style.display = 'none';
+            console.log('Распознавание завершено');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            console.log('Распознано:', transcript);
+            voiceText.textContent = transcript.length > 18 ? transcript.substring(0,15)+'…' : transcript;
+            processVoiceCommand(transcript.toLowerCase());
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Ошибка распознавания:', event.error);
+            voiceText.textContent = 'Ошибка, попробуйте снова';
+            voiceWaves.style.display = 'none';
+            setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000);
+        };
+
+        voiceBtn.addEventListener('click', async () => {
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+            if (!microphoneAllowed) {
+                const allowed = await requestMicrophone();
+                if (!allowed) {
+                    voiceText.textContent = 'Микрофон недоступен';
+                    setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000);
+                    return;
+                }
+                microphoneAllowed = true;
+                console.log('Микрофон получен');
+            }
+            recognition.start();
+        });
+    } else {
+        voiceBtn.style.display = 'none';
+    }
+
+    function getBestVoice() {
+        return new Promise((resolve) => {
+            const voices = speechSynthesis.getVoices();
+            if (voices.length) {
+                const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
+                                voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
+                                voices.find(v => v.lang.startsWith('ru'));
+                resolve(ruVoice || voices[0]);
+            } else {
+                speechSynthesis.onvoiceschanged = () => {
+                    const voices = speechSynthesis.getVoices();
+                    const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
+                                    voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
+                                    voices.find(v => v.lang.startsWith('ru'));
+                    resolve(ruVoice || voices[0]);
+                };
+            }
+        });
+    }
+
+    async function speak(text) {
+        if ('speechSynthesis' in window) {
+            if (isListening) recognition.stop();
+            voiceText.textContent = 'Отвечаю...';
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.rate = 1.2;
+            utterance.pitch = 1.1;
+            const bestVoice = await getBestVoice();
+            if (bestVoice) utterance.voice = bestVoice;
+            utterance.onend = () => { voiceText.textContent = 'Голосовой помощник'; };
+            utterance.onerror = () => { voiceText.textContent = 'Голосовой помощник'; };
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function processVoiceCommand(command) {
+        const sectionMap = {
+            'обзор': 'dashboard', 'обзора': 'dashboard', 'обзоре': 'dashboard',
+            'бэклог': 'backlog', 'бэклога': 'backlog', 'бэклоге': 'backlog',
+            'структуру': 'scheme', 'структура': 'scheme', 'структуре': 'scheme',
+            'идеи': 'ideas', 'идей': 'ideas', 'идеях': 'ideas',
+            'прототипы': 'prototypes', 'прототипов': 'prototypes',
+            'hrdnk': 'hrdnk',
+            'базу знаний': 'knowledge', 'базы знаний': 'knowledge',
+            'настройки': 'settings', 'настроек': 'settings'
+        };
+        const navVerbs = ['открой', 'покажи', 'перейди в', 'открыть', 'показать', 'перейти в'];
+        let matched = false;
+
+        for (const [name, pageId] of Object.entries(sectionMap)) {
+            if (navVerbs.some(verb => command.includes(verb + ' ' + name))) {
+                navigateTo(pageId);
+                speak(`Открываю раздел ${name}`);
+                matched = true; break;
+            }
+        }
+
+        if (!matched && (command.includes('добавь') || command.includes('создай'))) {
+            const match = command.match(/(?:добавь|создай)\s+(?:карточку|задачу|идею|прототип|знание|отдел)?\s*(.+?)(?:\s+в\s+(.+))?$/);
+            if (match) {
+                const title = match[1].trim();
+                const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
+                if (state[section] !== undefined) {
+                    const params = { title };
+                    if (section === 'knowledge') params.question = title;
+                    if (section === 'scheme') params.type = 'dept';
+                    createItem(section, params, section);
+                    speak(`Добавил "${title}" в раздел ${section}`);
+                    matched = true;
+                }
+            }
+        }
+
+        if (!matched && (command.includes('удали') || command.includes('убрать'))) {
+            const match = command.match(/(?:удали|убрав)\s+(?:карточку|задачу|листик)?\s*(.+?)(?:\s+в\s+(.+))?$/);
+            if (match) {
+                const title = match[1].trim().toLowerCase();
+                const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
+                if (state[section]) {
+                    const item = state[section].find(i => (i.title || i.q || '').toLowerCase().includes(title));
+                    if (item) {
+                        deleteItem(section, item.id, section);
+                        speak(`Удалил "${item.title || item.q}"`);
+                        matched = true;
+                    } else {
+                        speak(`Не нашёл "${title}" в разделе ${section}`);
+                        matched = true;
+                    }
+                }
+            }
+        }
+
+        if (!matched && (command.includes('шутка') || command.includes('анекдот') || command.includes('пошути'))) {
+            const jokes = ['Почему программисты не ходят в лес? Там нет нормального интернета!', 'Кармический банк начисляет кармики даже за улыбку. Улыбнись!', 'Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.'];
+            speak(jokes[Math.floor(Math.random() * jokes.length)]);
+            matched = true;
+        }
+
+        if (!matched) {
+            speak('Я не поняла команду. Попробуйте: "открой обзор", "добавь задачу привет в бэклог", "удали привет", "расскажи шутку".');
+        }
+    }
+
+    function navigateTo(pageId) {
+        const target = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+        if (target) {
+            document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active'));
+            target.classList.add('active');
+            render(pageId);
+        }
+    }
+
+    pages.forEach(page => {
+        page.addEventListener('click', () => {
+            pages.forEach(p => p.classList.remove('active'));
+            page.classList.add('active');
+            render(page.dataset.page);
+        });
     });
-  });
 
-  (async function init() {
-    await loadAllData();
-    render('dashboard');
-  })();
+    (async function init() {
+        await loadAllData();
+        render('dashboard');
+    })();
 })();
 </script>
 </body>
