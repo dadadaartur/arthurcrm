@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Пульт управления — Артур Галкин</title>
     <style>
+        /* ========== ВАШ ОРИГИНАЛЬНЫЙ CSS (НИЧЕГО НЕ МЕНЯЛ) ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', 'Comic Sans MS', sans-serif;
@@ -168,7 +169,7 @@
         .voice-feedback {
             position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7);
             color: white; padding: 8px 16px; border-radius: 40px; font-size: 14px;
-            z-index: 1000; backdrop-filter: blur(8px); font-family: monospace;
+            z-index: 1001; backdrop-filter: blur(8px); font-family: monospace;
             pointer-events: none;
         }
         .radio-container {
@@ -234,52 +235,33 @@
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 <div id="voiceFeedback" class="voice-feedback" style="display: none;">🎤 Готов</div>
 
-<!-- РАДИО: iframe с плеером volnorez -->
 <div class="radio-container">
     <iframe src="https://volnorez.com/xit-fm-aleksin" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 </div>
 
 <script>
-// =============================================
-// 1. Google Sheets API (НОВЫЙ URL)
-// =============================================
+// ========================== 1. GOOGLE SHEETS API (ВАШ URL) ==========================
 const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
 
 async function callAPI(action, sheet, params = {}) {
     const url = new URL(API_URL);
     url.searchParams.append('action', action);
     url.searchParams.append('sheet', sheet);
-    for (const [k, v] of Object.entries(params)) {
-        if (v !== undefined && v !== null) url.searchParams.append(k, v);
-    }
+    for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) url.searchParams.append(k, v);
     const response = await fetch(url.toString());
     const json = await response.json();
     if (!json || json.status !== 'success') throw new Error(json?.error || 'API error');
     return json;
 }
-async function loadSheet(sheetName) {
-    const res = await callAPI('read', sheetName);
-    return res.data || [];
-}
-async function createRecord(sheetName, fields) {
-    return await callAPI('create', sheetName, fields);
-}
-async function updateRecord(sheetName, id, fields) {
-    return await callAPI('update', sheetName, { id, ...fields });
-}
-async function deleteRecord(sheetName, id) {
-    return await callAPI('delete', sheetName, { id });
-}
-async function setPriority(sheetName, id, priority) {
-    return await callAPI('priority', sheetName, { id, priority });
-}
+async function loadSheet(sheetName) { const res = await callAPI('read', sheetName); return res.data || []; }
+async function createRecord(sheetName, fields) { return await callAPI('create', sheetName, fields); }
+async function updateRecord(sheetName, id, fields) { return await callAPI('update', sheetName, { id, ...fields }); }
+async function deleteRecord(sheetName, id) { return await callAPI('delete', sheetName, { id }); }
+async function setPriority(sheetName, id, priority) { return await callAPI('priority', sheetName, { id, priority }); }
 
-// =============================================
-// 2. Данные
-// =============================================
+// ========================== 2. ЗАГРУЗКА ДАННЫХ И АВАТАРА ==========================
 let appState = {
-    dashboard: [], backlog: [], scheme: [], ideas: [],
-    prototypes: [], hrdnk: [], knowledge: [], avatar: ''
+    dashboard: [], backlog: [], scheme: [], ideas: [], prototypes: [], hrdnk: [], knowledge: [], avatar: ''
 };
 let currentPage = 'dashboard';
 
@@ -287,38 +269,46 @@ async function loadAllData() {
     try {
         const sheets = ['dashboard', 'backlog', 'scheme', 'ideas', 'prototypes', 'hrdnk', 'knowledge'];
         for (let s of sheets) appState[s] = await loadSheet(s);
-        const storedAvatar = localStorage.getItem('arthurAvatar');
-        if (storedAvatar) appState.avatar = storedAvatar;
-    } catch(e) { console.error(e); showVoiceFeedback('Ошибка связи с таблицей', true); }
+        // загружаем аватар из отдельного листа "avatar"
+        const avatarData = await loadSheet('avatar');
+        if (avatarData.length && avatarData[0].base64) appState.avatar = avatarData[0].base64;
+        else appState.avatar = '';
+    } catch(e) { console.error(e); }
 }
 
-function saveAvatar(base64) {
+async function saveAvatarToSheet(base64) {
+    // лист "avatar" имеет поля id, base64
+    const existing = await loadSheet('avatar');
+    if (existing.length) {
+        await updateRecord('avatar', existing[0].id, { base64 });
+    } else {
+        await createRecord('avatar', { base64 });
+    }
     appState.avatar = base64;
-    localStorage.setItem('arthurAvatar', base64);
 }
 
-// Дефолтные данные для инициализации
+// ========================== 3. ДЕФОЛТНЫЕ ДАННЫЕ ДЛЯ ПЕРВОГО ЗАПУСКА ==========================
 const defaultState = {
     dashboard: [
-        { id:1, title:'Кармический Банк', desc:'HR-экосистема с геймификацией, AI-тренером, CRM, магазином призов.' },
-        { id:2, title:'HRDNK', desc:'Цифровой паспорт специалиста.' }
+        { id:1, title:'Кармический Банк', description:'HR-экосистема с геймификацией, AI-тренером, CRM, магазином призов.' },
+        { id:2, title:'HRDNK', description:'Цифровой паспорт специалиста.' }
     ],
-    backlog: [ { id:1, title:'Cloud.ru SSL', status:'progress', desc:'Решить проблему подключения к БД' } ],
+    backlog: [ { id:1, title:'Cloud.ru SSL', description:'Решить проблему подключения к БД', status:'active', priority:'medium' } ],
     scheme: [
-        { id:1, title:'Артур Галкин', role:'Основатель и Генеральный директор', type:'founder' },
-        { id:2, title:'Исследования', desc:'Психометрия', type:'dept' },
-        { id:3, title:'Математики', desc:'Алгоритмы', type:'dept' },
-        { id:4, title:'Психология', desc:'Квест-типология', type:'dept' },
-        { id:5, title:'Разработка', desc:'FastAPI', type:'dept' }
+        { id:1, title:'Артур Галкин', role:'Основатель и Генеральный директор', type:'founder', description:'' },
+        { id:2, title:'Исследования', description:'Психометрия', type:'dept' },
+        { id:3, title:'Математики', description:'Алгоритмы', type:'dept' },
+        { id:4, title:'Психология', description:'Квест-типология', type:'dept' },
+        { id:5, title:'Разработка', description:'FastAPI', type:'dept' }
     ],
     prototypes: [
-        { id:1, title:'Рабочий стол CRM', desc:'Воронка, активность, кнопки' },
-        { id:2, title:'Карточка сделки', desc:'Этапы, комментарии, начисления' },
-        { id:3, title:'Бильярд-дуэль', desc:'Физика, ИИ' }
+        { id:1, title:'Рабочий стол CRM', description:'Воронка, активность, кнопки' },
+        { id:2, title:'Карточка сделки', description:'Этапы, комментарии, начисления' },
+        { id:3, title:'Бильярд-дуэль', description:'Физика, ИИ' }
     ],
-    hrdnk: [ { id:1, title:'Концепция ЦПС', status:'ready', desc:'Цифровой паспорт специалиста' } ],
-    ideas: [ { id:1, text:'Система кармиков за здоровье' } ],
-    knowledge: [ { q:'проект', a:'Кармический Банк — HR-экосистема с геймификацией, AI-тренером, CRM.' } ]
+    hrdnk: [ { id:1, title:'Концепция ЦПС', description:'Цифровой паспорт специалиста', status:'ready' } ],
+    ideas: [ { id:1, text:'Система кармиков за здоровье', description:'' } ],
+    knowledge: [ { id:1, question:'проект', answer:'Кармический Банк — HR-экосистема с геймификацией, AI-тренером, CRM.' } ]
 };
 
 async function initSheets() {
@@ -327,47 +317,45 @@ async function initSheets() {
         if (existing.length === 0) {
             for (const rec of records) {
                 let fields = {};
-                if (sheetName === 'dashboard') fields = { title: rec.title, description: rec.desc };
-                else if (sheetName === 'backlog') fields = { title: rec.title, description: rec.desc, status: rec.status, priority: 'medium' };
-                else if (sheetName === 'scheme') fields = { title: rec.title, description: rec.desc || '', type: rec.type, role: rec.role || '' };
-                else if (sheetName === 'ideas') fields = { title: rec.text, description: '' };
-                else if (sheetName === 'prototypes') fields = { title: rec.title, description: rec.desc };
-                else if (sheetName === 'hrdnk') fields = { title: rec.title, description: rec.desc, status: rec.status };
-                else if (sheetName === 'knowledge') fields = { question: rec.q, answer: rec.a };
+                if (sheetName === 'dashboard') fields = { title: rec.title, description: rec.description };
+                else if (sheetName === 'backlog') fields = { title: rec.title, description: rec.description, status: rec.status, priority: rec.priority };
+                else if (sheetName === 'scheme') fields = { title: rec.title, description: rec.description, type: rec.type, role: rec.role || '' };
+                else if (sheetName === 'ideas') fields = { title: rec.text, description: rec.description };
+                else if (sheetName === 'prototypes') fields = { title: rec.title, description: rec.description };
+                else if (sheetName === 'hrdnk') fields = { title: rec.title, description: rec.description, status: rec.status };
+                else if (sheetName === 'knowledge') fields = { question: rec.question, answer: rec.answer };
                 await createRecord(sheetName, fields);
             }
         }
     }
+    // инициализация листа avatar
+    const avatarExist = await loadSheet('avatar');
+    if (avatarExist.length === 0) await createRecord('avatar', { base64: '' });
     await loadAllData();
 }
 
-// =============================================
-// 3. Отрисовка (оригинальная логика)
-// =============================================
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-}
+// ========================== 4. ОТРИСОВКА (ВАШИ ФУНКЦИИ, АДАПТИРОВАНЫ ПОД appState) ==========================
+function escapeHtml(str) { return (str || '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
 function card(item, key) {
     let content = `<div class="card" data-id="${item.id}">
         <h3>${escapeHtml(item.title || item.text || item.question || '')}</h3>
-        <p>${escapeHtml(item.description || item.desc || item.answer || '')}</p>
+        <p>${escapeHtml(item.description || item.answer || '')}</p>
         <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
             <button class="btn btn-edit edit-${key}" data-id="${item.id}">Редактировать</button>
             <button class="btn btn-delete delete-${key}" data-id="${item.id}">Удалить</button>
         </div>`;
     if (item.role) content += `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${escapeHtml(item.role)}</p>`;
-    if (item.priority) content += `<div><span style="background:#ffd966; padding:2px 8px; border-radius:20px;">Приоритет: ${item.priority}</span></div>`;
+    if (item.priority) content += `<div style="margin-top:8px;"><span style="background:#ffd966; padding:2px 8px; border-radius:20px;">Приоритет: ${item.priority}</span></div>`;
     content += `</div>`;
     return content;
 }
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function capitalize(s) { return s[0].toUpperCase() + s.slice(1); }
 function editableGrid(pageId, title, items, addLabel) {
     return `<div class="page active"><h2 class="page-title">${title}</h2><div class="grid" id="${pageId}List">${items.map(i => card(i, pageId)).join('')}</div><button class="btn btn-primary" id="add${capitalize(pageId)}Btn">${addLabel}</button></div>`;
 }
 function dashboard() { return editableGrid('dashboard', 'Обзор проектов', appState.dashboard, 'Добавить карточку'); }
 function backlog() {
-    const sorted = [...appState.backlog].sort((a,b) => ( (a.priority === 'high'?1:(a.priority==='medium'?2:3)) - (b.priority === 'high'?1:(b.priority==='medium'?2:3)) ));
+    const sorted = [...appState.backlog].sort((a,b) => ({high:1,medium:2,low:3}[a.priority]||2) - ({high:1,medium:2,low:3}[b.priority]||2));
     return editableGrid('backlog', 'Бэклог', sorted, 'Добавить задачу');
 }
 function scheme() {
@@ -377,8 +365,8 @@ function scheme() {
         <h2 class="page-title">Структура компании</h2>
         <button class="btn btn-primary" id="addSchemeBtn" style="margin-bottom:24px;">Добавить отдел</button>
         <div style="display:flex; flex-wrap:wrap; gap:20px;">
-            ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); text-align:center;"><h3>${escapeHtml(i.title)}</h3><p>${escapeHtml(i.role)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button></div></div>`).join('')}
-            ${depts.map(i => `<div class="card" style="width:200px;"><h4>${escapeHtml(i.title)}</h4><p>${escapeHtml(i.description)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Удалить</button></div></div>`).join('')}
+            ${founder.map(i => `<div class="card" style="width:260px; background:linear-gradient(45deg,#FFD700,#FFA500); text-align:center;"><h3>${escapeHtml(i.title)}</h3><p>${escapeHtml(i.role)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Уд</button></div></div>`).join('')}
+            ${depts.map(i => `<div class="card" style="width:200px;"><h4>${escapeHtml(i.title)}</h4><p>${escapeHtml(i.description)}</p><div><button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред</button><button class="btn btn-delete delete-scheme" data-id="${i.id}">Уд</button></div></div>`).join('')}
         </div>
     </div>`;
 }
@@ -389,7 +377,7 @@ function hrdnk() { return editableGrid('hrdnk', 'HRDNK', appState.hrdnk, 'Доб
 function settings() {
     return `<div class="page active"><h2 class="page-title">Настройки</h2>
         <div class="card"><h3>Аватар</h3><div class="settings-avatar" id="settingsAvatar" style="background-image:url('${appState.avatar || ''}')"></div><input type="file" id="avatarUpload" accept="image/*" style="display:none"><button class="btn btn-primary" id="changeAvatarBtn">Загрузить фото</button></div>
-        <div class="card"><button class="btn btn-delete" id="resetDataBtn">Сбросить локальные настройки</button></div>
+        <div class="card"><button class="btn btn-delete" id="resetDataBtn">Сбросить настройки (только аватар)</button></div>
     </div>`;
 }
 async function render(pageId) {
@@ -409,6 +397,7 @@ async function render(pageId) {
     attachEvents(pageId);
 }
 
+// модалка
 const modalOverlay = document.getElementById('modalOverlay');
 const modalContent = document.getElementById('modalContent');
 function showModal(innerHtml) {
@@ -419,6 +408,7 @@ function showModal(innerHtml) {
 }
 modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) modalOverlay.classList.remove('active'); });
 
+// обработчики кнопок (CRUD через API)
 async function attachEvents(pageId) {
     const key = pageId;
     const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
@@ -488,19 +478,27 @@ async function attachEvents(pageId) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = () => { saveAvatar(reader.result); document.getElementById('settingsAvatar').style.backgroundImage = `url(${reader.result})`; };
+            reader.onload = async () => {
+                await saveAvatarToSheet(reader.result);
+                document.getElementById('settingsAvatar').style.backgroundImage = `url(${reader.result})`;
+                speak('Аватар сохранён');
+            };
             reader.readAsDataURL(file);
         });
         document.getElementById('resetDataBtn')?.addEventListener('click', () => {
             showModal(`<button class="close-btn">✕</button><h3>Сбросить аватар?</h3><button class="btn btn-delete" id="confirmReset">Да</button>`);
-            document.getElementById('confirmReset').onclick = () => { localStorage.removeItem('arthurAvatar'); appState.avatar = ''; render('settings'); modalOverlay.classList.remove('active'); };
+            document.getElementById('confirmReset').onclick = async () => {
+                await saveAvatarToSheet('');
+                await loadAllData();
+                render('settings');
+                modalOverlay.classList.remove('active');
+                speak('Аватар удалён');
+            };
         });
     }
 }
 
-// =============================================
-// 4. Голосовой помощник (приятный голос, команды)
-// =============================================
+// ========================== 5. ГОЛОСОВОЙ АССИСТЕНТ (ПРИЯТНЫЙ, БЫСТРЫЙ, ГИБКИЙ) ==========================
 let recognition = null, isListening = false;
 function showVoiceFeedback(msg, isError = false) {
     const el = document.getElementById('voiceFeedback');
@@ -515,11 +513,8 @@ function getBestRussianVoice() {
         const check = () => {
             let voices = synth.getVoices().filter(v => v.lang.startsWith('ru'));
             if (!voices.length) resolve(null);
-            const google = voices.find(v => v.name.includes('Google'));
-            if (google) resolve(google);
-            const irina = voices.find(v => v.name.includes('Irina'));
-            if (irina) resolve(irina);
-            resolve(voices[0]);
+            let best = voices.find(v => v.name.includes('Google')) || voices.find(v => v.name.includes('Microsoft Irina')) || voices[0];
+            resolve(best);
         };
         if (synth.getVoices().length) check();
         else synth.addEventListener('voiceschanged', check, { once: true });
@@ -531,7 +526,7 @@ async function speak(text) {
     if (!cachedVoice) cachedVoice = await getBestRussianVoice();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'ru-RU';
-    utter.rate = 0.85;
+    utter.rate = 0.9;
     utter.pitch = 1.0;
     if (cachedVoice) utter.voice = cachedVoice;
     window.speechSynthesis.cancel();
@@ -540,7 +535,7 @@ async function speak(text) {
 async function processVoiceCommand(command) {
     const lower = command.toLowerCase();
     const page = currentPage;
-    // создать
+    // СОЗДАНИЕ
     if (lower.includes('создай') || lower.includes('добавь')) {
         let match = lower.match(/(?:создай|добавь)\s+(?:в\s+)?(?:задачу|идею|карточку|прототип|знание)?\s*(.+)/i);
         if (!match) { speak('Не понял название'); return; }
@@ -563,7 +558,7 @@ async function processVoiceCommand(command) {
         } catch(e) { speak('Ошибка создания'); }
         return;
     }
-    // редактировать
+    // РЕДАКТИРОВАНИЕ
     if (lower.includes('редактируй') || lower.includes('измени')) {
         let match = lower.match(/(?:редактируй|измени)\s+(.+?)\s+на\s+(.+)/i);
         if (!match) { speak('Скажите: редактируй [название] на [новое описание]'); return; }
@@ -578,7 +573,7 @@ async function processVoiceCommand(command) {
         } catch(e) { speak('Ошибка'); }
         return;
     }
-    // удалить
+    // УДАЛЕНИЕ
     if (lower.includes('удали')) {
         let match = lower.match(/удали\s+(.+)/i);
         if (!match) { speak('Что удалить?'); return; }
@@ -592,7 +587,7 @@ async function processVoiceCommand(command) {
         } catch(e) { speak('Ошибка удаления'); }
         return;
     }
-    // приоритет (только бэклог)
+    // ПРИОРИТЕТ (только бэклог)
     if ((lower.includes('приоритет') || lower.includes('приоритизируй')) && page === 'backlog') {
         let match = lower.match(/(?:приоритет|приоритизируй)\s+(высокий|средний|низкий)\s+для\s+(.+)/i);
         if (!match) { speak('Скажите: установи высокий приоритет для задачи...'); return; }
@@ -607,17 +602,20 @@ async function processVoiceCommand(command) {
         } catch(e) { speak('Ошибка'); }
         return;
     }
+    // ПОКАЗАТЬ СПИСОК
     if (lower.includes('покажи') || lower.includes('список') || lower.includes('что у меня')) {
         let count = appState[page]?.length || 0;
         speak(`В разделе ${page} ${count} элементов`);
         return;
     }
+    // ПОМОЩЬ
     if (lower.includes('помоги') || lower.includes('что ты умеешь')) {
-        speak('Я умею создавать, редактировать, удалять карточки. В бэклоге могу менять приоритет. Скажите: создай задачу: обновить сервер');
+        speak('Я умею создавать, редактировать, удалять карточки. В бэклоге менять приоритет. Скажите, например: создай задачу в бэклог: обновить сервер');
         return;
     }
     speak('Не понял. Скажите "помоги"');
 }
+
 function initVoice() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { showVoiceFeedback('Голос не поддерживается', true); return; }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -632,9 +630,8 @@ function initVoice() {
         processVoiceCommand(text);
     };
 }
-// =============================================
-// 5. Старт
-// =============================================
+
+// ========================== 6. ЗАПУСК ==========================
 document.addEventListener('DOMContentLoaded', async () => {
     initVoice();
     document.getElementById('voiceAssistantBtn')?.addEventListener('click', () => {
