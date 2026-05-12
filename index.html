@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Пульт Артура — Кармический Банк</title>
+  <title>Центр управления — Кармический Банк</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,18 +11,15 @@
       background: #fff4e6; color: #1a2634;
       display: flex; height: 100vh; overflow: hidden;
       user-select: none;
-      cursor: none; /* полностью убираем системный курсор */
+      cursor: none;                      /* системный курсор убран */
     }
-    input, textarea, [contenteditable] {
-      user-select: text;
-      cursor: none;
+    input, textarea, [contenteditable] { user-select: text; cursor: none; }
+
+    a, button, .btn, .nav-item, .magic-pin, .modern-close, input, textarea, select {
+      cursor: none !important;          /* даже при наведении не показывать стрелку */
     }
 
-    /* Убираем курсор со всех интерактивных элементов */
-    a, button, .btn, .nav-item, .clip-delete, .modern-close, input, textarea, select {
-      cursor: none !important;
-    }
-
+    /* Тропический фон */
     .tropical-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
       pointer-events: none;
@@ -31,7 +28,7 @@
     .sun {
       position: absolute; top: 25px; right: 70px; width: 100px; height: 100px;
       background: #FFD700; border-radius: 50%;
-      box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00, 0 0 300px 100px rgba(255,140,0,0.4);
+      box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00;
     }
     .ocean {
       position: absolute; bottom: 10%; left: 0; width: 100%; height: 40%;
@@ -49,74 +46,78 @@
     @keyframes sailHorizon { 0% { left: 70%; } 100% { left: 10%; } }
     .airplane-group { position: absolute; bottom: 25%; right: -5%; animation: airplaneFly 180s linear infinite; }
     @keyframes airplaneFly {
-      0% { right: -5%; bottom: 25%; }
-      5% { bottom: 28%; }
-      50% { right: 65%; bottom: 44%; }
-      90% { right: 90%; bottom: 56%; }
+      0% { right: -5%; bottom: 25%; } 5% { bottom: 28%; }
+      50% { right: 65%; bottom: 44%; } 90% { right: 90%; bottom: 56%; }
       100% { right: 105%; bottom: 60%; }
     }
     .airplane-dot { width: 6px; height: 6px; background: white; border-radius: 50%; position: absolute; top: -3px; right: 0; box-shadow: 0 0 6px white; }
     .contrail-line { position: absolute; top: 0; right: 6px; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.85), transparent); border-radius: 2px; animation: trailLength 180s linear infinite; }
-    @keyframes trailLength {
-      0% { width: 0%; opacity: 0; }
-      5% { width: 10%; opacity: 1; }
-      50% { width: 60%; opacity: 1; }
-      90% { width: 30%; opacity: 0.8; }
-      100% { width: 0%; opacity: 0; }
-    }
 
     .flying-a {
       position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
       text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer; display: none;
     }
 
-    /* ---------- ВОЛШЕБНЫЙ КУРСОР (ПАЛОЧКА + ОРЕОЛ + ЗВЁЗДЫ) ---------- */
+    /* ---------- ВОЛШЕБНАЯ ПАЛОЧКА (КУРСОР) ---------- */
     #customCursor {
       position: fixed; pointer-events: none; z-index: 9999;
-      font-size: 38px;
-      transform: translate(-15px, -15px);
-      filter: drop-shadow(0 0 15px #FFD700) drop-shadow(0 0 30px #FF8C00);
-      animation: floatWand 3s infinite alternate ease-in-out;
-      background: transparent;
-    }
-    @keyframes floatWand {
-      0% { transform: translate(-15px, -15px) rotate(-2deg) scale(1); }
-      100% { transform: translate(-15px, -15px) rotate(4deg) scale(1.03); }
-    }
-    #wandGlow {
-      position: absolute; top: 50%; left: 50%;
-      width: 60px; height: 60px;
-      background: radial-gradient(circle, rgba(255,215,0,0.5) 0%, transparent 70%);
-      border-radius: 50%;
+      width: 10px; height: 10px;               /* точка отсчёта */
       transform: translate(-50%, -50%);
-      animation: glowPulse 2s infinite alternate;
-      z-index: -1;
+      filter: drop-shadow(0 0 10px #FFD700);
     }
-    @keyframes glowPulse {
-      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; }
-      100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    /* сама палочка (древко) */
+    #customCursor::before {
+      content: '';
+      position: absolute;
+      bottom: 14px; left: 4px;
+      width: 2px; height: 36px;
+      background: linear-gradient(to top, #D4AF37, #FFF8DC);
+      border-radius: 1px;
+      box-shadow: 0 0 12px #FFD700;
+      transform: rotate(-20deg);
+      transform-origin: bottom center;
     }
-    /* звёздочки вокруг палочки */
+    /* звездочка на конце (прицел) */
+    #customCursor::after {
+      content: '✦';
+      position: absolute;
+      top: -14px; left: -8px;
+      font-size: 20px;
+      color: #FFD700;
+      text-shadow: 0 0 15px #FFA500, 0 0 30px #FF8C00;
+      animation: sparklePulse 1.5s infinite alternate;
+    }
+    @keyframes sparklePulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(1.3); opacity: 1; }
+    }
+
+    /* золотистая пыль вокруг */
     .stardust {
       position: fixed; pointer-events: none; z-index: 9998;
-      font-size: 14px;
-      animation: stardustFloat 1.5s infinite alternate ease-in-out;
+      font-size: 12px;
+      color: #FFD700;
+      text-shadow: 0 0 12px #FFA500, 0 0 25px #FF8C00;
+      animation: floatDust 2s infinite alternate ease-in-out;
     }
-    @keyframes stardustFloat {
+    @keyframes float miGusto {
       0% { transform: translate(0,0); opacity: 0.7; }
-      100% { transform: translate(5px, -8px); opacity: 1; }
+      100% { transform: translate(6px, -10px); opacity: 1; }
     }
+
     /* вспышка при клике */
     .magic-burst {
       position: fixed; pointer-events: none; z-index: 10001;
-      font-size: 24px;
+      font-size: 28px; color: #FFD700;
+      text-shadow: 0 0 30px #FF8C00;
       animation: burstFade 0.4s ease-out forwards;
     }
     @keyframes burstFade {
       0% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(2) rotate(20deg); }
+      100% { opacity: 0; transform: scale(2.5) rotate(15deg); }
     }
 
+    /* фейерверк */
     .firework { position: fixed; pointer-events: none; z-index: 10000; }
     .particle {
       position: absolute; width: 12px; height: 12px; border-radius: 50%;
@@ -127,12 +128,7 @@
       100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
     }
 
-    @keyframes pulseWave {
-      0% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
-      50% { box-shadow: 0 0 50px #FFD700, 0 0 100px #FF8C00; }
-      100% { box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; }
-    }
-
+    /* индикатор загрузки */
     .loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.25); backdrop-filter: blur(6px);
@@ -146,12 +142,13 @@
       -webkit-mask: radial-gradient(transparent 55%, black 56%);
       mask: radial-gradient(transparent 55%, black 56%);
       animation: spin 0.8s linear infinite;
-      box-shadow: 0 0 40px #FFA500, 0 0 80px rgba(255,140,0,0.6);
+      box-shadow: 0 0 40px #FFA500;
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; position: relative; }
-    .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; line-height: 1.2; letter-spacing: 1px; color: #2E3B2E; }
+    /* боковая панель */
+    .sidebar { width: 280px; background: rgba(255,255,255,0.8); backdrop-filter: blur(25px); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 32px 20px; z-index: 10; }
+    .sidebar-header { font-size: 26px; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; color: #2E3B2E; }
     .nav-item { padding: 12px 20px; border-radius: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 16px; margin-bottom: 10px; transition: all 0.3s ease; border: 1px solid transparent; color: #2E3B2E; }
     .nav-item[data-page="dashboard"] { background: linear-gradient(135deg, rgba(255,160,122,0.2), rgba(255,180,160,0.3)); }
     .nav-item[data-page="backlog"] { background: linear-gradient(135deg, rgba(255,220,100,0.2), rgba(255,240,150,0.3)); }
@@ -167,36 +164,64 @@
     .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; position: relative; z-index: 5; background: rgba(255,255,255,0.3); }
     .page { display: none; } .page.active { display: block; }
     .page-title { font-weight: 700; font-size: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-    .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; position: relative; }
+    .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.8)); backdrop-filter: blur(15px); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
     .card:hover { border-color: rgba(0,0,0,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 
     .btn { padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 15px; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 8px; margin: 6px; letter-spacing: 0.3px; background: rgba(255,255,255,0.8); color: #2E3B2E; border: 1px solid rgba(0,0,0,0.1); backdrop-filter: blur(10px); }
     .btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.95); }
-    .btn-primary { background: linear-gradient(135deg, #A5D6A7, #FFB74D); border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1; }
-    .btn-primary::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00); background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35; }
+    .btn-primary {
+      background: linear-gradient(135deg, #A5D6A7, #FFB74D);
+      border: 1px solid rgba(255,140,100,0.4); position: relative; z-index: 1;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+      border-radius: 32px; background: linear-gradient(45deg, #FFD700, #FF8C00, #FFD700, #FF8C00);
+      background-size: 300% 300%; z-index: -1; animation: hologram 3s ease infinite; opacity: 0.35;
+    }
     @keyframes hologram { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
+    /* кнопка Редактировать – белая с голографической каймой */
+    .btn-edit {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #FFD700;
+      box-shadow: 0 0 15px rgba(255,215,0,0.4);
+      color: #2E3B2E;
+    }
+    .btn-edit:hover {
+      background: white;
+      box-shadow: 0 0 25px #FFD700, 0 0 15px #FFA500;
+    }
+
+    /* модальное окно */
     .modern-close { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,220,0.9)); border: 1px solid rgba(255,140,100,0.6); position: relative; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 12px rgba(255,140,0,0.3); }
     .modern-close::before, .modern-close::after { content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; background: #FF4500; border-radius: 2px; }
     .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
     .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
-    .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
 
-    /* Волшебная заколочка вместо скрепки */
+    /* Премиальная заколочка (без эмодзи) */
     .magic-pin {
       display: inline-flex; align-items: center; justify-content: center;
       width: 32px; height: 32px; margin-left: 8px;
-      background: linear-gradient(145deg, #E0C9FF, #FFF0F5);
+      background: radial-gradient(circle at 30% 30%, #FFF0F5, #E6E6FA);
       border: 2px solid #FFD700;
-      border-radius: 50% 50% 50% 10%;
-      box-shadow: 0 0 15px #DDA0DD, 0 4px 8px rgba(0,0,0,0.2);
+      border-radius: 50%;
+      box-shadow: 0 0 18px #DDA0DD, 0 4px 8px rgba(0,0,0,0.15);
       cursor: grab;
-      font-size: 18px;
+      position: relative;
       transition: transform 0.2s, box-shadow 0.2s;
     }
+    .magic-pin::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      width: 2px; height: 10px;
+      background: #C0C0C0;
+      border-radius: 1px;
+      box-shadow: 0 0 5px #FFD700;
+    }
     .magic-pin:active { cursor: grabbing; transform: scale(0.9); }
-    .magic-pin:hover { box-shadow: 0 0 25px #FF00FF, 0 0 15px #FFD700; }
+    .magic-pin:hover { box-shadow: 0 0 30px #FF00FF, 0 0 20px #FFD700; }
 
     input, textarea {
       border: 1px solid rgba(0,0,0,0.15); border-radius: 16px; padding: 12px 16px;
@@ -222,10 +247,7 @@
 <div id="flyingA" class="flying-a">А</div>
 
 <!-- Волшебный курсор -->
-<div id="customCursor">
-  <div id="wandGlow"></div>
-</div>
-<!-- Звёздная пыль (создаётся динамически) -->
+<div id="customCursor"></div>
 
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
@@ -251,9 +273,10 @@
     <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
   </div>
 
+  <!-- Голосовой помощник без эмодзи -->
   <div style="margin-bottom: 24px;">
     <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
-      <span id="voiceIcon">🎙️</span> <span id="voiceText">Голосовой помощник</span>
+      <span id="voiceText">Голосовой помощник</span>
       <div id="voiceWaves" style="display:none; position:absolute; top:-8px; left:-8px; right:-8px; bottom:-8px; border-radius:36px; background:transparent; box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; animation:pulseWave 1s infinite;"></div>
     </button>
   </div>
@@ -301,14 +324,13 @@
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       switch(type) {
-        case 'magic': // волшебный перезвон
+        case 'magic':
           osc.type = 'sine';
           osc.frequency.setValueAtTime(800, t);
           osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
           gain.gain.setValueAtTime(0.12, t);
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
           osc.start(t); osc.stop(t + 0.2);
-          // второй тон
           const osc2 = ctx.createOscillator();
           osc2.type = 'sine';
           osc2.frequency.setValueAtTime(1200, t + 0.05);
@@ -319,7 +341,7 @@
           osc2.connect(gain2); gain2.connect(ctx.destination);
           osc2.start(t + 0.05); osc2.stop(t + 0.2);
           break;
-        case 'tear': // нежное шуршание
+        case 'tear':
           osc.type = 'sine';
           osc.frequency.setValueAtTime(300, t);
           osc.frequency.linearRampToValueAtTime(500, t + 0.15);
@@ -336,7 +358,6 @@
           osc.start(t); osc.stop(t + 0.2);
           break;
         case 'firework':
-          // колокольчики
           const notes = [523, 659, 784, 1047];
           notes.forEach((freq, i) => {
             const o = ctx.createOscillator();
@@ -357,7 +378,8 @@
   // ---------- ВОЛШЕБНЫЙ КУРСОР ----------
   const wand = document.getElementById('customCursor');
   let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
-  // массив звёздочек-хвостов
+
+  // золотая пыль (8 частиц)
   const starTrail = [];
   for (let i=0; i<8; i++) {
     const star = document.createElement('div');
@@ -375,7 +397,6 @@
     wand.style.top = mouseY + 'px';
   });
 
-  // анимация хвоста
   function animateStars() {
     let prevX = mouseX, prevY = mouseY;
     starTrail.forEach((s, idx) => {
@@ -391,33 +412,29 @@
   }
   animateStars();
 
-  // клик — магическая вспышка
   document.addEventListener('mousedown', () => {
-    if (!soundEnabled) return;
     playSound('magic');
-    // вспышка
     const burst = document.createElement('div');
     burst.className = 'magic-burst';
-    burst.textContent = '✨';
+    burst.textContent = '✦';
     burst.style.left = wand.style.left;
     burst.style.top = wand.style.top;
     document.body.appendChild(burst);
     setTimeout(() => burst.remove(), 400);
-    // несколько искр
     for (let i=0; i<5; i++) {
       const spark = document.createElement('div');
       spark.className = 'stardust';
       spark.textContent = '✧';
       spark.style.left = wand.style.left;
       spark.style.top = wand.style.top;
-      spark.style.animation = 'stardustFloat 0.6s ease-out forwards';
-      spark.style.fontSize = '12px';
+      spark.style.animation = 'floatDust 0.6s ease-out forwards';
+      spark.style.fontSize = '10px';
       document.body.appendChild(spark);
       setTimeout(() => spark.remove(), 600);
     }
   });
 
-  // Фейерверк (как раньше)
+  // Фейерверк
   let fireworkClicks = 0;
   let fireworkTimer = null;
   function launchFirework(x, y) {
@@ -459,7 +476,7 @@
     }
   });
 
-  // Летающая буква (без изменений)
+  // Летающая буква
   const flyingA = document.getElementById('flyingA');
   const lastA = document.querySelector('.last-a');
   let aFlying = false;
@@ -502,11 +519,12 @@
     }, 15 * 60 * 1000);
   }, 10000);
 
-  // Загрузка и API
+  // Индикатор загрузки
   const loader = document.getElementById('loadingOverlay');
   function showLoader() { loader.classList.add('active'); }
   function hideLoader() { loader.classList.remove('active'); }
 
+  // API
   async function loadAllData() {
     showLoader();
     try {
@@ -595,7 +613,7 @@
     } catch(e) { state[sheet].splice(index, 0, removed); render(pageId); alert('Ошибка сети'); }
   }
 
-  // Модалки и рендер (как раньше, но с magic-pin)
+  // Модальные окна
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
   function showModal(html) {
@@ -607,6 +625,7 @@
   function closeModal() { modalOverlay.classList.remove('active'); }
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
+  // Рендер
   const pages = document.querySelectorAll('.nav-item');
   const mainContent = document.getElementById('mainContent');
 
@@ -622,7 +641,7 @@
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <button class="btn btn-edit edit-${key}" data-id="${item.id || item.q}">Ред.</button>
-          <div class="magic-pin delete-${key}" data-id="${item.id || item.q}">🧷</div>
+          <div class="magic-pin delete-${key}" data-id="${item.id || item.q}"></div>
         </div>
       </div>
     </div>`;
@@ -646,14 +665,14 @@
           <h3>${i.title}</h3><p>${i.role}</p>
           <div style="display:flex; gap:12px; justify-content:center; margin-top:12px;">
             <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="magic-pin delete-scheme" data-id="${i.id}">🧷</div>
+            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
           </div>
         </div>`).join('')}
         ${depts.map(i => `<div class="card" style="width:200px;">
           <h4>${i.title}</h4><p>${i.desc || i.description || ''}</p>
           <div style="display:flex; gap:12px; margin-top:12px;">
             <button class="btn btn-edit edit-scheme" data-id="${i.id}">Ред.</button>
-            <div class="magic-pin delete-scheme" data-id="${i.id}">🧷</div>
+            <div class="magic-pin delete-scheme" data-id="${i.id}"></div>
           </div>
         </div>`).join('')}
       </div>
@@ -664,7 +683,7 @@
   function renderHrdnk() { return editableGrid('hrdnk', 'HRDNK', state.hrdnk, 'Добавить задачу'); }
   function renderKnowledge() { return editableGrid('knowledge', 'База знаний', state.knowledge, 'Добавить знание'); }
   function renderSettings() {
-    const soundStatus = soundEnabled ? 'Включены 🔊' : 'Выключены 🔇';
+    const soundStatus = soundEnabled ? 'Включены' : 'Выключены';
     return `<div class="page active">
       <h2 class="page-title">Настройки</h2>
       <div class="card">
@@ -698,7 +717,7 @@
     attachEvents(pageId);
   }
 
-  // Отрыв волшебной булавки
+  // Перетаскивание булавки
   let draggingPin = null;
   let dragClone = null;
   let dragStartX = 0, dragStartY = 0;
@@ -826,9 +845,8 @@
     }
   }
 
-  // Голосовой помощник (как раньше)
+  // Голосовой помощник (без эмодзи)
   const voiceBtn = document.getElementById('voiceBtn');
-  const voiceIcon = document.getElementById('voiceIcon');
   const voiceText = document.getElementById('voiceText');
   const voiceWaves = document.getElementById('voiceWaves');
   let recognition, isListening = false;
@@ -838,13 +856,13 @@
     recognition.lang = 'ru-RU';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.onstart = () => { isListening = true; voiceIcon.textContent = '🔴'; voiceText.textContent = 'Слушаю...'; voiceWaves.style.display = 'block'; playSound('magic'); };
-    recognition.onend = () => { isListening = false; voiceIcon.textContent = '🎙️'; voiceText.textContent = 'Голосовой помощник'; voiceWaves.style.display = 'none'; };
+    recognition.onstart = () => { isListening = true; voiceText.textContent = 'Слушаю...'; voiceWaves.style.display = 'block'; playSound('magic'); };
+    recognition.onend = () => { isListening = false; voiceText.textContent = 'Голосовой помощник'; voiceWaves.style.display = 'none'; };
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.toLowerCase().trim();
       processVoiceCommand(transcript);
     };
-    recognition.onerror = () => { voiceIcon.textContent = '🎙️'; voiceText.textContent = 'Ошибка, попробуйте снова'; setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000); };
+    recognition.onerror = () => { voiceText.textContent = 'Ошибка, попробуйте снова'; setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000); };
     voiceBtn.addEventListener('click', () => { if (isListening) recognition.stop(); else recognition.start(); });
   } else voiceBtn.style.display = 'none';
 
