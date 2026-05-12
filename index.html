@@ -176,7 +176,7 @@
     .modern-close::before { transform: translate(-50%, -50%) rotate(45deg); }
     .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
 
-    /* Премиальная заколочка с голографическим кружком */
+    /* Премиальная заколочка */
     .magic-pin {
       display: inline-flex; align-items: center; justify-content: center;
       width: 32px; height: 32px; margin-left: 8px;
@@ -196,9 +196,7 @@
       border-radius: 50%;
       opacity: 0.8;
       box-shadow: 0 0 12px #FFD700;
-      transition: all 0.2s;
     }
-    .magic-pin:hover::before { opacity: 1; box-shadow: 0 0 25px #FFD700; }
     .magic-pin:active { cursor: grabbing; transform: scale(0.9); }
     .magic-pin:hover { box-shadow: 0 0 30px #FF00FF, 0 0 20px #FFD700; }
 
@@ -220,6 +218,15 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
     }
     .card h3, .card h4 { word-break: break-word; }
+
+    /* Стиль для отображения распознанного текста */
+    #voiceText {
+      display: inline-block;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -251,6 +258,7 @@
     <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
   </div>
 
+  <!-- Голосовой помощник -->
   <div style="margin-bottom: 24px;">
     <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
       <span id="voiceText">Голосовой помощник</span>
@@ -273,6 +281,7 @@
 
 <script>
 (function() {
+  // ===== Конфигурация =====
   const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
   const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
   const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
@@ -284,7 +293,7 @@
   };
   let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
 
-  // Аудио
+  // ===== Аудио =====
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx;
   function getAudioCtx() {
@@ -347,12 +356,11 @@
             o.start(t + i*0.08); o.stop(t + i*0.08 + 0.2);
           });
           break;
-        default: break;
       }
     } catch(e) {}
   }
 
-  // ---------- ВОЛШЕБНЫЙ КУРСОР ----------
+  // ===== Курсор =====
   const wand = document.getElementById('customCursor');
   let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
   const starTrail = [];
@@ -364,7 +372,10 @@
     document.body.appendChild(star);
     starTrail.push({ el: star, x: mouseX, y: mouseY });
   }
-  document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; wand.style.left = mouseX + 'px'; wand.style.top = mouseY + 'px'; });
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX; mouseY = e.clientY;
+    wand.style.left = mouseX + 'px'; wand.style.top = mouseY + 'px';
+  });
   function animateStars() {
     let prevX = mouseX, prevY = mouseY;
     starTrail.forEach((s, idx) => {
@@ -399,9 +410,8 @@
     }
   });
 
-  // Фейерверк
-  let fireworkClicks = 0;
-  let fireworkTimer = null;
+  // ===== Фейерверк =====
+  let fireworkClicks = 0, fireworkTimer = null;
   function launchFirework(x, y) {
     const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
     for (let burst = 0; burst < 3; burst++) {
@@ -438,7 +448,7 @@
     }
   });
 
-  // Летающая буква
+  // ===== Летающая буква =====
   const flyingA = document.getElementById('flyingA');
   const lastA = document.querySelector('.last-a');
   let aFlying = false;
@@ -472,12 +482,11 @@
     setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000);
   }, 10000);
 
-  // Индикатор загрузки
+  // ===== API =====
   const loader = document.getElementById('loadingOverlay');
   function showLoader() { loader.classList.add('active'); }
   function hideLoader() { loader.classList.remove('active'); }
 
-  // API
   async function loadAllData() {
     showLoader();
     try {
@@ -589,7 +598,7 @@
     }
   }
 
-  // Модальные окна
+  // ===== Модалки =====
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
   function showModal(html) {
@@ -601,7 +610,7 @@
   function closeModal() { modalOverlay.classList.remove('active'); }
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  // Рендер
+  // ===== Рендер =====
   const pages = document.querySelectorAll('.nav-item');
   const mainContent = document.getElementById('mainContent');
 
@@ -693,12 +702,8 @@
     attachEvents(pageId);
   }
 
-  // Удаление: теперь клик тоже работает
-  let draggingPin = null;
-  let dragClone = null;
-  let dragStartX = 0, dragStartY = 0;
-  let dragMoved = false;
-  let clickHandled = false;
+  // ===== Перетаскивание и удаление =====
+  let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
 
   function askDelete(sheet, id) {
     playSound('tear');
@@ -710,10 +715,7 @@
         <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
       </div>
     `);
-    document.getElementById('confirmTearYes').addEventListener('click', async () => {
-      closeModal();
-      await deleteItem(sheet, id, getCurrentPage());
-    });
+    document.getElementById('confirmTearYes').addEventListener('click', async () => { closeModal(); await deleteItem(sheet, id, getCurrentPage()); });
     document.getElementById('confirmTearNo').addEventListener('click', closeModal);
   }
 
@@ -721,49 +723,28 @@
     e.preventDefault();
     if (draggingPin) return;
     draggingPin = el;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    dragMoved = false;
-    clickHandled = false;
-
+    dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
     dragClone = el.cloneNode(true);
-    dragClone.style.position = 'fixed';
-    dragClone.style.zIndex = '9998';
-    dragClone.style.pointerEvents = 'none';
-    dragClone.style.left = e.clientX + 'px';
-    dragClone.style.top = e.clientY + 'px';
+    dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
+    dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px';
     dragClone.style.opacity = '0.9';
     document.body.appendChild(dragClone);
     el.style.opacity = '0.3';
-
     document.addEventListener('mousemove', onDragMove);
     document.addEventListener('mouseup', onDragEnd);
   }
-
   function onDragMove(e) {
     if (!draggingPin) return;
-    if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) {
-      dragMoved = true;
-    }
-    if (dragClone) {
-      dragClone.style.left = e.clientX + 'px';
-      dragClone.style.top = e.clientY + 'px';
-    }
+    if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true;
+    if (dragClone) { dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px'; }
   }
-
   function onDragEnd(e) {
     document.removeEventListener('mousemove', onDragMove);
     document.removeEventListener('mouseup', onDragEnd);
     if (dragClone) { dragClone.remove(); dragClone = null; }
     if (draggingPin) {
       draggingPin.style.opacity = '1';
-      if (dragMoved) {
-        const id = draggingPin.dataset.id;
-        const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
-        askDelete(sheet, id);
-      } else if (!clickHandled) {
-        // Клик без перетаскивания
-        clickHandled = true;
+      if (dragMoved || !dragMoved) { // по клику или перетаскиванию – показываем запрос
         const id = draggingPin.dataset.id;
         const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
         askDelete(sheet, id);
@@ -821,7 +802,6 @@
         });
       });
 
-      // Вешаем mousedown на все magic-pin
       document.querySelectorAll('.magic-pin').forEach(el => {
         el.addEventListener('mousedown', e => startDrag(e, el));
       });
@@ -844,11 +824,32 @@
     }
   }
 
-  // Голосовой помощник (без цикла)
+  // ===== ГОЛОСОВОЙ ПОМОЩНИК =====
   const voiceBtn = document.getElementById('voiceBtn');
   const voiceText = document.getElementById('voiceText');
   const voiceWaves = document.getElementById('voiceWaves');
   let recognition, isListening = false, ignoreRecognition = false;
+
+  // Функция для выбора лучшего русского голоса
+  function getBestVoice() {
+    return new Promise((resolve) => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length) {
+        const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
+                        voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
+                        voices.find(v => v.lang.startsWith('ru'));
+        resolve(ruVoice || voices[0]);
+      } else {
+        speechSynthesis.onvoiceschanged = () => {
+          const voices = speechSynthesis.getVoices();
+          const ruVoice = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) ||
+                          voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) ||
+                          voices.find(v => v.lang.startsWith('ru'));
+          resolve(ruVoice || voices[0]);
+        };
+      }
+    });
+  }
 
   if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -856,74 +857,139 @@
     recognition.lang = 'ru-RU';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.onstart = () => { isListening = true; voiceText.textContent = 'Слушаю...'; voiceWaves.style.display = 'block'; playSound('magic'); };
-    recognition.onend = () => { isListening = false; voiceText.textContent = 'Голосовой помощник'; voiceWaves.style.display = 'none'; ignoreRecognition = false; };
-    recognition.onresult = (event) => {
-      if (ignoreRecognition) return;
-      const transcript = event.results[0][0].transcript.toLowerCase().trim();
-      processVoiceCommand(transcript);
-    };
-    recognition.onerror = () => { voiceText.textContent = 'Ошибка, попробуйте снова'; setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000); };
-    voiceBtn.addEventListener('click', () => { if (isListening) recognition.stop(); else recognition.start(); });
-  } else voiceBtn.style.display = 'none';
 
-  function speak(text) {
+    recognition.onstart = () => {
+      isListening = true;
+      voiceText.textContent = '🎤 Говорите...';
+      voiceWaves.style.display = 'block';
+      playSound('magic');
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      voiceText.textContent = 'Голосовой помощник';
+      voiceWaves.style.display = 'none';
+      ignoreRecognition = false;
+    };
+
+    recognition.onresult = async (event) => {
+      if (ignoreRecognition) return;
+      const transcript = event.results[0][0].transcript.trim();
+      voiceText.textContent = transcript.length > 18 ? transcript.substring(0,15)+'…' : transcript;
+      processVoiceCommand(transcript.toLowerCase());
+    };
+
+    recognition.onerror = (event) => {
+      console.warn('Speech error:', event.error);
+      voiceText.textContent = 'Ошибка, попробуйте снова';
+      setTimeout(() => { voiceText.textContent = 'Голосовой помощник'; }, 2000);
+    };
+
+    voiceBtn.addEventListener('click', () => {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    });
+  } else {
+    voiceBtn.style.display = 'none';
+  }
+
+  async function speak(text) {
     if ('speechSynthesis' in window) {
       ignoreRecognition = true;
       if (isListening) recognition.stop();
+      voiceText.textContent = 'Отвечаю...';
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU'; utterance.rate = 1.0; utterance.pitch = 1.1;
-      utterance.onend = () => { ignoreRecognition = false; };
+      utterance.lang = 'ru-RU';
+      utterance.rate = 1.2;          // быстрее стандартного
+      utterance.pitch = 1.1;        // приятный тон
+      const bestVoice = await getBestVoice();
+      if (bestVoice) utterance.voice = bestVoice;
+      utterance.onend = () => {
+        ignoreRecognition = false;
+        voiceText.textContent = 'Голосовой помощник';
+      };
+      utterance.onerror = () => {
+        ignoreRecognition = false;
+        voiceText.textContent = 'Голосовой помощник';
+      };
       window.speechSynthesis.speak(utterance);
     }
   }
 
   function processVoiceCommand(command) {
     const sectionMap = {
-      'обзор': 'dashboard', 'бэклог': 'backlog', 'структура': 'scheme', 'идеи': 'ideas',
-      'прототипы': 'prototypes', 'hrdnk': 'hrdnk', 'база знаний': 'knowledge', 'настройки': 'settings'
+      'обзор': 'dashboard', 'обзора': 'dashboard', 'обзоре': 'dashboard',
+      'бэклог': 'backlog', 'бэклога': 'backlog', 'бэклоге': 'backlog',
+      'структуру': 'scheme', 'структура': 'scheme', 'структуре': 'scheme',
+      'идеи': 'ideas', 'идей': 'ideas', 'идеях': 'ideas',
+      'прототипы': 'prototypes', 'прототипов': 'prototypes', 'прототипах': 'prototypes',
+      'hrdnk': 'hrdnk',
+      'базу знаний': 'knowledge', 'базы знаний': 'knowledge',
+      'настройки': 'settings', 'настроек': 'settings'
     };
+    const navVerbs = ['открой', 'покажи', 'перейди в', 'открыть', 'показать', 'перейти в'];
+
     let matched = false;
+
+    // Навигация
     for (const [name, pageId] of Object.entries(sectionMap)) {
-      if (command.includes(`открой ${name}`) || command.includes(`покажи ${name}`) || command.includes(`перейди в ${name}`)) {
+      if (navVerbs.some(verb => command.includes(verb + ' ' + name))) {
         navigateTo(pageId);
         speak(`Открываю раздел ${name}`);
         matched = true; break;
       }
     }
-    if (!matched && command.includes('добавить')) {
-      const match = command.match(/добавить\s+(?:карточку|задачу|идею|прототип|знание)\s+(.+?)(?:\s+в\s+(.+))?$/);
+
+    // Добавление
+    if (!matched && (command.includes('добавить') || command.includes('создать') || command.includes('занеси'))) {
+      const match = command.match(/(?:добавить|создать|занеси)\s+(?:карточку|задачу|идею|прототип|знание|отдел)?\s*(.+?)(?:\s+в\s+(.+))?$/);
       if (match) {
         const title = match[1].trim();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] : getCurrentPage();
-        if (section && state[section] !== undefined) {
+        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
+        if (state[section] !== undefined) {
           const params = { title };
           if (section === 'knowledge') params.question = title;
           if (section === 'scheme') params.type = 'dept';
           createItem(section, params, section);
-          speak(`Добавил "${title}" в раздел ${Object.keys(sectionMap).find(k => sectionMap[k] === section)}`);
+          speak(`Добавил "${title}" в раздел ${section}`);
           matched = true;
         }
       }
     }
-    if (!matched && command.includes('удали')) {
-      const match = command.match(/удали\s+(.+?)(?:\s+в\s+(.+))?$/);
+
+    // Удаление
+    if (!matched && (command.includes('удали') || command.includes('убрать') || command.includes('сотри'))) {
+      const match = command.match(/(?:удали|убрав|сотри)\s+(?:карточку|задачу|листик)?\s*(.+?)(?:\s+в\s+(.+))?$/);
       if (match) {
         const title = match[1].trim().toLowerCase();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] : getCurrentPage();
-        if (section && state[section]) {
+        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
+        if (state[section]) {
           const item = state[section].find(i => (i.title || i.q || '').toLowerCase().includes(title));
-          if (item) { deleteItem(section, item.id, section); speak(`Удалил "${item.title || item.q}"`); matched = true; }
-          else { speak('Не нашёл такой карточки'); matched = true; }
+          if (item) {
+            deleteItem(section, item.id, section);
+            speak(`Удалил "${item.title || item.q}"`);
+            matched = true;
+          } else {
+            speak(`Не нашёл "${title}" в разделе ${section}`);
+            matched = true;
+          }
         }
       }
     }
-    if (!matched && (command.includes('шутка') || command.includes('анекдот'))) {
-      const jokes = ['Почему программисты не ходят в лес? Там нет нормального интернета!','Кармический банк начисляет кармики даже за улыбку. Улыбнись!','Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.'];
+
+    // Шутка
+    if (!matched && (command.includes('шутка') || command.includes('анекдот') || command.includes('пошути'))) {
+      const jokes = ['Почему программисты не ходят в лес? Там нет нормального интернета!', 'Кармический банк начисляет кармики даже за улыбку. Улыбнись!', 'Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.'];
       speak(jokes[Math.floor(Math.random() * jokes.length)]);
       matched = true;
     }
-    if (!matched) speak('Я не понял команду. Попробуй: открой обзор, добавь задачу, удали, расскажи шутку.');
+
+    if (!matched) {
+      speak('Я не поняла команду. Попробуйте: "открой обзор", "добавь задачу привет в бэклог", "удали привет", "расскажи шутку".');
+    }
   }
 
   function navigateTo(pageId) {
