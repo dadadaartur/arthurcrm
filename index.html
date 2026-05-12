@@ -14,7 +14,6 @@
     }
     input, textarea, [contenteditable] { user-select: text; cursor: text; }
 
-    /* Тропический фон */
     .tropical-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
       pointer-events: none;
@@ -60,42 +59,39 @@
     /* Летающая буква */
     .flying-a {
       position: fixed; font-size: 26px; font-weight: 700; color: #9370DB;
-      text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer;
-      display: none;
+      text-shadow: 0 0 12px #FFD700; z-index: 9000; cursor: pointer; display: none;
     }
 
     /* Кастомный курсор */
     #customCursor {
       position: fixed; pointer-events: none; z-index: 9999;
-      font-size: 36px; transform: translate(-10px, -15px);
+      font-size: 40px; transform: translate(-15px, -15px);
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      transition: transform 0.1s, color 0.2s;
+      transition: transform 0.1s;
     }
-    #customCursor.hammer {
+    #customCursor.gun {
       font-size: 42px;
-      transform: translate(-15px, -20px) rotate(-20deg);
+      transform: translate(-20px, -20px) rotate(-15deg);
     }
-    #customCursor.hand {
-      animation: rainbow 2s infinite;
+    #customCursor.gun.shoot {
+      animation: gunShoot 0.3s ease;
     }
-    @keyframes rainbow {
-      0% { color: #FF6347; }
-      20% { color: #FFA500; }
-      40% { color: #32CD32; }
-      60% { color: #1E90FF; }
-      80% { color: #9370DB; }
-      100% { color: #FF69B4; }
-    }
-    #customCursor.bam {
-      animation: hammerHit 0.3s ease;
-    }
-    @keyframes hammerHit {
-      0% { transform: translate(-15px, -20px) rotate(-20deg) scale(1); }
-      40% { transform: translate(-10px, -10px) rotate(0deg) scale(1.3); }
-      100% { transform: translate(-15px, -20px) rotate(-20deg) scale(1); }
+    @keyframes gunShoot {
+      0% { transform: translate(-20px, -20px) rotate(-15deg) scale(1); }
+      40% { transform: translate(-15px, -15px) rotate(0deg) scale(1.2); }
+      100% { transform: translate(-20px, -20px) rotate(-15deg) scale(1); }
     }
 
-    /* Фейерверк */
+    #customCursor.finger {
+      font-size: 44px;
+      transform: translate(-15px, -15px);
+    }
+    #customCursor.finger.pressing {
+      font-size: 40px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      /* Замена на согнутый палец будет через JS */
+    }
+
     .firework {
       position: fixed; pointer-events: none; z-index: 10000;
     }
@@ -158,16 +154,15 @@
     .modern-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
     .modern-close:hover { box-shadow: 0 0 25px #FF8C00; transform: scale(1.1); }
 
-    /* Премиальная закрепка (скрепка) */
     .clip-delete {
-      width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
-      font-size: 20px; margin-left: 8px;
-      background: linear-gradient(135deg, #FFD700, #FFA500);
-      border-radius: 12px 12px 4px 4px;
-      box-shadow: 0 2px 10px rgba(255,140,0,0.6), 0 0 5px rgba(0,0,0,0.2);
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; margin-left: 8px;
+      background: linear-gradient(145deg, #C0C0C0, #E8E8E8);
+      border-radius: 14px 14px 4px 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 0 6px #FFD700;
       cursor: grab;
-      transition: transform 0.15s;
-      position: relative;
+      font-size: 20px;
+      transition: transform 0.2s;
     }
     .clip-delete:active { cursor: grabbing; }
 
@@ -192,16 +187,10 @@
 </head>
 <body>
 
-<!-- Летающая буква А -->
 <div id="flyingA" class="flying-a">А</div>
-
-<!-- Кастомный курсор -->
-<div id="customCursor" class="hammer">🎈</div>
-
-<!-- Индикатор загрузки -->
+<div id="customCursor" class="gun">🔫</div>
 <div class="loading-overlay" id="loadingOverlay"><div class="premium-spinner"></div></div>
 
-<!-- Фон -->
 <div class="tropical-bg">
   <div class="sun"></div>
   <div class="ocean"><div class="sailboat-horizon">⛵</div></div>
@@ -218,7 +207,6 @@
   </div>
 </div>
 
-<!-- Боковая панель -->
 <div class="sidebar" id="sidebarArea">
   <div class="sidebar-header" id="sidebarHeader">
     <span style="color:#FF6347;">П</span><span style="color:#FFA500;">у</span><span style="color:#32CD32;">л</span><span style="color:#1E90FF;">ь</span><span style="color:#9370DB;">т</span>
@@ -234,20 +222,15 @@
   <div class="nav-item" data-page="settings"><span>Настройки</span></div>
 </div>
 
-<!-- Главная область -->
 <div class="main-content" id="mainContent"></div>
-
-<!-- Модалки -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 
 <script>
 (function() {
-  // ====== КОНФИГУРАЦИЯ ======
   const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
   const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
   const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
 
-  // ====== СОСТОЯНИЕ ======
   const state = {
     dashboard: [], backlog: [], scheme: [], ideas: [],
     prototypes: [], hrdnk: [], knowledge: [],
@@ -255,7 +238,7 @@
   };
   let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
 
-  // ====== АУДИО ======
+  // Аудио
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx;
   function getAudioCtx() {
@@ -272,13 +255,13 @@
       const gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       switch(type) {
-        case 'hammer':
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(80, t);
-          osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-          gain.gain.setValueAtTime(0.4, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-          osc.start(t); osc.stop(t + 0.2);
+        case 'shoot':
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(150, t);
+          osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+          gain.gain.setValueAtTime(0.3, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+          osc.start(t); osc.stop(t + 0.15);
           break;
         case 'tear':
           osc.type = 'sawtooth';
@@ -306,50 +289,53 @@
           break;
         default: break;
       }
-    } catch(e) { console.warn('Audio error:', e); }
+    } catch(e) {}
   }
 
-  // ====== КАСТОМНЫЙ КУРСОР ======
+  // Кастомный курсор
   const cursor = document.getElementById('customCursor');
   const sidebar = document.getElementById('sidebarArea');
 
   function setCursorMode(mode) {
     cursor.className = mode;
-    if (mode === 'hammer') {
-      cursor.textContent = '🎈';
-    } else {
-      cursor.textContent = '🖐️';
+    if (mode === 'gun') {
+      cursor.textContent = '🔫';
+    } else if (mode === 'finger') {
+      cursor.textContent = '👆';
     }
   }
 
   document.addEventListener('mousemove', e => {
     cursor.style.left = e.clientX + 'px';
     cursor.style.top = e.clientY + 'px';
-
     const target = document.elementFromPoint(e.clientX, e.clientY);
-    const isOverSidebar = target && (target.closest('#sidebarArea') || target === sidebar);
-    if (isOverSidebar) {
-      setCursorMode('hammer');
+    if (target && (target.closest('#sidebarArea') || target === sidebar)) {
+      setCursorMode('gun');
     } else {
-      setCursorMode('hand');
+      setCursorMode('finger');
     }
   });
 
   document.addEventListener('mousedown', e => {
-    if (e.target.closest('button, .nav-item, .clip-delete, .modern-close')) {
-      cursor.classList.add('bam');
-      playSound('hammer');
-      setTimeout(() => cursor.classList.remove('bam'), 300);
+    if (cursor.classList.contains('gun')) {
+      cursor.classList.add('shoot');
+      playSound('shoot');
+      setTimeout(() => cursor.classList.remove('shoot'), 300);
+    } else if (cursor.classList.contains('finger')) {
+      cursor.classList.add('pressing');
+      cursor.textContent = '☝️';
+      setTimeout(() => {
+        cursor.classList.remove('pressing');
+        cursor.textContent = '👆';
+      }, 200);
     }
   });
 
-  // ====== ФЕЙЕРВЕРК ======
+  // Фейерверк
   let fireworkClicks = 0;
   let fireworkTimer = null;
-
   function launchFirework(x, y) {
     const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
-    // Три залпа с задержкой
     for (let burst = 0; burst < 3; burst++) {
       setTimeout(() => {
         const container = document.createElement('div');
@@ -358,7 +344,6 @@
         container.style.top = (y + (Math.random()-0.5)*200) + 'px';
         document.body.appendChild(container);
         playSound('firework');
-
         for (let i = 0; i < 30; i++) {
           const particle = document.createElement('div');
           particle.className = 'particle';
@@ -388,7 +373,7 @@
     }
   });
 
-  // ====== ЛЕТАЮЩАЯ БУКВА ======
+  // Летающая буква
   const flyingA = document.getElementById('flyingA');
   const lastA = document.querySelector('.last-a');
   let aFlying = false;
@@ -424,7 +409,6 @@
     };
   }
 
-  // Старт через 10 сек (демо), затем раз в 15 минут
   setTimeout(() => {
     startAFlight();
     setInterval(() => {
@@ -432,12 +416,12 @@
     }, 15 * 60 * 1000);
   }, 10000);
 
-  // ====== ИНДИКАТОР ЗАГРУЗКИ ======
+  // Индикатор загрузки
   const loader = document.getElementById('loadingOverlay');
   function showLoader() { loader.classList.add('active'); }
   function hideLoader() { loader.classList.remove('active'); }
 
-  // ====== РАБОТА С API ======
+  // API
   async function loadAllData() {
     showLoader();
     try {
@@ -475,7 +459,7 @@
     return res.json();
   }
 
-  // ====== ОПТИМИСТИЧНЫЕ ОПЕРАЦИИ ======
+  // Оптимистичные операции
   async function createItem(sheet, params, pageId) {
     const tempId = Date.now();
     const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
@@ -540,7 +524,7 @@
     }
   }
 
-  // ====== МОДАЛКИ ======
+  // Модальные окна
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
   function showModal(html) {
@@ -552,7 +536,7 @@
   function closeModal() { modalOverlay.classList.remove('active'); }
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  // ====== РЕНДЕР ======
+  // Рендер
   const pages = document.querySelectorAll('.nav-item');
   const mainContent = document.getElementById('mainContent');
 
@@ -560,7 +544,7 @@
     const title = item.title || item.text || item.q || '';
     const desc = item.desc || item.description || item.a || item.answer || '';
     return `<div class="card">
-      <div style="display:flex; justify-content:space-between;">
+      <div style="display:flex; justify-content:space-between; align-items:start;">
         <div>
           <h3>${title}</h3>
           <p>${desc}</p>
@@ -645,11 +629,86 @@
     attachEvents(pageId);
   }
 
+  // Перетаскивание скрепки (исправлено, без дублей)
+  let draggingClip = null;
+  let dragClone = null;
+  let dragStartX = 0, dragStartY = 0;
+  let dragMoved = false;
+
+  function startDrag(e, el) {
+    e.preventDefault();
+    if (draggingClip) return; // уже тащим
+    draggingClip = el;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragMoved = false;
+
+    dragClone = el.cloneNode(true);
+    dragClone.style.position = 'fixed';
+    dragClone.style.zIndex = '9998';
+    dragClone.style.pointerEvents = 'none';
+    dragClone.style.left = e.clientX + 'px';
+    dragClone.style.top = e.clientY + 'px';
+    dragClone.style.opacity = '0.9';
+    document.body.appendChild(dragClone);
+
+    el.style.opacity = '0.3';
+
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  }
+
+  function onDragMove(e) {
+    if (!draggingClip) return;
+    if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) {
+      dragMoved = true;
+    }
+    if (dragClone) {
+      dragClone.style.left = e.clientX + 'px';
+      dragClone.style.top = e.clientY + 'px';
+    }
+  }
+
+  function onDragEnd(e) {
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    if (dragClone) {
+      dragClone.remove();
+      dragClone = null;
+    }
+    if (draggingClip) {
+      draggingClip.style.opacity = '1';
+      if (dragMoved) {
+        playSound('tear');
+        const id = draggingClip.dataset.id;
+        const sheet = draggingClip.className.replace(/.*delete-(\w+).*/, '$1');
+        showModal(`
+          <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
+          <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
+          <div style="display:flex; gap:16px; margin-top:24px;">
+            <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
+            <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
+          </div>
+        `);
+        document.getElementById('confirmTearYes').addEventListener('click', async () => {
+          closeModal();
+          await deleteItem(sheet, id, getCurrentPage());
+        });
+        document.getElementById('confirmTearNo').addEventListener('click', closeModal);
+      }
+      draggingClip = null;
+    }
+  }
+
+  function getCurrentPage() {
+    const active = document.querySelector('.nav-item.active');
+    return active ? active.dataset.page : 'dashboard';
+  }
+
   function attachEvents(pageId) {
     const keys = ['dashboard','backlog','scheme','ideas','prototypes','hrdnk','knowledge'];
     if (keys.includes(pageId)) {
       const key = pageId;
-      // Добавление
       const addBtn = document.getElementById(`add${capitalize(key)}Btn`);
       if (addBtn) {
         addBtn.addEventListener('click', () => {
@@ -673,7 +732,6 @@
         });
       }
 
-      // Редактирование
       document.querySelectorAll(`.edit-${key}`).forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
@@ -702,72 +760,12 @@
         });
       });
 
-      // Удаление через перетаскивание скрепки
+      // Перетаскивание скрепок
       document.querySelectorAll('.clip-delete').forEach(el => {
-        let clone = null;
-        let startX, startY, moved = false;
-
-        el.addEventListener('mousedown', e => {
-          e.preventDefault();
-          startX = e.clientX;
-          startY = e.clientY;
-          moved = false;
-          clone = el.cloneNode(true);
-          clone.style.position = 'fixed';
-          clone.style.zIndex = '9998';
-          clone.style.pointerEvents = 'none';
-          clone.style.left = e.clientX + 'px';
-          clone.style.top = e.clientY + 'px';
-          clone.style.opacity = '0.8';
-          clone.style.transition = 'none';
-          document.body.appendChild(clone);
-          el.style.opacity = '0.3';
-        });
-
-        const onMove = e => {
-          if (!clone) return;
-          if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
-            moved = true;
-          }
-          clone.style.left = e.clientX + 'px';
-          clone.style.top = e.clientY + 'px';
-          cursor.style.left = e.clientX + 'px';  // чтобы курсор следовал вместе с клоном
-          cursor.style.top = e.clientY + 'px';
-        };
-
-        const onUp = e => {
-          document.removeEventListener('mousemove', onMove);
-          document.removeEventListener('mouseup', onUp);
-          if (clone) {
-            clone.remove();
-            el.style.opacity = '1';
-          }
-          if (moved) {
-            playSound('tear');
-            const id = el.dataset.id;
-            showModal(`
-              <button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
-              <h2 style="color:#2E3B2E;">Оторвать этот листик?</h2>
-              <div style="display:flex; gap:16px; margin-top:24px;">
-                <button class="btn" style="background:linear-gradient(135deg,#FF8C00,#FFD700); color:white;" id="confirmTearYes">Да, оторвать</button>
-                <button class="btn" style="background:linear-gradient(135deg,#A5D6A7,#FFB74D);" id="confirmTearNo">Нет, оставить</button>
-              </div>
-            `);
-            document.getElementById('confirmTearYes').addEventListener('click', async () => {
-              closeModal();
-              await deleteItem(key, id, pageId);
-            });
-            document.getElementById('confirmTearNo').addEventListener('click', closeModal);
-          }
-          clone = null;
-        };
-
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        el.addEventListener('mousedown', e => startDrag(e, el));
       });
     }
 
-    // Настройки
     if (pageId === 'settings') {
       document.getElementById('changeAvatarBtn')?.addEventListener('click', () => document.getElementById('avatarUpload').click());
       document.getElementById('avatarUpload')?.addEventListener('change', e => {
@@ -808,12 +806,10 @@
     });
   });
 
-  // Инициализация
   (async function init() {
     await loadAllData();
     render('dashboard');
   })();
-
 })();
 </script>
 </body>
