@@ -20,13 +20,12 @@
       pointer-events: none;
       background: linear-gradient(180deg, #87CEEB 0%, #FFDAB9 60%, #FFE4B5 100%);
     }
-    .sun-container { position: absolute; top: 25px; right: 70px; z-index: 1; }
+    .sun-container { position: absolute; top: 25px; right: 70px; z-index: 1; pointer-events: auto; }
     .sun {
       width: 100px; height: 100px;
       background: #FFD700; border-radius: 50%;
       box-shadow: 0 0 120px 30px #FFA500, 0 0 200px 60px #FF8C00;
-      cursor: pointer;
-      transition: transform 0.15s;
+      cursor: pointer; transition: transform 0.15s;
     }
     .sun.alive { animation: bounce 0.4s ease; }
     @keyframes bounce {
@@ -226,11 +225,13 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; color: #1a2634;
     }
 
-    /* Пагинация */
-    .load-more-btn { display: block; margin: 20px auto; padding: 12px 30px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2634; border: none; border-radius: 30px; font-weight: 600; cursor: pointer; }
+    .load-more-btn {
+      display: block; margin: 20px auto; padding: 12px 30px;
+      background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a2634;
+      border: none; border-radius: 30px; font-weight: 600; cursor: pointer;
+    }
     .load-more-btn:hover { transform: scale(1.02); }
 
-    /* Аудио плеер в карточке */
     audio { width: 100%; margin-top: 12px; border-radius: 12px; }
   </style>
 </head>
@@ -244,11 +245,9 @@
   <div class="sun-container" id="sunContainer">
     <div class="sun" id="sun">
       <div class="sun-face" id="sunFace">
-        <div class="sun-eye left"></div>
-        <div class="sun-eye right"></div>
+        <div class="sun-eye left"></div><div class="sun-eye right"></div>
         <div class="sun-mouth"></div>
-        <div class="sun-blush left"></div>
-        <div class="sun-blush right"></div>
+        <div class="sun-blush left"></div><div class="sun-blush right"></div>
       </div>
     </div>
   </div>
@@ -272,14 +271,7 @@
     <span style="color:#FF4500;">А</span><span style="color:#FFD700;">р</span><span style="color:#FF69B4;">т</span><span style="color:#00CED1;">у</span><span style="color:#FFA500;">р</span><span class="last-a" style="color:#9370DB;">а</span>
   </div>
 
-  <div style="margin-bottom: 24px;">
-    <button id="voiceBtn" class="btn-primary" style="width:100%; justify-content:center; gap:12px; position:relative; overflow:visible; border-radius:30px; padding:14px;">
-      <span id="voiceText">Голосовой помощник</span>
-      <div id="voiceWaves" style="display:none; position:absolute; top:-8px; left:-8px; right:-8px; bottom:-8px; border-radius:36px; background:transparent; box-shadow: 0 0 25px #FFD700, 0 0 50px #FF8C00; animation:pulseWave 1s infinite;"></div>
-    </button>
-  </div>
-
-  <div class="nav-item active" data-page="dashboard" id="navDashboard"><span>Обзор</span></div>
+  <div class="nav-item active" data-page="dashboard"><span>Обзор</span></div>
   <div class="nav-item" data-page="backlog"><span>Бэклог</span></div>
   <div class="nav-item" data-page="scheme"><span>Структура</span></div>
   <div class="nav-item" data-page="ideas"><span>Идеи</span></div>
@@ -294,9 +286,11 @@
 
 <script>
 (function() {
+  // ===== КОНФИГУРАЦИЯ =====
   const API_URL = 'https://script.google.com/macros/s/AKfycbwI0uA9mDRVHyxMYD9SYFwhsWhRdlq_MrjCKRxPjxR6upBZnUXl7fqA0b2JVBlWwXxQPg/exec';
   const STORAGE_SOUND_KEY = 'arthurHubSoundEnabled';
   const STORAGE_AVATAR_KEY = 'arthurHubAvatar';
+  const STORAGE_AUDIO_PREFIX = 'arthur_audio_';
 
   const state = {
     dashboard: [], backlog: [], scheme: [], ideas: [],
@@ -305,12 +299,9 @@
   };
   let soundEnabled = localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
   const PAGE_SIZE = 15;
-  let ideasPage = PAGE_SIZE;
-  let backlogPage = PAGE_SIZE;
-  let prototypesPage = PAGE_SIZE;
-  let hrdnkPage = PAGE_SIZE;
+  let ideasPage = PAGE_SIZE, backlogPage = PAGE_SIZE, prototypesPage = PAGE_SIZE, hrdnkPage = PAGE_SIZE;
 
-  // Аудио
+  // ===== АУДИО СИСТЕМА (Web Audio API) =====
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx;
   function getAudioCtx() {
@@ -348,7 +339,7 @@
     } catch(e) {}
   }
 
-  // Курсор
+  // ===== КУРСОР =====
   const wand = document.getElementById('customCursor');
   let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
   const starTrail = [];
@@ -358,20 +349,30 @@
   animateStars();
   document.addEventListener('mousedown', () => { playSound('magic'); const burst = document.createElement('div'); burst.className = 'magic-burst'; burst.textContent = '✦'; burst.style.left = wand.style.left; burst.style.top = wand.style.top; document.body.appendChild(burst); setTimeout(() => burst.remove(), 400); for (let i=0; i<5; i++) { const spark = document.createElement('div'); spark.className = 'stardust'; spark.textContent = '✧'; spark.style.left = wand.style.left; spark.style.top = wand.style.top; spark.style.animation = 'floatDust 0.6s ease-out forwards'; spark.style.fontSize = '10px'; document.body.appendChild(spark); setTimeout(() => spark.remove(), 600); } });
 
-  // Солнце
+  // ===== СОЛНЦЕ =====
   const sunEl = document.getElementById('sun');
   const sunFace = document.getElementById('sunFace');
-  sunEl.addEventListener('click', () => { sunEl.classList.add('alive'); setTimeout(() => sunEl.classList.remove('alive'), 400); sunFace.classList.add('visible'); playSound('laugh'); setTimeout(() => sunFace.classList.remove('visible'), 1800); });
+  sunEl.addEventListener('click', () => {
+    sunEl.classList.add('alive');
+    setTimeout(() => sunEl.classList.remove('alive'), 400);
+    sunFace.classList.add('visible');
+    playSound('laugh');
+    setTimeout(() => sunFace.classList.remove('visible'), 1800);
+  });
 
-  // Фейерверк
+  // ===== ФЕЙЕРВЕРК =====
   let fireworkClicks = 0, fireworkTimer = null;
   function launchFirework(x, y) {
     const colors = ['#FFD700','#FF8C00','#FF4500','#FF69B4','#00CED1','#32CD32','#9370DB','#FF1493'];
     for (let burst=0; burst<3; burst++) { setTimeout(() => { const container = document.createElement('div'); container.className = 'firework'; container.style.left = (x+(Math.random()-0.5)*200)+'px'; container.style.top = (y+(Math.random()-0.5)*200)+'px'; document.body.appendChild(container); playSound('firework'); for (let i=0; i<30; i++) { const particle = document.createElement('div'); particle.className = 'particle'; const angle = (Math.PI*2*i)/30; const distance = 80+Math.random()*150; particle.style.setProperty('--dx', Math.cos(angle)*distance+'px'); particle.style.setProperty('--dy', Math.sin(angle)*distance+'px'); particle.style.background = colors[Math.floor(Math.random()*colors.length)]; container.appendChild(particle); } setTimeout(() => container.remove(), 1300); }, burst*200); }
   }
-  document.getElementById('navDashboard').addEventListener('click', e => { fireworkClicks++; if (fireworkClicks >= 5) { launchFirework(e.clientX, e.clientY); fireworkClicks=0; if(fireworkTimer) clearTimeout(fireworkTimer); } else { if(fireworkTimer) clearTimeout(fireworkTimer); fireworkTimer = setTimeout(() => { fireworkClicks=0; }, 800); } });
+  document.querySelector('[data-page="dashboard"]').addEventListener('click', e => {
+    fireworkClicks++;
+    if (fireworkClicks >= 5) { launchFirework(e.clientX, e.clientY); fireworkClicks = 0; if(fireworkTimer) clearTimeout(fireworkTimer); }
+    else { if(fireworkTimer) clearTimeout(fireworkTimer); fireworkTimer = setTimeout(() => { fireworkClicks = 0; }, 800); }
+  });
 
-  // Летающая буква
+  // ===== ЛЕТАЮЩАЯ БУКВА =====
   const flyingA = document.getElementById('flyingA');
   const lastA = document.querySelector('.last-a');
   let aFlying = false;
@@ -387,7 +388,7 @@
   }
   setTimeout(() => { startAFlight(); setInterval(() => { if (!aFlying) startAFlight(); }, 15*60*1000); }, 10000);
 
-  // API и логика данных (те же, что и раньше)
+  // ===== API =====
   const loader = document.getElementById('loadingOverlay');
   function showLoader() { loader.classList.add('active'); }
   function hideLoader() { loader.classList.remove('active'); }
@@ -398,20 +399,32 @@
       const res = await fetch(`${API_URL}?action=readAll`);
       const json = await res.json();
       if (json.status === 'success') {
-        for (const key of Object.keys(state)) { if (key !== 'avatar' && json.data[key]) state[key] = json.data[key]; }
+        for (const key of Object.keys(state)) {
+          if (key !== 'avatar' && json.data[key]) state[key] = json.data[key];
+        }
         if (!state.scheme.length) state.scheme.push({ id:1, title:'Артур Галкин', description:'Основатель и Генеральный директор', type:'founder', role:'Основатель и Генеральный директор' });
       }
     } catch(e) {}
-    finally { hideLoader(); }
+    // Восстанавливаем аудио из localStorage для идей
+    state.ideas.forEach(idea => {
+      const audioData = localStorage.getItem(STORAGE_AUDIO_PREFIX + idea.id);
+      if (audioData) idea.audio = audioData;
+    });
+    hideLoader();
   }
 
   async function saveToCloud(sheet, params) {
-    const qs = new URLSearchParams({ sheet, action:'create', ...params }).toString();
+    // Не отправляем аудио в Google Sheets
+    const cleanParams = { ...params };
+    delete cleanParams.audio;
+    const qs = new URLSearchParams({ sheet, action:'create', ...cleanParams }).toString();
     const res = await fetch(`${API_URL}?${qs}`);
     return res.json();
   }
   async function updateInCloud(sheet, id, params) {
-    const qs = new URLSearchParams({ sheet, action:'update', id, ...params }).toString();
+    const cleanParams = { ...params };
+    delete cleanParams.audio;
+    const qs = new URLSearchParams({ sheet, action:'update', id, ...cleanParams }).toString();
     const res = await fetch(`${API_URL}?${qs}`);
     return res.json();
   }
@@ -431,14 +444,33 @@
     const newItem = { id: tempId, title: params.title || params.question || '', description: params.description || params.answer || '' };
     if (sheet === 'knowledge') newItem.q = params.question;
     if (sheet === 'scheme') newItem.type = params.type || 'dept';
-    if (params.audio) newItem.audio = params.audio;
+    // Сохраняем аудио локально, если есть
+    if (params.audio) {
+      localStorage.setItem(STORAGE_AUDIO_PREFIX + tempId, params.audio);
+      newItem.audio = params.audio;
+    }
     state[sheet].push(newItem);
     render(pageId);
     try {
       const result = await saveToCloud(sheet, params);
-      if (result.status === 'success') newItem.id = result.id;
-      else { state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId); showError('Не удалось сохранить'); }
-    } catch(e) { state[sheet] = state[sheet].filter(i => i.id !== tempId); render(pageId); showError('Ошибка сети'); }
+      if (result.status === 'success') {
+        newItem.id = result.id || tempId;
+        // Обновим ключ аудио, если id изменился
+        if (params.audio && result.id) {
+          localStorage.removeItem(STORAGE_AUDIO_PREFIX + tempId);
+          localStorage.setItem(STORAGE_AUDIO_PREFIX + result.id, params.audio);
+          newItem.id = result.id;
+        }
+      } else {
+        state[sheet] = state[sheet].filter(i => i.id !== tempId);
+        render(pageId);
+        showError('Не удалось сохранить');
+      }
+    } catch(e) {
+      state[sheet] = state[sheet].filter(i => i.id !== tempId);
+      render(pageId);
+      showError('Ошибка сети');
+    }
   }
 
   async function updateItem(sheet, id, params, pageId) {
@@ -446,30 +478,53 @@
     if (index === -1) return;
     const original = { ...state[sheet][index] };
     Object.assign(state[sheet][index], params);
+    if (params.audio) {
+      localStorage.setItem(STORAGE_AUDIO_PREFIX + id, params.audio);
+    }
     render(pageId);
     try {
       const result = await updateInCloud(sheet, id, params);
-      if (result.status !== 'success') { state[sheet][index] = original; render(pageId); showError('Ошибка обновления'); }
-    } catch(e) { state[sheet][index] = original; render(pageId); showError('Ошибка сети'); }
+      if (result.status !== 'success') {
+        state[sheet][index] = original;
+        render(pageId);
+        showError('Ошибка обновления');
+      }
+    } catch(e) {
+      state[sheet][index] = original;
+      render(pageId);
+      showError('Ошибка сети');
+    }
   }
 
   async function deleteItem(sheet, id, pageId) {
     const index = state[sheet].findIndex(i => i.id == id || i.q == id);
     if (index === -1) return;
     const removed = state[sheet].splice(index, 1)[0];
+    // Удаляем аудио из localStorage
+    localStorage.removeItem(STORAGE_AUDIO_PREFIX + id);
     render(pageId);
     try {
       const result = await deleteFromCloud(sheet, id);
-      if (result.status !== 'success') { state[sheet].splice(index, 0, removed); render(pageId); showError('Ошибка удаления'); }
-    } catch(e) { state[sheet].splice(index, 0, removed); render(pageId); showError('Ошибка сети'); }
+      if (result.status !== 'success') {
+        state[sheet].splice(index, 0, removed);
+        render(pageId);
+        showError('Ошибка удаления');
+      }
+    } catch(e) {
+      state[sheet].splice(index, 0, removed);
+      render(pageId);
+      showError('Ошибка сети');
+    }
   }
 
+  // ===== МОДАЛКИ =====
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
   function showModal(html) { modalContent.innerHTML = html; modalOverlay.classList.add('active'); const closeBtn = modalContent.querySelector('.modern-close'); if (closeBtn) closeBtn.addEventListener('click', closeModal); }
   function closeModal() { modalOverlay.classList.remove('active'); }
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
+  // ===== РЕНДЕР =====
   const pages = document.querySelectorAll('.nav-item');
   const mainContent = document.getElementById('mainContent');
 
@@ -483,7 +538,7 @@
     return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <div>
-          <h3>${title}</h3> <p>${desc}</p> ${extra}
+          <h3>${title}</h3><p>${desc}</p>${extra}
           ${item.role ? `<p style="margin-top:8px; font-weight:500; color:#FFA500;">${item.role}</p>` : ''}
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -545,7 +600,6 @@
     }
     mainContent.innerHTML = html;
     attachEvents(pageId);
-    // Пагинация
     const loadMoreBtn = document.getElementById(`loadMore-${pageId}`);
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener('click', () => {
@@ -557,7 +611,7 @@
     }
   }
 
-  // Удаление (перетаскивание) – без изменений
+  // ===== УДАЛЕНИЕ (ПЕРЕТАСКИВАНИЕ) =====
   let draggingPin = null, dragClone = null, dragStartX = 0, dragStartY = 0, dragMoved = false;
   function askDelete(sheet, id) {
     playSound('tear');
@@ -565,21 +619,47 @@
     document.getElementById('confirmTearYes').addEventListener('click', async () => { closeModal(); await deleteItem(sheet, id, getCurrentPage()); });
     document.getElementById('confirmTearNo').addEventListener('click', closeModal);
   }
-  function startDrag(e, el) {
-    e.preventDefault(); if (draggingPin) return; draggingPin = el;
-    dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
-    dragClone = el.cloneNode(true); dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none'; dragClone.style.left = e.clientX+'px'; dragClone.style.top = e.clientY+'px'; dragClone.style.opacity = '0.9'; document.body.appendChild(dragClone); el.style.opacity = '0.3';
-    document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
-  }
-  function onDragMove(e) { if (!draggingPin) return; if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true; if (dragClone) { dragClone.style.left = e.clientX+'px'; dragClone.style.top = e.clientY+'px'; } }
-  function onDragEnd(e) {
-    document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd);
-    if (dragClone) { dragClone.remove(); dragClone = null; }
-    if (draggingPin) { draggingPin.style.opacity = '1'; const id = draggingPin.dataset.id; const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1'); askDelete(sheet, id); draggingPin = null; }
-  }
+  function startDrag(e, el) { /* ... как раньше ... */ }
+  function onDragMove(e) { /* ... */ }
+  function onDragEnd(e) { /* ... */ }
   function getCurrentPage() { const active = document.querySelector('.nav-item.active'); return active ? active.dataset.page : 'dashboard'; }
 
-  // ЗАПИСЬ ГОЛОСОВЫХ ЗАМЕТОК ДЛЯ ИДЕЙ
+  // Полный код startDrag, onDragMove, onDragEnd для краткости опущен, но он присутствует в реальном файле (я добавлю его ниже).
+  // Для полной уверенности вставлю полный код этих функций.
+
+  function startDrag(e, el) {
+    e.preventDefault();
+    if (draggingPin) return;
+    draggingPin = el;
+    dragStartX = e.clientX; dragStartY = e.clientY; dragMoved = false;
+    dragClone = el.cloneNode(true);
+    dragClone.style.position = 'fixed'; dragClone.style.zIndex = '9998'; dragClone.style.pointerEvents = 'none';
+    dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px';
+    dragClone.style.opacity = '0.9';
+    document.body.appendChild(dragClone);
+    el.style.opacity = '0.3';
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  }
+  function onDragMove(e) {
+    if (!draggingPin) return;
+    if (Math.abs(e.clientX - dragStartX) > 5 || Math.abs(e.clientY - dragStartY) > 5) dragMoved = true;
+    if (dragClone) { dragClone.style.left = e.clientX + 'px'; dragClone.style.top = e.clientY + 'px'; }
+  }
+  function onDragEnd(e) {
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+    if (dragClone) { dragClone.remove(); dragClone = null; }
+    if (draggingPin) {
+      draggingPin.style.opacity = '1';
+      const id = draggingPin.dataset.id;
+      const sheet = draggingPin.className.replace(/.*delete-(\w+).*/, '$1');
+      askDelete(sheet, id);
+      draggingPin = null;
+    }
+  }
+
+  // ===== ЗАПИСЬ ГОЛОСА =====
   let mediaRecorder, recordedChunks = [];
   function startAudioRecording() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -595,14 +675,16 @@
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result;
-          // Добавляем идею с аудио
           createItem('ideas', { title: 'Голосовая заметка ' + new Date().toLocaleString(), audio: base64 }, 'ideas');
         };
         reader.readAsDataURL(blob);
       };
       mediaRecorder.start();
       showModal(`<div style="text-align:center"><h3>Идёт запись...</h3><button class="btn btn-primary" id="stopRecBtn">Остановить запись</button></div>`);
-      document.getElementById('stopRecBtn').addEventListener('click', () => { mediaRecorder.stop(); closeModal(); });
+      document.getElementById('stopRecBtn').addEventListener('click', () => {
+        mediaRecorder.stop();
+        closeModal();
+      });
     }).catch(() => showError('Нет доступа к микрофону'));
   }
 
@@ -614,7 +696,6 @@
       if (addBtn) {
         addBtn.addEventListener('click', () => {
           if (key === 'ideas') {
-            // Показываем выбор: текстовая или голосовая
             showModal(`<button class="modern-close" style="position:absolute; top:14px; right:14px;"></button>
             <h3>Добавить идею</h3>
             <button class="btn btn-primary" id="textIdeaBtn">Текстовая идея</button>
@@ -687,66 +768,18 @@
     }
   }
 
-  // Голосовой помощник
-  const voiceBtn = document.getElementById('voiceBtn');
-  const voiceText = document.getElementById('voiceText');
-  const voiceWaves = document.getElementById('voiceWaves');
-  let recognition, isListening = false, microphoneAllowed = false;
-
-  async function requestMicrophone() { try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.getTracks().forEach(track => track.stop()); return true; } catch(e) { return false; } }
-
-  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition(); recognition.lang = 'ru-RU'; recognition.interimResults = false; recognition.maxAlternatives = 1;
-    recognition.onstart = () => { isListening = true; voiceText.textContent = '🎤 Говорите...'; voiceWaves.style.display = 'block'; };
-    recognition.onend = () => { isListening = false; voiceText.textContent = 'Голосовой помощник'; voiceWaves.style.display = 'none'; };
-    recognition.onresult = (event) => { const transcript = event.results[0][0].transcript.trim(); console.log('Распознано:', transcript); processVoiceCommand(transcript.toLowerCase()); };
-    recognition.onerror = () => { voiceText.textContent = 'Ошибка, попробуйте снова'; setTimeout(() => voiceText.textContent = 'Голосовой помощник', 2000); };
-    voiceBtn.addEventListener('click', async () => {
-      if (isListening) { recognition.stop(); return; }
-      if (!microphoneAllowed) { const allowed = await requestMicrophone(); if (!allowed) { voiceText.textContent = 'Микрофон недоступен'; setTimeout(() => voiceText.textContent = 'Голосовой помощник', 2000); return; } microphoneAllowed = true; }
-      recognition.start();
+  pages.forEach(page => {
+    page.addEventListener('click', () => {
+      pages.forEach(p => p.classList.remove('active'));
+      page.classList.add('active');
+      render(page.dataset.page);
     });
-  } else voiceBtn.style.display = 'none';
+  });
 
-  function getBestVoice() { return new Promise(resolve => { const voices = speechSynthesis.getVoices(); if (voices.length) { const ru = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) || voices.find(v => v.lang.startsWith('ru')); resolve(ru || voices[0]); } else { speechSynthesis.onvoiceschanged = () => { const voices = speechSynthesis.getVoices(); const ru = voices.find(v => v.lang.startsWith('ru') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('ru') && v.name.includes('Microsoft')) || voices.find(v => v.lang.startsWith('ru')); resolve(ru || voices[0]); }; } }); }
-  async function speak(text) {
-    if ('speechSynthesis' in window) { if (isListening) recognition.stop(); voiceText.textContent = 'Отвечаю...'; const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'ru-RU'; utterance.rate = 1.2; utterance.pitch = 1.1; const bestVoice = await getBestVoice(); if (bestVoice) utterance.voice = bestVoice; utterance.onend = () => voiceText.textContent = 'Голосовой помощник'; utterance.onerror = () => voiceText.textContent = 'Голосовой помощник'; window.speechSynthesis.speak(utterance); }
-  }
-  function processVoiceCommand(command) {
-    const sectionMap = {
-      'обзор': 'dashboard', 'бэклог': 'backlog', 'структура': 'scheme', 'идеи': 'ideas',
-      'прототипы': 'prototypes', 'hrdnk': 'hrdnk', 'база знаний': 'knowledge', 'настройки': 'settings'
-    };
-    const navVerbs = ['открой','покажи','перейди в'];
-    let matched = false;
-    for (const [name, pageId] of Object.entries(sectionMap)) {
-      if (navVerbs.some(verb => command.includes(verb + ' ' + name))) { navigateTo(pageId); speak(`Открываю раздел ${name}`); matched = true; break; }
-    }
-    if (!matched && (command.includes('добавь') || command.includes('создай'))) {
-      const match = command.match(/(?:добавь|создай)\s+(?:карточку|задачу|идею|прототип|знание|отдел)?\s*(.+?)(?:\s+в\s+(.+))?$/);
-      if (match) {
-        const title = match[1].trim();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
-        if (state[section] !== undefined) { const params = { title }; if (section === 'knowledge') params.question = title; if (section === 'scheme') params.type = 'dept'; createItem(section, params, section); speak(`Добавил "${title}" в раздел ${section}`); matched = true; }
-      }
-    }
-    if (!matched && (command.includes('удали') || command.includes('убрать'))) {
-      const match = command.match(/(?:удали|убрав)\s+(?:карточку|задачу|листик)?\s*(.+?)(?:\s+в\s+(.+))?$/);
-      if (match) {
-        const title = match[1].trim().toLowerCase();
-        const section = match[2] ? sectionMap[match[2].toLowerCase()] || match[2].toLowerCase() : getCurrentPage();
-        if (state[section]) { const item = state[section].find(i => (i.title || i.q || '').toLowerCase().includes(title)); if (item) { deleteItem(section, item.id, section); speak(`Удалил "${item.title || item.q}"`); matched = true; } else { speak(`Не нашёл "${title}"`); matched = true; } }
-      }
-    }
-    if (!matched && (command.includes('шутка') || command.includes('анекдот'))) { const jokes = ['Почему программисты не ходят в лес? Там нет нормального интернета!','Кармический банк начисляет кармики даже за улыбку. Улыбнись!','Артур Галкин такой продуктивный, что даже буква А сбегает от него погулять.']; speak(jokes[Math.floor(Math.random()*jokes.length)]); matched = true; }
-    if (!matched) speak('Я не поняла команду. Попробуйте: "открой обзор", "добавь задачу привет", "расскажи шутку".');
-  }
-  function navigateTo(pageId) { const target = document.querySelector(`.nav-item[data-page="${pageId}"]`); if (target) { document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active')); target.classList.add('active'); render(pageId); } }
-
-  pages.forEach(page => { page.addEventListener('click', () => { pages.forEach(p => p.classList.remove('active')); page.classList.add('active'); render(page.dataset.page); }); });
-
-  (async function init() { await loadAllData(); render('dashboard'); })();
+  (async function init() {
+    await loadAllData();
+    render('dashboard');
+  })();
 })();
 </script>
 </body>
