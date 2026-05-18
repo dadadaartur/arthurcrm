@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase } from '../../supabaseClient'
 import Link from 'next/link'
 
 export default function ServiceDetail() {
