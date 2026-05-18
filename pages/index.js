@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import ServiceCard from '@/components/ServiceCard'
-import SearchBar from '@/components/SearchBar'
+import { supabase } from '../lib/supabaseClient'
+import ServiceCard from '../components/ServiceCard'
+import SearchBar from '../components/SearchBar'
 
 export default function Home() {
   const [services, setServices] = useState([])
