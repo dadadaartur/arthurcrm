@@ -10,7 +10,58 @@ body {
   cursor: default;
 }
 
-/* Базовое облако */
+/* Реалистичное облако (пушистые края) */
+.cloud-fluffy {
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  box-shadow:
+    0 20px 40px -12px rgba(255, 255, 255, 0.6),
+    0 0 80px rgba(255, 255, 255, 0.4);
+  padding: 1rem 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+/* Псевдоэлементы для рваных краёв (имитация кучевого облака) */
+.cloud-fluffy::before,
+.cloud-fluffy::after {
+  content: '';
+  position: absolute;
+  background: inherit;
+  backdrop-filter: inherit;
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.cloud-fluffy::before {
+  width: 50%;
+  height: 60%;
+  top: -30%;
+  left: 5%;
+}
+
+.cloud-fluffy::after {
+  width: 40%;
+  height: 50%;
+  top: -25%;
+  right: 5%;
+}
+
+.cloud-fluffy:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 48px -12px rgba(255, 255, 255, 0.8),
+    0 0 100px rgba(255, 255, 255, 0.6);
+}
+
+/* Базовое облако (прежний класс) – оставлено для совместимости */
 .cloud {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -31,45 +82,6 @@ body {
   transform: translateY(-2px);
 }
 
-/* Солнце в правом верхнем углу */
-.sun {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle at 30% 30%, #ffe484, #ffb347);
-  border-radius: 50%;
-  box-shadow:
-    0 0 60px #ffb347,
-    0 0 120px #ffb347,
-    0 0 200px rgba(255, 179, 71, 0.6);
-  z-index: -1;
-  animation: pulse 4s ease-in-out infinite;
-}
-
-.sun::before {
-  content: '';
-  position: absolute;
-  top: -30px;
-  left: -30px;
-  right: -30px;
-  bottom: -30px;
-  background: radial-gradient(circle, rgba(255,228,132,0.4) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: glow 3s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes glow {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
-}
-
 /* Кнопки с тройным градиентом и голограммой */
 .btn-holographic {
   position: relative;
@@ -84,7 +96,7 @@ body {
   transition: all 0.3s ease;
   text-decoration: none;
   display: inline-block;
-  cursor: pointer; /* Здесь курсор – логично, это кнопка */
+  cursor: pointer;
 }
 
 .btn-holographic:hover {
@@ -107,33 +119,6 @@ body {
   outline: none;
   border-color: #c084fc;
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(255, 107, 0, 0.1);
-}
-
-/* Облачные плитки-подсказки */
-.tag-cloud {
-  animation: float 6s ease-in-out infinite;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 2rem;
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-  color: #4a5568;
-  box-shadow: 0 8px 20px -8px rgba(135, 206, 250, 0.4);
-  cursor: pointer;
-  transition: all 0.2s;
-  user-select: none;
-}
-
-.tag-cloud:hover {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 12px 24px -8px rgba(135, 206, 250, 0.6);
-  transform: translateY(-2px);
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
 }
 
 /* Подсветка совпадений */
@@ -162,7 +147,17 @@ body {
   border-color: transparent;
 }
 
-/* Убираем системный курсор с текстовых блоков (не кликабельных) */
-p, h1, h2, h3, span, div:not(.btn-holographic):not(.tag-cloud):not(.filter-pill) {
+/* Убираем системный курсор со всех некликабельных элементов */
+h1, h2, h3, p, span, div {
   cursor: default;
+}
+
+/* Явно разрешаем курсор-указатель только на кликабельных */
+a, button, .btn-holographic, .filter-pill, .cloud-fluffy, .tag-cloud {
+  cursor: pointer;
+}
+
+/* Убираем мигающий caret при клике на фон – скрываем outline у всех элементов */
+*:focus {
+  outline: none;
 }
