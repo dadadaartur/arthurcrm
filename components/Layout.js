@@ -12,10 +12,10 @@ export default function Layout({ children }) {
           </Link>
           <nav className="flex gap-4">
             <Link href="/" className="text-gray-700 hover:text-purple-500 transition">
-              Каталог
+              Главная
             </Link>
-            <Link href="/match" className="text-gray-700 hover:text-purple-500 transition">
-              Подобрать
+            <Link href="/catalog" className="text-gray-700 hover:text-purple-500 transition">
+              Каталог
             </Link>
           </nav>
         </div>
