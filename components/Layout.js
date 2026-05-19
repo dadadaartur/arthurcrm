@@ -10,9 +10,12 @@ export default function Layout({ children }) {
               AI Marketplace
             </span>
           </Link>
-          <nav>
+          <nav className="flex gap-4">
             <Link href="/" className="text-gray-700 hover:text-green-500 transition">
               Каталог
+            </Link>
+            <Link href="/match" className="text-gray-700 hover:text-green-500 transition">
+              Подобрать
             </Link>
           </nav>
         </div>
