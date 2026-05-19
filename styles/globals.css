@@ -2,40 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Летнее небо */
 body {
-  background: #FFFFFF;
-  color: #1A1A1A;
+  background: linear-gradient(180deg, #C9E8FF 0%, #E3F2FD 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1A1A1A;
 }
 
-/* Тотальная зачистка курсоров */
+/* Полная блокировка любых курсоров, кроме указателя на кликабельных */
 * {
-  cursor: default;
+  cursor: default !important;
+  user-select: none;
 }
-a, button, .clickable, .ghost-button {
-  cursor: pointer;
-}
-input, textarea {
-  cursor: text;
-}
-*:focus {
-  outline: none;
+a, button, .clickable, .ghost-framed {
+  cursor: pointer !important;
 }
 
-/* Цифра баланса с градиентом и обводкой */
+/* Убираем любые обводки при фокусе */
+*:focus {
+  outline: none !important;
+}
+
+/* Цифра баланса с градиентом серебро-платина и чёрной обводкой */
 .balance-number {
   font-size: 64px;
   font-weight: 700;
   letter-spacing: -1px;
   line-height: 1.1;
   text-align: center;
-  /* Градиент от серебра к платине */
   background: linear-gradient(180deg, #EAEAEA 0%, #C0C0C0 40%, #A0A0A0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  /* Чёрная обводка */
   -webkit-text-stroke: 2px #000000;
-  /* Мерцание */
   animation: subtleGlow 2s ease-in-out infinite;
 }
 
@@ -44,7 +44,7 @@ input, textarea {
   50% { filter: drop-shadow(0 0 6px rgba(0,0,0,0.2)); }
 }
 
-/* Блок баланса с яркой голографической рамкой */
+/* Блок баланса с голографической рамкой */
 .balance-block {
   background: #FFFFFF;
   border: 1px solid rgba(167, 139, 250, 0.35);
@@ -67,44 +67,44 @@ input, textarea {
   transform: translateY(-2px);
 }
 
-/* Контейнер для кнопок под цифрой */
-.balance-actions {
-  margin-top: 32px;
-  display: flex;
-  justify-content: center;
-  gap: 28px;
+/* Подпись над цифрой */
+.balance-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
 }
 
-/* Безрамочная кнопка с голографическим шрифтом */
-.ghost-button {
-  font-size: 16px;
+/* Кнопки с тонкой голографической рамкой */
+.ghost-framed {
+  font-size: 15px;
   font-weight: 400;
   color: #3A3A3A;
   background: none;
-  border: none;
-  padding: 0;
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: 50px;
+  padding: 8px 22px;
   transition: all 0.25s;
   text-shadow: 0 0 8px rgba(120, 120, 120, 0.15);
   letter-spacing: 0.3px;
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.12);
 }
 
-.ghost-button:hover {
-  text-shadow: 0 0 14px rgba(120, 120, 120, 0.35);
+.ghost-framed:hover {
+  border-color: rgba(167, 139, 250, 0.7);
+  box-shadow: 0 0 24px rgba(167, 139, 250, 0.3);
   transform: scale(1.04);
   color: #000000;
 }
 
-/* Поле ввода (для других страниц) */
-.input-field {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 10px 14px;
-  width: 100%;
-  font-size: 14px;
-  transition: border 0.2s;
-}
-.input-field:focus {
-  border-color: #A78BFA;
-  box-shadow: 0 0 0 3px rgba(167,139,250,0.15);
+/* Контейнер для кнопок */
+.balance-actions {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
