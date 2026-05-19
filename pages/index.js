@@ -49,14 +49,7 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-6 py-10 flex justify-start">
       <div
         style={{
-          // Новый тёплый, глубокий фон карты
-          background: `
-            linear-gradient(
-              160deg,
-              #26231E 0%,
-              #1B1815 35%,
-              #13110F 100%
-            )`,
+          background: 'linear-gradient(160deg, #26231E 0%, #1B1815 35%, #13110F 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '28px',
           padding: '28px 36px',
@@ -76,7 +69,7 @@ export default function Home() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`
         }}
       >
-        {/* Верхний блик — лёгкое свечение вдоль верхней грани */}
+        {/* Верхний блик */}
         <div
           style={{
             position: 'absolute',
@@ -84,12 +77,7 @@ export default function Home() {
             left: 0,
             right: 0,
             height: '90px',
-            background: `
-              linear-gradient(
-                180deg,
-                rgba(255,255,255,.05),
-                transparent
-              )`,
+            background: `linear-gradient(180deg, rgba(255,255,255,.05), transparent)`,
             pointerEvents: 'none',
           }}
         />
@@ -128,19 +116,9 @@ export default function Home() {
               width: '260px',
               height: '260px',
               borderRadius: '50%',
-              background: `
-                radial-gradient(
-                  circle,
-                  transparent 58%,
-                  rgba(197,160,78,.15) 70%,
-                  transparent 76%
-                )
-              `,
+              background: `radial-gradient(circle, transparent 58%, rgba(197,160,78,.15) 70%, transparent 76%)`,
               border: '1px solid rgba(197,160,78,.4)',
-              boxShadow: `
-                0 0 60px rgba(197,160,78,.2),
-                inset 0 0 30px rgba(197,160,78,.08)
-              `,
+              boxShadow: `0 0 60px rgba(197,160,78,.2), inset 0 0 30px rgba(197,160,78,.08)`,
               top: '42%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
