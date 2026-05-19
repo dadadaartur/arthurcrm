@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function MyPurchases() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [purchases, setPurchases] = useState([])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        supabase.from('purchases')
-          .select('*').eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .then(({ data }) => setPurchases(data || []))
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      supabase.from('purchases')
+        .select('*').eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .then(({ data }) => setPurchases(data || []))
     })
   }, [])
 
