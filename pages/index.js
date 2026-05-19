@@ -76,55 +76,59 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
+      {/* Заголовок на облаке */}
       <div className="text-center mb-10 select-none">
-        <h1 className="text-4xl font-light text-gray-700 mb-3 tracking-wide cursor-default">
+        <h1 className="inline-block cloud px-8 py-4 mb-6 text-4xl font-light text-gray-700 tracking-wide cursor-default">
           Волшебный мир{' '}
           <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">
             AI
           </span>
         </h1>
-        <p className="text-gray-500 text-lg max-w-xl mx-auto cursor-default">
-          Просто скажите, что нужно сделать, и мы подберём лучшие инструменты. Не тратьте время на поиски — магия уже здесь.
+        <p className="text-gray-600 text-lg max-w-xl mx-auto cursor-default bg-white/40 backdrop-blur-sm rounded-full py-2 px-6">
+          Просто скажите, что нужно сделать, и мы подберём лучшие инструменты
         </p>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-3 mb-10 select-none">
+      {/* Облачные подсказки */}
+      <div className="flex flex-wrap justify-center gap-4 mb-10 select-none">
         {SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion}
             onClick={() => handleTagClick(suggestion)}
-            className="tag-cloud bg-white/40 backdrop-blur-sm border border-white/50 rounded-full px-5 py-2 text-sm text-gray-700 shadow-sm hover:shadow-md hover:bg-white/60 transition-all cursor-pointer select-none"
+            className="tag-cloud"
           >
             {suggestion}
           </button>
         ))}
       </div>
 
+      {/* Поле ввода + кнопка в облачном контейнере */}
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-10">
-        <div className="flex flex-col sm:flex-row gap-3 items-center">
+        <div className="cloud p-2 flex flex-col sm:flex-row gap-2 items-center">
           <input
             type="text"
             placeholder="Опишите вашу задачу..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full sm:flex-1 pl-6 pr-4 py-4 input-magic text-lg text-gray-700 placeholder-gray-400 rounded-full"
+            className="w-full sm:flex-1 pl-6 pr-4 py-4 bg-white/40 backdrop-blur-sm rounded-full text-lg text-gray-700 placeholder-gray-400 border-none focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
           <button
             type="submit"
-            className="btn-holographic flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto"
+            className="btn-holographic flex items-center justify-center px-8 py-4 w-full sm:w-auto"
           >
             Подобрать
           </button>
         </div>
       </form>
 
+      {/* Фильтры на облачке */}
       {results.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-3 mb-8 select-none">
+        <div className="flex flex-wrap justify-center gap-3 mb-8 select-none cloud px-4 py-2">
           <span className="text-sm text-gray-500 self-center mr-2">Фильтры:</span>
           <select
             value={filters.category}
             onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            className="filter-pill cursor-pointer"
+            className="filter-pill"
           >
             <option value="">Все категории</option>
             <option value="Текст">Текст</option>
@@ -138,7 +142,7 @@ export default function Home() {
           <select
             value={filters.pricing}
             onChange={(e) => setFilters({ ...filters, pricing: e.target.value })}
-            className="filter-pill cursor-pointer"
+            className="filter-pill"
           >
             <option value="">Любая цена</option>
             <option value="Бесплатно">Бесплатно</option>
@@ -148,7 +152,7 @@ export default function Home() {
           <select
             value={filters.rating}
             onChange={(e) => setFilters({ ...filters, rating: parseFloat(e.target.value) })}
-            className="filter-pill cursor-pointer"
+            className="filter-pill"
           >
             <option value="0">Любой рейтинг</option>
             <option value="4">4+ звёзд</option>
@@ -160,8 +164,9 @@ export default function Home() {
         </div>
       )}
 
+      {/* Загрузка / пусто */}
       {loading && (
-        <div className="text-center text-gray-400 py-8 select-none">Ищем лучшие варианты...</div>
+        <div className="text-center text-gray-500 py-8 select-none">Ищем лучшие варианты...</div>
       )}
       {noResult && (
         <div className="text-center text-gray-500 py-8 select-none">
@@ -169,9 +174,10 @@ export default function Home() {
         </div>
       )}
 
+      {/* Карточки результатов в облачном обрамлении */}
       {results.length > 0 && (
         <div>
-          <h2 className="text-xl font-light mb-6 text-gray-600 select-none">
+          <h2 className="text-xl font-light mb-6 text-gray-600 select-none cloud px-4 py-2 inline-block">
             Найдено {results.length} решений
           </h2>
           <div className="grid gap-6 md:grid-cols-2">
@@ -180,7 +186,7 @@ export default function Home() {
               return (
                 <div
                   key={service.id}
-                  className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
+                  className="cloud p-6 hover:shadow-2xl transition-all"
                 >
                   <div className="flex items-start mb-4 select-none">
                     <img
@@ -225,7 +231,7 @@ export default function Home() {
                       href={actionUrl}
                       target="_blank"
                       rel="noopener"
-                      className="text-sm btn-holographic px-4 py-1"
+                      className="btn-holographic text-sm px-4 py-1"
                     >
                       Начать!
                     </a>
