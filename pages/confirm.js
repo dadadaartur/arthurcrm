@@ -29,10 +29,10 @@ export default function Confirm() {
   }
 
   async function handleConfirm(eventId, role) {
-    // role: 'manager', 'hr', 'senior'
+    // Исправлено: используем user.id из состояния
     const { error } = await supabase
       .from('karma_events')
-      .update({ status: 'approved', confirmed_by: supabase.auth.user().id, confirmed_role: role })
+      .update({ status: 'approved', confirmed_by: user.id, confirmed_role: role })
       .eq('id', eventId)
     if (!error) fetchPending()
     else alert('Ошибка подтверждения')
