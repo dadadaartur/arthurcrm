@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -8,6 +8,18 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  // Проверка: если уже авторизован, сразу на главную
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.push('/')
+      } else {
+        setLoading(false)
+      }
+    })
+  }, [])
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -16,6 +28,8 @@ export default function Login() {
     if (error) setError(error.message)
     else router.push('/')
   }
+
+  if (loading) return <div className="p-8 text-center">Загрузка...</div>
 
   return (
     <div className="max-w-md mx-auto px-4 py-12">
