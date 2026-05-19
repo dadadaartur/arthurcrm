@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 
-// Функция склонения слова "кармик"
+// Склонение слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -47,16 +47,7 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(180deg,#F4F0E6 0%, #EFE8DA 100%)',
-        padding: '40px'
-      }}
-    >
+    <div className="max-w-7xl mx-auto px-6 py-10 flex justify-start">
       <div
         style={{
           background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
@@ -72,8 +63,8 @@ export default function Home() {
             inset 0 0 30px rgba(255,255,255,.02),
             inset 0 0 60px rgba(0,0,0,.3)
           `,
-          minWidth: '520px',
-          maxWidth: '560px',
+          minWidth: '560px',
+          maxWidth: '600px',
           width: '100%',
           position: 'relative',
           overflow: 'hidden'
@@ -88,7 +79,9 @@ export default function Home() {
             textAlign: 'center',
             textTransform: 'uppercase',
             letterSpacing: '3px',
-            marginBottom: '2px'
+            marginBottom: '2px',
+            filter: 'blur(0.3px)',
+            opacity: 0.8
           }}
         >
           БАЛАНС
@@ -104,7 +97,7 @@ export default function Home() {
             height: '190px'
           }}
         >
-          {/* нимб */}
+          {/* нимб (ярче) */}
           <div
             style={{
               position: 'absolute',
@@ -115,16 +108,19 @@ export default function Home() {
                 radial-gradient(
                   circle,
                   transparent 58%,
-                  rgba(197,160,78,.05) 70%,
+                  rgba(197,160,78,.12) 70%,
                   transparent 75%
                 )
               `,
-              border: '1px solid rgba(197,160,78,.18)',
+              border: '1px solid rgba(197,160,78,.35)',
               boxShadow: `
-                0 0 35px rgba(197,160,78,.08),
-                inset 0 0 20px rgba(197,160,78,.02)
+                0 0 50px rgba(197,160,78,.15),
+                inset 0 0 30px rgba(197,160,78,.05)
               `,
-              opacity: .9
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              opacity: 1
             }}
           />
 
@@ -132,7 +128,7 @@ export default function Home() {
           <div
             style={{
               position: 'absolute',
-              left: '18px',
+              left: '10px',
               display: 'flex',
               alignItems: 'center'
             }}
@@ -148,11 +144,11 @@ export default function Home() {
             />
             <div
               style={{
-                width: '145px',
+                width: '60px',
                 height: '1px',
-                marginLeft: '14px',
+                marginLeft: '8px',
                 background:
-                  'linear-gradient(90deg, rgba(197,160,78,.2), rgba(197,160,78,.75))'
+                  'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))'
               }}
             />
             <div
@@ -196,7 +192,10 @@ export default function Home() {
                 marginTop: '8px',
                 fontSize: '14px',
                 color: 'rgba(255,255,255,.68)',
-                letterSpacing: '.4px'
+                letterSpacing: '.4px',
+                filter: 'blur(0.4px)',
+                opacity: 0.7,
+                textShadow: '0 0 5px rgba(255,255,255,0.15)'
               }}
             >
               {karmikWord}
@@ -207,7 +206,7 @@ export default function Home() {
           <div
             style={{
               position: 'absolute',
-              right: '18px',
+              right: '10px',
               display: 'flex',
               alignItems: 'center'
             }}
@@ -224,11 +223,11 @@ export default function Home() {
             />
             <div
               style={{
-                width: '145px',
+                width: '60px',
                 height: '1px',
-                marginRight: '14px',
+                marginRight: '8px',
                 background:
-                  'linear-gradient(90deg, rgba(197,160,78,.75), rgba(197,160,78,.2))'
+                  'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))'
               }}
             />
             <div
