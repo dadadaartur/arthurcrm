@@ -10,33 +10,40 @@ function Star({ filled }) {
 
 export default function ServiceCard({ service }) {
   const stars = Array.from({ length: 5 }, (_, i) => i < Math.round(service.rating))
-  
+  const actionUrl = service.referral_url || service.website_url || '#'
+
   return (
-    <Link href={`/service/${service.id}`}>
-      <div className="border border-white/40 rounded-2xl p-5 bg-white/60 backdrop-blur-md shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer h-full flex flex-col">
-        <div className="flex items-center mb-3">
-          <img
-            src={service.logo_url || '/placeholder.png'}
-            alt={service.name}
-            className="w-10 h-10 rounded-xl mr-3 object-cover border border-white"
-          />
-          <h3 className="font-semibold text-lg text-gray-800">{service.name}</h3>
-        </div>
-        <p className="text-gray-600 text-sm flex-grow line-clamp-3 mb-3">
-          {service.description}
-        </p>
-        <div className="flex justify-between items-center mt-auto">
-          <span className="bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white text-xs px-3 py-1 rounded-full">
-            {service.category}
-          </span>
-          <span className="flex items-center gap-0.5">
-            {stars.map((filled, i) => (
-              <Star key={i} filled={filled} />
-            ))}
-            <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
-          </span>
-        </div>
+    <div className="border border-white/40 rounded-2xl p-5 bg-white/60 backdrop-blur-md shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 h-full flex flex-col">
+      <Link href={`/service/${service.id}`} className="flex items-center mb-3 cursor-pointer select-none">
+        <img
+          src={service.logo_url || '/placeholder.png'}
+          alt={service.name}
+          className="w-10 h-10 rounded-xl mr-3 object-cover border border-white"
+        />
+        <h3 className="font-semibold text-lg text-gray-800">{service.name}</h3>
+      </Link>
+      <p className="text-gray-600 text-sm flex-grow line-clamp-3 mb-3 select-none">
+        {service.description}
+      </p>
+      <div className="flex justify-between items-center mt-auto">
+        <span className="bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white text-xs px-3 py-1 rounded-full select-none">
+          {service.category}
+        </span>
+        <span className="flex items-center gap-0.5 select-none">
+          {stars.map((filled, i) => (
+            <Star key={i} filled={filled} />
+          ))}
+          <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
+        </span>
       </div>
-    </Link>
+      <a
+        href={actionUrl}
+        target="_blank"
+        rel="noopener"
+        className="btn-holographic mt-4 text-center text-sm"
+      >
+        Начать!
+      </a>
+    </div>
   )
 }
