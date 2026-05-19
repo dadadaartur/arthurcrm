@@ -7,14 +7,16 @@ export default function Layout({ children }) {
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-start">
           <Link
             href="/"
-            className="text-2xl font-bold tracking-tight select-none"
+            className="text-xl font-bold tracking-tight select-none"
             style={{
-              // Прозрачная заливка + золотая обводка
+              fontSize: '1.5rem',
               color: 'transparent',
               WebkitTextStroke: '1px #C5A04E',
-              // Голографическое свечение
-              textShadow:
-                '0 0 15px rgba(197,160,78,0.8), 0 0 30px rgba(197,160,78,0.5)',
+              textShadow: `
+                0 0 15px rgba(197,160,78,0.9),
+                0 0 30px rgba(167,139,250,0.6),
+                0 0 45px rgba(255,215,0,0.5)
+              `,
               background: 'transparent',
             }}
           >
