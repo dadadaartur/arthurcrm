@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Link from 'next/link'
 
-// SVG-звезда
 function Star({ filled }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
@@ -12,7 +11,6 @@ function Star({ filled }) {
   )
 }
 
-// Иконка внешней ссылки (вместо 🔗)
 function ExternalLinkIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,7 +50,7 @@ export default function ServiceDetail() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <Link href="/" className="text-gray-500 hover:text-green-500 transition mb-4 inline-block">
+      <Link href="/" className="text-gray-500 hover:text-purple-500 transition mb-4 inline-block">
         ← Назад в каталог
       </Link>
       <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/40 mt-4">
@@ -60,7 +58,7 @@ export default function ServiceDetail() {
           <img src={service.logo_url || '/placeholder.png'} alt={service.name} className="w-16 h-16 rounded-xl mr-4 object-cover border border-white" />
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{service.name}</h1>
-            <span className="bg-gradient-to-r from-yellow-400 to-green-400 text-white text-xs px-3 py-1 rounded-full inline-block mt-1">
+            <span className="bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white text-xs px-3 py-1 rounded-full inline-block mt-1">
               {service.category}
             </span>
           </div>
