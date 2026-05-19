@@ -2,8 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Светлый фон: белое золото */
 body {
-  background: linear-gradient(180deg, #C9E8FF 0%, #A8D8F0 40%, #7EC8E3 70%, #D4C5A9 90%, #F4E4C1 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF7 50%, #F9F3E3 100%);
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -21,6 +22,7 @@ a, button, .clickable {
   outline: none !important;
 }
 
+/* Золотой спиннер */
 .spinner {
   display: inline-block;
   width: 24px;
