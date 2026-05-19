@@ -34,6 +34,9 @@ export default function Layout({ children }) {
                 <Link href="/" className="hover:text-gold transition">Главная</Link>
                 <Link href="/events" className="hover:text-gold transition">События</Link>
                 <Link href="/confirm" className="hover:text-gold transition">Подтверждения</Link>
+                <Link href="/leaderboard" className="hover:text-gold transition">Рейтинг</Link>
+                <Link href="/shop" className="hover:text-gold transition">Магазин</Link>
+                <Link href="/admin" className="hover:text-gold transition">Админ</Link>
                 <button onClick={handleLogout} className="btn-outline text-xs border-gold text-gold hover:bg-gold/10">
                   Выйти
                 </button>
