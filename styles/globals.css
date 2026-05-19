@@ -10,7 +10,7 @@ body {
   cursor: default;
 }
 
-/* Реалистичное облако (пушистые края) */
+/* Реалистичное облако без псевдоэлементов – только тени */
 .cloud-fluffy {
   position: relative;
   background: rgba(255, 255, 255, 0.85);
@@ -18,7 +18,12 @@ body {
   border-radius: 50%;
   box-shadow:
     0 20px 40px -12px rgba(255, 255, 255, 0.6),
-    0 0 80px rgba(255, 255, 255, 0.4);
+    0 0 80px rgba(255, 255, 255, 0.4),
+    /* Пушистые края через дополнительные белые тени */
+    10px -15px 0 -5px rgba(255, 255, 255, 0.7),
+    -10px -15px 0 -5px rgba(255, 255, 255, 0.7),
+    20px -5px 0 -8px rgba(255, 255, 255, 0.6),
+    -20px -5px 0 -8px rgba(255, 255, 255, 0.6);
   padding: 1rem 2rem;
   display: inline-flex;
   align-items: center;
@@ -29,39 +34,18 @@ body {
   user-select: none;
 }
 
-/* Псевдоэлементы для рваных краёв (имитация кучевого облака) */
-.cloud-fluffy::before,
-.cloud-fluffy::after {
-  content: '';
-  position: absolute;
-  background: inherit;
-  backdrop-filter: inherit;
-  border-radius: 50%;
-  z-index: -1;
-}
-
-.cloud-fluffy::before {
-  width: 50%;
-  height: 60%;
-  top: -30%;
-  left: 5%;
-}
-
-.cloud-fluffy::after {
-  width: 40%;
-  height: 50%;
-  top: -25%;
-  right: 5%;
-}
-
 .cloud-fluffy:hover {
   transform: translateY(-3px);
   box-shadow:
     0 24px 48px -12px rgba(255, 255, 255, 0.8),
-    0 0 100px rgba(255, 255, 255, 0.6);
+    0 0 100px rgba(255, 255, 255, 0.6),
+    12px -18px 0 -6px rgba(255, 255, 255, 0.8),
+    -12px -18px 0 -6px rgba(255, 255, 255, 0.8),
+    24px -8px 0 -10px rgba(255, 255, 255, 0.7),
+    -24px -8px 0 -10px rgba(255, 255, 255, 0.7);
 }
 
-/* Базовое облако (прежний класс) – оставлено для совместимости */
+/* Базовое облако (прежний класс) – для меню и футера */
 .cloud {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -82,7 +66,7 @@ body {
   transform: translateY(-2px);
 }
 
-/* Кнопки с тройным градиентом и голограммой */
+/* Кнопки с голограммой */
 .btn-holographic {
   position: relative;
   background: linear-gradient(135deg, #ff6b00, #ffd700, #8b5cf6);
@@ -104,7 +88,7 @@ body {
   transform: translateY(-1px);
 }
 
-/* Поле ввода с магическим свечением */
+/* Поле ввода */
 .input-magic {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -116,7 +100,7 @@ body {
 }
 
 .input-magic:focus {
-  outline: none;
+  outline: none !important;
   border-color: #c084fc;
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(255, 107, 0, 0.1);
 }
@@ -129,7 +113,7 @@ body {
   font-weight: 500;
 }
 
-/* Фильтры-пилюли */
+/* Фильтры-пилюли (пока не используются, но оставим для будущего) */
 .filter-pill {
   background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(4px);
@@ -152,12 +136,16 @@ h1, h2, h3, p, span, div {
   cursor: default;
 }
 
-/* Явно разрешаем курсор-указатель только на кликабельных */
 a, button, .btn-holographic, .filter-pill, .cloud-fluffy, .tag-cloud {
   cursor: pointer;
 }
 
-/* Убираем мигающий caret при клике на фон – скрываем outline у всех элементов */
+/* Полностью гасим outline у всего, чтобы не было артефактов */
 *:focus {
-  outline: none;
+  outline: none !important;
+}
+
+/* Дополнительная защита от артефактного курсора в поле ввода */
+input, textarea {
+  caret-color: auto; /* стандартный курсор ввода, не системный указатель */
 }
