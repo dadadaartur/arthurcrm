@@ -38,7 +38,6 @@ export default function Home() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [noResult, setNoResult] = useState(false)
-  const [filters, setFilters] = useState({ category: '', pricing: '', rating: 0 })
 
   async function performSearch(q) {
     if (!q.trim()) return
@@ -46,18 +45,13 @@ export default function Home() {
     setLoading(true)
     setNoResult(false)
 
-    let dbQuery = supabase
+    const { data, error } = await supabase
       .from('services')
       .select('*')
       .or(`description.ilike.%${q}%,use_cases.ilike.%${q}%`)
       .order('rating', { ascending: false })
       .limit(20)
 
-    if (filters.category) dbQuery = dbQuery.eq('category', filters.category)
-    if (filters.pricing) dbQuery = dbQuery.eq('pricing', filters.pricing)
-    if (filters.rating > 0) dbQuery = dbQuery.gte('rating', filters.rating)
-
-    const { data, error } = await dbQuery
     if (error) console.error(error)
     setResults(data || [])
     setNoResult((data || []).length === 0)
@@ -76,15 +70,15 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      {/* Заголовок на облаке */}
+      {/* Заголовок – теперь отлично виден на небе */}
       <div className="text-center mb-10 select-none">
-        <h1 className="inline-block cloud px-8 py-4 mb-6 text-4xl font-light text-gray-700 tracking-wide cursor-default">
+        <h1 className="text-5xl font-light text-gray-800 mb-6 tracking-wide">
           Волшебный мир{' '}
-          <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">
+          <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent drop-shadow-lg">
             AI
           </span>
         </h1>
-        <p className="text-gray-600 text-lg max-w-xl mx-auto cursor-default bg-white/40 backdrop-blur-sm rounded-full py-2 px-6">
+        <p className="text-gray-700 text-lg max-w-xl mx-auto bg-white/30 backdrop-blur-sm rounded-full py-2 px-6">
           Просто скажите, что нужно сделать, и мы подберём лучшие инструменты
         </p>
       </div>
@@ -95,14 +89,14 @@ export default function Home() {
           <button
             key={suggestion}
             onClick={() => handleTagClick(suggestion)}
-            className="tag-cloud"
+            className="cloud-fluffy text-gray-700 font-medium text-sm"
           >
             {suggestion}
           </button>
         ))}
       </div>
 
-      {/* Поле ввода + кнопка в облачном контейнере */}
+      {/* Поле ввода + кнопка */}
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-10">
         <div className="cloud p-2 flex flex-col sm:flex-row gap-2 items-center">
           <input
@@ -121,50 +115,7 @@ export default function Home() {
         </div>
       </form>
 
-      {/* Фильтры на облачке */}
-      {results.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-3 mb-8 select-none cloud px-4 py-2">
-          <span className="text-sm text-gray-500 self-center mr-2">Фильтры:</span>
-          <select
-            value={filters.category}
-            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            className="filter-pill"
-          >
-            <option value="">Все категории</option>
-            <option value="Текст">Текст</option>
-            <option value="Изображения">Изображения</option>
-            <option value="Код">Код</option>
-            <option value="Продуктивность">Продуктивность</option>
-            <option value="Видео">Видео</option>
-            <option value="Музыка">Музыка</option>
-            <option value="Презентации">Презентации</option>
-          </select>
-          <select
-            value={filters.pricing}
-            onChange={(e) => setFilters({ ...filters, pricing: e.target.value })}
-            className="filter-pill"
-          >
-            <option value="">Любая цена</option>
-            <option value="Бесплатно">Бесплатно</option>
-            <option value="Freemium">Freemium</option>
-            <option value="Платно">Платно</option>
-          </select>
-          <select
-            value={filters.rating}
-            onChange={(e) => setFilters({ ...filters, rating: parseFloat(e.target.value) })}
-            className="filter-pill"
-          >
-            <option value="0">Любой рейтинг</option>
-            <option value="4">4+ звёзд</option>
-            <option value="4.5">4.5+ звёзд</option>
-          </select>
-          <button onClick={() => performSearch(query)} className="filter-pill active">
-            Применить
-          </button>
-        </div>
-      )}
-
-      {/* Загрузка / пусто */}
+      {/* Состояния загрузки и пустого результата */}
       {loading && (
         <div className="text-center text-gray-500 py-8 select-none">Ищем лучшие варианты...</div>
       )}
@@ -174,7 +125,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Карточки результатов в облачном обрамлении */}
+      {/* Карточки результатов */}
       {results.length > 0 && (
         <div>
           <h2 className="text-xl font-light mb-6 text-gray-600 select-none cloud px-4 py-2 inline-block">
