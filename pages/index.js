@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
 function getKarmikWord(n) {
@@ -13,7 +12,6 @@ function getKarmikWord(n) {
 }
 
 export default function Home() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -22,16 +20,16 @@ export default function Home() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
-      } else {
-        setUser(user)
-        const { data } = await supabase
-          .from('karma_balance')
-          .select('balance')
-          .eq('user_id', user.id)
-          .single()
-        if (data) setBalance(data.balance)
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      const { data } = await supabase
+        .from('karma_balance')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (data) setBalance(data.balance)
       setLoading(false)
     }
     checkUser()
@@ -67,7 +65,6 @@ export default function Home() {
         width: '100%',
         transition: 'all 0.3s ease'
       }}>
-        {/* Заголовок Баланс */}
         <div style={{
           fontSize: '14px',
           fontWeight: 500,
@@ -79,8 +76,6 @@ export default function Home() {
         }}>
           Баланс
         </div>
-
-        {/* Цифра баланса */}
         <div style={{
           fontSize: '56px',
           fontWeight: 700,
@@ -95,8 +90,6 @@ export default function Home() {
         }}>
           {balance.toLocaleString()}
         </div>
-
-        {/* Слово "кармиков" */}
         <div style={{
           textAlign: 'center',
           fontSize: '14px',
@@ -108,7 +101,6 @@ export default function Home() {
           {karmikWord}
         </div>
 
-        {/* Кнопки действий */}
         <div style={{
           marginTop: '28px',
           display: 'flex',
@@ -122,7 +114,7 @@ export default function Home() {
           ].map(([label, path]) => (
             <button
               key={path}
-              onClick={() => router.push(path)}
+              onClick={() => window.location.href = path}
               style={{
                 flex: '1 1 0',
                 fontSize: '14px',
@@ -156,7 +148,7 @@ export default function Home() {
             </button>
           ))}
           <button
-            onClick={() => router.push('/shop')}
+            onClick={() => window.location.href = '/shop'}
             style={{
               flexBasis: '100%',
               textAlign: 'center',
