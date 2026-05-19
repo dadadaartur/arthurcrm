@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function Transfer() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
   const [recipientEmail, setRecipientEmail] = useState('')
@@ -14,12 +12,13 @@ export default function Transfer() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
-          .then(({ data }) => { if (data) setBalance(data.balance) })
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
+        .then(({ data }) => { if (data) setBalance(data.balance) })
     })
   }, [])
 
@@ -37,7 +36,6 @@ export default function Transfer() {
       return
     }
 
-    // Найдём получателя по email через auth.users
     const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
     if (userError) {
       setError('Ошибка поиска пользователя')
@@ -49,7 +47,6 @@ export default function Transfer() {
       return
     }
 
-    // Создаём перевод
     const { error: transferError } = await supabase.from('transfers').insert({
       from_user_id: user.id,
       to_user_id: recipient.id,
@@ -62,7 +59,6 @@ export default function Transfer() {
       return
     }
 
-    // Обновляем балансы: списываем у отправителя, начисляем получателю
     await supabase.from('karma_balance').upsert({
       user_id: user.id,
       balance: balance - transferAmount
@@ -70,14 +66,12 @@ export default function Transfer() {
 
     const { data: recipientBalance } = await supabase.from('karma_balance')
       .select('balance').eq('user_id', recipient.id).single()
-
     const newRecipientBalance = (recipientBalance?.balance || 0) + transferAmount
     await supabase.from('karma_balance').upsert({
       user_id: recipient.id,
       balance: newRecipientBalance
     }, { onConflict: 'user_id' })
 
-    // Добавляем записи в транзакции
     await supabase.from('karma_transactions').insert([
       { user_id: user.id, amount: -transferAmount, description: `Перевод пользователю ${recipientEmail}` },
       { user_id: recipient.id, amount: transferAmount, description: `Перевод от ${user.email}` }
@@ -87,7 +81,6 @@ export default function Transfer() {
     setRecipientEmail('')
     setAmount('')
     setDescription('')
-    // Обновим баланс отправителя на экране
     setBalance(balance - transferAmount)
   }
 
