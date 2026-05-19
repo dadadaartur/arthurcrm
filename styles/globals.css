@@ -2,18 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Небесный фон */
 body {
-  background: linear-gradient(135deg, #e0f0ff 0%, #f0e6ff 100%);
+  background: linear-gradient(180deg, #b3e0ff 0%, #d4f0ff 40%, #eaf6ff 100%);
   background-attachment: fixed;
   min-height: 100vh;
   cursor: default;
+}
+
+/* Базовое облако */
+.cloud {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 3rem;
+  box-shadow:
+    0 20px 40px -12px rgba(255, 255, 255, 0.5),
+    0 0 80px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.cloud:hover {
+  box-shadow:
+    0 24px 48px -12px rgba(255, 255, 255, 0.7),
+    0 0 100px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
 }
 
 /* Кнопки с тройным градиентом и голограммой */
 .btn-holographic {
   position: relative;
   background: linear-gradient(135deg, #ff6b00, #ffd700, #8b5cf6);
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: #0a0a0a;
   font-weight: 500;
   padding: 0.5rem 1.5rem;
@@ -33,13 +55,13 @@ body {
 
 /* Поле ввода с магическим свечением */
 .input-magic {
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.8);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 2rem;
   padding: 0.75rem 1.5rem;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 12px rgba(135, 206, 250, 0.3);
 }
 
 .input-magic:focus {
@@ -48,9 +70,25 @@ body {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(255, 107, 0, 0.1);
 }
 
-/* Облачные плитки-подсказки */
+/* Облачные плитки-подсказки (теги) */
 .tag-cloud {
   animation: float 6s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 2rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  color: #4a5568;
+  box-shadow: 0 8px 20px -8px rgba(135, 206, 250, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-cloud:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12px 24px -8px rgba(135, 206, 250, 0.6);
+  transform: translateY(-2px);
 }
 
 @keyframes float {
@@ -68,9 +106,9 @@ body {
 
 /* Фильтры-пилюли */
 .filter-pill {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 2rem;
   padding: 0.3rem 1rem;
   cursor: pointer;
