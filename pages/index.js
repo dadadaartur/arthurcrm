@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 
-// Склонение слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -53,7 +52,7 @@ export default function Home() {
           background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '28px',
-          padding: '36px 44px',
+          padding: '28px 36px',
           boxShadow: `
             0 0 0 2px rgba(197,160,78,.25),
             0 0 40px rgba(197,160,78,.2),
@@ -63,17 +62,18 @@ export default function Home() {
             inset 0 0 30px rgba(255,255,255,.02),
             inset 0 0 60px rgba(0,0,0,.3)
           `,
-          minWidth: '560px',
-          maxWidth: '600px',
+          minWidth: '500px',
+          maxWidth: '540px',
           width: '100%',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`
         }}
       >
         {/* заголовок */}
         <div
           style={{
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 500,
             color: 'rgba(255,255,255,.55)',
             textAlign: 'center',
@@ -94,30 +94,30 @@ export default function Home() {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '190px'
+            height: '180px'
           }}
         >
-          {/* нимб — теперь компактнее и прозрачнее */}
+          {/* нимб – поднят выше, ярче */}
           <div
             style={{
               position: 'absolute',
-              width: '240px',
-              height: '240px',
+              width: '260px',
+              height: '260px',
               borderRadius: '50%',
               background: `
                 radial-gradient(
                   circle,
-                  transparent 60%,
-                  rgba(197,160,78,.06) 72%,
-                  transparent 78%
+                  transparent 58%,
+                  rgba(197,160,78,.15) 70%,
+                  transparent 76%
                 )
               `,
-              border: '1px solid rgba(197,160,78,.25)',
+              border: '1px solid rgba(197,160,78,.4)',
               boxShadow: `
-                0 0 40px rgba(197,160,78,.1),
-                inset 0 0 20px rgba(197,160,78,.04)
+                0 0 60px rgba(197,160,78,.2),
+                inset 0 0 30px rgba(197,160,78,.08)
               `,
-              top: '50%',
+              top: '42%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
               opacity: 1
@@ -125,132 +125,50 @@ export default function Home() {
           />
 
           {/* левая стрелка */}
-          <div
-            style={{
-              position: 'absolute',
-              left: '10px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <div
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#E2BC57',
-                boxShadow: '0 0 12px rgba(226,188,87,.9)'
-              }}
-            />
-            <div
-              style={{
-                width: '60px',
-                height: '1px',
-                marginLeft: '8px',
-                background:
-                  'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))'
-              }}
-            />
-            <div
-              style={{
-                width: '8px',
-                height: '8px',
-                borderTop: '1px solid rgba(255,220,120,.9)',
-                borderRight: '1px solid rgba(255,220,120,.9)',
-                transform: 'rotate(45deg)',
-                marginLeft: '-2px'
-              }}
-            />
+          <div style={{ position: 'absolute', left: '10px', display: 'flex', alignItems: 'center' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
+            <div style={{ width: '70px', height: '1px', marginLeft: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))' }} />
+            <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(45deg)', marginLeft: '-2px' }} />
           </div>
 
           {/* цифра */}
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 5,
-              textAlign: 'center'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '84px',
-                fontWeight: 700,
-                lineHeight: 1,
-                letterSpacing: '-3px',
-                background:
-                  'linear-gradient(180deg,#FFD700 0%,#C5A04E 60%,#8B7300 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                WebkitTextStroke: '1px rgba(0,0,0,.25)',
-                filter: 'drop-shadow(0 0 8px rgba(197,160,78,.55))'
-              }}
-            >
+          <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
+            <div style={{
+              fontSize: '78px',
+              fontWeight: 700,
+              lineHeight: 1,
+              letterSpacing: '-3px',
+              background: 'linear-gradient(180deg,#FFD700 0%,#C5A04E 60%,#8B7300 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              WebkitTextStroke: '1px rgba(0,0,0,.25)',
+              filter: 'drop-shadow(0 0 8px rgba(197,160,78,.55))'
+            }}>
               {balance.toLocaleString()}
             </div>
-            <div
-              style={{
-                marginTop: '8px',
-                fontSize: '14px',
-                color: 'rgba(255,255,255,.68)',
-                letterSpacing: '.4px',
-                filter: 'blur(0.4px)',
-                opacity: 0.7,
-                textShadow: '0 0 5px rgba(255,255,255,0.15)'
-              }}
-            >
+            <div style={{
+              marginTop: '8px',
+              fontSize: '14px',
+              color: 'rgba(255,255,255,.68)',
+              letterSpacing: '.4px',
+              filter: 'blur(0.4px)',
+              opacity: 0.7,
+              textShadow: '0 0 5px rgba(255,255,255,0.15)'
+            }}>
               {karmikWord}
             </div>
           </div>
 
           {/* правая стрелка */}
-          <div
-            style={{
-              position: 'absolute',
-              right: '10px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <div
-              style={{
-                width: '8px',
-                height: '8px',
-                borderTop: '1px solid rgba(255,220,120,.9)',
-                borderRight: '1px solid rgba(255,220,120,.9)',
-                transform: 'rotate(225deg)',
-                marginRight: '-2px'
-              }}
-            />
-            <div
-              style={{
-                width: '60px',
-                height: '1px',
-                marginRight: '8px',
-                background:
-                  'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))'
-              }}
-            />
-            <div
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#E2BC57',
-                boxShadow: '0 0 12px rgba(226,188,87,.9)'
-              }}
-            />
+          <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
+            <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(225deg)', marginRight: '-2px' }} />
+            <div style={{ width: '70px', height: '1px', marginRight: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))' }} />
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
           </div>
         </div>
 
         {/* кнопки */}
-        <div
-          style={{
-            marginTop: '10px',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}
-        >
+        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {['История', 'Покупки', 'Перевести'].map((label) => (
             <button
               key={label}
@@ -267,7 +185,18 @@ export default function Home() {
                 border: '1px solid rgba(197,160,78,.35)',
                 borderRadius: '50px',
                 padding: '10px 0',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(197,160,78,0.15)'
+                e.target.style.borderColor = '#C5A04E'
+                e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent'
+                e.target.style.borderColor = 'rgba(197,160,78,.35)'
+                e.target.style.boxShadow = 'none'
               }}
             >
               {label}
@@ -282,7 +211,18 @@ export default function Home() {
               background: 'transparent',
               color: 'rgba(255,255,255,.82)',
               padding: '10px 0',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.25s'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(197,160,78,0.15)'
+              e.target.style.borderColor = '#C5A04E'
+              e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent'
+              e.target.style.borderColor = 'rgba(197,160,78,.35)'
+              e.target.style.boxShadow = 'none'
             }}
           >
             Магазин
