@@ -25,34 +25,40 @@ a, button, .clickable, .ghost-framed {
   outline: none !important;
 }
 
-/* Блок баланса – теперь с рельефным фоном как у премиум-карты */
+/* Блок баланса – рельефный премиум-фон как пластиковая карта */
 .balance-block {
-  background: linear-gradient(145deg, #F5F7FA 0%, #E8ECF1 100%);
-  border: 1px solid rgba(167, 139, 250, 0.35);
-  border-radius: 24px;
+  background: linear-gradient(160deg, #F8FAFB 0%, #E9ECF0 100%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 28px;
   padding: 48px 56px;
   box-shadow:
     /* Голографическая внешняя рамка */
-    0 0 0 1px rgba(255, 255, 255, 0.9),
-    0 0 30px rgba(167, 139, 250, 0.25),
-    0 0 60px rgba(250, 204, 21, 0.15),
-    /* Внутренний рельеф – тени для имитации пластика */
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.03);
+    0 0 0 2px rgba(167, 139, 250, 0.25),
+    0 0 40px rgba(167, 139, 250, 0.3),
+    0 0 80px rgba(250, 204, 21, 0.2),
+    /* Внутренний рельеф: верхний свет, нижняя тень, карточная текстура */
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.04),
+    inset 0 0 30px rgba(255, 255, 255, 0.7),
+    inset 0 0 60px rgba(0, 0, 0, 0.02);
   transition: all 0.3s ease;
   display: inline-block;
   min-width: 420px;
   max-width: 480px;
+  /* Лёгкий шум для текстуры карты (опционально) */
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 .balance-block:hover {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 1),
-    0 0 40px rgba(167, 139, 250, 0.4),
-    0 0 80px rgba(250, 204, 21, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
+    0 0 0 2px rgba(167, 139, 250, 0.45),
+    0 0 50px rgba(167, 139, 250, 0.5),
+    0 0 90px rgba(250, 204, 21, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.06),
+    inset 0 0 30px rgba(255, 255, 255, 0.8),
+    inset 0 0 60px rgba(0, 0, 0, 0.03);
+  transform: translateY(-3px);
 }
 
 /* Подпись "Баланс" */
