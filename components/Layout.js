@@ -32,7 +32,7 @@ export default function Layout({ children }) {
 
       <footer className="bg-transparent py-6 text-center text-gray-500 text-sm">
         <span className="cloud px-4 py-2 inline-block select-none">
-          © {new Date().getFullYear()} Ai Come To Me — ваш навигатор в мире ИИ
+          © {new Date().getFullYear()} Ai Come To Me
         </span>
       </footer>
     </div>
