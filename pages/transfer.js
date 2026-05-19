@@ -8,7 +8,6 @@ export default function Transfer() {
   const [amount, setAmount] = useState('')
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
@@ -26,7 +25,6 @@ export default function Transfer() {
   async function handleTransfer(e) {
     e.preventDefault()
     setError('')
-    setSuccess('')
     const transferAmount = parseInt(amount)
     if (!recipientEmail || !transferAmount || transferAmount <= 0) {
       setError('Заполните все поля')
@@ -102,7 +100,6 @@ export default function Transfer() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>✨</div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">Перевод выполнен!</h3>
             <p className="text-gray-600">Операция записана в историю.</p>
             <button onClick={() => setShowModal(false)} className="btn-gold mt-6">Ок</button>
