@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Небесный фон */
 body {
   background: linear-gradient(180deg, #b3e0ff 0%, #d4f0ff 40%, #eaf6ff 100%);
   background-attachment: fixed;
@@ -10,65 +9,47 @@ body {
   cursor: default;
 }
 
-/* Реалистичное облако без псевдоэлементов – только тени */
-.cloud-fluffy {
-  position: relative;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  box-shadow:
-    0 20px 40px -12px rgba(255, 255, 255, 0.6),
-    0 0 80px rgba(255, 255, 255, 0.4),
-    /* Пушистые края через дополнительные белые тени */
-    10px -15px 0 -5px rgba(255, 255, 255, 0.7),
-    -10px -15px 0 -5px rgba(255, 255, 255, 0.7),
-    20px -5px 0 -8px rgba(255, 255, 255, 0.6),
-    -20px -5px 0 -8px rgba(255, 255, 255, 0.6);
-  padding: 1rem 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-}
-
-.cloud-fluffy:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 24px 48px -12px rgba(255, 255, 255, 0.8),
-    0 0 100px rgba(255, 255, 255, 0.6),
-    12px -18px 0 -6px rgba(255, 255, 255, 0.8),
-    -12px -18px 0 -6px rgba(255, 255, 255, 0.8),
-    24px -8px 0 -10px rgba(255, 255, 255, 0.7),
-    -24px -8px 0 -10px rgba(255, 255, 255, 0.7);
-}
-
-/* Базовое облако (прежний класс) – для меню и футера */
-.cloud {
-  background: rgba(255, 255, 255, 0.8);
+/* Облачная карточка (безопасный вариант) */
+.cloud-card {
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);
-  border-radius: 3rem;
-  box-shadow:
-    0 20px 40px -12px rgba(255, 255, 255, 0.5),
-    0 0 80px rgba(255, 255, 255, 0.3),
-    inset 0 -2px 0 rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 2.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 30px -12px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   transition: all 0.3s ease;
+  cursor: default;
 }
 
-.cloud:hover {
-  box-shadow:
-    0 24px 48px -12px rgba(255, 255, 255, 0.7),
-    0 0 100px rgba(255, 255, 255, 0.5),
-    inset 0 -2px 0 rgba(255, 255, 255, 1);
+.cloud-card:hover {
+  box-shadow: 0 24px 40px -12px rgba(255, 255, 255, 0.8), 0 0 80px rgba(255, 255, 255, 0.5);
   transform: translateY(-2px);
 }
 
-/* Кнопки с голограммой */
+/* Кнопка-пилюля внутри облака (просто кликабельная) */
+.btn-pill {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 2rem;
+  padding: 0.4rem 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+  font-weight: 500;
+  color: #2d3748;
+  user-select: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.btn-pill:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+
+/* Кнопка-голограмма (та же) */
 .btn-holographic {
-  position: relative;
   background: linear-gradient(135deg, #ff6b00, #ffd700, #8b5cf6);
   border: 1px solid rgba(255, 255, 255, 0.6);
   color: #0a0a0a;
@@ -105,7 +86,7 @@ body {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(255, 107, 0, 0.1);
 }
 
-/* Подсветка совпадений */
+/* Подсветка */
 .highlight-match {
   background: linear-gradient(120deg, rgba(255, 215, 0, 0.4) 0%, rgba(139, 92, 246, 0.3) 100%);
   padding: 0 2px;
@@ -113,39 +94,16 @@ body {
   font-weight: 500;
 }
 
-/* Фильтры-пилюли (пока не используются, но оставим для будущего) */
-.filter-pill {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 2rem;
-  padding: 0.3rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #4b5563;
-}
-
-.filter-pill.active {
-  background: linear-gradient(135deg, #ff6b00, #ffd700, #8b5cf6);
-  color: white;
-  border-color: transparent;
-}
-
-/* Убираем системный курсор со всех некликабельных элементов */
+/* Убираем системные курсоры */
 h1, h2, h3, p, span, div {
   cursor: default;
 }
-
-a, button, .btn-holographic, .filter-pill, .cloud-fluffy, .tag-cloud {
+a, button, .btn-holographic, .btn-pill {
   cursor: pointer;
 }
-
-/* Полностью гасим outline у всего, чтобы не было артефактов */
 *:focus {
   outline: none !important;
 }
-
-/* Дополнительная защита от артефактного курсора в поле ввода */
 input, textarea {
-  caret-color: auto; /* стандартный курсор ввода, не системный указатель */
+  caret-color: auto;
 }
