@@ -3,97 +3,73 @@
 @tailwind utilities;
 
 body {
-  background: #F5F6FA;
+  background: #FFFFFF;
   color: #1A1A1A;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Сброс курсора */
-* { cursor: default; }
-a, button, .clickable { cursor: pointer; }
-input, textarea { cursor: text; }
-
-/* Белая карточка */
-.card {
-  background: #FFFFFF;
-  border: 1px solid #EAEAEA;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s;
+/* Сброс курсора везде, кроме полей ввода */
+* {
+  cursor: default;
 }
-.card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+a, button, .clickable {
+  cursor: pointer;
+}
+input, textarea {
+  cursor: text;
 }
 
-/* Карточка баланса (светлая, с золотой полосой) */
-.balance-card {
-  background: #FFFFFF;
-  border: 1px solid #EAEAEA;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  position: relative;
-  overflow: hidden;
+/* Убираем все outline */
+*:focus {
+  outline: none;
 }
-.balance-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #C5A04E, #E0C87D);
-}
-.balance-amount {
-  font-size: 36px;
+
+/* Мерцающая цифра баланса */
+.balance-number {
+  font-size: 48px;
   font-weight: 700;
-  color: #1A1A1A;
-  letter-spacing: -0.5px;
-}
-.balance-label {
-  color: #6B7280;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 500;
+  color: #000000;
+  letter-spacing: -1px;
+  animation: subtleGlow 2s ease-in-out infinite;
 }
 
-/* Кнопка-пилюля с иконкой (светлая) */
-.btn-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 50px;
+@keyframes subtleGlow {
+  0%, 100% { text-shadow: 0 0 0 rgba(0,0,0,0); }
+  50% { text-shadow: 0 0 8px rgba(0,0,0,0.08); }
+}
+
+/* Прямоугольный блок баланса */
+.balance-block {
   background: #FFFFFF;
-  border: 1px solid #EAEAEA;
-  color: #1A1A1A;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-.btn-pill:hover {
-  border-color: #C5A04E;
-  background: #FFFBF5;
+  border: 1px solid #F0F0F0;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  display: inline-block;
 }
 
-/* Золотая кнопка (основное действие) */
-.btn-gold {
-  background: #C5A04E;
+/* Безрамочная кнопка с голографическим шрифтом */
+.ghost-button {
+  display: inline-block;
+  padding: 6px 0;
+  margin-right: 20px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4A4A4A;
+  background: none;
   border: none;
-  color: #FFFFFF;
-  font-weight: 500;
-  padding: 10px 24px;
-  border-radius: 50px;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-.btn-gold:hover {
-  background: #B28B3F;
+  transition: all 0.2s;
+  text-shadow: 0 0 6px rgba(90, 90, 90, 0.15);
+  letter-spacing: 0.3px;
 }
 
-/* Поле ввода */
+.ghost-button:hover {
+  text-shadow: 0 0 10px rgba(90, 90, 90, 0.3);
+  transform: scale(1.03);
+  color: #000000;
+}
+
+/* Поле ввода (для остальных страниц) */
 .input-field {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
@@ -104,9 +80,6 @@ input, textarea { cursor: text; }
   transition: border 0.2s;
 }
 .input-field:focus {
-  outline: none;
-  border-color: #C5A04E;
-  box-shadow: 0 0 0 3px rgba(197,160,78,0.15);
+  border-color: #A78BFA;
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.15);
 }
-
-*:focus { outline: none; }
