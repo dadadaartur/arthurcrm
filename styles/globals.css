@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Живой фон: небо + море + песок */
+/* Живой фон: небо, море, реалистичный песок */
 body {
-  background: linear-gradient(180deg, #C9E8FF 0%, #A8D8F0 40%, #0077BE 60%, #005A8B 80%, #F4E4C1 80%, #E8D5A3 100%);
+  background: linear-gradient(180deg, #C9E8FF 0%, #A8D8F0 40%, #0077BE 60%, #005A8B 80%, #003D5C 100%);
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -13,36 +13,54 @@ body {
   overflow-x: hidden;
 }
 
-/* Песчаный берег (псевдоэлемент) */
+/* Песчаный берег – неровный, с дюнами */
 body::after {
   content: '';
   position: fixed;
   bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 20%;
-  background: linear-gradient(180deg, #F4E4C1 0%, #E8D5A3 50%, #DDD0A8 100%);
+  left: -10%;
+  width: 120%;
+  height: 25%;
+  background: linear-gradient(180deg, 
+    rgba(255,248,220,0) 0%, 
+    #F4E4C1 15%, 
+    #E8D5A3 40%, 
+    #DDD0A8 70%, 
+    #C9B896 100%);
   z-index: -2;
+  border-radius: 100% 100% 0 0 / 60% 60% 0 0;
+  box-shadow: 
+    0 -5px 15px rgba(0,0,0,0.1),
+    0 -15px 30px rgba(0,0,0,0.05);
+  animation: sandShift 12s ease-in-out infinite alternate;
 }
 
-/* Волны на море */
+@keyframes sandShift {
+  0% { transform: translateY(0) skewX(1deg); }
+  100% { transform: translateY(-8px) skewX(-1deg); }
+}
+
+/* Морские волны (пена) */
 body::before {
   content: '';
   position: fixed;
-  top: 55%;
-  left: -50%;
-  width: 200%;
-  height: 30%;
-  background: radial-gradient(ellipse at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+  bottom: 20%;
+  left: -5%;
+  width: 110%;
+  height: 10%;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.15) 0%, transparent 50%);
   z-index: -1;
-  animation: waves 8s ease-in-out infinite;
+  animation: waves 6s ease-in-out infinite;
 }
 
 @keyframes waves {
-  0%, 100% { transform: translateX(0) scaleY(1); }
-  25% { transform: translateX(2%) scaleY(1.1); }
-  50% { transform: translateX(0) scaleY(0.95); }
-  75% { transform: translateX(-2%) scaleY(1.05); }
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(3%) translateY(-5px); }
+  50% { transform: translateX(1%) translateY(3px); }
+  75% { transform: translateX(-2%) translateY(-2px); }
 }
 
 /* Полная блокировка курсоров */
@@ -57,7 +75,7 @@ a, button, .clickable, .ghost-framed {
   outline: none !important;
 }
 
-/* Золотой спиннер (кольцо со стрелочками) */
+/* Золотой спиннер */
 .spinner {
   display: inline-block;
   width: 24px;
@@ -88,18 +106,18 @@ a, button, .clickable, .ghost-framed {
   to { transform: rotate(360deg); }
 }
 
-/* Блок баланса – чёрная рельефная премиум-карта */
+/* Блок баланса – ЧЁРНАЯ РЕЛЬЕФНАЯ ПРЕМИУМ-КАРТА */
 .balance-block {
   background: linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
   padding: 48px 56px;
   box-shadow:
-    /* Голографическая внешняя рамка */
+    /* Золотая внешняя рамка */
     0 0 0 2px rgba(197, 160, 78, 0.25),
     0 0 40px rgba(197, 160, 78, 0.2),
     0 0 80px rgba(197, 160, 78, 0.1),
-    /* Внутренний рельеф */
+    /* Внутренний рельеф – свет сверху, тень снизу */
     inset 0 2px 4px rgba(255, 255, 255, 0.05),
     inset 0 -4px 8px rgba(0, 0, 0, 0.5),
     inset 0 0 30px rgba(255, 255, 255, 0.02),
@@ -108,7 +126,7 @@ a, button, .clickable, .ghost-framed {
   display: inline-block;
   min-width: 420px;
   max-width: 480px;
-  /* Текстурная вуаль */
+  /* Шероховатая текстура */
   background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
@@ -124,7 +142,7 @@ a, button, .clickable, .ghost-framed {
   transform: translateY(-3px);
 }
 
-/* Подпись "Баланс" (белая на чёрном) */
+/* Подпись "Баланс" */
 .balance-label {
   font-size: 14px;
   font-weight: 500;
@@ -135,7 +153,7 @@ a, button, .clickable, .ghost-framed {
   margin-bottom: 8px;
 }
 
-/* Цифра баланса (золотой градиент) */
+/* Цифра баланса – золотая */
 .balance-number {
   font-size: 64px;
   font-weight: 700;
@@ -154,7 +172,7 @@ a, button, .clickable, .ghost-framed {
   50% { filter: drop-shadow(0 0 8px rgba(197, 160, 78, 0.6)); }
 }
 
-/* Слово "кармиков" под цифрой (белое) */
+/* Слово "кармиков" */
 .balance-word {
   text-align: center;
   font-size: 16px;
@@ -173,7 +191,7 @@ a, button, .clickable, .ghost-framed {
   gap: 16px;
 }
 
-/* Кнопка с тонкой голографической рамкой (светлая на чёрном) */
+/* Кнопки с голографической рамкой */
 .ghost-framed {
   font-size: 15px;
   font-weight: 400;
@@ -195,7 +213,6 @@ a, button, .clickable, .ghost-framed {
   color: #FFFFFF;
 }
 
-/* Широкая кнопка */
 .ghost-framed-full {
   flex-basis: 100%;
   text-align: center;
