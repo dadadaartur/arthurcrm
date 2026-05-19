@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function History() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [transfers, setTransfers] = useState([])
@@ -11,11 +9,12 @@ export default function History() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        loadData(user.id)
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      loadData(user.id)
     })
   }, [])
 
@@ -33,7 +32,6 @@ export default function History() {
     setPurchases(pr || [])
   }
 
-  // Объединим в общий список с типом операции
   const allOperations = [
     ...transactions.map(t => ({ ...t, type: 'transaction' })),
     ...transfers.map(t => ({ ...t, type: 'transfer' })),
@@ -66,7 +64,7 @@ export default function History() {
                 </div>
                 <span className={
                   (op.type === 'transaction' && op.amount >= 0) ||
-                  (op.type === 'transfer' && op.from_user_id !== user.id) // входящий перевод
+                  (op.type === 'transfer' && op.from_user_id !== user.id)
                     ? 'text-green-600 font-medium'
                     : 'text-red-600 font-medium'
                 }>
