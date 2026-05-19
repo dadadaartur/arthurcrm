@@ -1,21 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// SVG-иконки
 function Star({ filled }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  )
-}
-
-function MagicIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="4.5 1.5 3 5 0 6.5 3 8 4.5 11.5 6 8 9 6.5 6 5" />
-      <line x1="11" y1="17" x2="19" y2="9" />
-      <line x1="16.5" y1="14.5" x2="18.5" y2="16.5" />
     </svg>
   )
 }
@@ -69,7 +58,6 @@ export default function Home() {
     if (filters.rating > 0) dbQuery = dbQuery.gte('rating', filters.rating)
 
     const { data, error } = await dbQuery
-
     if (error) console.error(error)
     setResults(data || [])
     setNoResult((data || []).length === 0)
@@ -88,21 +76,24 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-light text-gray-700 mb-3 tracking-wide">
-          Волшебный мир <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">AI</span>
+      <div className="text-center mb-10 select-none">
+        <h1 className="text-4xl font-light text-gray-700 mb-3 tracking-wide cursor-default">
+          Волшебный мир{' '}
+          <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">
+            AI
+          </span>
         </h1>
-        <p className="text-gray-500 text-lg max-w-xl mx-auto">
+        <p className="text-gray-500 text-lg max-w-xl mx-auto cursor-default">
           Просто скажите, что нужно сделать, и мы подберём лучшие инструменты. Не тратьте время на поиски — магия уже здесь.
         </p>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-3 mb-10">
+      <div className="flex flex-wrap justify-center gap-3 mb-10 select-none">
         {SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion}
             onClick={() => handleTagClick(suggestion)}
-            className="tag-cloud bg-white/40 backdrop-blur-sm border border-white/50 rounded-full px-5 py-2 text-sm text-gray-700 shadow-sm hover:shadow-md hover:bg-white/60 transition-all"
+            className="tag-cloud bg-white/40 backdrop-blur-sm border border-white/50 rounded-full px-5 py-2 text-sm text-gray-700 shadow-sm hover:shadow-md hover:bg-white/60 transition-all cursor-pointer select-none"
           >
             {suggestion}
           </button>
@@ -122,19 +113,18 @@ export default function Home() {
             type="submit"
             className="btn-holographic flex items-center justify-center gap-2 px-8 py-4 w-full sm:w-auto"
           >
-            <MagicIcon />
             Подобрать
           </button>
         </div>
       </form>
 
       {results.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
+        <div className="flex flex-wrap justify-center gap-3 mb-8 select-none">
           <span className="text-sm text-gray-500 self-center mr-2">Фильтры:</span>
           <select
             value={filters.category}
             onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-            className="filter-pill"
+            className="filter-pill cursor-pointer"
           >
             <option value="">Все категории</option>
             <option value="Текст">Текст</option>
@@ -148,7 +138,7 @@ export default function Home() {
           <select
             value={filters.pricing}
             onChange={(e) => setFilters({ ...filters, pricing: e.target.value })}
-            className="filter-pill"
+            className="filter-pill cursor-pointer"
           >
             <option value="">Любая цена</option>
             <option value="Бесплатно">Бесплатно</option>
@@ -158,7 +148,7 @@ export default function Home() {
           <select
             value={filters.rating}
             onChange={(e) => setFilters({ ...filters, rating: parseFloat(e.target.value) })}
-            className="filter-pill"
+            className="filter-pill cursor-pointer"
           >
             <option value="0">Любой рейтинг</option>
             <option value="4">4+ звёзд</option>
@@ -171,87 +161,78 @@ export default function Home() {
       )}
 
       {loading && (
-        <div className="text-center text-gray-400 py-8">Ищем лучшие варианты...</div>
+        <div className="text-center text-gray-400 py-8 select-none">Ищем лучшие варианты...</div>
       )}
       {noResult && (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 py-8 select-none">
           Пока нет сервисов для этой задачи. Мы постоянно добавляем новые — загляните позже.
         </div>
       )}
 
       {results.length > 0 && (
         <div>
-          <h2 className="text-xl font-light mb-6 text-gray-600">
+          <h2 className="text-xl font-light mb-6 text-gray-600 select-none">
             Найдено {results.length} решений
           </h2>
           <div className="grid gap-6 md:grid-cols-2">
-            {results.map((service) => (
-              <div
-                key={service.id}
-                className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
-              >
-                <div className="flex items-start mb-4">
-                  <img
-                    src={service.logo_url || '/placeholder.png'}
-                    alt={service.name}
-                    className="w-12 h-12 rounded-xl mr-4 object-cover border border-white"
-                  />
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-800">
-                      {highlightText(service.name, query)}
-                    </h3>
-                    <span className="text-xs bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white px-2 py-0.5 rounded-full">
-                      {service.category}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-gray-600 text-sm mb-3">
-                  {highlightText(service.description, query)}
-                </p>
-
-                {service.use_cases && (
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                      Ключевые возможности
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      {highlightText(service.use_cases, query)}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star key={i} filled={i < Math.round(service.rating)} />
-                    ))}
-                    <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
+            {results.map((service) => {
+              const actionUrl = service.referral_url || service.website_url || '#'
+              return (
+                <div
+                  key={service.id}
+                  className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-start mb-4 select-none">
+                    <img
+                      src={service.logo_url || '/placeholder.png'}
+                      alt={service.name}
+                      className="w-12 h-12 rounded-xl mr-4 object-cover border border-white"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        {highlightText(service.name, query)}
+                      </h3>
+                      <span className="text-xs bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white px-2 py-0.5 rounded-full">
+                        {service.category}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <p className="text-gray-600 text-sm mb-3 select-none">
+                    {highlightText(service.description, query)}
+                  </p>
+
+                  {service.use_cases && (
+                    <div className="mb-4 select-none">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                        Ключевые возможности
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {highlightText(service.use_cases, query)}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-1 select-none">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Star key={i} filled={i < Math.round(service.rating)} />
+                      ))}
+                      <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
+                    </div>
+
                     <a
-                      href={service.website_url}
+                      href={actionUrl}
                       target="_blank"
                       rel="noopener"
                       className="text-sm btn-holographic px-4 py-1"
                     >
-                      Подробнее
+                      Начать!
                     </a>
-                    {service.referral_url && (
-                      <a
-                        href={service.referral_url}
-                        target="_blank"
-                        rel="noopener"
-                        className="text-sm border border-purple-400 text-purple-600 px-4 py-1 rounded-full hover:bg-purple-50 transition"
-                      >
-                        Попробовать
-                      </a>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
