@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import Link from 'next/link'
 
+// SVG-иконки
 function Star({ filled }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
@@ -10,22 +10,39 @@ function Star({ filled }) {
   )
 }
 
-function SearchIcon() {
+function MagicIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  )
-}
-
-function MagicWand() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="4.5 1.5 3 5 0 6.5 3 8 4.5 11.5 6 8 9 6.5 6 5" />
       <line x1="11" y1="17" x2="19" y2="9" />
       <line x1="16.5" y1="14.5" x2="18.5" y2="16.5" />
     </svg>
+  )
+}
+
+// Облако популярных подсказок
+const SUGGESTIONS = [
+  'Создать логотип',
+  'Написать статью',
+  'Сгенерировать код',
+  'Оживить фото',
+  'Сделать презентацию',
+  'Обработать видео',
+  'Перевести текст',
+  'Создать музыку',
+]
+
+// Функция подсветки совпадений в тексте
+function highlightText(text, query) {
+  if (!query.trim()) return <span>{text}</span>
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  const parts = text.split(regex)
+  return parts.map((part, i) =>
+    regex.test(part) ? (
+      <span key={i} className="highlight-match">{part}</span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
   )
 }
 
@@ -34,19 +51,26 @@ export default function Match() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [noResult, setNoResult] = useState(false)
+  const [filters, setFilters] = useState({ category: '', pricing: '', rating: 0 })
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!query.trim()) return
+  async function performSearch(q) {
+    if (!q.trim()) return
+    setQuery(q)
     setLoading(true)
     setNoResult(false)
 
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('services')
       .select('*')
-      .or(`description.ilike.%${query}%,use_cases.ilike.%${query}%`)
+      .or(`description.ilike.%${q}%,use_cases.ilike.%${q}%`)
       .order('rating', { ascending: false })
-      .limit(10)
+      .limit(20)
+
+    if (filters.category) dbQuery = dbQuery.eq('category', filters.category)
+    if (filters.pricing) dbQuery = dbQuery.eq('pricing', filters.pricing)
+    if (filters.rating > 0) dbQuery = dbQuery.gte('rating', filters.rating)
+
+    const { data, error } = await dbQuery
 
     if (error) console.error(error)
     setResults(data || [])
@@ -54,47 +78,126 @@ export default function Match() {
     setLoading(false)
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-light text-center mb-4 text-gray-700">
-        Какая задача стоит перед вами?
-      </h1>
-      <p className="text-center text-gray-500 mb-8">
-        Опишите, что нужно сделать, и мы подберём лучшие ИИ-решения
-      </p>
+  // Обработчик клика по тегу
+  function handleTagClick(tag) {
+    performSearch(tag)
+  }
 
-      <form onSubmit={handleSubmit} className="max-w-xl mx-auto mb-12">
+  // Обработчик отправки формы
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (!query.trim()) return
+    performSearch(query)
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-12">
+      {/* Заголовок и подзаголовок */}
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-light text-gray-700 mb-3 tracking-wide">
+          Волшебный мир <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">AI</span>
+        </h1>
+        <p className="text-gray-500 text-lg max-w-xl mx-auto">
+          Просто скажите, что нужно сделать, и мы подберём лучшие инструменты. Не тратьте время на поиски — магия уже здесь.
+        </p>
+      </div>
+
+      {/* Облако подсказок (захват внимания) */}
+      <div className="flex flex-wrap justify-center gap-3 mb-10">
+        {SUGGESTIONS.map((suggestion) => (
+          <button
+            key={suggestion}
+            onClick={() => handleTagClick(suggestion)}
+            className="tag-cloud bg-white/40 backdrop-blur-sm border border-white/50 rounded-full px-5 py-2 text-sm text-gray-700 shadow-sm hover:shadow-md hover:bg-white/60 transition-all"
+          >
+            {suggestion}
+          </button>
+        ))}
+      </div>
+
+      {/* Поле ввода с магией */}
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-10">
         <div className="relative">
-          <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <SearchIcon />
-          </span>
           <input
             type="text"
-            placeholder="Например: создать логотип, написать статью..."
+            placeholder="Опишите вашу задачу..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white/60 backdrop-blur-md border border-white/60 rounded-full shadow-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent text-gray-700 placeholder-gray-400"
+            className="w-full pl-6 pr-14 py-4 input-magic text-lg text-gray-700 placeholder-gray-400"
           />
           <button
             type="submit"
-            className="btn-holographic absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 px-6"
+            className="absolute right-2 top-1/2 -translate-y-1/2 btn-holographic flex items-center gap-2 px-5 py-2"
           >
-            <MagicWand />
+            <MagicIcon />
             Подобрать
           </button>
         </div>
       </form>
 
-      {loading && (
-        <div className="text-center text-gray-400">Ищем лучшие варианты...</div>
+      {/* Фильтры (появляются после поиска, если есть результаты) */}
+      {results.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          <span className="text-sm text-gray-500 self-center mr-2">Фильтры:</span>
+          {/* Категория */}
+          <select
+            value={filters.category}
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+            className="filter-pill"
+          >
+            <option value="">Все категории</option>
+            <option value="Текст">Текст</option>
+            <option value="Изображения">Изображения</option>
+            <option value="Код">Код</option>
+            <option value="Продуктивность">Продуктивность</option>
+            <option value="Видео">Видео</option>
+            <option value="Музыка">Музыка</option>
+          </select>
+
+          {/* Цена */}
+          <select
+            value={filters.pricing}
+            onChange={(e) => setFilters({ ...filters, pricing: e.target.value })}
+            className="filter-pill"
+          >
+            <option value="">Любая цена</option>
+            <option value="Бесплатно">Бесплатно</option>
+            <option value="Freemium">Freemium</option>
+            <option value="Платно">Платно</option>
+          </select>
+
+          {/* Рейтинг */}
+          <select
+            value={filters.rating}
+            onChange={(e) => setFilters({ ...filters, rating: parseFloat(e.target.value) })}
+            className="filter-pill"
+          >
+            <option value="0">Любой рейтинг</option>
+            <option value="4">4+ звёзд</option>
+            <option value="4.5">4.5+ звёзд</option>
+          </select>
+
+          {/* Кнопка Применить */}
+          <button
+            onClick={() => performSearch(query)}
+            className="filter-pill active"
+          >
+            Применить
+          </button>
+        </div>
       )}
 
+      {/* Состояния загрузки и пустого результата */}
+      {loading && (
+        <div className="text-center text-gray-400 py-8">Ищем лучшие варианты...</div>
+      )}
       {noResult && (
-        <div className="text-center text-gray-500">
+        <div className="text-center text-gray-500 py-8">
           Пока нет сервисов для этой задачи. Мы постоянно добавляем новые — загляните позже.
         </div>
       )}
 
+      {/* Карточки результатов */}
       {results.length > 0 && (
         <div>
           <h2 className="text-xl font-light mb-6 text-gray-600">
@@ -104,7 +207,7 @@ export default function Match() {
             {results.map((service) => (
               <div
                 key={service.id}
-                className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg"
+                className="bg-white/60 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
               >
                 <div className="flex items-start mb-4">
                   <img
@@ -114,7 +217,7 @@ export default function Match() {
                   />
                   <div>
                     <h3 className="font-semibold text-lg text-gray-800">
-                      {service.name}
+                      {highlightText(service.name, query)}
                     </h3>
                     <span className="text-xs bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white px-2 py-0.5 rounded-full">
                       {service.category}
@@ -122,8 +225,8 @@ export default function Match() {
                   </div>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-                  {service.description}
+                <p className="text-gray-600 text-sm mb-3">
+                  {highlightText(service.description, query)}
                 </p>
 
                 {service.use_cases && (
@@ -132,7 +235,7 @@ export default function Match() {
                       Ключевые возможности
                     </p>
                     <p className="text-sm text-gray-700">
-                      {service.use_cases}
+                      {highlightText(service.use_cases, query)}
                     </p>
                   </div>
                 )}
@@ -140,14 +243,9 @@ export default function Match() {
                 <div className="flex items-center justify-between mt-auto">
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        filled={i < Math.round(service.rating)}
-                      />
+                      <Star key={i} filled={i < Math.round(service.rating)} />
                     ))}
-                    <span className="text-gray-500 text-sm ml-1">
-                      {service.rating}
-                    </span>
+                    <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
                   </div>
 
                   <div className="flex gap-3">
