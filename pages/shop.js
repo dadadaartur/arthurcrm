@@ -68,8 +68,8 @@ export default function Shop() {
       {modal.show && (
         <div className="modal-overlay" onClick={() => setModal({ ...modal, show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>{modal.type === 'success' ? '✨' : '⚠️'}</div>
-            <p className="text-gray-800">{modal.message}</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">{modal.type === 'success' ? 'Успешно' : 'Ошибка'}</h3>
+            <p className="text-gray-600">{modal.message}</p>
             <button onClick={() => setModal({ ...modal, show: false })} className="btn-gold mt-6">Ок</button>
           </div>
         </div>
