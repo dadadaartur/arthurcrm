@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #F4F6F9;
+  color: #1F2937;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Сброс курсора */
+* {
+  cursor: default;
+}
+a, button, .clickable {
+  cursor: pointer;
+}
+input, textarea {
+  cursor: text;
+}
+
+/* Карточка в стиле "премиум" */
+.premium-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(197, 160, 78, 0.3);
+  box-shadow: 0 4px 12px rgba(11, 30, 63, 0.08);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+.premium-card:hover {
+  box-shadow: 0 8px 20px rgba(11, 30, 63, 0.12);
+}
+
+/* Кнопка "Золотой стандарт" */
+.btn-gold {
+  background: linear-gradient(135deg, #C5A04E, #B28B3F);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #FFFFFF;
+  font-weight: 500;
+  padding: 0.6rem 1.8rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, #B28B3F, #9E7A34);
+  box-shadow: 0 4px 12px rgba(197, 160, 78, 0.4);
+}
+
+/* Вторичная кнопка */
+.btn-outline {
+  border: 1px solid #C5A04E;
+  color: #C5A04E;
+  background: transparent;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-outline:hover {
+  background: rgba(197, 160, 78, 0.05);
+}
+
+/* Поле ввода */
+.input-field {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  transition: border 0.2s;
+}
+.input-field:focus {
+  outline: none;
+  border-color: #C5A04E;
+  box-shadow: 0 0 0 2px rgba(197, 160, 78, 0.2);
+}
+
+/* Убираем все стандартные outline */
+*:focus {
+  outline: none;
+}
