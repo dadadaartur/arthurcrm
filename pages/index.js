@@ -49,7 +49,14 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-6 py-10 flex justify-start">
       <div
         style={{
-          background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
+          // Новый тёплый, глубокий фон карты
+          background: `
+            linear-gradient(
+              160deg,
+              #26231E 0%,
+              #1B1815 35%,
+              #13110F 100%
+            )`,
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '28px',
           padding: '28px 36px',
@@ -57,10 +64,9 @@ export default function Home() {
             0 0 0 2px rgba(197,160,78,.25),
             0 0 40px rgba(197,160,78,.2),
             0 0 80px rgba(197,160,78,.1),
-            inset 0 2px 4px rgba(255,255,255,.05),
-            inset 0 -4px 8px rgba(0,0,0,.5),
-            inset 0 0 30px rgba(255,255,255,.02),
-            inset 0 0 60px rgba(0,0,0,.3)
+            inset 0 2px 8px rgba(255,255,255,.08),
+            inset 0 0 40px rgba(255,220,140,.03),
+            inset 0 -4px 12px rgba(0,0,0,.35)
           `,
           minWidth: '500px',
           maxWidth: '540px',
@@ -70,6 +76,24 @@ export default function Home() {
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`
         }}
       >
+        {/* Верхний блик — лёгкое свечение вдоль верхней грани */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '90px',
+            background: `
+              linear-gradient(
+                180deg,
+                rgba(255,255,255,.05),
+                transparent
+              )`,
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* заголовок */}
         <div
           style={{
@@ -97,7 +121,7 @@ export default function Home() {
             height: '180px'
           }}
         >
-          {/* нимб – поднят выше, ярче */}
+          {/* нимб */}
           <div
             style={{
               position: 'absolute',
