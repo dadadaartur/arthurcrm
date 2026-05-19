@@ -5,10 +5,16 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent">
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-start">
-          <Link href="/" className="text-2xl font-bold tracking-tight select-none"
+          <Link
+            href="/"
+            className="text-2xl font-bold tracking-tight select-none"
             style={{
-              color: '#C5A04E',
-              textShadow: '0 0 15px rgba(197,160,78,0.8), 0 0 30px rgba(197,160,78,0.5)',
+              // Прозрачная заливка + золотая обводка
+              color: 'transparent',
+              WebkitTextStroke: '1px #C5A04E',
+              // Голографическое свечение
+              textShadow:
+                '0 0 15px rgba(197,160,78,0.8), 0 0 30px rgba(197,160,78,0.5)',
               background: 'transparent',
             }}
           >
