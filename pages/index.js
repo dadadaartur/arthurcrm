@@ -30,7 +30,10 @@ export default function Home() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-light text-center mb-4 text-gray-700 tracking-wide">
-        Каталог <span className="font-semibold bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">ИИ-решений</span>
+        Каталог{' '}
+        <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">
+          ИИ-решений
+        </span>
       </h1>
       <SearchBar search={search} setSearch={setSearch} />
       
