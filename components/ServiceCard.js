@@ -1,6 +1,5 @@
 import Link from 'next/link'
 
-// SVG-звезда вместо эмодзи
 function Star({ filled }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
@@ -27,7 +26,7 @@ export default function ServiceCard({ service }) {
           {service.description}
         </p>
         <div className="flex justify-between items-center mt-auto">
-          <span className="bg-gradient-to-r from-yellow-400 to-green-400 text-white text-xs px-3 py-1 rounded-full">
+          <span className="bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white text-xs px-3 py-1 rounded-full">
             {service.category}
           </span>
           <span className="flex items-center gap-0.5">
