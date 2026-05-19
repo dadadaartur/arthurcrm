@@ -1,23 +1,22 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function Shop() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
   const [rewards, setRewards] = useState([])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        supabase.from('karma_balance').select('balance').eq('user_id', user.id).single().then(({ data }) => {
-          if (data) setBalance(data.balance)
-        })
-        supabase.from('rewards').select('*').then(({ data }) => setRewards(data || []))
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      supabase.from('karma_balance').select('balance').eq('user_id', user.id).single().then(({ data }) => {
+        if (data) setBalance(data.balance)
+      })
+      supabase.from('rewards').select('*').then(({ data }) => setRewards(data || []))
     })
   }, [])
 
@@ -26,7 +25,6 @@ export default function Shop() {
       alert('Недостаточно кармиков')
       return
     }
-    // Создаём событие с отрицательной суммой (покупка)
     const { error } = await supabase.from('karma_events').insert({
       user_id: user.id,
       description: `Покупка: ${reward.name}`,
