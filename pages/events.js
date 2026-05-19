@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function Events() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [events, setEvents] = useState([])
   const [description, setDescription] = useState('')
@@ -13,11 +11,12 @@ export default function Events() {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        fetchEvents(user.id)
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      fetchEvents(user.id)
     }
     checkUser()
   }, [])
