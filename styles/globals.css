@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Небесный фон */
 body {
-  @apply bg-gray-50;
+  background: #e0f0ff; /* чистый небесный */
+  background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, transparent 50%);
+  min-height: 100vh;
+  cursor: default; /* убираем курсоры где не нужно */
+}
+
+/* Тонкие стильные кнопки с градиентом и голограммой */
+.btn-holographic {
+  position: relative;
+  background: linear-gradient(135deg, #fbbf24, #34d399); /* жёлтый → зелёный */
+  border: 1px solid rgba(255,255,255,0.6);
+  color: #0a0a0a;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4), 0 0 20px rgba(52, 211, 153, 0.3);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.btn-holographic:hover {
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.7), 0 0 40px rgba(52, 211, 153, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Убираем стандартные outline и делаем свои */
+input:focus, button:focus {
+  outline: none;
+  ring: 2px solid #34d399;
 }
