@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
+import Spinner from '../components/Spinner'
 
 // Функция склонения слова "кармик"
 function getKarmikWord(n) {
@@ -37,7 +38,11 @@ export default function Home() {
     checkUser()
   }, [])
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Загрузка...</div>
+  if (loading) return (
+    <div className="p-8 flex justify-center items-center">
+      <Spinner />
+    </div>
+  )
 
   const karmikWord = getKarmikWord(balance)
 
