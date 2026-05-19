@@ -6,6 +6,7 @@ export default function History() {
   const [transactions, setTransactions] = useState([])
   const [transfers, setTransfers] = useState([])
   const [purchases, setPurchases] = useState([])
+  const [filter, setFilter] = useState('all') // all, income, expense, transfer
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -38,44 +39,48 @@ export default function History() {
     ...purchases.map(p => ({ ...p, type: 'purchase' }))
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
+  const filtered = allOperations.filter(op => {
+    if (filter === 'income') return (op.type === 'transaction' && op.amount > 0) || (op.type === 'transfer' && op.from_user_id !== user.id)
+    if (filter === 'expense') return (op.type === 'transaction' && op.amount < 0) || (op.type === 'transfer' && op.from_user_id === user.id) || op.type === 'purchase'
+    if (filter === 'transfer') return op.type === 'transfer'
+    return true
+  })
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-6">История операций</h1>
-        {allOperations.length === 0 ? (
-          <p className="text-gray-500">Операций пока нет</p>
-        ) : (
-          <ul className="space-y-3">
-            {allOperations.map(op => (
-              <li key={op.id + op.type} className="flex justify-between items-start border-b border-gray-100 pb-2">
-                <div>
-                  <p className="font-medium">
-                    {op.type === 'transfer' ? (
-                      op.from_user_id === user.id
-                        ? `Перевод пользователю ${op.to_user_id}`
-                        : `Перевод от пользователя ${op.from_user_id}`
-                    ) : op.type === 'purchase' ? (
-                      `Покупка: ${op.reward_name}`
-                    ) : (
-                      op.description
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
-                </div>
-                <span className={
-                  (op.type === 'transaction' && op.amount >= 0) ||
-                  (op.type === 'transfer' && op.from_user_id !== user.id)
-                    ? 'text-green-600 font-medium'
-                    : 'text-red-600 font-medium'
-                }>
-                  {op.type === 'transaction' ? (op.amount > 0 ? '+' : '') + op.amount :
-                   op.type === 'transfer' ? (op.from_user_id === user.id ? '-' : '+') + op.amount :
-                   op.type === 'purchase' ? '-' + op.cost : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="premium-card mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">История операций</h1>
+        <div className="flex gap-2 flex-wrap">
+          {['all', 'income', 'expense', 'transfer'].map(f => (
+            <button key={f} onClick={() => setFilter(f)} className={`filter-pill ${filter === f ? 'active' : ''}`}>
+              {f === 'all' ? 'Все' : f === 'income' ? 'Начисления' : f === 'expense' ? 'Списания' : 'Переводы'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {filtered.map(op => (
+          <div key={op.id + op.type} className="premium-card flex justify-between items-center">
+            <div>
+              <p className="font-medium text-gray-800">
+                {op.type === 'transfer' ? (
+                  op.from_user_id === user.id ? 'Исходящий перевод' : 'Входящий перевод'
+                ) : op.type === 'purchase' ? (
+                  `Покупка: ${op.reward_name}`
+                ) : (
+                  op.description
+                )}
+              </p>
+              <p className="text-sm text-gray-500">{new Date(op.created_at).toLocaleString('ru')}</p>
+            </div>
+            <span className={`font-semibold ${(op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.from_user_id !== user.id) ? 'text-green-600' : 'text-red-600'}`}>
+              {op.type === 'transaction' ? (op.amount > 0 ? '+' : '') + op.amount :
+               op.type === 'transfer' ? (op.from_user_id === user.id ? '-' : '+') + op.amount :
+               op.type === 'purchase' ? '-' + op.cost : ''}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )
