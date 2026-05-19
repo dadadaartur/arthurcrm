@@ -2,8 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Архитектурный рельефный фон */
 body {
-  background: linear-gradient(180deg, #F4F0E6 0%, #EFE8DA 100%);
+  background-color: #F4F0E6;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4c5a9' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -22,7 +24,6 @@ a, button, .clickable {
   outline: none !important;
 }
 
-/* Золотой спиннер */
 .spinner {
   display: inline-block;
   width: 24px;
@@ -51,7 +52,6 @@ a, button, .clickable {
   to { transform: rotate(360deg); }
 }
 
-/* Премиальная карточка */
 .premium-card {
   background: #FFFFFF;
   border: 1px solid rgba(197, 160, 78, 0.2);
@@ -64,7 +64,6 @@ a, button, .clickable {
   box-shadow: 0 12px 28px rgba(0,0,0,0.08);
 }
 
-/* Кнопка с золотой анимацией */
 .btn-gold {
   background: linear-gradient(135deg, #C5A04E, #B28B3F);
   border: none;
@@ -82,7 +81,6 @@ a, button, .clickable {
   box-shadow: 0 0 20px rgba(197, 160, 78, 0.5);
   transform: translateY(-1px);
 }
-/* Бегущая золотая стрелка */
 .btn-gold::after {
   content: '';
   position: absolute;
@@ -90,15 +88,15 @@ a, button, .clickable {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
   animation: shimmer 2s infinite;
+  pointer-events: none;
 }
 @keyframes shimmer {
   0% { left: -100%; }
   100% { left: 100%; }
 }
 
-/* Вторичная кнопка */
 .btn-outline {
   border: 1px solid #C5A04E;
   color: #C5A04E;
@@ -115,7 +113,6 @@ a, button, .clickable {
   box-shadow: 0 0 15px rgba(197, 160, 78, 0.2);
 }
 
-/* Поле ввода */
 .input-field {
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
@@ -130,7 +127,6 @@ a, button, .clickable {
   box-shadow: 0 0 0 3px rgba(197, 160, 78, 0.1);
 }
 
-/* Модальное окно */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -164,7 +160,6 @@ a, button, .clickable {
   to { transform: scale(1); opacity: 1; }
 }
 
-/* Фильтры-пилюли */
 .filter-pill {
   border: 1px solid rgba(197, 160, 78, 0.3);
   background: transparent;
