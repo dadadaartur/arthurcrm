@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Link from 'next/link'
 
-// SVG-звезда
 function Star({ filled }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
@@ -11,7 +10,6 @@ function Star({ filled }) {
   )
 }
 
-// Иконка поиска (SVG)
 function SearchIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -21,7 +19,6 @@ function SearchIcon() {
   )
 }
 
-// Иконка для кнопки "Подобрать"
 function MagicWand() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +41,6 @@ export default function Match() {
     setLoading(true)
     setNoResult(false)
 
-    // Поиск по описанию и use_cases
     const { data, error } = await supabase
       .from('services')
       .select('*')
@@ -77,7 +73,7 @@ export default function Match() {
             placeholder="Например: создать логотип, написать статью..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white/60 backdrop-blur-md border border-white/60 rounded-full shadow-lg focus:ring-2 focus:ring-green-300 focus:border-transparent text-gray-700 placeholder-gray-400"
+            className="w-full pl-12 pr-4 py-4 bg-white/60 backdrop-blur-md border border-white/60 rounded-full shadow-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent text-gray-700 placeholder-gray-400"
           />
           <button
             type="submit"
@@ -120,7 +116,7 @@ export default function Match() {
                     <h3 className="font-semibold text-lg text-gray-800">
                       {service.name}
                     </h3>
-                    <span className="text-xs bg-gradient-to-r from-yellow-400 to-green-400 text-white px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white px-2 py-0.5 rounded-full">
                       {service.category}
                     </span>
                   </div>
@@ -168,7 +164,7 @@ export default function Match() {
                         href={service.referral_url}
                         target="_blank"
                         rel="noopener"
-                        className="text-sm border border-green-400 text-green-600 px-4 py-1 rounded-full hover:bg-green-50 transition"
+                        className="text-sm border border-purple-400 text-purple-600 px-4 py-1 rounded-full hover:bg-purple-50 transition"
                       >
                         Попробовать
                       </a>
