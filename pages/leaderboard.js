@@ -12,7 +12,6 @@ export default function Leaderboard() {
       .limit(20)
       .then(({ data }) => {
         if (data) {
-          // Получим email через отдельный запрос (можно оптимизировать через view)
           Promise.all(data.map(async (row) => {
             const { data: userData } = await supabase.auth.admin.getUserById(row.user_id)
             return { ...row, email: userData?.user?.email || 'Аноним' }
