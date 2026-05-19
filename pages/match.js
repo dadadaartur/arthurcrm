@@ -117,17 +117,17 @@ export default function Match() {
 
       {/* Поле ввода с магией */}
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-10">
-        <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             placeholder="Опишите вашу задачу..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-6 pr-14 py-4 input-magic text-lg text-gray-700 placeholder-gray-400"
+            className="flex-grow pl-6 pr-4 py-4 input-magic text-lg text-gray-700 placeholder-gray-400"
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 btn-holographic flex items-center gap-2 px-5 py-2"
+            className="btn-holographic flex items-center justify-center gap-2 px-8 py-4 self-stretch sm:self-auto"
           >
             <MagicIcon />
             Подобрать
@@ -152,6 +152,7 @@ export default function Match() {
             <option value="Продуктивность">Продуктивность</option>
             <option value="Видео">Видео</option>
             <option value="Музыка">Музыка</option>
+            <option value="Презентации">Презентации</option>
           </select>
 
           {/* Цена */}
