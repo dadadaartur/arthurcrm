@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-gray-50">
+      <header className="bg-transparent">
         <div className="max-w-6xl ml-0 mr-auto px-6 py-5 flex justify-start">
           <Link href="/" className="text-2xl font-bold tracking-tight select-none"
             style={{
@@ -16,7 +16,7 @@ export default function Layout({ children }) {
         </div>
       </header>
       <main className="flex-grow">{children}</main>
-      <footer className="bg-white border-t border-gray-50 text-center py-4 text-xs text-gray-300">
+      <footer className="bg-transparent text-center py-4 text-xs text-gray-400">
         © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>
