@@ -2,16 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Летнее небо */
+/* Живой фон: небо + море + песок */
 body {
-  background: linear-gradient(180deg, #C9E8FF 0%, #E3F2FD 100%);
+  background: linear-gradient(180deg, #C9E8FF 0%, #A8D8F0 40%, #0077BE 60%, #005A8B 80%, #F4E4C1 80%, #E8D5A3 100%);
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Полная блокировка любых курсоров, кроме указателя на кликабельных */
+/* Песчаный берег (псевдоэлемент) */
+body::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  background: linear-gradient(180deg, #F4E4C1 0%, #E8D5A3 50%, #DDD0A8 100%);
+  z-index: -2;
+}
+
+/* Волны на море */
+body::before {
+  content: '';
+  position: fixed;
+  top: 55%;
+  left: -50%;
+  width: 200%;
+  height: 30%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+  z-index: -1;
+  animation: waves 8s ease-in-out infinite;
+}
+
+@keyframes waves {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  25% { transform: translateX(2%) scaleY(1.1); }
+  50% { transform: translateX(0) scaleY(0.95); }
+  75% { transform: translateX(-2%) scaleY(1.05); }
+}
+
+/* Полная блокировка курсоров */
 * {
   cursor: default !important;
   user-select: none;
@@ -19,89 +53,118 @@ body {
 a, button, .clickable, .ghost-framed {
   cursor: pointer !important;
 }
-
-/* Убираем любые обводки при фокусе */
 *:focus {
   outline: none !important;
 }
 
-/* Блок баланса – рельефный премиум-фон как пластиковая карта */
+/* Золотой спиннер (кольцо со стрелочками) */
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid transparent;
+  border-top-color: #C5A04E;
+  border-right-color: #FACC15;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  position: relative;
+}
+
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  border-left-color: rgba(197, 160, 78, 0.6);
+  border-bottom-color: rgba(250, 204, 21, 0.6);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite reverse;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Блок баланса – чёрная рельефная премиум-карта */
 .balance-block {
-  background: linear-gradient(160deg, #F8FAFB 0%, #E9ECF0 100%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
   padding: 48px 56px;
   box-shadow:
     /* Голографическая внешняя рамка */
-    0 0 0 2px rgba(167, 139, 250, 0.25),
-    0 0 40px rgba(167, 139, 250, 0.3),
-    0 0 80px rgba(250, 204, 21, 0.2),
-    /* Внутренний рельеф: верхний свет, нижняя тень, карточная текстура */
-    inset 0 2px 4px rgba(255, 255, 255, 0.9),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.04),
-    inset 0 0 30px rgba(255, 255, 255, 0.7),
-    inset 0 0 60px rgba(0, 0, 0, 0.02);
+    0 0 0 2px rgba(197, 160, 78, 0.25),
+    0 0 40px rgba(197, 160, 78, 0.2),
+    0 0 80px rgba(197, 160, 78, 0.1),
+    /* Внутренний рельеф */
+    inset 0 2px 4px rgba(255, 255, 255, 0.05),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(255, 255, 255, 0.02),
+    inset 0 0 60px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   display: inline-block;
   min-width: 420px;
   max-width: 480px;
-  /* Лёгкий шум для текстуры карты (опционально) */
+  /* Текстурная вуаль */
   background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 .balance-block:hover {
   box-shadow:
-    0 0 0 2px rgba(167, 139, 250, 0.45),
-    0 0 50px rgba(167, 139, 250, 0.5),
-    0 0 90px rgba(250, 204, 21, 0.3),
-    inset 0 2px 4px rgba(255, 255, 255, 1),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.06),
-    inset 0 0 30px rgba(255, 255, 255, 0.8),
-    inset 0 0 60px rgba(0, 0, 0, 0.03);
+    0 0 0 2px rgba(197, 160, 78, 0.5),
+    0 0 60px rgba(197, 160, 78, 0.3),
+    0 0 100px rgba(197, 160, 78, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 0.08),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.7),
+    inset 0 0 30px rgba(255, 255, 255, 0.03),
+    inset 0 0 60px rgba(0, 0, 0, 0.4);
   transform: translateY(-3px);
 }
 
-/* Подпись "Баланс" */
+/* Подпись "Баланс" (белая на чёрном) */
 .balance-label {
   font-size: 14px;
   font-weight: 500;
-  color: #6B7280;
+  color: rgba(255, 255, 255, 0.6);
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 8px;
 }
 
-/* Цифра баланса с градиентом серебро-платина и чёрной обводкой */
+/* Цифра баланса (золотой градиент) */
 .balance-number {
   font-size: 64px;
   font-weight: 700;
   letter-spacing: -1px;
   line-height: 1.1;
   text-align: center;
-  background: linear-gradient(180deg, #EAEAEA 0%, #C0C0C0 40%, #A0A0A0 100%);
+  background: linear-gradient(180deg, #FFD700 0%, #C5A04E 50%, #8B7300 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: 2px #000000;
+  -webkit-text-stroke: 1px rgba(0,0,0,0.3);
   animation: subtleGlow 2s ease-in-out infinite;
 }
 
 @keyframes subtleGlow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(0,0,0,0.1)); }
-  50% { filter: drop-shadow(0 0 6px rgba(0,0,0,0.2)); }
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(197, 160, 78, 0.3)); }
+  50% { filter: drop-shadow(0 0 8px rgba(197, 160, 78, 0.6)); }
 }
 
-/* Слово "кармиков" под цифрой */
+/* Слово "кармиков" под цифрой (белое) */
 .balance-word {
   text-align: center;
   font-size: 16px;
-  color: #5A5A5A;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 8px;
   font-weight: 400;
   letter-spacing: 0.3px;
 }
 
-/* Контейнер для кнопок действий */
+/* Контейнер для кнопок */
 .balance-actions {
   margin-top: 32px;
   display: flex;
@@ -110,30 +173,29 @@ a, button, .clickable, .ghost-framed {
   gap: 16px;
 }
 
-/* Кнопка с тонкой голографической рамкой */
+/* Кнопка с тонкой голографической рамкой (светлая на чёрном) */
 .ghost-framed {
   font-size: 15px;
   font-weight: 400;
-  color: #3A3A3A;
-  background: none;
-  border: 1px solid rgba(167, 139, 250, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  border: 1px solid rgba(197, 160, 78, 0.4);
   border-radius: 50px;
   padding: 8px 22px;
   transition: all 0.25s;
-  text-shadow: 0 0 8px rgba(120, 120, 120, 0.15);
+  text-shadow: 0 0 8px rgba(197, 160, 78, 0.3);
   letter-spacing: 0.3px;
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.12);
-  cursor: pointer;
+  box-shadow: 0 0 12px rgba(197, 160, 78, 0.1);
 }
 
 .ghost-framed:hover {
-  border-color: rgba(167, 139, 250, 0.7);
-  box-shadow: 0 0 24px rgba(167, 139, 250, 0.3);
+  border-color: rgba(197, 160, 78, 0.9);
+  box-shadow: 0 0 24px rgba(197, 160, 78, 0.4);
   transform: scale(1.04);
-  color: #000000;
+  color: #FFFFFF;
 }
 
-/* Широкая кнопка (например, "Магазин") */
+/* Широкая кнопка */
 .ghost-framed-full {
   flex-basis: 100%;
   text-align: center;
