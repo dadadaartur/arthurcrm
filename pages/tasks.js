@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function Tasks() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [tasks, setTasks] = useState([])
   const [completed, setCompleted] = useState([])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        loadTasks(user.id)
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      loadTasks(user.id)
     })
   }, [])
 
@@ -26,13 +25,11 @@ export default function Tasks() {
   }
 
   async function completeTask(taskId) {
-    // Вставляем запись о выполнении
     const { error } = await supabase.from('user_tasks').insert({
       user_id: user.id,
       task_id: taskId
     })
     if (!error) {
-      // Находим задание и начисляем награду через событие
       const task = tasks.find(t => t.id === taskId)
       if (task) {
         await supabase.from('karma_events').insert({
