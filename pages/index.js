@@ -48,9 +48,9 @@ export default function Home() {
   return (
     <div style={{
       maxWidth: '1100px',
-      marginLeft: '2rem',
+      marginLeft: '0',          // строго к левому краю, как и логотип
       marginRight: 'auto',
-      padding: '2rem',
+      padding: '1.5rem 1.5rem', // те же отступы, что в шапке (px-6)
       display: 'flex',
       justifyContent: 'flex-start'
     }}>
@@ -58,7 +58,7 @@ export default function Home() {
         background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: '28px',
-        padding: '48px 56px',
+        padding: '32px 40px',        // компактнее
         boxShadow: `
           0 0 0 2px rgba(197, 160, 78, 0.25),
           0 0 40px rgba(197, 160, 78, 0.2),
@@ -69,8 +69,8 @@ export default function Home() {
           inset 0 0 60px rgba(0, 0, 0, 0.3)
         `,
         display: 'inline-block',
-        minWidth: '420px',
-        maxWidth: '480px',
+        minWidth: '320px',
+        maxWidth: '380px',
         transition: 'all 0.3s ease'
       }}>
         <div style={{
@@ -85,7 +85,7 @@ export default function Home() {
           Баланс
         </div>
         <div style={{
-          fontSize: '64px',
+          fontSize: '48px',           // уменьшена цифра
           fontWeight: 700,
           letterSpacing: '-1px',
           lineHeight: 1.1,
@@ -100,9 +100,9 @@ export default function Home() {
         </div>
         <div style={{
           textAlign: 'center',
-          fontSize: '16px',
+          fontSize: '14px',
           color: 'rgba(255, 255, 255, 0.7)',
-          marginTop: '8px',
+          marginTop: '6px',
           fontWeight: 400,
           letterSpacing: '0.3px'
         }}>
@@ -110,11 +110,11 @@ export default function Home() {
         </div>
 
         <div style={{
-          marginTop: '32px',
+          marginTop: '24px',
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: '16px'
+          gap: '12px'
         }}>
           {[
             ['История', '/history'],
@@ -125,13 +125,13 @@ export default function Home() {
               key={path}
               onClick={() => router.push(path)}
               style={{
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 400,
                 color: 'rgba(255, 255, 255, 0.8)',
                 background: 'transparent',
                 border: '1px solid rgba(197, 160, 78, 0.4)',
                 borderRadius: '50px',
-                padding: '8px 22px',
+                padding: '6px 18px',
                 cursor: 'pointer',
                 textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
                 letterSpacing: '0.3px',
@@ -159,13 +159,13 @@ export default function Home() {
             style={{
               flexBasis: '100%',
               textAlign: 'center',
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 400,
               color: 'rgba(255, 255, 255, 0.8)',
               background: 'transparent',
               border: '1px solid rgba(197, 160, 78, 0.4)',
               borderRadius: '50px',
-              padding: '8px 22px',
+              padding: '6px 18px',
               cursor: 'pointer',
               textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
               letterSpacing: '0.3px',
