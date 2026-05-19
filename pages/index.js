@@ -38,7 +38,7 @@ export default function Home() {
   }, [])
 
   if (loading) return (
-    <div className="p-8 flex justify-center items-center">
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
       <Spinner />
     </div>
   )
@@ -47,10 +47,10 @@ export default function Home() {
 
   return (
     <div style={{
-      maxWidth: '6xl',
-      marginLeft: '0',
+      maxWidth: '1100px',
+      marginLeft: '2rem',
       marginRight: 'auto',
-      padding: '2.5rem 1.5rem',
+      padding: '2rem',
       display: 'flex',
       justifyContent: 'flex-start'
     }}>
@@ -94,7 +94,7 @@ export default function Home() {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           WebkitTextStroke: '1px rgba(0,0,0,0.3)',
-          animation: 'subtleGlow 2s ease-in-out infinite'
+          filter: 'drop-shadow(0 0 4px rgba(197,160,78,0.4))'
         }}>
           {balance.toLocaleString()}
         </div>
@@ -116,63 +116,44 @@ export default function Home() {
           justifyContent: 'center',
           gap: '16px'
         }}>
-          <button
-            onClick={() => router.push('/history')}
-            style={{
-              fontSize: '15px',
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.8)',
-              background: 'transparent',
-              border: '1px solid rgba(197, 160, 78, 0.4)',
-              borderRadius: '50px',
-              padding: '8px 22px',
-              cursor: 'pointer',
-              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
-              letterSpacing: '0.3px',
-              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-              transition: 'all 0.25s'
-            }}
-          >
-            История
-          </button>
-          <button
-            onClick={() => router.push('/my-purchases')}
-            style={{
-              fontSize: '15px',
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.8)',
-              background: 'transparent',
-              border: '1px solid rgba(197, 160, 78, 0.4)',
-              borderRadius: '50px',
-              padding: '8px 22px',
-              cursor: 'pointer',
-              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
-              letterSpacing: '0.3px',
-              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-              transition: 'all 0.25s'
-            }}
-          >
-            Покупки
-          </button>
-          <button
-            onClick={() => router.push('/transfer')}
-            style={{
-              fontSize: '15px',
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.8)',
-              background: 'transparent',
-              border: '1px solid rgba(197, 160, 78, 0.4)',
-              borderRadius: '50px',
-              padding: '8px 22px',
-              cursor: 'pointer',
-              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
-              letterSpacing: '0.3px',
-              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-              transition: 'all 0.25s'
-            }}
-          >
-            Перевести
-          </button>
+          {[
+            ['История', '/history'],
+            ['Покупки', '/my-purchases'],
+            ['Перевести', '/transfer'],
+          ].map(([label, path]) => (
+            <button
+              key={path}
+              onClick={() => router.push(path)}
+              style={{
+                fontSize: '15px',
+                fontWeight: 400,
+                color: 'rgba(255, 255, 255, 0.8)',
+                background: 'transparent',
+                border: '1px solid rgba(197, 160, 78, 0.4)',
+                borderRadius: '50px',
+                padding: '8px 22px',
+                cursor: 'pointer',
+                textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
+                letterSpacing: '0.3px',
+                boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
+                transition: 'all 0.25s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = 'rgba(197,160,78,0.9)';
+                e.target.style.boxShadow = '0 0 24px rgba(197,160,78,0.4)';
+                e.target.style.transform = 'scale(1.04)';
+                e.target.style.color = '#FFFFFF';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = 'rgba(197,160,78,0.4)';
+                e.target.style.boxShadow = '0 0 12px rgba(197,160,78,0.1)';
+                e.target.style.transform = 'scale(1)';
+                e.target.style.color = 'rgba(255,255,255,0.8)';
+              }}
+            >
+              {label}
+            </button>
+          ))}
           <button
             onClick={() => router.push('/shop')}
             style={{
@@ -190,6 +171,18 @@ export default function Home() {
               letterSpacing: '0.3px',
               boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
               transition: 'all 0.25s'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.borderColor = 'rgba(197,160,78,0.9)';
+              e.target.style.boxShadow = '0 0 24px rgba(197,160,78,0.4)';
+              e.target.style.transform = 'scale(1.04)';
+              e.target.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.borderColor = 'rgba(197,160,78,0.4)';
+              e.target.style.boxShadow = '0 0 12px rgba(197,160,78,0.1)';
+              e.target.style.transform = 'scale(1)';
+              e.target.style.color = 'rgba(255,255,255,0.8)';
             }}
           >
             Магазин
