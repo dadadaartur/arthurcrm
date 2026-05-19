@@ -1,14 +1,25 @@
 import Link from 'next/link'
 
+// SVG-звезда вместо эмодзи
+function Star({ filled }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  )
+}
+
 export default function ServiceCard({ service }) {
+  const stars = Array.from({ length: 5 }, (_, i) => i < Math.round(service.rating))
+  
   return (
     <Link href={`/service/${service.id}`}>
-      <div className="border rounded-xl p-5 hover:shadow-lg transition-shadow bg-white cursor-pointer h-full flex flex-col">
+      <div className="border border-white/40 rounded-2xl p-5 bg-white/60 backdrop-blur-md shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer h-full flex flex-col">
         <div className="flex items-center mb-3">
           <img
             src={service.logo_url || '/placeholder.png'}
             alt={service.name}
-            className="w-10 h-10 rounded-lg mr-3 object-cover"
+            className="w-10 h-10 rounded-xl mr-3 object-cover border border-white"
           />
           <h3 className="font-semibold text-lg text-gray-800">{service.name}</h3>
         </div>
@@ -16,12 +27,14 @@ export default function ServiceCard({ service }) {
           {service.description}
         </p>
         <div className="flex justify-between items-center mt-auto">
-          <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">
+          <span className="bg-gradient-to-r from-yellow-400 to-green-400 text-white text-xs px-3 py-1 rounded-full">
             {service.category}
           </span>
-          <span className="text-yellow-500 text-sm">
-            {'★'.repeat(Math.round(service.rating))}{' '}
-            <span className="text-gray-400">{service.rating}</span>
+          <span className="flex items-center gap-0.5">
+            {stars.map((filled, i) => (
+              <Star key={i} filled={filled} />
+            ))}
+            <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
           </span>
         </div>
       </div>
