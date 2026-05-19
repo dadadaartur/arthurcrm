@@ -2,15 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Архитектурный рельефный фон */
+/* Основной фон – многослойный: теплое молоко + золотистые ореолы */
 body {
-  background-color: #F4F0E6;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4c5a9' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background:
+    radial-gradient(circle at 50% 35%, rgba(197,160,78,.10) 0%, rgba(197,160,78,.04) 18%, transparent 45%),
+    radial-gradient(circle at 20% 70%, rgba(255,220,120,.03), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(255,220,120,.025), transparent 30%),
+    linear-gradient(180deg, #F5F1E8 0%, #EFE8DA 50%, #ECE4D4 100%);
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
   margin: 0;
+  position: relative;
+}
+
+/* Шум бумаги – очень лёгкая зернистость */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.025;
+  background-image: radial-gradient(#000 0.5px, transparent 0.5px);
+  background-size: 7px 7px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Золотая пыль – несколько редких сверкающих точек */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 15% 22%, rgba(212,180,84,.7) 0 1px, transparent 2px),
+    radial-gradient(circle at 75% 30%, rgba(212,180,84,.5) 0 1px, transparent 2px),
+    radial-gradient(circle at 80% 65%, rgba(212,180,84,.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 25% 80%, rgba(212,180,84,.5) 0 1px, transparent 2px),
+    radial-gradient(circle at 50% 12%, rgba(212,180,84,.6) 0 1px, transparent 2px),
+    radial-gradient(circle at 63% 88%, rgba(212,180,84,.4) 0 1px, transparent 2px);
+  filter: blur(0.3px);
 }
 
 * {
