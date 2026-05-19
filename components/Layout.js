@@ -19,30 +19,29 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-deep-blue text-white shadow-md border-b border-gold/20">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold tracking-tight text-gold select-none">
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold tracking-tight text-[#C5A04E] select-none">
             Karmabank
           </Link>
           {user ? (
-            <nav className="flex gap-4 items-center text-sm font-medium">
-              <Link href="/" className="hover:text-gold transition">Главная</Link>
-              <Link href="/transfer" className="hover:text-gold transition">Перевод</Link>
-              <Link href="/history" className="hover:text-gold transition">История</Link>
-              <Link href="/tasks" className="hover:text-gold transition">Задания</Link>
-              <Link href="/shop" className="hover:text-gold transition">Магазин</Link>
-              <button onClick={handleLogout} className="btn-outline text-xs border-gold text-gold hover:bg-gold/10 px-3 py-1">
+            <nav className="flex gap-4 items-center text-sm font-medium text-gray-600">
+              <Link href="/transfer" className="hover:text-[#C5A04E] transition">Перевод</Link>
+              <Link href="/history" className="hover:text-[#C5A04E] transition">История</Link>
+              <Link href="/shop" className="hover:text-[#C5A04E] transition">Магазин</Link>
+              <Link href="/tasks" className="hover:text-[#C5A04E] transition">Задания</Link>
+              <button onClick={handleLogout} className="text-gray-400 hover:text-gray-600 transition">
                 Выйти
               </button>
             </nav>
           ) : (
-            <Link href="/login" className="btn-gold text-xs px-4 py-2">Войти</Link>
+            <Link href="/login" className="btn-gold text-sm px-5 py-2">Войти</Link>
           )}
         </div>
       </header>
       <main className="flex-grow">{children}</main>
-      <footer className="bg-deep-blue text-gray-500 text-center py-3 text-xs border-t border-white/10">
-        © {new Date().getFullYear()} Кармический банк.
+      <footer className="bg-white border-t border-gray-100 text-center py-4 text-xs text-gray-400">
+        © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>
   )
