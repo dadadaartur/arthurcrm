@@ -1,198 +1,107 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import Link from 'next/link'
 
-function Star({ filled }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#fbbf24" : "#d1d5db"} stroke="#fbbf24" strokeWidth="1.5">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  )
-}
-
-const SUGGESTIONS = [
-  'Создать логотип',
-  'Написать статью',
-  'Сгенерировать код',
-  'Оживить фото',
-  'Сделать презентацию',
-  'Обработать видео',
-  'Перевести текст',
-  'Создать музыку',
+// Статичные вопросы-ответы (можно заменить выборкой из базы)
+const QUICK_ACTIONS = [
+  {
+    question: 'Нужна уникальная картинка?',
+    answer: 'Midjourney',
+    serviceId: 2, // id вашего Midjourney в таблице services
+  },
+  {
+    question: 'Хотите написать текст или статью?',
+    answer: 'ChatGPT',
+    serviceId: 1, // id ChatGPT
+  },
+  {
+    question: 'Сгенерировать код моментально?',
+    answer: 'GitHub Copilot',
+    serviceId: 5,
+  },
+  {
+    question: 'Создать презентацию за пару кликов?',
+    answer: 'Gamma',
+    serviceId: 4,
+  },
+  {
+    question: 'Обработать видео как профи?',
+    answer: 'Runway',
+    serviceId: 6,
+  },
+  {
+    question: 'Перевести текст на другой язык?',
+    answer: 'DeepL',
+    serviceId: 7,
+  },
+  {
+    question: 'Создать музыку или трек?',
+    answer: 'Suno',
+    serviceId: 8,
+  },
+  {
+    question: 'Оживить старое фото?',
+    answer: 'Midjourney',
+    serviceId: 2,
+  },
 ]
 
-function highlightText(text, query) {
-  if (!query.trim()) return <span>{text}</span>
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  const parts = text.split(regex)
-  return parts.map((part, i) =>
-    regex.test(part) ? (
-      <span key={i} className="highlight-match">{part}</span>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  )
-}
-
 export default function Home() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [noResult, setNoResult] = useState(false)
+  const [services, setServices] = useState([])
 
-  async function performSearch(q) {
-    if (!q.trim()) return
-    setQuery(q)
-    setLoading(true)
-    setNoResult(false)
-
-    const { data, error } = await supabase
+  useEffect(() => {
+    // Загружаем все сервисы, чтобы получить реферальные ссылки
+    supabase
       .from('services')
-      .select('*')
-      .or(`description.ilike.%${q}%,use_cases.ilike.%${q}%`)
-      .order('rating', { ascending: false })
-      .limit(20)
+      .select('id, referral_url, website_url, name')
+      .then(({ data }) => {
+        if (data) setServices(data)
+      })
+  }, [])
 
-    if (error) console.error(error)
-    setResults(data || [])
-    setNoResult((data || []).length === 0)
-    setLoading(false)
-  }
-
-  function handleTagClick(tag) {
-    performSearch(tag)
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault()
-    if (!query.trim()) return
-    performSearch(query)
+  const getActionUrl = (serviceId) => {
+    const service = services.find(s => s.id === serviceId)
+    if (!service) return '#'
+    return service.referral_url || service.website_url || '#'
   }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      {/* Заголовок – теперь отлично виден на небе */}
-      <div className="text-center mb-10 select-none">
-        <h1 className="text-5xl font-light text-gray-800 mb-6 tracking-wide">
+      <div className="text-center mb-12 select-none">
+        <h1 className="text-5xl font-light text-gray-800 mb-4 tracking-wide">
           Волшебный мир{' '}
           <span className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent drop-shadow-lg">
             AI
           </span>
         </h1>
         <p className="text-gray-700 text-lg max-w-xl mx-auto bg-white/30 backdrop-blur-sm rounded-full py-2 px-6">
-          Просто скажите, что нужно сделать, и мы подберём лучшие инструменты
+          Выберите задачу — получите идеальный инструмент
         </p>
       </div>
 
-      {/* Облачные подсказки */}
-      <div className="flex flex-wrap justify-center gap-4 mb-10 select-none">
-        {SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion}
-            onClick={() => handleTagClick(suggestion)}
-            className="cloud-fluffy text-gray-700 font-medium text-sm"
-          >
-            {suggestion}
-          </button>
+      {/* Сетка карточек-потребностей */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {QUICK_ACTIONS.map((item, idx) => (
+          <div key={idx} className="cloud-card flex flex-col items-center text-center">
+            <p className="text-gray-700 font-medium mb-3">{item.question}</p>
+            <a
+              href={getActionUrl(item.serviceId)}
+              target="_blank"
+              rel="noopener"
+              className="btn-holographic px-6 py-2 text-sm font-semibold"
+            >
+              {item.answer} — Начать!
+            </a>
+          </div>
         ))}
       </div>
 
-      {/* Поле ввода + кнопка */}
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-10">
-        <div className="cloud p-2 flex flex-col sm:flex-row gap-2 items-center">
-          <input
-            type="text"
-            placeholder="Опишите вашу задачу..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full sm:flex-1 pl-6 pr-4 py-4 bg-white/40 backdrop-blur-sm rounded-full text-lg text-gray-700 placeholder-gray-400 border-none focus:outline-none focus:ring-2 focus:ring-purple-300"
-          />
-          <button
-            type="submit"
-            className="btn-holographic flex items-center justify-center px-8 py-4 w-full sm:w-auto"
-          >
-            Подобрать
-          </button>
-        </div>
-      </form>
-
-      {/* Состояния загрузки и пустого результата */}
-      {loading && (
-        <div className="text-center text-gray-500 py-8 select-none">Ищем лучшие варианты...</div>
-      )}
-      {noResult && (
-        <div className="text-center text-gray-500 py-8 select-none">
-          Пока нет сервисов для этой задачи. Мы постоянно добавляем новые — загляните позже.
-        </div>
-      )}
-
-      {/* Карточки результатов */}
-      {results.length > 0 && (
-        <div>
-          <h2 className="text-xl font-light mb-6 text-gray-600 select-none cloud px-4 py-2 inline-block">
-            Найдено {results.length} решений
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            {results.map((service) => {
-              const actionUrl = service.referral_url || service.website_url || '#'
-              return (
-                <div
-                  key={service.id}
-                  className="cloud p-6 hover:shadow-2xl transition-all"
-                >
-                  <div className="flex items-start mb-4 select-none">
-                    <img
-                      src={service.logo_url || '/placeholder.png'}
-                      alt={service.name}
-                      className="w-12 h-12 rounded-xl mr-4 object-cover border border-white"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">
-                        {highlightText(service.name, query)}
-                      </h3>
-                      <span className="text-xs bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 text-white px-2 py-0.5 rounded-full">
-                        {service.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-3 select-none">
-                    {highlightText(service.description, query)}
-                  </p>
-
-                  {service.use_cases && (
-                    <div className="mb-4 select-none">
-                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                        Ключевые возможности
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        {highlightText(service.use_cases, query)}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-auto">
-                    <div className="flex items-center gap-1 select-none">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star key={i} filled={i < Math.round(service.rating)} />
-                      ))}
-                      <span className="text-gray-500 text-sm ml-1">{service.rating}</span>
-                    </div>
-
-                    <a
-                      href={actionUrl}
-                      target="_blank"
-                      rel="noopener"
-                      className="btn-holographic text-sm px-4 py-1"
-                    >
-                      Начать!
-                    </a>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {/* Ссылка на реестр для сложного поиска */}
+      <div className="mt-12 text-center">
+        <Link href="/catalog" className="btn-pill text-gray-600 hover:text-purple-600">
+          Или перейти в Реестр Ai для ручного поиска
+        </Link>
+      </div>
     </div>
   )
 }
