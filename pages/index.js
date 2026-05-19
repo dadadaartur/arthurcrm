@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
-// Функция склонения слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -47,23 +46,152 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div className="max-w-6xl ml-0 mr-auto px-6 py-10 flex justify-start">
-      <div className="balance-block">
-        <div className="balance-label">Баланс</div>
-        <div className="balance-number">{balance.toLocaleString()}</div>
-        <div className="balance-word">{karmikWord}</div>
+    <div style={{
+      maxWidth: '6xl',
+      marginLeft: '0',
+      marginRight: 'auto',
+      padding: '2.5rem 1.5rem',
+      display: 'flex',
+      justifyContent: 'flex-start'
+    }}>
+      <div style={{
+        background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: '28px',
+        padding: '48px 56px',
+        boxShadow: `
+          0 0 0 2px rgba(197, 160, 78, 0.25),
+          0 0 40px rgba(197, 160, 78, 0.2),
+          0 0 80px rgba(197, 160, 78, 0.1),
+          inset 0 2px 4px rgba(255, 255, 255, 0.05),
+          inset 0 -4px 8px rgba(0, 0, 0, 0.5),
+          inset 0 0 30px rgba(255, 255, 255, 0.02),
+          inset 0 0 60px rgba(0, 0, 0, 0.3)
+        `,
+        display: 'inline-block',
+        minWidth: '420px',
+        maxWidth: '480px',
+        transition: 'all 0.3s ease'
+      }}>
+        <div style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: 'rgba(255, 255, 255, 0.6)',
+          textAlign: 'center',
+          textTransform: 'uppercase',
+          letterSpacing: '2px',
+          marginBottom: '8px'
+        }}>
+          Баланс
+        </div>
+        <div style={{
+          fontSize: '64px',
+          fontWeight: 700,
+          letterSpacing: '-1px',
+          lineHeight: 1.1,
+          textAlign: 'center',
+          background: 'linear-gradient(180deg, #FFD700 0%, #C5A04E 50%, #8B7300 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          WebkitTextStroke: '1px rgba(0,0,0,0.3)',
+          animation: 'subtleGlow 2s ease-in-out infinite'
+        }}>
+          {balance.toLocaleString()}
+        </div>
+        <div style={{
+          textAlign: 'center',
+          fontSize: '16px',
+          color: 'rgba(255, 255, 255, 0.7)',
+          marginTop: '8px',
+          fontWeight: 400,
+          letterSpacing: '0.3px'
+        }}>
+          {karmikWord}
+        </div>
 
-        <div className="balance-actions">
-          <button onClick={() => router.push('/history')} className="ghost-framed">
+        <div style={{
+          marginTop: '32px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '16px'
+        }}>
+          <button
+            onClick={() => router.push('/history')}
+            style={{
+              fontSize: '15px',
+              fontWeight: 400,
+              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: '1px solid rgba(197, 160, 78, 0.4)',
+              borderRadius: '50px',
+              padding: '8px 22px',
+              cursor: 'pointer',
+              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
+              letterSpacing: '0.3px',
+              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
+              transition: 'all 0.25s'
+            }}
+          >
             История
           </button>
-          <button onClick={() => router.push('/my-purchases')} className="ghost-framed">
+          <button
+            onClick={() => router.push('/my-purchases')}
+            style={{
+              fontSize: '15px',
+              fontWeight: 400,
+              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: '1px solid rgba(197, 160, 78, 0.4)',
+              borderRadius: '50px',
+              padding: '8px 22px',
+              cursor: 'pointer',
+              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
+              letterSpacing: '0.3px',
+              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
+              transition: 'all 0.25s'
+            }}
+          >
             Покупки
           </button>
-          <button onClick={() => router.push('/transfer')} className="ghost-framed">
+          <button
+            onClick={() => router.push('/transfer')}
+            style={{
+              fontSize: '15px',
+              fontWeight: 400,
+              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: '1px solid rgba(197, 160, 78, 0.4)',
+              borderRadius: '50px',
+              padding: '8px 22px',
+              cursor: 'pointer',
+              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
+              letterSpacing: '0.3px',
+              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
+              transition: 'all 0.25s'
+            }}
+          >
             Перевести
           </button>
-          <button onClick={() => router.push('/shop')} className="ghost-framed ghost-framed-full">
+          <button
+            onClick={() => router.push('/shop')}
+            style={{
+              flexBasis: '100%',
+              textAlign: 'center',
+              fontSize: '15px',
+              fontWeight: 400,
+              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: '1px solid rgba(197, 160, 78, 0.4)',
+              borderRadius: '50px',
+              padding: '8px 22px',
+              cursor: 'pointer',
+              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
+              letterSpacing: '0.3px',
+              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
+              transition: 'all 0.25s'
+            }}
+          >
             Магазин
           </button>
         </div>
