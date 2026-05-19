@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useRouter } from 'next/router'
 
 export default function Confirm() {
-  const router = useRouter()
   const [user, setUser] = useState(null)
   const [pendingEvents, setPendingEvents] = useState([])
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) router.push('/login')
-      else {
-        setUser(user)
-        fetchPending()
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
+      setUser(user)
+      fetchPending()
     }
     checkUser()
   }, [])
@@ -29,7 +28,6 @@ export default function Confirm() {
   }
 
   async function handleConfirm(eventId, role) {
-    // Исправлено: используем user.id из состояния
     const { error } = await supabase
       .from('karma_events')
       .update({ status: 'approved', confirmed_by: user.id, confirmed_role: role })
