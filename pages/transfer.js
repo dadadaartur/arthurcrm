@@ -6,9 +6,10 @@ export default function Transfer() {
   const [balance, setBalance] = useState(0)
   const [recipientEmail, setRecipientEmail] = useState('')
   const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
+  const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -51,7 +52,7 @@ export default function Transfer() {
       from_user_id: user.id,
       to_user_id: recipient.id,
       amount: transferAmount,
-      description: description || 'Перевод кармиков'
+      description: comment || 'Перевод кармиков'
     })
 
     if (transferError) {
@@ -77,54 +78,37 @@ export default function Transfer() {
       { user_id: recipient.id, amount: transferAmount, description: `Перевод от ${user.email}` }
     ])
 
-    setSuccess(`Перевод ${transferAmount} кармиков выполнен`)
+    setBalance(balance - transferAmount)
     setRecipientEmail('')
     setAmount('')
-    setDescription('')
-    setBalance(balance - transferAmount)
+    setComment('')
+    setShowModal(true)
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
+    <div className="max-w-md mx-auto px-4 py-10">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-6">Перевод кармиков</h1>
-        <p className="text-gold text-xl mb-4">Ваш баланс: {balance} кармиков</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Перевод кармиков</h2>
+        <div className="text-sm text-gray-500 mb-4">Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков</div>
         <form onSubmit={handleTransfer} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email получателя</label>
-            <input
-              type="email"
-              value={recipientEmail}
-              onChange={e => setRecipientEmail(e.target.value)}
-              className="input-field"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              className="input-field"
-              min="1"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Описание (необязательно)</label>
-            <input
-              type="text"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="input-field"
-            />
-          </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
+          <input type="email" placeholder="Email получателя" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} className="input-field" required />
+          <input type="number" placeholder="Сумма" value={amount} onChange={e => setAmount(e.target.value)} className="input-field" min="1" required />
+          <input type="text" placeholder="Комментарий" value={comment} onChange={e => setComment(e.target.value)} className="input-field" />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" className="btn-gold w-full">Отправить</button>
         </form>
       </div>
+
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>✨</div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Перевод выполнен!</h3>
+            <p className="text-gray-600">Операция записана в историю.</p>
+            <button onClick={() => setShowModal(false)} className="btn-gold mt-6">Ок</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
