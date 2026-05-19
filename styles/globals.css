@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Светлый фон: белое золото */
 body {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF7 50%, #F9F3E3 100%);
+  background: linear-gradient(180deg, #F4F0E6 0%, #EFE8DA 100%);
   background-attachment: fixed;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1A1A1A;
   margin: 0;
 }
 
@@ -49,4 +49,134 @@ a, button, .clickable {
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Премиальная карточка */
+.premium-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(197, 160, 78, 0.2);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  transition: all 0.3s;
+}
+.premium-card:hover {
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+/* Кнопка с золотой анимацией */
+.btn-gold {
+  background: linear-gradient(135deg, #C5A04E, #B28B3F);
+  border: none;
+  color: #FFFFFF;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.btn-gold:hover {
+  box-shadow: 0 0 20px rgba(197, 160, 78, 0.5);
+  transform: translateY(-1px);
+}
+/* Бегущая золотая стрелка */
+.btn-gold::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Вторичная кнопка */
+.btn-outline {
+  border: 1px solid #C5A04E;
+  color: #C5A04E;
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-outline:hover {
+  background: rgba(197, 160, 78, 0.05);
+  box-shadow: 0 0 15px rgba(197, 160, 78, 0.2);
+}
+
+/* Поле ввода */
+.input-field {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.input-field:focus {
+  border-color: #C5A04E;
+  box-shadow: 0 0 0 3px rgba(197, 160, 78, 0.1);
+}
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  animation: scaleIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Фильтры-пилюли */
+.filter-pill {
+  border: 1px solid rgba(197, 160, 78, 0.3);
+  background: transparent;
+  color: #4B5563;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-pill.active {
+  background: linear-gradient(135deg, #C5A04E, #B28B3F);
+  color: #FFFFFF;
+  border-color: transparent;
 }
