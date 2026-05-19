@@ -97,25 +97,25 @@ export default function Home() {
             height: '190px'
           }}
         >
-          {/* нимб (ярче) */}
+          {/* нимб — теперь компактнее и прозрачнее */}
           <div
             style={{
               position: 'absolute',
-              width: '300px',
-              height: '300px',
+              width: '240px',
+              height: '240px',
               borderRadius: '50%',
               background: `
                 radial-gradient(
                   circle,
-                  transparent 58%,
-                  rgba(197,160,78,.12) 70%,
-                  transparent 75%
+                  transparent 60%,
+                  rgba(197,160,78,.06) 72%,
+                  transparent 78%
                 )
               `,
-              border: '1px solid rgba(197,160,78,.35)',
+              border: '1px solid rgba(197,160,78,.25)',
               boxShadow: `
-                0 0 50px rgba(197,160,78,.15),
-                inset 0 0 30px rgba(197,160,78,.05)
+                0 0 40px rgba(197,160,78,.1),
+                inset 0 0 20px rgba(197,160,78,.04)
               `,
               top: '50%',
               left: '50%',
