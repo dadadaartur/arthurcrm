@@ -3,20 +3,22 @@ import Link from 'next/link'
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white shadow-sm">
+      <header className="bg-white/70 backdrop-blur-md shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-indigo-600">
-            🤖 AI Marketplace
+          <Link href="/" className="text-2xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-yellow-400 to-green-400 bg-clip-text text-transparent">
+              AI Marketplace
+            </span>
           </Link>
           <nav>
-            <Link href="/" className="text-gray-600 hover:text-indigo-600">
+            <Link href="/" className="text-gray-700 hover:text-green-500 transition">
               Каталог
             </Link>
           </nav>
         </div>
       </header>
       <main className="flex-grow">{children}</main>
-      <footer className="bg-white border-t py-6 text-center text-gray-500 text-sm">
+      <footer className="bg-white/70 backdrop-blur-md border-t py-6 text-center text-gray-500 text-sm">
         © {new Date().getFullYear()} AI Marketplace — ваш навигатор в мире ИИ
       </footer>
     </div>
