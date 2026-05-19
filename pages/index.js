@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 
+// Функция склонения слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -35,147 +36,254 @@ export default function Home() {
     checkUser()
   }, [])
 
-  if (loading) return (
-    <div className="flex justify-center items-center py-8">
-      <Spinner />
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Spinner />
+      </div>
+    )
+  }
 
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10 flex justify-start">
-      <div style={{
-        background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '28px',
-        padding: '36px 44px',
-        boxShadow: `
-          0 0 0 2px rgba(197, 160, 78, 0.25),
-          0 0 40px rgba(197, 160, 78, 0.2),
-          0 0 80px rgba(197, 160, 78, 0.1),
-          inset 0 2px 4px rgba(255, 255, 255, 0.05),
-          inset 0 -4px 8px rgba(0, 0, 0, 0.5),
-          inset 0 0 30px rgba(255, 255, 255, 0.02),
-          inset 0 0 60px rgba(0, 0, 0, 0.3)
-        `,
-        display: 'inline-block',
-        minWidth: '440px',
-        maxWidth: '520px',
-        width: '100%',
-        transition: 'all 0.3s ease'
-      }}>
-        <div style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: 'rgba(255, 255, 255, 0.6)',
-          textAlign: 'center',
-          textTransform: 'uppercase',
-          letterSpacing: '2px',
-          marginBottom: '8px'
-        }}>
-          Баланс
-        </div>
-        <div style={{
-          fontSize: '56px',
-          fontWeight: 700,
-          letterSpacing: '-1px',
-          lineHeight: 1.1,
-          textAlign: 'center',
-          background: 'linear-gradient(180deg, #FFD700 0%, #C5A04E 50%, #8B7300 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          WebkitTextStroke: '1px rgba(0,0,0,0.3)',
-          filter: 'drop-shadow(0 0 4px rgba(197,160,78,0.4))'
-        }}>
-          {balance.toLocaleString()}
-        </div>
-        <div style={{
-          textAlign: 'center',
-          fontSize: '14px',
-          color: 'rgba(255, 255, 255, 0.7)',
-          marginTop: '6px',
-          fontWeight: 400,
-          letterSpacing: '0.3px'
-        }}>
-          {karmikWord}
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(180deg,#F4F0E6 0%, #EFE8DA 100%)',
+        padding: '40px'
+      }}
+    >
+      <div
+        style={{
+          background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '28px',
+          padding: '36px 44px',
+          boxShadow: `
+            0 0 0 2px rgba(197,160,78,.25),
+            0 0 40px rgba(197,160,78,.2),
+            0 0 80px rgba(197,160,78,.1),
+            inset 0 2px 4px rgba(255,255,255,.05),
+            inset 0 -4px 8px rgba(0,0,0,.5),
+            inset 0 0 30px rgba(255,255,255,.02),
+            inset 0 0 60px rgba(0,0,0,.3)
+          `,
+          minWidth: '520px',
+          maxWidth: '560px',
+          width: '100%',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {/* заголовок */}
+        <div
+          style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'rgba(255,255,255,.55)',
+            textAlign: 'center',
+            textTransform: 'uppercase',
+            letterSpacing: '3px',
+            marginBottom: '2px'
+          }}
+        >
+          БАЛАНС
         </div>
 
-        <div style={{
-          marginTop: '28px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          {[
-            ['История', '/history'],
-            ['Покупки', '/my-purchases'],
-            ['Перевести', '/transfer'],
-          ].map(([label, path]) => (
+        {/* центр */}
+        <div
+          style={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '190px'
+          }}
+        >
+          {/* нимб */}
+          <div
+            style={{
+              position: 'absolute',
+              width: '300px',
+              height: '300px',
+              borderRadius: '50%',
+              background: `
+                radial-gradient(
+                  circle,
+                  transparent 58%,
+                  rgba(197,160,78,.05) 70%,
+                  transparent 75%
+                )
+              `,
+              border: '1px solid rgba(197,160,78,.18)',
+              boxShadow: `
+                0 0 35px rgba(197,160,78,.08),
+                inset 0 0 20px rgba(197,160,78,.02)
+              `,
+              opacity: .9
+            }}
+          />
+
+          {/* левая стрелка */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '18px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#E2BC57',
+                boxShadow: '0 0 12px rgba(226,188,87,.9)'
+              }}
+            />
+            <div
+              style={{
+                width: '145px',
+                height: '1px',
+                marginLeft: '14px',
+                background:
+                  'linear-gradient(90deg, rgba(197,160,78,.2), rgba(197,160,78,.75))'
+              }}
+            />
+            <div
+              style={{
+                width: '8px',
+                height: '8px',
+                borderTop: '1px solid rgba(255,220,120,.9)',
+                borderRight: '1px solid rgba(255,220,120,.9)',
+                transform: 'rotate(45deg)',
+                marginLeft: '-2px'
+              }}
+            />
+          </div>
+
+          {/* цифра */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 5,
+              textAlign: 'center'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '84px',
+                fontWeight: 700,
+                lineHeight: 1,
+                letterSpacing: '-3px',
+                background:
+                  'linear-gradient(180deg,#FFD700 0%,#C5A04E 60%,#8B7300 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                WebkitTextStroke: '1px rgba(0,0,0,.25)',
+                filter: 'drop-shadow(0 0 8px rgba(197,160,78,.55))'
+              }}
+            >
+              {balance.toLocaleString()}
+            </div>
+            <div
+              style={{
+                marginTop: '8px',
+                fontSize: '14px',
+                color: 'rgba(255,255,255,.68)',
+                letterSpacing: '.4px'
+              }}
+            >
+              {karmikWord}
+            </div>
+          </div>
+
+          {/* правая стрелка */}
+          <div
+            style={{
+              position: 'absolute',
+              right: '18px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{
+                width: '8px',
+                height: '8px',
+                borderTop: '1px solid rgba(255,220,120,.9)',
+                borderRight: '1px solid rgba(255,220,120,.9)',
+                transform: 'rotate(225deg)',
+                marginRight: '-2px'
+              }}
+            />
+            <div
+              style={{
+                width: '145px',
+                height: '1px',
+                marginRight: '14px',
+                background:
+                  'linear-gradient(90deg, rgba(197,160,78,.75), rgba(197,160,78,.2))'
+              }}
+            />
+            <div
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#E2BC57',
+                boxShadow: '0 0 12px rgba(226,188,87,.9)'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* кнопки */}
+        <div
+          style={{
+            marginTop: '10px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          {['История', 'Покупки', 'Перевести'].map((label) => (
             <button
-              key={path}
-              onClick={() => window.location.href = path}
+              key={label}
+              onClick={() => {
+                if (label === 'История') window.location.href = '/history'
+                if (label === 'Покупки') window.location.href = '/my-purchases'
+                if (label === 'Перевести') window.location.href = '/transfer'
+              }}
               style={{
                 flex: '1 1 0',
                 fontSize: '14px',
-                fontWeight: 400,
-                color: 'rgba(255, 255, 255, 0.8)',
+                color: 'rgba(255,255,255,.82)',
                 background: 'transparent',
-                border: '1px solid rgba(197, 160, 78, 0.4)',
+                border: '1px solid rgba(197,160,78,.35)',
                 borderRadius: '50px',
-                padding: '8px 0',
-                cursor: 'pointer',
-                textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
-                letterSpacing: '0.3px',
-                boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-                transition: 'all 0.25s',
-                textAlign: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.borderColor = 'rgba(197,160,78,0.9)';
-                e.target.style.boxShadow = '0 0 24px rgba(197,160,78,0.4)';
-                e.target.style.transform = 'scale(1.04)';
-                e.target.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.borderColor = 'rgba(197,160,78,0.4)';
-                e.target.style.boxShadow = '0 0 12px rgba(197,160,78,0.1)';
-                e.target.style.transform = 'scale(1)';
-                e.target.style.color = 'rgba(255,255,255,0.8)';
+                padding: '10px 0',
+                cursor: 'pointer'
               }}
             >
               {label}
             </button>
           ))}
           <button
-            onClick={() => window.location.href = '/shop'}
+            onClick={() => { window.location.href = '/shop' }}
             style={{
               flexBasis: '100%',
-              textAlign: 'center',
-              fontSize: '14px',
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.8)',
-              background: 'transparent',
-              border: '1px solid rgba(197, 160, 78, 0.4)',
+              border: '1px solid rgba(197,160,78,.35)',
               borderRadius: '50px',
-              padding: '8px 0',
-              cursor: 'pointer',
-              textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
-              letterSpacing: '0.3px',
-              boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-              transition: 'all 0.25s'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.borderColor = 'rgba(197,160,78,0.9)';
-              e.target.style.boxShadow = '0 0 24px rgba(197,160,78,0.4)';
-              e.target.style.transform = 'scale(1.04)';
-              e.target.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.borderColor = 'rgba(197,160,78,0.4)';
-              e.target.style.boxShadow = '0 0 12px rgba(197,160,78,0.1)';
-              e.target.style.transform = 'scale(1)';
-              e.target.style.color = 'rgba(255,255,255,0.8)';
+              background: 'transparent',
+              color: 'rgba(255,255,255,.82)',
+              padding: '10px 0',
+              cursor: 'pointer'
             }}
           >
             Магазин
