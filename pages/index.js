@@ -8,6 +8,7 @@ export default function Home() {
   const [balance, setBalance] = useState(0)
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
+  const [dailyRewardCollected, setDailyRewardCollected] = useState(false)
 
   useEffect(() => {
     checkUser()
@@ -21,6 +22,7 @@ export default function Home() {
       setUser(user)
       await fetchBalance(user.id)
       await fetchTransactions(user.id)
+      await checkDailyReward(user.id)
     }
     setLoading(false)
   }
@@ -44,6 +46,31 @@ export default function Home() {
     setTransactions(data || [])
   }
 
+  // Ежедневный бонус за вход
+  async function checkDailyReward(userId) {
+    const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+    // Найдем событие "Ежедневный вход" за сегодня
+    const { data } = await supabase.from('karma_events')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('description', 'Ежедневный вход')
+      .gte('created_at', today)
+      .limit(1)
+
+    if (!data || data.length === 0) {
+      // Ещё не получал сегодня
+      await supabase.from('karma_events').insert({
+        user_id: userId,
+        description: 'Ежедневный вход',
+        amount: 1,
+        status: 'auto_approved',
+        category: 'daily'
+      })
+      setBalance(prev => prev + 1)
+      setDailyRewardCollected(true)
+    }
+  }
+
   if (loading) return <div className="p-8 text-center">Загрузка...</div>
 
   return (
@@ -52,6 +79,9 @@ export default function Home() {
         <h1 className="text-2xl font-bold text-deep-blue">Добро пожаловать, {user.email}</h1>
         <p className="text-gray-600 mt-2">Ваш текущий баланс кармы:</p>
         <div className="text-4xl font-bold text-gold mt-4">{balance} <span className="text-lg">кармиков</span></div>
+        {dailyRewardCollected && (
+          <p className="text-green-600 mt-2">+1 кармик за ежедневный вход!</p>
+        )}
       </div>
 
       <div className="premium-card">
