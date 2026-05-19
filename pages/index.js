@@ -38,7 +38,7 @@ export default function Home() {
   }, [])
 
   if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
+    <div className="flex justify-center items-center py-8">
       <Spinner />
     </div>
   )
@@ -46,19 +46,12 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div style={{
-      maxWidth: '1100px',
-      marginLeft: '0',          // строго к левому краю, как и логотип
-      marginRight: 'auto',
-      padding: '1.5rem 1.5rem', // те же отступы, что в шапке (px-6)
-      display: 'flex',
-      justifyContent: 'flex-start'
-    }}>
+    <div className="max-w-6xl mx-auto px-6 py-10 flex justify-start">
       <div style={{
         background: 'linear-gradient(160deg, #1A1A1A 0%, #0D0D0D 100%)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: '28px',
-        padding: '32px 40px',        // компактнее
+        padding: '36px 44px',
         boxShadow: `
           0 0 0 2px rgba(197, 160, 78, 0.25),
           0 0 40px rgba(197, 160, 78, 0.2),
@@ -69,10 +62,12 @@ export default function Home() {
           inset 0 0 60px rgba(0, 0, 0, 0.3)
         `,
         display: 'inline-block',
-        minWidth: '320px',
-        maxWidth: '380px',
+        minWidth: '440px',
+        maxWidth: '520px',
+        width: '100%',
         transition: 'all 0.3s ease'
       }}>
+        {/* Заголовок Баланс */}
         <div style={{
           fontSize: '14px',
           fontWeight: 500,
@@ -84,8 +79,10 @@ export default function Home() {
         }}>
           Баланс
         </div>
+
+        {/* Цифра баланса */}
         <div style={{
-          fontSize: '48px',           // уменьшена цифра
+          fontSize: '56px',
           fontWeight: 700,
           letterSpacing: '-1px',
           lineHeight: 1.1,
@@ -98,6 +95,8 @@ export default function Home() {
         }}>
           {balance.toLocaleString()}
         </div>
+
+        {/* Слово "кармиков" */}
         <div style={{
           textAlign: 'center',
           fontSize: '14px',
@@ -109,11 +108,11 @@ export default function Home() {
           {karmikWord}
         </div>
 
+        {/* Кнопки действий */}
         <div style={{
-          marginTop: '24px',
+          marginTop: '28px',
           display: 'flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
           gap: '12px'
         }}>
           {[
@@ -125,18 +124,20 @@ export default function Home() {
               key={path}
               onClick={() => router.push(path)}
               style={{
+                flex: '1 1 0',
                 fontSize: '14px',
                 fontWeight: 400,
                 color: 'rgba(255, 255, 255, 0.8)',
                 background: 'transparent',
                 border: '1px solid rgba(197, 160, 78, 0.4)',
                 borderRadius: '50px',
-                padding: '6px 18px',
+                padding: '8px 0',
                 cursor: 'pointer',
                 textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
                 letterSpacing: '0.3px',
                 boxShadow: '0 0 12px rgba(197, 160, 78, 0.1)',
-                transition: 'all 0.25s'
+                transition: 'all 0.25s',
+                textAlign: 'center'
               }}
               onMouseEnter={(e) => {
                 e.target.style.borderColor = 'rgba(197,160,78,0.9)';
@@ -165,7 +166,7 @@ export default function Home() {
               background: 'transparent',
               border: '1px solid rgba(197, 160, 78, 0.4)',
               borderRadius: '50px',
-              padding: '6px 18px',
+              padding: '8px 0',
               cursor: 'pointer',
               textShadow: '0 0 8px rgba(197, 160, 78, 0.3)',
               letterSpacing: '0.3px',
