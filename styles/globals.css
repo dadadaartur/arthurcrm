@@ -25,6 +25,47 @@ a, button, .clickable, .ghost-framed {
   outline: none !important;
 }
 
+/* Блок баланса – теперь с рельефным фоном как у премиум-карты */
+.balance-block {
+  background: linear-gradient(145deg, #F5F7FA 0%, #E8ECF1 100%);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 24px;
+  padding: 48px 56px;
+  box-shadow:
+    /* Голографическая внешняя рамка */
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    0 0 30px rgba(167, 139, 250, 0.25),
+    0 0 60px rgba(250, 204, 21, 0.15),
+    /* Внутренний рельеф – тени для имитации пластика */
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  display: inline-block;
+  min-width: 420px;
+  max-width: 480px;
+}
+
+.balance-block:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 1),
+    0 0 40px rgba(167, 139, 250, 0.4),
+    0 0 80px rgba(250, 204, 21, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Подпись "Баланс" */
+.balance-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
 /* Цифра баланса с градиентом серебро-платина и чёрной обводкой */
 .balance-number {
   font-size: 64px;
@@ -44,41 +85,26 @@ a, button, .clickable, .ghost-framed {
   50% { filter: drop-shadow(0 0 6px rgba(0,0,0,0.2)); }
 }
 
-/* Блок баланса с голографической рамкой */
-.balance-block {
-  background: #FFFFFF;
-  border: 1px solid rgba(167, 139, 250, 0.35);
-  border-radius: 24px;
-  padding: 40px 48px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.9),
-    0 0 30px rgba(167, 139, 250, 0.25),
-    0 0 60px rgba(250, 204, 21, 0.15);
-  transition: all 0.3s ease;
-  display: inline-block;
-  min-width: 380px;
-}
-
-.balance-block:hover {
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,1),
-    0 0 40px rgba(167, 139, 250, 0.4),
-    0 0 80px rgba(250, 204, 21, 0.25);
-  transform: translateY(-2px);
-}
-
-/* Подпись над цифрой */
-.balance-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #6B7280;
+/* Слово "кармиков" под цифрой */
+.balance-word {
   text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 8px;
+  font-size: 16px;
+  color: #5A5A5A;
+  margin-top: 8px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
 }
 
-/* Кнопки с тонкой голографической рамкой */
+/* Контейнер для кнопок действий */
+.balance-actions {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Кнопка с тонкой голографической рамкой */
 .ghost-framed {
   font-size: 15px;
   font-weight: 400;
@@ -91,6 +117,7 @@ a, button, .clickable, .ghost-framed {
   text-shadow: 0 0 8px rgba(120, 120, 120, 0.15);
   letter-spacing: 0.3px;
   box-shadow: 0 0 12px rgba(167, 139, 250, 0.12);
+  cursor: pointer;
 }
 
 .ghost-framed:hover {
@@ -100,11 +127,8 @@ a, button, .clickable, .ghost-framed {
   color: #000000;
 }
 
-/* Контейнер для кнопок */
-.balance-actions {
-  margin-top: 32px;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
+/* Широкая кнопка (например, "Магазин") */
+.ghost-framed-full {
+  flex-basis: 100%;
+  text-align: center;
 }
