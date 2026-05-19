@@ -4,11 +4,12 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent">
-        <div className="max-w-6xl ml-0 mr-auto px-6 py-5 flex justify-start">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-start">
           <Link href="/" className="text-2xl font-bold tracking-tight select-none"
             style={{
-              color: '#A78BFA',
-              textShadow: '0 0 10px rgba(167, 139, 250, 0.5), 0 0 20px rgba(167, 139, 250, 0.2)',
+              color: '#C5A04E',
+              textShadow: '0 0 15px rgba(197,160,78,0.8), 0 0 30px rgba(197,160,78,0.5)',
+              background: 'transparent',
             }}
           >
             Кармический банк
