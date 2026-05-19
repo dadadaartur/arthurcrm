@@ -7,22 +7,28 @@ export default function Layout({ children }) {
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent">
-              AI Marketplace
+              Ai Come To Me
             </span>
           </Link>
-          <nav className="flex gap-4">
-            <Link href="/" className="text-gray-700 hover:text-purple-500 transition">
-              Главная
+          <nav className="flex gap-4 items-center">
+            <Link
+              href="/"
+              className="font-semibold bg-gradient-to-r from-orange-500 via-yellow-400 to-purple-500 bg-clip-text text-transparent hover:scale-105 transition-transform"
+            >
+              Выбери свой Ai
             </Link>
-            <Link href="/catalog" className="text-gray-700 hover:text-purple-500 transition">
-              Каталог
+            <Link
+              href="/catalog"
+              className="text-gray-700 hover:text-purple-500 transition"
+            >
+              Реестр Ai
             </Link>
           </nav>
         </div>
       </header>
       <main className="flex-grow">{children}</main>
       <footer className="bg-white/70 backdrop-blur-md border-t py-6 text-center text-gray-500 text-sm">
-        © {new Date().getFullYear()} AI Marketplace — ваш навигатор в мире ИИ
+        © {new Date().getFullYear()} Ai Come To Me — ваш навигатор в мире ИИ
       </footer>
     </div>
   )
