@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background: #F4F6F9;
+  background: #0B1E3F;
   color: #1F2937;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -19,30 +19,33 @@ input, textarea {
   cursor: text;
 }
 
-/* Карточка в стиле "премиум" */
+/* Карточка премиум */
 .premium-card {
   background: #FFFFFF;
-  border: 1px solid rgba(197, 160, 78, 0.3);
-  box-shadow: 0 4px 12px rgba(11, 30, 63, 0.08);
+  border: 1px solid rgba(197, 160, 78, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-radius: 1rem;
   padding: 1.5rem;
   transition: all 0.2s;
 }
 .premium-card:hover {
-  box-shadow: 0 8px 20px rgba(11, 30, 63, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
 }
 
-/* Кнопка "Золотой стандарт" */
+/* Золотая кнопка */
 .btn-gold {
   background: linear-gradient(135deg, #C5A04E, #B28B3F);
   border: 1px solid rgba(255,255,255,0.2);
   color: #FFFFFF;
   font-weight: 500;
-  padding: 0.6rem 1.8rem;
-  border-radius: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 0.4rem;
   transition: all 0.3s;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
 }
 .btn-gold:hover {
   background: linear-gradient(135deg, #B28B3F, #9E7A34);
@@ -54,10 +57,14 @@ input, textarea {
   border: 1px solid #C5A04E;
   color: #C5A04E;
   background: transparent;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 0.4rem;
   font-weight: 500;
   transition: all 0.2s;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .btn-outline:hover {
   background: rgba(197, 160, 78, 0.05);
@@ -67,8 +74,8 @@ input, textarea {
 .input-field {
   background: #FFFFFF;
   border: 1px solid #D1D5DB;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
   width: 100%;
   transition: border 0.2s;
 }
@@ -81,4 +88,26 @@ input, textarea {
 /* Убираем все стандартные outline */
 *:focus {
   outline: none;
+}
+
+/* Банковская карточка баланса */
+.balance-card {
+  background: linear-gradient(135deg, #1E3A5F, #0B1E3F);
+  border: 1px solid rgba(197, 160, 78, 0.4);
+  border-radius: 1rem;
+  padding: 2rem;
+  color: #FFFFFF;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.balance-amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #C5A04E;
+  letter-spacing: 0.02em;
+}
+.balance-label {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
