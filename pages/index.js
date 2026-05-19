@@ -32,16 +32,17 @@ export default function Home() {
   return (
     <div className="max-w-6xl ml-0 mr-auto px-6 py-10 flex justify-start">
       <div className="balance-block">
+        <div className="balance-label">Баланс</div>
         <div className="balance-number">{balance.toLocaleString()}</div>
         <div className="balance-actions">
-          <button onClick={() => router.push('/history')} className="ghost-button">
-            История операций
+          <button onClick={() => router.push('/history')} className="ghost-framed">
+            История
           </button>
-          <button onClick={() => router.push('/transfer')} className="ghost-button">
+          <button onClick={() => router.push('/my-purchases')} className="ghost-framed">
+            Покупки
+          </button>
+          <button onClick={() => router.push('/transfer')} className="ghost-framed">
             Перевести
-          </button>
-          <button onClick={() => router.push('/my-purchases')} className="ghost-button">
-            Мои покупки
           </button>
         </div>
       </div>
