@@ -45,13 +45,12 @@ export default function Home() {
 
   const karmikWord = getKarmikWord(balance)
   const balanceStr = balance.toLocaleString()
-  // Адаптивный размер шрифта в зависимости от длины числа
   const dynamicFontSize = balanceStr.length > 5 ? '42px' :
                           balanceStr.length > 4 ? '52px' :
                           balanceStr.length > 3 ? '64px' : '78px'
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 flex justify-start">
+    <div className="flex justify-start px-4 py-6">
       <div style={{
         background: '#0A0A0A',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -104,7 +103,7 @@ export default function Home() {
           alignItems: 'center',
           height: '180px'
         }}>
-          {/* Нимб – живой, с анимацией haloGlow */}
+          {/* Нимб */}
           <div style={{
             position: 'absolute',
             width: '180px',
