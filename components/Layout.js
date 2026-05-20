@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function Layout({ children }) {
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Фоновый слой (отдельно, сзади) */}
+      {/* Фоновый слой (закреплён сзади) */}
       <div style={{
         position: 'fixed',
         inset: 0,
