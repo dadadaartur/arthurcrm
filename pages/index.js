@@ -50,13 +50,13 @@ export default function Home() {
                           balanceStr.length > 3 ? '58px' : '68px'
 
   return (
-    <div className="flex flex-col items-start px-6 py-8 space-y-8">
-      {/* Блок баланса (без кнопок) */}
+    <div className="flex flex-col items-start px-10 py-8 space-y-10">
+      {/* Блок баланса (увеличен, нимб свободен) */}
       <div style={{
         background: '#0A0A0A',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '24px',
-        padding: '24px 28px',
+        padding: '28px 32px',
         boxShadow: `
           0 0 0 2px rgba(197,160,78,.25),
           0 0 40px rgba(197,160,78,.2),
@@ -65,7 +65,7 @@ export default function Home() {
           inset 0 0 40px rgba(255,220,140,.03),
           inset 0 -4px 12px rgba(0,0,0,.35)
         `,
-        width: '460px',
+        width: '500px',
         position: 'relative',
         zIndex: 10,
         overflow: 'hidden'
@@ -76,7 +76,7 @@ export default function Home() {
           top: 0,
           left: 0,
           right: 0,
-          height: '60px',
+          height: '70px',
           background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent)',
           pointerEvents: 'none'
         }} />
@@ -87,34 +87,34 @@ export default function Home() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '180px'
+          height: '200px'
         }}>
-          {/* Нимб — яркий, живой, отцентрирован */}
+          {/* Нимб — яркий, живой, с запасом по краям */}
           <div style={{
             position: 'absolute',
-            width: '220px',
-            height: '220px',
+            width: '240px',
+            height: '240px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.25) 70%, transparent 76%)',
-            border: '1px solid rgba(197,160,78,.5)',
+            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.3) 70%, transparent 76%)',
+            border: '1px solid rgba(197,160,78,.6)',
             animation: 'haloGlow 3s infinite ease-in-out',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)'
           }} />
 
-          {/* Левая стрелка — отодвинута к краю */}
-          <div style={{ position: 'absolute', left: '4px', display: 'flex', alignItems: 'center' }}>
+          {/* Левая стрелка — максимально отодвинута */}
+          <div style={{ position: 'absolute', left: '2px', display: 'flex', alignItems: 'center' }}>
             <div style={{
               width: '8px',
               height: '8px',
               borderRadius: '50%',
               background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
-              boxShadow: '0 0 10px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
+              boxShadow: '0 0 12px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
               border: '1px solid rgba(255,215,0,0.6)'
             }} />
             <div style={{
-              width: '80px',
+              width: '90px',
               height: '1px',
               marginLeft: '8px',
               background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))'
@@ -168,8 +168,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Правая стрелка — отодвинута к краю */}
-          <div style={{ position: 'absolute', right: '4px', display: 'flex', alignItems: 'center' }}>
+          {/* Правая стрелка — максимально отодвинута */}
+          <div style={{ position: 'absolute', right: '2px', display: 'flex', alignItems: 'center' }}>
             <div style={{
               width: '6px',
               height: '6px',
@@ -179,7 +179,7 @@ export default function Home() {
               marginRight: '-2px'
             }} />
             <div style={{
-              width: '80px',
+              width: '90px',
               height: '1px',
               marginRight: '8px',
               background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))'
@@ -189,33 +189,124 @@ export default function Home() {
               height: '8px',
               borderRadius: '50%',
               background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
-              boxShadow: '0 0 10px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
+              boxShadow: '0 0 12px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
               border: '1px solid rgba(255,215,0,0.6)'
             }} />
           </div>
         </div>
       </div>
 
-      {/* Кнопки действий (отдельный ряд) */}
-      <div className="flex flex-wrap gap-3 w-full max-w-lg">
-        {[
-          ['История', '/history'],
-          ['Покупки', '/my-purchases'],
-          ['Перевести', '/transfer'],
-          ['Магазин', '/shop']
-        ].map(([label, path]) => (
-          <button
-            key={label}
-            onClick={() => window.location.href = path}
-            className="action-btn"
-          >
-            {label}
-          </button>
-        ))}
+      {/* Кнопки действий (отдельная строка под балансом, стиль как внутри блока) */}
+      <div className="flex flex-wrap gap-2" style={{ width: '500px' }}>
+        <button
+          onClick={() => window.location.href = '/history'}
+          style={{
+            flex: '1 1 0',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,.82)',
+            background: 'transparent',
+            border: '1px solid rgba(197,160,78,.35)',
+            borderRadius: '50px',
+            padding: '10px 0',
+            cursor: 'pointer',
+            transition: 'all 0.25s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(197,160,78,0.15)'
+            e.target.style.borderColor = '#C5A04E'
+            e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.borderColor = 'rgba(197,160,78,.35)'
+            e.target.style.boxShadow = 'none'
+          }}
+        >
+          История
+        </button>
+        <button
+          onClick={() => window.location.href = '/my-purchases'}
+          style={{
+            flex: '1 1 0',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,.82)',
+            background: 'transparent',
+            border: '1px solid rgba(197,160,78,.35)',
+            borderRadius: '50px',
+            padding: '10px 0',
+            cursor: 'pointer',
+            transition: 'all 0.25s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(197,160,78,0.15)'
+            e.target.style.borderColor = '#C5A04E'
+            e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.borderColor = 'rgba(197,160,78,.35)'
+            e.target.style.boxShadow = 'none'
+          }}
+        >
+          Покупки
+        </button>
+        <button
+          onClick={() => window.location.href = '/transfer'}
+          style={{
+            flex: '1 1 0',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,.82)',
+            background: 'transparent',
+            border: '1px solid rgba(197,160,78,.35)',
+            borderRadius: '50px',
+            padding: '10px 0',
+            cursor: 'pointer',
+            transition: 'all 0.25s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(197,160,78,0.15)'
+            e.target.style.borderColor = '#C5A04E'
+            e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.borderColor = 'rgba(197,160,78,.35)'
+            e.target.style.boxShadow = 'none'
+          }}
+        >
+          Перевести
+        </button>
+        <button
+          onClick={() => window.location.href = '/shop'}
+          style={{
+            flexBasis: '100%',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,.82)',
+            background: 'transparent',
+            border: '1px solid rgba(197,160,78,.35)',
+            borderRadius: '50px',
+            padding: '10px 0',
+            cursor: 'pointer',
+            transition: 'all 0.25s',
+            marginTop: '4px'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'rgba(197,160,78,0.15)'
+            e.target.style.borderColor = '#C5A04E'
+            e.target.style.boxShadow = '0 0 15px rgba(197,160,78,0.4)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.borderColor = 'rgba(197,160,78,.35)'
+            e.target.style.boxShadow = 'none'
+          }}
+        >
+          Магазин
+        </button>
       </div>
 
       {/* Разделы-украшения (наполнение страницы) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
         <div className="premium-card-enhanced">
           <h3 className="text-lg font-semibold mb-2">Задания</h3>
           <p className="text-gray-500 text-sm">Активные задачи и цели</p>
