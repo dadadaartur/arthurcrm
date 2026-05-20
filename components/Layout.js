@@ -26,12 +26,11 @@ export default function Layout({ children }) {
               letterSpacing: '-0.5px',
               lineHeight: '1.2',
               padding: '6px 18px',
-              // Белая полоса, как мазок кистью
               background: 'rgba(255,255,255,0.9)',
               backdropFilter: 'blur(4px)',
-              borderRadius: '16px', // мягкие края, имитация кисти
-              color: '#B8860B', // тёмное золото для текста
-              textShadow: '0 2px 8px rgba(184,134,11,0.3), 0 0 20px rgba(255,215,0,0.2)',
+              borderRadius: '16px',
+              color: '#2E7D32',            // тёмно-зелёный текст
+              textShadow: '0 2px 8px rgba(46,125,50,0.3), 0 0 20px rgba(76,175,80,0.2)',
               boxShadow: '0 4px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8)',
               display: 'inline-block'
             }}>
