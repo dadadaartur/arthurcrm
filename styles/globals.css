@@ -7,7 +7,7 @@
   cursor: default !important;
   user-select: none;
 }
-a, button, .clickable, .btn-gold, .btn-outline, .ghost-framed, .filter-pill, .cloud, .floating-cloud {
+a, button, .clickable, .btn-gold, .btn-outline, .ghost-framed, .filter-pill {
   cursor: pointer !important;
 }
 *:focus {
@@ -18,60 +18,10 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-  /* Роскошный белый фон */
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
-  position: relative;
-  z-index: 0;
+  background: #ffffff; /* чистый белый фон, без градиентов */
 }
 
-/* Сакральная геометрия (очень тонкая, под контентом) */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.8;
-  background:
-    /* большой внешний круг */
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.08) 541px, transparent 542px),
-    /* центральная сфера */
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.12) 321px, transparent 322px),
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.08) 211px, transparent 212px),
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.06) 96px, transparent 97px),
-    /* боковые орбиты */
-    radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.04) 361px, transparent 362px),
-    radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.04) 361px, transparent 362px),
-    /* горизонтальная и вертикальная оси */
-    linear-gradient(90deg, transparent, rgba(212,180,84,.06), transparent),
-    linear-gradient(180deg, transparent, rgba(212,180,84,.04), transparent);
-}
-
-/* Золотая пыль и световые точки (очень деликатно) */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(212,180,84,0.9) 0 3px, transparent 4px),
-    radial-gradient(circle at 50% 15%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 50% 85%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 28% 50%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 72% 50%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 9% 22%, rgba(212,180,84,0.35) 0 1px, transparent 2px),
-    radial-gradient(circle at 16% 78%, rgba(212,180,84,0.2) 0 1px, transparent 2px),
-    radial-gradient(circle at 88% 30%, rgba(212,180,84,0.25) 0 1px, transparent 2px),
-    radial-gradient(circle at 78% 82%, rgba(212,180,84,0.2) 0 1px, transparent 2px),
-    radial-gradient(circle at 70% 12%, rgba(212,180,84,0.35) 0 1px, transparent 2px),
-    radial-gradient(circle at 25% 92%, rgba(212,180,84,0.3) 0 1px, transparent 2px),
-    /* микротекстура */
-    radial-gradient(#000 0.5px, transparent 0.5px);
-  background-size: auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, 8px 8px;
-  opacity: 0.4;
-  filter: blur(0.3px);
-}
-
-/* === Остальные UI‑элементы === */
+/* === UI-компоненты === */
 .spinner {
   display: inline-block;
   width: 24px;
