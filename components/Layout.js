@@ -18,7 +18,6 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent relative z-10">
         <div className="flex justify-between items-center px-12 py-6">
-          {/* Левая часть: логотип + навигация */}
           <div className="flex items-center gap-8">
             <Link href="/" className="select-none" style={{
               fontSize: '1.8rem',
@@ -37,17 +36,16 @@ export default function Layout({ children }) {
               Кармический банк
             </Link>
             <nav className="flex gap-3 text-sm font-medium">
-              <Link href="/path-to-perfection" className="ghost-nav-btn">Путь к совершенству</Link>
-              <Link href="/healthcare" className="ghost-nav-btn">Забота о здоровье</Link>
-              <Link href="/supd" className="ghost-nav-btn">СУПД</Link>
+              <Link href="/path-to-perfection" className="btn-hologram" style={{ padding: '8px 20px' }}>Путь к совершенству</Link>
+              <Link href="/healthcare" className="btn-hologram" style={{ padding: '8px 20px' }}>Забота о здоровье</Link>
+              <Link href="/supd" className="btn-hologram" style={{ padding: '8px 20px' }}>СУПД</Link>
             </nav>
           </div>
 
-          {/* Правая часть: имя + выход */}
           <div className="flex items-center gap-4 text-sm font-medium">
             {user && <span className="text-gray-700">Артур</span>}
             {user && (
-              <button onClick={handleLogout} className="ghost-nav-btn">
+              <button onClick={handleLogout} className="btn-hologram" style={{ padding: '8px 20px' }}>
                 Выйти
               </button>
             )}
