@@ -51,24 +51,22 @@ export default function Home() {
         background: 'linear-gradient(160deg, #26231E 0%, #1B1815 35%, #13110F 100%)',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '28px',
-        padding: '30px 36px',
+        position: 'relative',
+        zIndex: 10,
+        isolation: 'isolate',
+        overflow: 'hidden',
         boxShadow: `
           0 0 0 2px rgba(197,160,78,.25),
           0 0 40px rgba(197,160,78,.2),
-          0 0 80px rgba(197,160,78,.1),
-          inset 0 2px 8px rgba(255,255,255,.08),
-          inset 0 0 40px rgba(255,220,140,.03),
-          inset 0 -4px 12px rgba(0,0,0,.35)
+          0 0 80px rgba(197,160,78,.1)
         `,
+        padding: '30px 36px',
         minWidth: '500px',
         maxWidth: '540px',
         width: '100%',
-        position: 'relative',
-        zIndex: 100,  // гарантированно над всеми фонами
-        overflow: 'hidden',
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`
       }}>
-        {/* Верхний блик */}
+        {/* Внутренняя часть карточки без изменений */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -79,7 +77,6 @@ export default function Home() {
           pointerEvents: 'none'
         }} />
 
-        {/* Заголовок БАЛАНС */}
         <div style={{
           fontSize: '13px',
           fontWeight: 500,
@@ -92,7 +89,6 @@ export default function Home() {
           БАЛАНС
         </div>
 
-        {/* Центральная область с нимбом и цифрой */}
         <div style={{
           position: 'relative',
           display: 'flex',
@@ -100,7 +96,6 @@ export default function Home() {
           alignItems: 'center',
           height: '220px'
         }}>
-          {/* Нимб */}
           <div style={{
             position: 'absolute',
             width: '200px',
@@ -114,14 +109,12 @@ export default function Home() {
             transform: 'translate(-50%, -50%)'
           }} />
 
-          {/* Левая стрелка */}
           <div style={{ position: 'absolute', left: '10px', display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
             <div style={{ width: '70px', height: '1px', marginLeft: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))' }} />
             <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(45deg)', marginLeft: '-2px' }} />
           </div>
 
-          {/* Цифра и слово кармиков */}
           <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
             <div style={{
               fontSize: '78px',
@@ -149,7 +142,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Правая стрелка */}
           <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(225deg)', marginRight: '-2px' }} />
             <div style={{ width: '70px', height: '1px', marginRight: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))' }} />
@@ -157,7 +149,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Кнопки */}
         <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {['История', 'Покупки', 'Перевести'].map((label) => (
             <button
