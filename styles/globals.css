@@ -18,31 +18,7 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-  background: #FFFFFF; /* чисто белый фон */
-  position: relative;
-  z-index: 0;
-}
-
-/* Сакральная геометрия на фоне (под контентом) */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: 1;
-  background:
-    /* большой внешний круг */
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.18) 541px, transparent 542px),
-    /* центральная сфера */
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.22) 321px, transparent 322px),
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.16) 211px, transparent 212px),
-    radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.12) 96px, transparent 97px),
-    /* боковые орбиты */
-    radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.10) 361px, transparent 362px),
-    radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.10) 361px, transparent 362px),
-    /* горизонтальная и вертикальная оси */
-    linear-gradient(90deg, transparent, rgba(212,180,84,.14), transparent),
-    linear-gradient(180deg, transparent, rgba(212,180,84,.10), transparent);
+  background: #FFFFFF; /* чистый белый, без градиентов */
 }
 
 /* === UI-компоненты === */
