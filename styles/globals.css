@@ -6,7 +6,7 @@
   cursor: default !important;
   user-select: none;
 }
-a, button, .clickable, .btn-gold, .btn-outline, .ghost-framed, .filter-pill {
+a, button, .clickable, .btn-gold, .btn-outline, .ghost-framed, .ghost-nav-btn, .premium-card-enhanced {
   cursor: pointer !important;
 }
 *:focus {
@@ -58,6 +58,41 @@ body {
 }
 .premium-card:hover {
   box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+/* Улучшенные карточки для разделов с голограммной рамкой */
+.premium-card-enhanced {
+  background: #FFFFFF;
+  border: 1px solid rgba(197, 160, 78, 0.35);
+  border-radius: 24px;
+  padding: 28px 28px;
+  box-shadow: 0 0 20px rgba(197, 160, 78, 0.15);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.premium-card-enhanced:hover {
+  box-shadow: 0 0 30px rgba(197, 160, 78, 0.35), 0 0 60px rgba(197, 160, 78, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Кнопки навигации с голографическим свечением */
+.ghost-nav-btn {
+  border: 1px solid rgba(197, 160, 78, 0.4);
+  background: transparent;
+  color: #4A4A4A;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-shadow: 0 0 5px rgba(197, 160, 78, 0.2);
+  box-shadow: 0 0 10px rgba(197, 160, 78, 0.1);
+}
+.ghost-nav-btn:hover {
+  border-color: #C5A04E;
+  box-shadow: 0 0 20px rgba(197, 160, 78, 0.4);
+  color: #000;
 }
 
 .btn-gold {
@@ -175,12 +210,12 @@ body {
 /* Анимация нимба */
 @keyframes haloGlow {
   0% {
-    box-shadow: 0 0 60px rgba(197,160,78,.2), inset 0 0 30px rgba(197,160,78,.08);
+    box-shadow: 0 0 60px rgba(197,160,78,.3), inset 0 0 30px rgba(197,160,78,.1);
   }
   50% {
-    box-shadow: 0 0 90px rgba(197,160,78,.5), inset 0 0 50px rgba(197,160,78,.15);
+    box-shadow: 0 0 100px rgba(197,160,78,.6), inset 0 0 60px rgba(197,160,78,.2);
   }
   100% {
-    box-shadow: 0 0 60px rgba(197,160,78,.2), inset 0 0 30px rgba(197,160,78,.08);
+    box-shadow: 0 0 60px rgba(197,160,78,.3), inset 0 0 30px rgba(197,160,78,.1);
   }
 }
