@@ -64,6 +64,7 @@ export default function Home() {
         maxWidth: '540px',
         width: '100%',
         position: 'relative',
+        zIndex: 100,          // <-- поверх всех фонов
         overflow: 'hidden',
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`
       }}>
@@ -86,20 +87,20 @@ export default function Home() {
           textAlign: 'center',
           textTransform: 'uppercase',
           letterSpacing: '3px',
-          marginBottom: '0' // убираем отступ
+          marginBottom: '0'
         }}>
           БАЛАНС
         </div>
 
-        {/* Центральная область с нимбом и цифрой (ровные отступы) */}
+        {/* Центральная область с нимбом и цифрой */}
         <div style={{
           position: 'relative',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '220px' // достаточно для нимба и стрелок
+          height: '220px'
         }}>
-          {/* Нимб — уменьшен, идеально отцентрирован */}
+          {/* Нимб */}
           <div style={{
             position: 'absolute',
             width: '200px',
@@ -132,7 +133,7 @@ export default function Home() {
               WebkitTextFillColor: 'transparent',
               WebkitTextStroke: '1px rgba(0,0,0,.25)',
               filter: 'drop-shadow(0 0 8px rgba(197,160,78,.55))',
-              marginTop: '10px' // ровный отступ от заголовка
+              marginTop: '10px'
             }}>
               {balance.toLocaleString()}
             </div>
@@ -142,7 +143,7 @@ export default function Home() {
               letterSpacing: '.4px',
               filter: 'blur(0.4px)',
               opacity: 0.7,
-              marginTop: '10px' // такой же отступ, как сверху
+              marginTop: '10px'
             }}>
               {karmikWord}
             </div>
