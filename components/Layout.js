@@ -4,7 +4,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent relative z-10">
-        <div className="max-w-5xl mx-auto px-4 py-5 flex justify-start">
+        <div className="w-full flex justify-start px-4 py-5">
           <Link href="/" className="text-2xl font-bold tracking-tight select-none"
             style={{
               color: 'transparent',
