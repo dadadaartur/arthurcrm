@@ -2,54 +2,51 @@ import Link from 'next/link'
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Фоновый контейнер (все слои) */}
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
+      {/* Фоновый слой (отдельно, сзади) */}
       <div style={{
         position: 'fixed',
         inset: 0,
         overflow: 'hidden',
+        zIndex: -1,
         background: `
-          linear-gradient(180deg, #FAF8F3 0%, #F7F4EE 45%, #F4F0E8 100%)
+          linear-gradient(180deg, #FFFFFF 0%, #FCFCFB 45%, #FAFAF8 100%)
         `
       }}>
-        {/* текстура бумаги */}
+        {/* очень мягкое центральное свечение */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.025,
-          backgroundImage: 'radial-gradient(#000 0.5px, transparent 0.5px)',
-          backgroundSize: '7px 7px'
+          background: `radial-gradient(circle at 50% 50%, rgba(212,180,84,.045), transparent 42%)`
         }} />
 
         {/* сакральная геометрия */}
         <div style={{
           position: 'absolute',
           inset: 0,
+          opacity: 0.9,
           background: `
-            radial-gradient(circle at 50% 50%, transparent 0, transparent 26px, rgba(212,180,84,.8) 27px, transparent 28px),
-            radial-gradient(circle at 50% 50%, transparent 0, transparent 170px, rgba(212,180,84,.35) 171px, transparent 172px),
-            radial-gradient(circle at 50% 50%, transparent 0, transparent 280px, rgba(212,180,84,.28) 281px, transparent 282px),
-            radial-gradient(circle at 50% 50%, transparent 0, transparent 470px, rgba(212,180,84,.18) 471px, transparent 472px),
-            radial-gradient(circle at 20% 50%, transparent 0, transparent 330px, rgba(212,180,84,.12) 331px, transparent 332px),
-            radial-gradient(circle at 80% 50%, transparent 0, transparent 330px, rgba(212,180,84,.12) 331px, transparent 332px),
-            radial-gradient(circle at 50% 95%, transparent 0, transparent 180px, rgba(212,180,84,.08) 181px, transparent 182px),
-            linear-gradient(90deg, transparent, rgba(212,180,84,.24) 50%, transparent),
-            linear-gradient(180deg, transparent, rgba(212,180,84,.24) 50%, transparent)
+            radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.10) 541px, transparent 542px),
+            radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.16) 321px, transparent 322px),
+            radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.12) 211px, transparent 212px),
+            radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.10) 96px, transparent 97px),
+            radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.06) 361px, transparent 362px),
+            radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.06) 361px, transparent 362px),
+            linear-gradient(90deg, transparent, rgba(212,180,84,.10), transparent),
+            linear-gradient(180deg, transparent, rgba(212,180,84,.08), transparent)
           `
         }} />
 
-        {/* светящиеся точки */}
+        {/* световые точки */}
         <div style={{
           position: 'absolute',
           inset: 0,
           background: `
             radial-gradient(circle at 50% 50%, rgba(212,180,84,1) 0 4px, transparent 5px),
-            radial-gradient(circle at 50% 15%, rgba(212,180,84,.8) 0 2px, transparent 3px),
-            radial-gradient(circle at 50% 30%, rgba(212,180,84,.7) 0 2px, transparent 3px),
-            radial-gradient(circle at 50% 70%, rgba(212,180,84,.7) 0 2px, transparent 3px),
-            radial-gradient(circle at 50% 85%, rgba(212,180,84,.8) 0 2px, transparent 3px),
-            radial-gradient(circle at 25% 50%, rgba(212,180,84,.8) 0 3px, transparent 4px),
-            radial-gradient(circle at 75% 50%, rgba(212,180,84,.8) 0 3px, transparent 4px)
+            radial-gradient(circle at 50% 15%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+            radial-gradient(circle at 50% 85%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+            radial-gradient(circle at 28% 50%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+            radial-gradient(circle at 72% 50%, rgba(212,180,84,.7) 0 2px, transparent 3px)
           `
         }} />
 
@@ -57,21 +54,29 @@ export default function Layout({ children }) {
         <div style={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.55,
+          opacity: 0.28,
           background: `
-            radial-gradient(circle at 5% 40%, rgba(212,180,84,.3) 0 1px, transparent 2px),
-            radial-gradient(circle at 10% 65%, rgba(212,180,84,.3) 0 1px, transparent 2px),
-            radial-gradient(circle at 90% 30%, rgba(212,180,84,.3) 0 1px, transparent 2px),
-            radial-gradient(circle at 85% 75%, rgba(212,180,84,.3) 0 1px, transparent 2px),
-            radial-gradient(circle at 70% 15%, rgba(212,180,84,.8) 0 1px, transparent 3px),
-            radial-gradient(circle at 20% 80%, rgba(212,180,84,.6) 0 1px, transparent 3px),
-            radial-gradient(circle at 60% 90%, rgba(212,180,84,.6) 0 1px, transparent 3px)
+            radial-gradient(circle at 9% 22%, rgba(212,180,84,.45) 0 1px, transparent 2px),
+            radial-gradient(circle at 16% 78%, rgba(212,180,84,.25) 0 1px, transparent 2px),
+            radial-gradient(circle at 88% 30%, rgba(212,180,84,.35) 0 1px, transparent 2px),
+            radial-gradient(circle at 78% 82%, rgba(212,180,84,.25) 0 1px, transparent 2px),
+            radial-gradient(circle at 70% 12%, rgba(212,180,84,.45) 0 1px, transparent 2px),
+            radial-gradient(circle at 25% 92%, rgba(212,180,84,.4) 0 1px, transparent 2px)
           `
+        }} />
+
+        {/* дорогая микротекстура */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.012,
+          backgroundImage: 'radial-gradient(#000 .5px, transparent .5px)',
+          backgroundSize: '8px 8px'
         }} />
       </div>
 
-      {/* Шапка */}
-      <header className="bg-transparent relative z-10">
+      {/* Контент поверх фона */}
+      <header style={{ position: 'relative', zIndex: 10 }}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-start">
           <Link href="/" className="text-2xl font-bold tracking-tight select-none"
             style={{
@@ -84,9 +89,11 @@ export default function Layout({ children }) {
         </div>
       </header>
 
-      <main className="flex-grow relative z-10">{children}</main>
+      <main style={{ position: 'relative', zIndex: 10, flexGrow: 1 }}>
+        {children}
+      </main>
 
-      <footer className="bg-transparent text-center py-4 text-xs text-gray-400 relative z-10">
+      <footer style={{ position: 'relative', zIndex: 10 }} className="text-center py-4 text-xs text-gray-400">
         © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>
