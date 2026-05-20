@@ -52,7 +52,7 @@ export default function Home() {
           background: 'linear-gradient(160deg, #26231E 0%, #1B1815 35%, #13110F 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '28px',
-          padding: '28px 36px',
+          padding: '30px 36px',
           boxShadow: `
             0 0 0 2px rgba(197,160,78,.25),
             0 0 40px rgba(197,160,78,.2),
@@ -70,70 +70,62 @@ export default function Home() {
         }}
       >
         {/* Верхний блик */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '90px',
-            background: `linear-gradient(180deg, rgba(255,255,255,.05), transparent)`,
-            pointerEvents: 'none',
-          }}
-        />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '90px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent)',
+          pointerEvents: 'none'
+        }} />
 
-        {/* заголовок */}
-        <div
-          style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,.55)',
-            textAlign: 'center',
-            textTransform: 'uppercase',
-            letterSpacing: '3px',
-            marginBottom: '2px',
-            filter: 'blur(0.3px)',
-            opacity: 0.8
-          }}
-        >
+        {/* Заголовок БАЛАНС */}
+        <div style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          color: 'rgba(255,255,255,.55)',
+          textAlign: 'center',
+          textTransform: 'uppercase',
+          letterSpacing: '3px',
+          marginBottom: '6px',
+          filter: 'blur(0.3px)',
+          opacity: 0.8
+        }}>
           БАЛАНС
         </div>
 
-        {/* центр */}
-        <div
-          style={{
-            position: 'relative',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '180px'
-          }}
-        >
-          {/* нимб */}
-          <div
-            style={{
-              position: 'absolute',
-              width: '260px',
-              height: '260px',
-              borderRadius: '50%',
-              background: `radial-gradient(circle, transparent 58%, rgba(197,160,78,.15) 70%, transparent 76%)`,
-              border: '1px solid rgba(197,160,78,.4)',
-              boxShadow: `0 0 60px rgba(197,160,78,.2), inset 0 0 30px rgba(197,160,78,.08)`,
-              top: '42%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              opacity: 1
-            }}
-          />
+        {/* Центральная область с нимбом и цифрой */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '210px' // достаточно для нимба без наложения на кнопки
+        }}>
+          {/* Нимб — уменьшен, поднят выше */}
+          <div style={{
+            position: 'absolute',
+            width: '220px',
+            height: '220px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.15) 70%, transparent 76%)',
+            border: '1px solid rgba(197,160,78,.4)',
+            boxShadow: '0 0 60px rgba(197,160,78,.2), inset 0 0 30px rgba(197,160,78,.08)',
+            top: '38%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            opacity: 1
+          }} />
 
-          {/* левая стрелка */}
+          {/* Левая стрелка */}
           <div style={{ position: 'absolute', left: '10px', display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
             <div style={{ width: '70px', height: '1px', marginLeft: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))' }} />
             <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(45deg)', marginLeft: '-2px' }} />
           </div>
 
-          {/* цифра */}
+          {/* Цифра и слово кармиков */}
           <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
             <div style={{
               fontSize: '78px',
@@ -149,19 +141,18 @@ export default function Home() {
               {balance.toLocaleString()}
             </div>
             <div style={{
-              marginTop: '8px',
+              marginTop: '10px',
               fontSize: '14px',
               color: 'rgba(255,255,255,.68)',
               letterSpacing: '.4px',
               filter: 'blur(0.4px)',
-              opacity: 0.7,
-              textShadow: '0 0 5px rgba(255,255,255,0.15)'
+              opacity: 0.7
             }}>
               {karmikWord}
             </div>
           </div>
 
-          {/* правая стрелка */}
+          {/* Правая стрелка */}
           <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(225deg)', marginRight: '-2px' }} />
             <div style={{ width: '70px', height: '1px', marginRight: '8px', background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))' }} />
@@ -169,8 +160,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* кнопки */}
-        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        {/* Кнопки */}
+        <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {['История', 'Покупки', 'Перевести'].map((label) => (
             <button
               key={label}
