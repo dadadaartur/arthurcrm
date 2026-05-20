@@ -45,17 +45,18 @@ export default function Home() {
 
   const karmikWord = getKarmikWord(balance)
   const balanceStr = balance.toLocaleString()
-  const dynamicFontSize = balanceStr.length > 5 ? '42px' :
-                          balanceStr.length > 4 ? '52px' :
-                          balanceStr.length > 3 ? '64px' : '78px'
+  const dynamicFontSize = balanceStr.length > 5 ? '38px' :
+                          balanceStr.length > 4 ? '48px' :
+                          balanceStr.length > 3 ? '58px' : '68px'
 
   return (
-    <div className="flex justify-start px-4 py-6">
+    <div className="flex flex-col items-start px-6 py-8 space-y-8">
+      {/* Блок баланса */}
       <div style={{
         background: '#0A0A0A',
         border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '28px',
-        padding: '24px 28px',
+        borderRadius: '24px',
+        padding: '20px 24px',
         boxShadow: `
           0 0 0 2px rgba(197,160,78,.25),
           0 0 40px rgba(197,160,78,.2),
@@ -64,9 +65,7 @@ export default function Home() {
           inset 0 0 40px rgba(255,220,140,.03),
           inset 0 -4px 12px rgba(0,0,0,.35)
         `,
-        minWidth: '420px',
-        maxWidth: '460px',
-        width: '100%',
+        width: '380px',
         position: 'relative',
         zIndex: 10,
         overflow: 'hidden'
@@ -77,55 +76,72 @@ export default function Home() {
           top: 0,
           left: 0,
           right: 0,
-          height: '70px',
+          height: '60px',
           background: 'linear-gradient(180deg, rgba(255,255,255,.05), transparent)',
           pointerEvents: 'none'
         }} />
 
-        {/* Заголовок БАЛАНС */}
-        <div style={{
-          fontSize: '13px',
-          fontWeight: 500,
-          color: 'rgba(255,255,255,.55)',
-          textAlign: 'center',
-          textTransform: 'uppercase',
-          letterSpacing: '3px',
-          marginBottom: '0'
-        }}>
-          БАЛАНС
-        </div>
-
-        {/* Центральная область с нимбом и цифрой */}
+        {/* Нимб + цифра + слово Баланс внутри */}
         <div style={{
           position: 'relative',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '180px'
+          height: '160px'
         }}>
-          {/* Нимб */}
+          {/* Нимб (живой) */}
           <div style={{
             position: 'absolute',
-            width: '180px',
-            height: '180px',
+            width: '170px',
+            height: '170px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.15) 70%, transparent 76%)',
-            border: '1px solid rgba(197,160,78,.4)',
+            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.2) 70%, transparent 76%)',
+            border: '1px solid rgba(197,160,78,.45)',
             animation: 'haloGlow 3s infinite ease-in-out',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)'
           }} />
 
-          {/* Левая стрелка */}
-          <div style={{ position: 'absolute', left: '8px', display: 'flex', alignItems: 'center' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
-            <div style={{ width: '60px', height: '1px', marginLeft: '6px', background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))' }} />
-            <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(45deg)', marginLeft: '-2px' }} />
+          {/* Левая точка (рельефная) */}
+          <div style={{ position: 'absolute', left: '6px', display: 'flex', alignItems: 'center' }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
+              boxShadow: '0 0 8px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
+              border: '1px solid rgba(255,215,0,0.6)'
+            }} />
+            <div style={{
+              width: '60px',
+              height: '1px',
+              marginLeft: '6px',
+              background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))'
+            }} />
+            <div style={{
+              width: '6px',
+              height: '6px',
+              borderTop: '1px solid rgba(255,220,120,.9)',
+              borderRight: '1px solid rgba(255,220,120,.9)',
+              transform: 'rotate(45deg)',
+              marginLeft: '-2px'
+            }} />
           </div>
 
-          {/* Цифра и слово кармиков */}
+          {/* Центр: слово БАЛАНС и цифра */}
           <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
+            <div style={{
+              fontSize: '12px',
+              fontWeight: 500,
+              color: 'rgba(255,255,255,.5)',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              marginBottom: '4px',
+              filter: 'blur(0.3px)'
+            }}>
+              БАЛАНС
+            </div>
             <div style={{
               fontSize: dynamicFontSize,
               fontWeight: 700,
@@ -136,27 +152,46 @@ export default function Home() {
               WebkitTextFillColor: 'transparent',
               WebkitTextStroke: '1px rgba(0,0,0,.25)',
               filter: 'drop-shadow(0 0 8px rgba(197,160,78,.55))',
-              marginTop: '8px'
+              marginTop: '4px'
             }}>
               {balanceStr}
             </div>
             <div style={{
-              fontSize: '14px',
-              color: 'rgba(255,255,255,.68)',
-              letterSpacing: '.4px',
+              fontSize: '13px',
+              color: 'rgba(255,255,255,.65)',
+              letterSpacing: '.3px',
               filter: 'blur(0.4px)',
               opacity: 0.7,
-              marginTop: '8px'
+              marginTop: '4px'
             }}>
               {karmikWord}
             </div>
           </div>
 
-          {/* Правая стрелка */}
-          <div style={{ position: 'absolute', right: '8px', display: 'flex', alignItems: 'center' }}>
-            <div style={{ width: '8px', height: '8px', borderTop: '1px solid rgba(255,220,120,.9)', borderRight: '1px solid rgba(255,220,120,.9)', transform: 'rotate(225deg)', marginRight: '-2px' }} />
-            <div style={{ width: '60px', height: '1px', marginRight: '6px', background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))' }} />
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E2BC57', boxShadow: '0 0 12px rgba(226,188,87,.9)' }} />
+          {/* Правая точка */}
+          <div style={{ position: 'absolute', right: '6px', display: 'flex', alignItems: 'center' }}>
+            <div style={{
+              width: '6px',
+              height: '6px',
+              borderTop: '1px solid rgba(255,220,120,.9)',
+              borderRight: '1px solid rgba(255,220,120,.9)',
+              transform: 'rotate(225deg)',
+              marginRight: '-2px'
+            }} />
+            <div style={{
+              width: '60px',
+              height: '1px',
+              marginRight: '6px',
+              background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
+              boxShadow: '0 0 8px rgba(255,220,100,0.9), inset 0 1px 2px rgba(255,255,255,0.8)',
+              border: '1px solid rgba(255,215,0,0.6)'
+            }} />
           </div>
         </div>
 
@@ -172,12 +207,12 @@ export default function Home() {
               }}
               style={{
                 flex: '1 1 0',
-                fontSize: '14px',
+                fontSize: '13px',
                 color: 'rgba(255,255,255,.82)',
                 background: 'transparent',
                 border: '1px solid rgba(197,160,78,.35)',
                 borderRadius: '50px',
-                padding: '8px 0',
+                padding: '6px 0',
                 cursor: 'pointer',
                 transition: 'all 0.25s'
               }}
@@ -196,14 +231,14 @@ export default function Home() {
             </button>
           ))}
           <button
-            onClick={() => { window.location.href = '/shop' }}
+            onClick={() => window.location.href = '/shop'}
             style={{
               flexBasis: '100%',
               border: '1px solid rgba(197,160,78,.35)',
               borderRadius: '50px',
               background: 'transparent',
               color: 'rgba(255,255,255,.82)',
-              padding: '8px 0',
+              padding: '6px 0',
               cursor: 'pointer',
               transition: 'all 0.25s'
             }}
@@ -221,6 +256,24 @@ export default function Home() {
             Магазин
           </button>
         </div>
+      </div>
+
+      {/* Разделы‑заглушки */}
+      <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
+        <div className="premium-card">
+          <h3 className="text-lg font-semibold mb-2">Задания</h3>
+          <p className="text-gray-500 text-sm">Новые задания скоро появятся</p>
+        </div>
+        <div className="premium-card">
+          <h3 className="text-lg font-semibold mb-2">Рейтинг</h3>
+          <p className="text-gray-500 text-sm">Топ сотрудников</p>
+        </div>
+        <button className="premium-card text-left hover:bg-gray-50 transition">
+          <h3 className="text-lg font-semibold">Соревнования</h3>
+        </button>
+        <button className="premium-card text-left hover:bg-gray-50 transition">
+          <h3 className="text-lg font-semibold">Битва экспертов</h3>
+        </button>
       </div>
     </div>
   )
