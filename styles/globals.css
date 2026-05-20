@@ -18,7 +18,7 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-  background: #FFFFFF; /* чистый белый, без градиентов */
+  background: #FFFFFF;
 }
 
 /* === UI-компоненты === */
