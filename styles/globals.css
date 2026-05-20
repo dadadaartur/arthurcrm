@@ -48,7 +48,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Голограммная кнопка — теперь сочнее */
+/* Голограммная кнопка — чистые цвета, без грязи */
 .btn-hologram {
   background: #FFFFFF;
   border: 1px solid transparent;
@@ -59,24 +59,31 @@ body {
   cursor: pointer;
   transition: all 0.25s;
   box-shadow:
-    0 0 12px rgba(34,197,94,0.5),
-    0 0 20px rgba(234,179,8,0.4),
-    0 0 28px rgba(59,130,246,0.45),
-    0 0 32px rgba(239,68,68,0.3);
+    0 0 15px rgba(34,197,94,0.5),
+    0 0 25px rgba(249,168,37,0.4),
+    0 0 35px rgba(59,130,246,0.4),
+    0 0 40px rgba(239,68,68,0.3);
   background-clip: padding-box;
 }
+
+/* Градиентный текст внутри голограммных кнопок */
+.btn-hologram {
+  background: linear-gradient(135deg, #2E7D32, #4CAF50);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .btn-hologram:hover {
-  background: #FFFFFF;
-  filter: brightness(1.08);
+  filter: brightness(1.1);
   box-shadow:
-    0 0 20px rgba(34,197,94,0.7),
-    0 0 30px rgba(234,179,8,0.6),
-    0 0 40px rgba(59,130,246,0.65),
-    0 0 50px rgba(239,68,68,0.5);
+    0 0 25px rgba(34,197,94,0.7),
+    0 0 35px rgba(249,168,37,0.6),
+    0 0 45px rgba(59,130,246,0.6),
+    0 0 55px rgba(239,68,68,0.5);
   transform: translateY(-1px);
 }
 
-/* Голограммная карточка-раздел — также ярче */
+/* Голограммная карточка-раздел — чистые переливы */
 .card-hologram {
   background: #FFFFFF;
   border: 1px solid transparent;
@@ -85,23 +92,23 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow:
-    0 0 15px rgba(34,197,94,0.4),
-    0 0 25px rgba(234,179,8,0.3),
-    0 0 35px rgba(59,130,246,0.35),
-    0 0 40px rgba(239,68,68,0.25);
+    0 0 20px rgba(34,197,94,0.4),
+    0 0 30px rgba(249,168,37,0.3),
+    0 0 40px rgba(59,130,246,0.35),
+    0 0 50px rgba(239,68,68,0.25);
   background-clip: padding-box;
 }
 .card-hologram:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.05);
   box-shadow:
-    0 0 25px rgba(34,197,94,0.6),
-    0 0 40px rgba(234,179,8,0.5),
-    0 0 50px rgba(59,130,246,0.55),
-    0 0 60px rgba(239,68,68,0.45);
+    0 0 30px rgba(34,197,94,0.6),
+    0 0 45px rgba(249,168,37,0.5),
+    0 0 55px rgba(59,130,246,0.5),
+    0 0 65px rgba(239,68,68,0.4);
   transform: translateY(-3px);
 }
 
-/* Зелёные кнопки (замена золотых) */
+/* Зелёные кнопки (вспомогательные) */
 .btn-gold {
   background: linear-gradient(135deg, #4CAF50, #388E3C);
   border: none;
