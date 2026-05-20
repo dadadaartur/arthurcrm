@@ -21,17 +21,17 @@ export default function Layout({ children }) {
           {/* Левая часть: логотип + навигация */}
           <div className="flex items-center gap-8">
             <Link href="/" className="select-none" style={{
-              fontSize: '1.8rem',
-              fontWeight: '700',
-              letterSpacing: '-0.5px',
+              fontSize: '1.5rem',          // уменьшен
+              fontWeight: '400',           // тонкий, изящный
+              letterSpacing: '-0.3px',
               lineHeight: '1.2',
-              padding: '6px 18px',
-              background: 'rgba(255,255,255,0.9)',
+              padding: '4px 14px',        // компактнее
+              background: 'rgba(255,255,255,0.85)',
               backdropFilter: 'blur(4px)',
-              borderRadius: '16px',
-              color: '#2E7D32',            // тёмно-зелёный текст
-              textShadow: '0 2px 8px rgba(46,125,50,0.3), 0 0 20px rgba(76,175,80,0.2)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8)',
+              borderRadius: '12px',
+              color: '#F9A825',            // тёплый жёлтый
+              textShadow: '0 1px 4px rgba(249,168,37,0.2)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.7)',
               display: 'inline-block'
             }}>
               Кармический банк
