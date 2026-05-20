@@ -158,7 +158,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Кнопки действий (голограммные) */}
+          {/* Кнопки действий (голограммные, с зелёным градиентным текстом) */}
           <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', width: '460px' }}>
             {['История', 'Покупки', 'Перевести'].map((label) => (
               <button
@@ -184,23 +184,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения */}
+        {/* Правая колонка: разделы-украшения (жёлтые заголовки, зелёный текст подписей) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2">Задания</h3>
-            <p className="text-gray-600 text-sm">Выполняй миссии и расти над собой</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F9A825' }}>Задания</h3>
+            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Выполняй миссии и расти над собой</p>
           </div>
           <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2">Рейтинг</h3>
-            <p className="text-gray-600 text-sm">Твоя позиция среди лучших</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F9A825' }}>Рейтинг</h3>
+            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Твоя позиция среди лучших</p>
           </div>
           <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2">Соревнования</h3>
-            <p className="text-gray-600 text-sm">Докажи своё мастерство в битве</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F9A825' }}>Соревнования</h3>
+            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Докажи своё мастерство в битве</p>
           </div>
           <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2">Битва экспертов</h3>
-            <p className="text-gray-600 text-sm">Всероссийский чемпионат профессионалов</p>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: '#F9A825' }}>Битва экспертов</h3>
+            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Всероссийский чемпионат профессионалов</p>
           </div>
         </div>
       </div>
