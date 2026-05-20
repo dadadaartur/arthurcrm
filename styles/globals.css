@@ -1,54 +1,213 @@
-/* Голограммная кнопка с округлыми углами */
-.btn-hologram {
-  background: #FFFFFF;
-  border: 1px solid transparent;
-  border-radius: 50px;
-  padding: 12px 0;
-  font-size: 14px;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  cursor: default !important;
+  user-select: none;
+}
+a, button, .clickable, .btn-gold, .btn-outline, .ghost-nav-btn, .premium-card-holographic {
+  cursor: pointer !important;
+}
+*:focus {
+  outline: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-  cursor: pointer;
-  transition: all 0.25s;
-  box-shadow:
-    0 0 8px rgba(34,197,94,0.3),   /* зелёный */
-    0 0 15px rgba(234,179,8,0.2),   /* жёлтый */
-    0 0 20px rgba(59,130,246,0.25), /* синий */
-    0 0 25px rgba(239,68,68,0.15);  /* красный */
-  background-clip: padding-box;
-}
-
-.btn-hologram:hover {
   background: #FFFFFF;
-  filter: brightness(1.08);
-  box-shadow:
-    0 0 15px rgba(34,197,94,0.6),
-    0 0 25px rgba(234,179,8,0.5),
-    0 0 35px rgba(59,130,246,0.55),
-    0 0 40px rgba(239,68,68,0.4);
-  transform: translateY(-1px);
 }
 
-/* Голограммная карточка-раздел */
-.card-hologram {
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid transparent;
+  border-top-color: #C5A04E;
+  border-right-color: #FACC15;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  position: relative;
+}
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  border-left-color: rgba(197, 160, 78, 0.6);
+  border-bottom-color: rgba(250, 204, 21, 0.6);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite reverse;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Голограммная карточка для разделов */
+.premium-card-holographic {
   background: #FFFFFF;
   border: 1px solid transparent;
   border-radius: 24px;
   padding: 36px 32px;
-  cursor: pointer;
+  box-shadow: 0 0 15px rgba(167,139,250,0.15), 0 0 30px rgba(250,204,21,0.1);
   transition: all 0.3s;
-  box-shadow:
-    0 0 10px rgba(34,197,94,0.2),
-    0 0 20px rgba(234,179,8,0.15),
-    0 0 30px rgba(59,130,246,0.2),
-    0 0 35px rgba(239,68,68,0.1);
+  cursor: pointer;
+  border-image: linear-gradient(135deg, #A78BFA, #FACC15, #60A5FA) 1;
   background-clip: padding-box;
 }
-
-.card-hologram:hover {
+.premium-card-holographic:hover {
+  box-shadow: 0 0 30px rgba(167,139,250,0.4), 0 0 50px rgba(250,204,21,0.3);
   filter: brightness(1.08);
-  box-shadow:
-    0 0 20px rgba(34,197,94,0.5),
-    0 0 35px rgba(234,179,8,0.4),
-    0 0 45px rgba(59,130,246,0.5),
-    0 0 50px rgba(239,68,68,0.3);
   transform: translateY(-3px);
+}
+
+/* Навигационные кнопки в шапке (голограммные) */
+.ghost-nav-btn {
+  border: 1px solid transparent;
+  background: #FFFFFF;
+  color: #4A4A4A;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 0 10px rgba(167,139,250,0.2), 0 0 15px rgba(250,204,21,0.1);
+  border-image: linear-gradient(135deg, #A78BFA, #FACC15, #60A5FA) 1;
+  background-clip: padding-box;
+}
+.ghost-nav-btn:hover {
+  box-shadow: 0 0 25px rgba(167,139,250,0.5), 0 0 35px rgba(250,204,21,0.3);
+  filter: brightness(1.05);
+  color: #000;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #C5A04E, #B28B3F);
+  border: none;
+  color: #FFFFFF;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.btn-gold:hover {
+  box-shadow: 0 0 20px rgba(197, 160, 78, 0.5);
+  transform: translateY(-1px);
+}
+.btn-gold::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.btn-outline {
+  border: 1px solid #C5A04E;
+  color: #C5A04E;
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-outline:hover {
+  background: rgba(197, 160, 78, 0.05);
+  box-shadow: 0 0 15px rgba(197, 160, 78, 0.2);
+}
+
+.input-field {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.input-field:focus {
+  border-color: #C5A04E;
+  box-shadow: 0 0 0 3px rgba(197, 160, 78, 0.1);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  animation: scaleIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.filter-pill {
+  border: 1px solid rgba(197, 160, 78, 0.3);
+  background: transparent;
+  color: #4B5563;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-pill.active {
+  background: linear-gradient(135deg, #C5A04E, #B28B3F);
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+/* Анимация нимба (тонкая, чёткая) */
+@keyframes ringPulse {
+  0% { box-shadow: 0 0 25px rgba(197,160,78,0.5), 0 0 50px rgba(197,160,78,0.2); }
+  50% { box-shadow: 0 0 40px rgba(197,160,78,0.8), 0 0 70px rgba(197,160,78,0.3); }
+  100% { box-shadow: 0 0 25px rgba(197,160,78,0.5), 0 0 50px rgba(197,160,78,0.2); }
+}
+
+@keyframes coreGlow {
+  0% { filter: blur(4px) brightness(1); }
+  50% { filter: blur(3px) brightness(1.15); }
+  100% { filter: blur(4px) brightness(1); }
 }
