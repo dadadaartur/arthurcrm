@@ -26,10 +26,11 @@ export default function Layout({ children }) {
               letterSpacing: '-0.5px',
               lineHeight: '1.2',
               padding: '6px 18px',
+              // Белая полоса, как мазок кистью
               background: 'rgba(255,255,255,0.9)',
               backdropFilter: 'blur(4px)',
-              borderRadius: '16px',
-              color: '#B8860B',
+              borderRadius: '16px', // мягкие края, имитация кисти
+              color: '#B8860B', // тёмное золото для текста
               textShadow: '0 2px 8px rgba(184,134,11,0.3), 0 0 20px rgba(255,215,0,0.2)',
               boxShadow: '0 4px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8)',
               display: 'inline-block'
@@ -37,9 +38,9 @@ export default function Layout({ children }) {
               Кармический банк
             </Link>
             <nav className="flex gap-3 text-sm font-medium">
-              <Link href="/path-to-perfection" className="ghost-nav-btn">Путь к совершенству</Link>
-              <Link href="/healthcare" className="ghost-nav-btn">Забота о здоровье</Link>
-              <Link href="/supd" className="ghost-nav-btn">СУПД</Link>
+              <Link href="/path-to-perfection" className="nav-btn">Путь к совершенству</Link>
+              <Link href="/healthcare" className="nav-btn">Забота о здоровье</Link>
+              <Link href="/supd" className="nav-btn">СУПД</Link>
             </nav>
           </div>
 
@@ -47,7 +48,7 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-4 text-sm font-medium">
             {user && <span className="text-gray-700">Артур</span>}
             {user && (
-              <button onClick={handleLogout} className="ghost-nav-btn">
+              <button onClick={handleLogout} className="nav-btn">
                 Выйти
               </button>
             )}
