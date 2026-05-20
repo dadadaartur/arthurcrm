@@ -6,35 +6,29 @@ export default function Layout({ children }) {
       {/* Чисто белый фон */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#FFFFFF' }} />
 
-      {/* Сакральная геометрия (тонкие золотые линии и круги) */}
+      {/* Сакральная геометрия (видимая, без точек) */}
       <div style={{
         position: 'fixed',
         inset: 0,
         zIndex: 1,
-        opacity: 0.8,
+        opacity: 1,            /* полностью непрозрачный слой */
         background: `
-          radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.08) 541px, transparent 542px),
-          radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.12) 321px, transparent 322px),
-          radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.08) 211px, transparent 212px),
-          radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.06) 96px, transparent 97px),
-          radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.04) 361px, transparent 362px),
-          radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.04) 361px, transparent 362px),
-          linear-gradient(90deg, transparent, rgba(212,180,84,.06), transparent),
-          linear-gradient(180deg, transparent, rgba(212,180,84,.04), transparent)
+          /* большой внешний круг */
+          radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.15) 541px, transparent 542px),
+          /* центральная сфера */
+          radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.20) 321px, transparent 322px),
+          radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.14) 211px, transparent 212px),
+          radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.10) 96px, transparent 97px),
+          /* боковые орбиты */
+          radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.08) 361px, transparent 362px),
+          radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.08) 361px, transparent 362px),
+          /* горизонтальная и вертикальная оси */
+          linear-gradient(90deg, transparent, rgba(212,180,84,.12), transparent),
+          linear-gradient(180deg, transparent, rgba(212,180,84,.08), transparent)
         `
       }} />
 
-      {/* Микротекстура бумаги (без точек) */}
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 2,
-        opacity: 0.012,
-        backgroundImage: 'radial-gradient(#000 0.5px, transparent 0.5px)',
-        backgroundSize: '8px 8px'
-      }} />
-
-      {/* Контент поверх всего */}
+      {/* Контент поверх всего (z-index: 10) */}
       <header style={{ position: 'relative', zIndex: 10 }}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-start">
           <Link href="/" className="text-2xl font-bold tracking-tight select-none"
