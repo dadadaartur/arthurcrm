@@ -17,15 +17,23 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent relative z-10">
-        <div className="flex justify-between items-center px-6 py-5">
+        <div className="flex justify-between items-center px-12 py-6">
           {/* Левая часть: логотип + навигация */}
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-2xl font-bold tracking-tight select-none"
-              style={{
-                color: 'transparent',
-                WebkitTextStroke: '1px #000000',
-                textShadow: '0 0 8px rgba(0,0,0,0.1)',
-              }}>
+          <div className="flex items-center gap-8">
+            <Link href="/" className="select-none" style={{
+              fontSize: '1.8rem',
+              fontWeight: '700',
+              letterSpacing: '-0.5px',
+              lineHeight: '1.2',
+              padding: '6px 18px',
+              background: 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(4px)',
+              borderRadius: '16px',
+              color: '#B8860B',
+              textShadow: '0 2px 8px rgba(184,134,11,0.3), 0 0 20px rgba(255,215,0,0.2)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8)',
+              display: 'inline-block'
+            }}>
               Кармический банк
             </Link>
             <nav className="flex gap-3 text-sm font-medium">
