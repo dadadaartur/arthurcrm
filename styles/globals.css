@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === Полное уничтожение системных курсоров === */
 * {
   cursor: default !important;
   user-select: none;
@@ -21,7 +20,6 @@ body {
   background: #FFFFFF;
 }
 
-/* === UI-компоненты === */
 .spinner {
   display: inline-block;
   width: 24px;
