@@ -38,9 +38,9 @@ export default function Layout({ children }) {
               Кармический банк
             </Link>
             <nav className="flex gap-3 text-sm font-medium">
-              <Link href="/path-to-perfection" className="nav-btn">Путь к совершенству</Link>
-              <Link href="/healthcare" className="nav-btn">Забота о здоровье</Link>
-              <Link href="/supd" className="nav-btn">СУПД</Link>
+              <Link href="/path-to-perfection" className="btn-hologram" style={{ padding: '8px 20px' }}>Путь к совершенству</Link>
+              <Link href="/healthcare" className="btn-hologram" style={{ padding: '8px 20px' }}>Забота о здоровье</Link>
+              <Link href="/supd" className="btn-hologram" style={{ padding: '8px 20px' }}>СУПД</Link>
             </nav>
           </div>
 
@@ -48,7 +48,7 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-4 text-sm font-medium">
             {user && <span className="text-gray-700">Артур</span>}
             {user && (
-              <button onClick={handleLogout} className="nav-btn">
+              <button onClick={handleLogout} className="btn-hologram" style={{ padding: '8px 20px' }}>
                 Выйти
               </button>
             )}
