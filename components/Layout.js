@@ -3,9 +3,10 @@ import Link from 'next/link'
 export default function Layout({ children }) {
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Фоновые слои (не перекрывают контент благодаря z-index) */}
+      {/* Чисто белый фон */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#FFFFFF' }} />
 
+      {/* Сакральная геометрия (тонкие золотые линии и круги) */}
       <div style={{
         position: 'fixed',
         inset: 0,
@@ -23,27 +24,14 @@ export default function Layout({ children }) {
         `
       }} />
 
+      {/* Микротекстура бумаги (без точек) */}
       <div style={{
         position: 'fixed',
         inset: 0,
         zIndex: 2,
-        opacity: 0.4,
-        filter: 'blur(0.3px)',
-        background: `
-          radial-gradient(circle at 50% 50%, rgba(212,180,84,0.9) 0 3px, transparent 4px),
-          radial-gradient(circle at 50% 15%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-          radial-gradient(circle at 50% 85%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-          radial-gradient(circle at 28% 50%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-          radial-gradient(circle at 72% 50%, rgba(212,180,84,0.5) 0 1px, transparent 2px),
-          radial-gradient(circle at 9% 22%, rgba(212,180,84,0.35) 0 1px, transparent 2px),
-          radial-gradient(circle at 16% 78%, rgba(212,180,84,0.2) 0 1px, transparent 2px),
-          radial-gradient(circle at 88% 30%, rgba(212,180,84,0.25) 0 1px, transparent 2px),
-          radial-gradient(circle at 78% 82%, rgba(212,180,84,0.2) 0 1px, transparent 2px),
-          radial-gradient(circle at 70% 12%, rgba(212,180,84,0.35) 0 1px, transparent 2px),
-          radial-gradient(circle at 25% 92%, rgba(212,180,84,0.3) 0 1px, transparent 2px),
-          radial-gradient(#000 0.5px, transparent 0.5px)
-        `,
-        backgroundSize: 'auto, auto, auto, auto, auto, auto, auto, auto, auto, auto, 8px 8px'
+        opacity: 0.012,
+        backgroundImage: 'radial-gradient(#000 0.5px, transparent 0.5px)',
+        backgroundSize: '8px 8px'
       }} />
 
       {/* Контент поверх всего */}
