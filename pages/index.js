@@ -50,13 +50,13 @@ export default function Home() {
                           balanceStr.length > 3 ? '58px' : '68px'
 
   return (
-    <div className="flex flex-col items-start px-6 py-8 space-y-8">
+    <div className="flex flex-col items-start px-6 py-8 space-y-10">
       {/* Блок баланса */}
       <div style={{
         background: '#0A0A0A',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '24px',
-        padding: '20px 24px',
+        padding: '24px 28px',
         boxShadow: `
           0 0 0 2px rgba(197,160,78,.25),
           0 0 40px rgba(197,160,78,.2),
@@ -65,7 +65,7 @@ export default function Home() {
           inset 0 0 40px rgba(255,220,140,.03),
           inset 0 -4px 12px rgba(0,0,0,.35)
         `,
-        width: '380px',
+        width: '440px',
         position: 'relative',
         zIndex: 10,
         overflow: 'hidden'
@@ -87,24 +87,24 @@ export default function Home() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '160px'
+          height: '170px'
         }}>
-          {/* Нимб (живой) */}
+          {/* Нимб (живой, с ярким свечением) */}
           <div style={{
             position: 'absolute',
-            width: '170px',
-            height: '170px',
+            width: '200px',
+            height: '200px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.2) 70%, transparent 76%)',
-            border: '1px solid rgba(197,160,78,.45)',
+            background: 'radial-gradient(circle, transparent 58%, rgba(197,160,78,.25) 70%, transparent 76%)',
+            border: '1px solid rgba(197,160,78,.5)',
             animation: 'haloGlow 3s infinite ease-in-out',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)'
           }} />
 
-          {/* Левая точка (рельефная) */}
-          <div style={{ position: 'absolute', left: '6px', display: 'flex', alignItems: 'center' }}>
+          {/* Левая точка (рельефная) – отодвинута дальше */}
+          <div style={{ position: 'absolute', left: '2px', display: 'flex', alignItems: 'center' }}>
             <div style={{
               width: '8px',
               height: '8px',
@@ -114,7 +114,7 @@ export default function Home() {
               border: '1px solid rgba(255,215,0,0.6)'
             }} />
             <div style={{
-              width: '60px',
+              width: '70px',
               height: '1px',
               marginLeft: '6px',
               background: 'linear-gradient(90deg, rgba(197,160,78,.4), rgba(197,160,78,.9))'
@@ -168,8 +168,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Правая точка */}
-          <div style={{ position: 'absolute', right: '6px', display: 'flex', alignItems: 'center' }}>
+          {/* Правая точка – отодвинута дальше */}
+          <div style={{ position: 'absolute', right: '2px', display: 'flex', alignItems: 'center' }}>
             <div style={{
               width: '6px',
               height: '6px',
@@ -179,7 +179,7 @@ export default function Home() {
               marginRight: '-2px'
             }} />
             <div style={{
-              width: '60px',
+              width: '70px',
               height: '1px',
               marginRight: '6px',
               background: 'linear-gradient(90deg, rgba(197,160,78,.9), rgba(197,160,78,.4))'
@@ -195,7 +195,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Кнопки */}
+        {/* Кнопки действий */}
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {['История', 'Покупки', 'Перевести'].map((label) => (
             <button
@@ -258,22 +258,24 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Разделы‑заглушки */}
-      <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
-        <div className="premium-card">
+      {/* Разделы‑украшения */}
+      <div className="grid grid-cols-2 gap-5 w-full max-w-2xl">
+        <div className="premium-card-enhanced">
           <h3 className="text-lg font-semibold mb-2">Задания</h3>
-          <p className="text-gray-500 text-sm">Новые задания скоро появятся</p>
+          <p className="text-gray-500 text-sm">Активные задачи скоро появятся</p>
         </div>
-        <div className="premium-card">
+        <div className="premium-card-enhanced">
           <h3 className="text-lg font-semibold mb-2">Рейтинг</h3>
           <p className="text-gray-500 text-sm">Топ сотрудников</p>
         </div>
-        <button className="premium-card text-left hover:bg-gray-50 transition">
-          <h3 className="text-lg font-semibold">Соревнования</h3>
-        </button>
-        <button className="premium-card text-left hover:bg-gray-50 transition">
-          <h3 className="text-lg font-semibold">Битва экспертов</h3>
-        </button>
+        <div className="premium-card-enhanced">
+          <h3 className="text-lg font-semibold mb-2">Соревнования</h3>
+          <p className="text-gray-500 text-sm">Внутренние чемпионаты</p>
+        </div>
+        <div className="premium-card-enhanced">
+          <h3 className="text-lg font-semibold mb-2">Битва экспертов</h3>
+          <p className="text-gray-500 text-sm">Всеобщая игра</p>
+        </div>
       </div>
     </div>
   )
