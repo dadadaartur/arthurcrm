@@ -54,23 +54,36 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Левая колонка: баланс и кнопки */}
         <div className="flex flex-col items-start">
-          {/* Блок баланса (рельефный белый фон, золото внутри) */}
+          {/* Блок баланса (последняя стабильная версия) */}
           <div style={{
-            background: `linear-gradient(180deg, #FFFFFF 0%, #FDFDFD 100%)`,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
-            border: '1px solid rgba(0,0,0,0.04)',
-            borderRadius: '32px',
+            background: '#0A0A0A',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '28px',
             padding: '36px 40px',
             boxShadow: `
-              0 0 0 2px rgba(197,160,78,.2),
-              0 20px 40px -12px rgba(0,0,0,0.08),
-              0 0 80px rgba(197,160,78,0.1)
+              0 0 0 2px rgba(197,160,78,.3),
+              0 0 60px rgba(197,160,78,.3),
+              0 0 100px rgba(197,160,78,.15),
+              inset 0 2px 8px rgba(255,255,255,.08),
+              inset 0 0 40px rgba(255,220,140,.04),
+              inset 0 -4px 12px rgba(0,0,0,.35)
             `,
             width: '560px',
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Центральная область с нимбом (строгий, тонкий) */}
+            {/* Верхний блик */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '80px',
+              background: 'linear-gradient(180deg, rgba(255,255,255,.06), transparent)',
+              pointerEvents: 'none'
+            }} />
+
+            {/* Нимб + цифра + слово БАЛАНС внутри */}
             <div style={{
               position: 'relative',
               display: 'flex',
@@ -78,7 +91,7 @@ export default function Home() {
               alignItems: 'center',
               height: '260px'
             }}>
-              {/* Тонкое кольцо + свечение */}
+              {/* Тонкий, но яркий нимб */}
               <div style={{
                 position: 'absolute',
                 width: '220px',
@@ -92,7 +105,7 @@ export default function Home() {
                 transform: 'translate(-50%, -50%)',
                 background: 'transparent'
               }} />
-              {/* Легкое ядро */}
+              {/* Легкое ядро вокруг цифры */}
               <div style={{
                 position: 'absolute',
                 width: '160px',
@@ -106,8 +119,8 @@ export default function Home() {
                 transform: 'translate(-50%, -50%)'
               }} />
 
-              {/* Левая стрелка (отодвинута дальше, линия короче) */}
-              <div style={{ position: 'absolute', left: '8px', display: 'flex', alignItems: 'center' }}>
+              {/* Левая стрелка */}
+              <div style={{ position: 'absolute', left: '4px', display: 'flex', alignItems: 'center' }}>
                 <div style={{
                   width: '8px', height: '8px', borderRadius: '50%',
                   background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
@@ -115,7 +128,7 @@ export default function Home() {
                   border: '1px solid rgba(255,215,0,0.8)'
                 }} />
                 <div style={{
-                  width: '90px', height: '1px', marginLeft: '8px',
+                  width: '110px', height: '1px', marginLeft: '10px',
                   background: 'linear-gradient(90deg, rgba(197,160,78,.5), rgba(197,160,78,1))'
                 }} />
                 <div style={{
@@ -128,7 +141,7 @@ export default function Home() {
               {/* Центр: цифра и надписи */}
               <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
                 <div style={{
-                  fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.4)',
+                  fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,.6)',
                   textTransform: 'uppercase', letterSpacing: '3px',
                   marginBottom: '6px', filter: 'blur(0.3px)'
                 }}>
@@ -137,15 +150,16 @@ export default function Home() {
                 <div style={{
                   fontSize: dynamicFontSize, fontWeight: 700, lineHeight: 1,
                   letterSpacing: '-2px',
-                  background: 'linear-gradient(180deg,#B8860B 0%,#C5A04E 60%,#FFD700 100%)',
+                  background: 'linear-gradient(180deg,#FFD700 0%,#C5A04E 60%,#8B7300 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.2))',
+                  WebkitTextStroke: '1px rgba(0,0,0,.25)',
+                  filter: 'drop-shadow(0 0 12px rgba(197,160,78,.8))',
                   marginTop: '6px'
                 }}>
                   {balanceStr}
                 </div>
                 <div style={{
-                  fontSize: '14px', color: 'rgba(0,0,0,0.5)',
+                  fontSize: '14px', color: 'rgba(255,255,255,.7)',
                   letterSpacing: '.4px', filter: 'blur(0.5px)',
                   opacity: 0.8, marginTop: '6px'
                 }}>
@@ -153,15 +167,15 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Правая стрелка (отодвинута дальше, линия короче) */}
-              <div style={{ position: 'absolute', right: '8px', display: 'flex', alignItems: 'center' }}>
+              {/* Правая стрелка */}
+              <div style={{ position: 'absolute', right: '4px', display: 'flex', alignItems: 'center' }}>
                 <div style={{
                   width: '6px', height: '6px',
                   borderTop: '1px solid rgba(255,220,120,1)', borderRight: '1px solid rgba(255,220,120,1)',
                   transform: 'rotate(225deg)', marginRight: '-2px'
                 }} />
                 <div style={{
-                  width: '90px', height: '1px', marginRight: '8px',
+                  width: '110px', height: '1px', marginRight: '10px',
                   background: 'linear-gradient(90deg, rgba(197,160,78,1), rgba(197,160,78,.5))'
                 }} />
                 <div style={{
@@ -172,49 +186,88 @@ export default function Home() {
                 }} />
               </div>
             </div>
-          </div>
 
-          {/* Кнопки действий (голограммные, округлые) */}
-          <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', width: '560px' }}>
-            {['История', 'Покупки', 'Перевести'].map((label) => (
+            {/* Кнопки действий (строго внутри чёрного блока) */}
+            <div style={{ marginTop: '32px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {['История', 'Покупки', 'Перевести'].map((label) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    if (label === 'История') window.location.href = '/history'
+                    if (label === 'Покупки') window.location.href = '/my-purchases'
+                    if (label === 'Перевести') window.location.href = '/transfer'
+                  }}
+                  style={{
+                    flex: '1 1 0',
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,.82)',
+                    background: 'transparent',
+                    border: '1px solid rgba(197,160,78,.35)',
+                    borderRadius: '50px',
+                    padding: '12px 0',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(197,160,78,0.2)'
+                    e.target.style.borderColor = '#C5A04E'
+                    e.target.style.boxShadow = '0 0 20px rgba(197,160,78,0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'transparent'
+                    e.target.style.borderColor = 'rgba(197,160,78,.35)'
+                    e.target.style.boxShadow = 'none'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
               <button
-                key={label}
-                onClick={() => {
-                  if (label === 'История') window.location.href = '/history'
-                  if (label === 'Покупки') window.location.href = '/my-purchases'
-                  if (label === 'Перевести') window.location.href = '/transfer'
+                onClick={() => window.location.href = '/shop'}
+                style={{
+                  flexBasis: '100%',
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,.82)',
+                  background: 'transparent',
+                  border: '1px solid rgba(197,160,78,.35)',
+                  borderRadius: '50px',
+                  padding: '12px 0',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s',
+                  marginTop: '4px'
                 }}
-                className="btn-hologram"
-                style={{ flex: '1 1 0' }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(197,160,78,0.2)'
+                  e.target.style.borderColor = '#C5A04E'
+                  e.target.style.boxShadow = '0 0 20px rgba(197,160,78,0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'transparent'
+                  e.target.style.borderColor = 'rgba(197,160,78,.35)'
+                  e.target.style.boxShadow = 'none'
+                }}
               >
-                {label}
+                Магазин
               </button>
-            ))}
-            <button
-              onClick={() => window.location.href = '/shop'}
-              className="btn-hologram"
-              style={{ flexBasis: '100%', marginTop: '4px' }}
-            >
-              Магазин
-            </button>
+            </div>
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения с голограммными карточками */}
+        {/* Правая колонка: разделы-украшения (аккуратные, стабильные) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
-          <div className="card-hologram">
+          <div className="section-card">
             <h3 className="text-xl font-semibold mb-2">Задания</h3>
             <p className="text-gray-600 text-sm">Выполняй миссии и расти над собой</p>
           </div>
-          <div className="card-hologram">
+          <div className="section-card">
             <h3 className="text-xl font-semibold mb-2">Рейтинг</h3>
             <p className="text-gray-600 text-sm">Твоя позиция среди лучших</p>
           </div>
-          <div className="card-hologram">
+          <div className="section-card">
             <h3 className="text-xl font-semibold mb-2">Соревнования</h3>
             <p className="text-gray-600 text-sm">Докажи своё мастерство в битве</p>
           </div>
-          <div className="card-hologram">
+          <div className="section-card">
             <h3 className="text-xl font-semibold mb-2">Битва экспертов</h3>
             <p className="text-gray-600 text-sm">Всероссийский чемпионат профессионалов</p>
           </div>
