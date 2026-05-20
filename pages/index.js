@@ -54,7 +54,7 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Левая колонка: баланс и кнопки */}
         <div className="flex flex-col items-start">
-          {/* Блок баланса (белый рельефный) */}
+          {/* Блок баланса (белый рельефный, без кляксы) */}
           <div style={{
             background: `linear-gradient(180deg, #FFFFFF 0%, #FDFDFD 100%)`,
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
@@ -91,19 +91,6 @@ export default function Home() {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 background: 'transparent'
-              }} />
-              {/* Легкое ядро (без кляксы) */}
-              <div style={{
-                position: 'absolute',
-                width: '160px',
-                height: '160px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.2) 40%, transparent 70%)',
-                filter: 'blur(4px)',
-                animation: 'coreGlow 2s infinite ease-in-out',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)'
               }} />
 
               {/* Левая стрелка (укорочена и отодвинута) */}
