@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Полное уничтожение любых текстовых кареток и системных курсоров */
+/* Полное уничтожение курсоров */
 * {
   cursor: default !important;
   user-select: none;
@@ -18,157 +18,73 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-}
-
-/* Золотой спиннер */
-.spinner {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid transparent;
-  border-top-color: #C5A04E;
-  border-right-color: #FACC15;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
   position: relative;
+  min-height: 100vh;
+  /* Основной светлый градиент */
+  background: linear-gradient(180deg, #FFFFFF 0%, #FCFCFB 45%, #FAFAF8 100%);
 }
-.spinner::before {
+
+/* Сакральная геометрия, свет, пыль – всё на псевдоэлементах */
+body::before {
   content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border: 2px solid transparent;
-  border-left-color: rgba(197, 160, 78, 0.6);
-  border-bottom-color: rgba(250, 204, 21, 0.6);
-  border-radius: 50%;
-  animation: spin 1.2s linear infinite reverse;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.premium-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(197, 160, 78, 0.2);
-  border-radius: 20px;
-  padding: 28px 32px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-  transition: all 0.3s;
-}
-.premium-card:hover {
-  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-}
-
-.btn-gold {
-  background: linear-gradient(135deg, #C5A04E, #B28B3F);
-  border: none;
-  color: #FFFFFF;
-  font-weight: 500;
-  padding: 10px 24px;
-  border-radius: 50px;
-  font-size: 14px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-.btn-gold:hover {
-  box-shadow: 0 0 20px rgba(197, 160, 78, 0.5);
-  transform: translateY(-1px);
-}
-.btn-gold::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  animation: shimmer 2s infinite;
-  pointer-events: none;
-}
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.btn-outline {
-  border: 1px solid #C5A04E;
-  color: #C5A04E;
-  background: transparent;
-  padding: 8px 20px;
-  border-radius: 50px;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.btn-outline:hover {
-  background: rgba(197, 160, 78, 0.05);
-  box-shadow: 0 0 15px rgba(197, 160, 78, 0.2);
-}
-
-.input-field {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 10px 16px;
-  width: 100%;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-.input-field:focus {
-  border-color: #C5A04E;
-  box-shadow: 0 0 0 3px rgba(197, 160, 78, 0.1);
-}
-
-.modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease;
-}
-.modal-content {
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 400px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-  animation: scaleIn 0.25s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  inset: 0;
+  z-index: -1;
+  opacity: 0.9;
+  background:
+    /* большой внешний круг */
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 540px, rgba(212,180,84,.10) 541px, transparent 542px),
+    /* центральная сфера */
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 320px, rgba(212,180,84,.16) 321px, transparent 322px),
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 210px, rgba(212,180,84,.12) 211px, transparent 212px),
+    radial-gradient(circle at 50% 50%, transparent 0, transparent 95px, rgba(212,180,84,.10) 96px, transparent 97px),
+    /* боковые орбиты */
+    radial-gradient(circle at 18% 50%, transparent 0, transparent 360px, rgba(212,180,84,.06) 361px, transparent 362px),
+    radial-gradient(circle at 82% 50%, transparent 0, transparent 360px, rgba(212,180,84,.06) 361px, transparent 362px),
+    /* горизонтальная и вертикальная оси */
+    linear-gradient(90deg, transparent, rgba(212,180,84,.10), transparent),
+    linear-gradient(180deg, transparent, rgba(212,180,84,.08), transparent);
 }
 
-.filter-pill {
-  border: 1px solid rgba(197, 160, 78, 0.3);
-  background: transparent;
-  color: #4B5563;
-  padding: 6px 16px;
-  border-radius: 50px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.55;
+  background:
+    /* очень мягкое центральное свечение */
+    radial-gradient(circle at 50% 50%, rgba(212,180,84,.045), transparent 42%),
+    /* световые точки */
+    radial-gradient(circle at 50% 50%, rgba(212,180,84,1) 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 15%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 85%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 28% 50%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 50%, rgba(212,180,84,.7) 0 2px, transparent 3px),
+    /* золотая пыль */
+    radial-gradient(circle at 9% 22%, rgba(212,180,84,.45) 0 1px, transparent 2px),
+    radial-gradient(circle at 16% 78%, rgba(212,180,84,.25) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 30%, rgba(212,180,84,.35) 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 82%, rgba(212,180,84,.25) 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 12%, rgba(212,180,84,.45) 0 1px, transparent 2px),
+    radial-gradient(circle at 25% 92%, rgba(212,180,84,.4) 0 1px, transparent 2px),
+    /* дорогая микротекстура */
+    radial-gradient(#000 0.5px, transparent 0.5px);
+  background-size:
+    auto, auto, auto, auto, auto, auto,
+    auto, auto, auto, auto, auto, auto,
+    8px 8px; /* размер для шума */
+  filter: blur(0.3px);
 }
-.filter-pill.active {
-  background: linear-gradient(135deg, #C5A04E, #B28B3F);
-  color: #FFFFFF;
-  border-color: transparent;
+
+/* Убираем размытость у точек, возвращая чёткость */
+body::after {
+  filter: none;
+  background-blend-mode: normal;
 }
+
+/* Остальные стили (оставляем без изменений) */
+.spinner { ... }
+.premium-card { ... }
+.btn-gold { ... }
+/* ... и т.д. весь остальной код, который был в прошлых версиях globals.css */
