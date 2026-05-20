@@ -51,11 +51,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-start px-12 py-8">
-      {/* Основная сетка: слева баланс + кнопки, справа разделы */}
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Левая колонка: баланс и кнопки */}
         <div className="flex flex-col items-start">
-          {/* Блок баланса (только нимб и цифры) */}
+          {/* Блок баланса */}
           <div style={{
             background: '#0A0A0A',
             border: '1px solid rgba(255,255,255,0.08)',
@@ -84,7 +83,7 @@ export default function Home() {
               pointerEvents: 'none'
             }} />
 
-            {/* Нимб + цифра + слово БАЛАНС внутри */}
+            {/* Центральная область с нимбом */}
             <div style={{
               position: 'relative',
               display: 'flex',
@@ -92,39 +91,59 @@ export default function Home() {
               alignItems: 'center',
               height: '260px'
             }}>
-              {/* Размытый золотой нимб (три слоя) */}
-              <div style={{
-                position: 'absolute',
-                width: '300px',
-                height: '300px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(197,160,78,.4) 0%, transparent 70%)',
-                filter: 'blur(20px)',
-                animation: 'haloGlow 3s infinite ease-in-out',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)'
-              }} />
-              <div style={{
-                position: 'absolute',
-                width: '240px',
-                height: '240px',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,215,0,.5) 0%, transparent 60%)',
-                filter: 'blur(15px)',
-                animation: 'haloGlow 2.5s infinite ease-in-out',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)'
-              }} />
+              {/* Слой 1: Яркое центральное ядро (белое с золотом) */}
               <div style={{
                 position: 'absolute',
                 width: '180px',
                 height: '180px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,.8) 0%, transparent 50%)',
-                filter: 'blur(10px)',
-                animation: 'haloGlow 2s infinite ease-in-out',
+                background: 'radial-gradient(circle, rgba(255,255,255,.9) 0%, rgba(255,215,0,.7) 30%, transparent 70%)',
+                filter: 'blur(8px)',
+                animation: 'coreGlow 2s infinite ease-in-out',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+              }} />
+
+              {/* Слой 2: Первое золотое кольцо (чёткое) */}
+              <div style={{
+                position: 'absolute',
+                width: '220px',
+                height: '220px',
+                borderRadius: '50%',
+                border: '1px solid rgba(197,160,78,.8)',
+                boxShadow: '0 0 20px rgba(197,160,78,.6)',
+                animation: 'ringPulse1 3s infinite ease-in-out',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: 'transparent'
+              }} />
+
+              {/* Слой 3: Второе золотое кольцо (более широкое, мягкое) */}
+              <div style={{
+                position: 'absolute',
+                width: '260px',
+                height: '260px',
+                borderRadius: '50%',
+                border: '1px solid rgba(197,160,78,.4)',
+                boxShadow: '0 0 30px rgba(197,160,78,.3)',
+                animation: 'ringPulse2 3s infinite ease-in-out',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: 'transparent'
+              }} />
+
+              {/* Слой 4: Внешний ореол (плавное угасание) */}
+              <div style={{
+                position: 'absolute',
+                width: '300px',
+                height: '300px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(197,160,78,.2) 0%, transparent 70%)',
+                filter: 'blur(12px)',
+                animation: 'haloBreath 4s infinite ease-in-out',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)'
@@ -199,7 +218,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Кнопки (строго отделены, стиль не тронут) */}
+          {/* Кнопки (отдельно, на белом фоне, текст тёмный) */}
           <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', width: '560px' }}>
             {['История', 'Покупки', 'Перевести'].map((label) => (
               <button
@@ -212,22 +231,22 @@ export default function Home() {
                 style={{
                   flex: '1 1 0',
                   fontSize: '14px',
-                  color: 'rgba(255,255,255,.82)',
+                  color: '#1A1A1A',
                   background: 'transparent',
-                  border: '1px solid rgba(197,160,78,.35)',
+                  border: '1px solid rgba(197,160,78,.5)',
                   borderRadius: '50px',
                   padding: '12px 0',
                   cursor: 'pointer',
                   transition: 'all 0.25s'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(197,160,78,0.2)'
+                  e.target.style.background = 'rgba(197,160,78,0.15)'
                   e.target.style.borderColor = '#C5A04E'
                   e.target.style.boxShadow = '0 0 20px rgba(197,160,78,0.5)'
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.background = 'transparent'
-                  e.target.style.borderColor = 'rgba(197,160,78,.35)'
+                  e.target.style.borderColor = 'rgba(197,160,78,.5)'
                   e.target.style.boxShadow = 'none'
                 }}
               >
@@ -239,9 +258,9 @@ export default function Home() {
               style={{
                 flexBasis: '100%',
                 fontSize: '14px',
-                color: 'rgba(255,255,255,.82)',
+                color: '#1A1A1A',
                 background: 'transparent',
-                border: '1px solid rgba(197,160,78,.35)',
+                border: '1px solid rgba(197,160,78,.5)',
                 borderRadius: '50px',
                 padding: '12px 0',
                 cursor: 'pointer',
@@ -249,13 +268,13 @@ export default function Home() {
                 marginTop: '4px'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(197,160,78,0.2)'
+                e.target.style.background = 'rgba(197,160,78,0.15)'
                 e.target.style.borderColor = '#C5A04E'
                 e.target.style.boxShadow = '0 0 20px rgba(197,160,78,0.5)'
               }}
               onMouseLeave={(e) => {
                 e.target.style.background = 'transparent'
-                e.target.style.borderColor = 'rgba(197,160,78,.35)'
+                e.target.style.borderColor = 'rgba(197,160,78,.5)'
                 e.target.style.boxShadow = 'none'
               }}
             >
@@ -264,7 +283,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения (заполняют пространство) */}
+        {/* Правая колонка: разделы-украшения */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="premium-card-enhanced">
             <h3 className="text-xl font-semibold mb-2">Задания</h3>
