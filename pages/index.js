@@ -54,7 +54,7 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Левая колонка: баланс и кнопки */}
         <div className="flex flex-col items-start">
-          {/* Блок баланса (белый рельефный, без кляксы) */}
+          {/* Блок баланса (белый рельефный) */}
           <div style={{
             background: `linear-gradient(180deg, #FFFFFF 0%, #FDFDFD 100%)`,
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
@@ -62,9 +62,9 @@ export default function Home() {
             borderRadius: '32px',
             padding: '36px 40px',
             boxShadow: `
-              0 0 0 2px rgba(197,160,78,.2),
+              0 0 0 2px rgba(76,175,80,.25),
               0 20px 40px -12px rgba(0,0,0,0.08),
-              0 0 80px rgba(197,160,78,0.1)
+              0 0 80px rgba(76,175,80,0.1)
             `,
             width: '560px',
             position: 'relative',
@@ -78,14 +78,14 @@ export default function Home() {
               alignItems: 'center',
               height: '260px'
             }}>
-              {/* Тонкое кольцо + свечение */}
+              {/* Тонкое кольцо + зелёное свечение */}
               <div style={{
                 position: 'absolute',
                 width: '220px',
                 height: '220px',
                 borderRadius: '50%',
-                border: '1px solid rgba(197,160,78,.7)',
-                boxShadow: '0 0 25px rgba(197,160,78,0.5), 0 0 50px rgba(197,160,78,0.2)',
+                border: '1px solid rgba(76,175,80,.7)',
+                boxShadow: '0 0 25px rgba(76,175,80,0.5), 0 0 50px rgba(76,175,80,0.2)',
                 animation: 'ringPulse 3s infinite ease-in-out',
                 top: '50%',
                 left: '50%',
@@ -93,26 +93,26 @@ export default function Home() {
                 background: 'transparent'
               }} />
 
-              {/* Левая стрелка (укорочена и отодвинута) */}
+              {/* Левая стрелка (укорочена и отодвинута, зелёная гамма) */}
               <div style={{ position: 'absolute', left: '8px', display: 'flex', alignItems: 'center' }}>
                 <div style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
-                  boxShadow: '0 0 16px rgba(255,220,100,1), inset 0 1px 2px rgba(255,255,255,0.9)',
-                  border: '1px solid rgba(255,215,0,0.8)'
+                  background: 'radial-gradient(circle at 30% 30%, #A5D6A7, #2E7D32)',
+                  boxShadow: '0 0 16px rgba(76,175,80,1), inset 0 1px 2px rgba(255,255,255,0.9)',
+                  border: '1px solid rgba(76,175,80,0.8)'
                 }} />
                 <div style={{
                   width: '80px', height: '1px', marginLeft: '8px',
-                  background: 'linear-gradient(90deg, rgba(197,160,78,.5), rgba(197,160,78,1))'
+                  background: 'linear-gradient(90deg, rgba(76,175,80,.5), rgba(76,175,80,1))'
                 }} />
                 <div style={{
                   width: '6px', height: '6px',
-                  borderTop: '1px solid rgba(255,220,120,1)', borderRight: '1px solid rgba(255,220,120,1)',
+                  borderTop: '1px solid rgba(76,175,80,1)', borderRight: '1px solid rgba(76,175,80,1)',
                   transform: 'rotate(45deg)', marginLeft: '-2px'
                 }} />
               </div>
 
-              {/* Центр: цифра и надписи (золото на белом) */}
+              {/* Центр: цифра и надписи (зелёный градиент) */}
               <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
                 <div style={{
                   fontSize: '13px', fontWeight: 500, color: 'rgba(0,0,0,0.4)',
@@ -124,7 +124,7 @@ export default function Home() {
                 <div style={{
                   fontSize: dynamicFontSize, fontWeight: 700, lineHeight: 1,
                   letterSpacing: '-2px',
-                  background: 'linear-gradient(180deg,#B8860B 0%,#C5A04E 60%,#FFD700 100%)',
+                  background: 'linear-gradient(180deg,#2E7D32 0%,#4CAF50 60%,#81C784 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.2))',
                   marginTop: '6px'
@@ -140,22 +140,22 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Правая стрелка (укорочена и отодвинута) */}
+              {/* Правая стрелка (зелёная гамма) */}
               <div style={{ position: 'absolute', right: '8px', display: 'flex', alignItems: 'center' }}>
                 <div style={{
                   width: '6px', height: '6px',
-                  borderTop: '1px solid rgba(255,220,120,1)', borderRight: '1px solid rgba(255,220,120,1)',
+                  borderTop: '1px solid rgba(76,175,80,1)', borderRight: '1px solid rgba(76,175,80,1)',
                   transform: 'rotate(225deg)', marginRight: '-2px'
                 }} />
                 <div style={{
                   width: '80px', height: '1px', marginRight: '8px',
-                  background: 'linear-gradient(90deg, rgba(197,160,78,1), rgba(197,160,78,.5))'
+                  background: 'linear-gradient(90deg, rgba(76,175,80,1), rgba(76,175,80,.5))'
                 }} />
                 <div style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: 'radial-gradient(circle at 30% 30%, #FFE484, #B8860B)',
-                  boxShadow: '0 0 16px rgba(255,220,100,1), inset 0 1px 2px rgba(255,255,255,0.9)',
-                  border: '1px solid rgba(255,215,0,0.8)'
+                  background: 'radial-gradient(circle at 30% 30%, #A5D6A7, #2E7D32)',
+                  boxShadow: '0 0 16px rgba(76,175,80,1), inset 0 1px 2px rgba(255,255,255,0.9)',
+                  border: '1px solid rgba(76,175,80,0.8)'
                 }} />
               </div>
             </div>
