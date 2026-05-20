@@ -21,16 +21,16 @@ export default function Layout({ children }) {
           {/* Левая часть: логотип + навигация */}
           <div className="flex items-center gap-8">
             <Link href="/" className="select-none" style={{
-              fontSize: '1.5rem',          // уменьшен
-              fontWeight: '400',           // тонкий, изящный
+              fontSize: '1.5rem',
+              fontWeight: '400',
               letterSpacing: '-0.3px',
               lineHeight: '1.2',
-              padding: '4px 14px',        // компактнее
+              padding: '4px 14px',
               background: 'rgba(255,255,255,0.85)',
               backdropFilter: 'blur(4px)',
               borderRadius: '12px',
-              color: '#F9A825',            // тёплый жёлтый
-              textShadow: '0 1px 4px rgba(249,168,37,0.2)',
+              color: '#FFFFFF',                              // белый текст
+              textShadow: '0 0 15px rgba(76,175,80,0.7), 0 0 30px rgba(249,168,37,0.5)',  // зелёная + жёлтая тень
               boxShadow: '0 2px 8px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.7)',
               display: 'inline-block'
             }}>
