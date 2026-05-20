@@ -54,19 +54,19 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Левая колонка: баланс и кнопки */}
         <div className="flex flex-col items-start">
-          {/* Блок баланса (уменьшен, дизайн сохранён) */}
+          {/* Блок баланса (без изменений дизайна) */}
           <div style={{
             background: `linear-gradient(180deg, #FFFFFF 0%, #FDFDFD 100%)`,
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
             border: '1px solid rgba(0,0,0,0.04)',
             borderRadius: '28px',
-            padding: '24px 32px',       // уменьшено с 36/40
+            padding: '24px 32px',
             boxShadow: `
               0 0 0 2px rgba(76,175,80,.2),
               0 12px 24px -8px rgba(0,0,0,0.06),
               0 0 40px rgba(76,175,80,0.06)
             `,
-            width: '460px',            // уменьшено с 560
+            width: '460px',
             position: 'relative',
             overflow: 'hidden'
           }}>
@@ -76,17 +76,15 @@ export default function Home() {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              height: '200px'          // уменьшено с 260
+              height: '200px'
             }}>
-              {/* Тонкое кольцо + едва заметное свечение */}
+              {/* Нимб — только тонкое кольцо, без свечения */}
               <div style={{
                 position: 'absolute',
                 width: '180px',
                 height: '180px',
                 borderRadius: '50%',
-                border: '1px solid rgba(76,175,80,.35)',   // тоньше и прозрачнее
-                boxShadow: '0 0 8px rgba(76,175,80,0.15)', // лёгкое свечение
-                animation: 'ringPulse 4s infinite ease-in-out', // медленнее
+                border: '1px solid rgba(76,175,80,.35)',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
@@ -160,7 +158,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Кнопки действий (без изменений) */}
+          {/* Кнопки действий (голограммные) */}
           <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', width: '460px' }}>
             {['История', 'Покупки', 'Перевести'].map((label) => (
               <button
@@ -186,7 +184,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения (без изменений) */}
+        {/* Правая колонка: разделы-украшения */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="card-hologram">
             <h3 className="text-xl font-semibold mb-2">Задания</h3>
