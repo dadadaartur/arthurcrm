@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
@@ -32,18 +33,37 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
 
+  // Загружаем профиль при монтировании и при изменении user
   useEffect(() => {
+    const loadProfile = async (currentUser) => {
+      if (!currentUser) {
+        setProfile(null)
+        return
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, roles(name, is_system)')
+        .eq('user_id', currentUser.id)
+        .maybeSingle()
+      setProfile(data || null)
+    }
+
+    // Получаем текущую сессию сразу
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('display_name, roles(name, is_system)')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => setProfile(data))
-      }
+      loadProfile(user)
     })
+
+    // Подписываемся на изменения аутентификации (логин/логаут)
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+      loadProfile(currentUser)
+    })
+
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
   }, [])
 
   async function handleLogout() {
@@ -52,9 +72,10 @@ export default function Layout({ children }) {
   }
 
   const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin = profile?.roles?.name === 'РОП' ||
-                         profile?.roles?.name === 'СМ' ||
-                         profile?.roles?.name === 'Администратор'
+  const isCompanyAdmin =
+    profile?.roles?.name === 'РОП' ||
+    profile?.roles?.name === 'СМ' ||
+    profile?.roles?.name === 'Администратор'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
