@@ -9,9 +9,7 @@
 a, button, .clickable, .action-btn, .wide-btn {
   cursor: pointer !important;
 }
-*:focus {
-  outline: none !important;
-}
+*:focus { outline: none !important; }
 
 body {
   margin: 0;
@@ -19,28 +17,55 @@ body {
   background: #0a1628;
   color: #eaf0fb;
   min-height: 100vh;
+  position: relative;
 }
 
-/* Звёзды */
-.stars-bg {
+/* Звёзды (чистый CSS) */
+body::before {
+  content: '';
   position: fixed;
   inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 10% 20%, white, transparent),
+    radial-gradient(1px 1px at 20% 40%, white, transparent),
+    radial-gradient(1px 1px at 30% 10%, white, transparent),
+    radial-gradient(1px 1px at 40% 60%, white, transparent),
+    radial-gradient(1px 1px at 50% 30%, white, transparent),
+    radial-gradient(1px 1px at 60% 80%, white, transparent),
+    radial-gradient(1px 1px at 70% 15%, white, transparent),
+    radial-gradient(1px 1px at 80% 50%, white, transparent),
+    radial-gradient(1px 1px at 90% 70%, white, transparent),
+    radial-gradient(1px 1px at 15% 85%, white, transparent),
+    radial-gradient(1px 1px at 25% 55%, white, transparent),
+    radial-gradient(1px 1px at 35% 95%, white, transparent),
+    radial-gradient(1px 1px at 45% 5%, white, transparent),
+    radial-gradient(1px 1px at 55% 45%, white, transparent),
+    radial-gradient(1px 1px at 65% 75%, white, transparent),
+    radial-gradient(1px 1px at 75% 25%, white, transparent),
+    radial-gradient(1px 1px at 85% 35%, white, transparent),
+    radial-gradient(1px 1px at 95% 65%, white, transparent),
+    radial-gradient(1px 1px at 5% 50%, white, transparent),
+    radial-gradient(1px 1px at 12% 12%, white, transparent);
+  background-size: 200px 200px;
+  animation: twinkle 3s infinite alternate;
+  opacity: 0.7;
   z-index: 0;
   pointer-events: none;
 }
-.star-dot {
-  position: absolute;
-  border-radius: 50%;
-  background: white;
-  opacity: 0.6;
-  animation: twinkleStar 2.5s infinite alternate;
-}
-@keyframes twinkleStar {
-  0% { opacity: 0.25; transform: scale(0.7); }
-  100% { opacity: 0.9; transform: scale(1.2); }
+
+@keyframes twinkle {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.9; }
 }
 
-/* Баланс-карточка (размеры и отступы как в стабильной версии) */
+/* Анимация рамок borderShine */
+@keyframes borderShine {
+  0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
+  50% { border-color: rgba(192,132,252,0.8); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
+  100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+
+/* Баланс-карточка */
 .balance-card {
   background: #0A0A0A;
   border: 1px solid rgba(249,115,22,0.5);
@@ -53,7 +78,7 @@ body {
   overflow: hidden;
 }
 
-/* Чёрная дыра – абсолютно внутри, под цифрами */
+/* Чёрная дыра (только в области цифр) */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -68,13 +93,14 @@ body {
   z-index: 0;
   pointer-events: none;
 }
+
 @keyframes blackHolePulse {
   0% { box-shadow: 0 0 20px rgba(249,115,22,0.2); }
   50% { box-shadow: 0 0 30px rgba(249,115,22,0.5); }
   100% { box-shadow: 0 0 20px rgba(249,115,22,0.2); }
 }
 
-/* Кнопки (старые размеры, новые цвета) */
+/* Кнопки */
 .action-btn {
   flex: 1 1 0;
   font-size: 14px;
@@ -118,7 +144,7 @@ body {
   box-shadow: 0 0 15px rgba(249,115,22,0.5);
 }
 
-/* Карточки разделов (старые размеры, новые цвета) */
+/* Карточки разделов */
 .dash-card {
   background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
   border: 1px solid rgba(249,115,22,0.5);
@@ -136,12 +162,36 @@ body {
   color: transparent;
 }
 
-@keyframes borderShine {
-  0% { border-color: rgba(249,115,22,0.4); }
-  50% { border-color: rgba(192,132,252,0.8); }
-  100% { border-color: rgba(249,115,22,0.4); }
+/* Спиннер */
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid transparent;
+  border-top-color: #f97316;
+  border-right-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border: 2px solid transparent;
+  border-left-color: rgba(249,115,22,0.6);
+  border-bottom-color: rgba(192,132,252,0.6);
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite reverse;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Остальное */
-.spinner { /* как раньше */ }
-.modal-overlay { /* ... */ }
+/* Остальные общие стили */
+.premium-card { background: #152238; border: 1px solid rgba(249,115,22,0.5); border-radius: 20px; padding: 28px 32px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+.btn-gold { background: linear-gradient(135deg, #f97316, #e65c00); border: none; color: white; font-weight: 600; padding: 10px 24px; border-radius: 50px; font-size: 14px; }
+.btn-outline { border: 1px solid #f97316; color: #f97316; background: transparent; padding: 8px 20px; border-radius: 50px; font-weight: 500; font-size: 14px; }
+.input-field { background: #0f1f35; border: 1px solid rgba(249,115,22,0.5); border-radius: 12px; padding: 10px 16px; width: 100%; font-size: 14px; color: #eaf0fb; }
+.input-field:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.2); }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: linear-gradient(145deg, #1a2f4a 0%, #0f1f35 100%); border: 1px solid #f97316; border-radius: 28px; padding: 36px; max-width: 440px; width: 90%; text-align: center; box-shadow: 0 0 60px rgba(249,115,22,0.6); }
+.filter-pill { border: 1px solid rgba(249,115,22,0.3); background: transparent; color: #9aa9c1; padding: 6px 16px; border-radius: 50px; font-size: 13px; cursor: pointer; }
+.filter-pill.active { background: linear-gradient(135deg, #f97316, #c084fc); color: white; }
