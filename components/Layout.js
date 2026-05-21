@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Реалистичные звёзды
+// Реалистичные звёзды (как снимки МКС)
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
