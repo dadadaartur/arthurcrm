@@ -21,42 +21,25 @@ export default function Home() {
   useEffect(() => {
     const checkAccess = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
+      if (!user) { router.push('/login'); return }
 
-      // Проверяем наличие профиля
       const { data: profile } = await supabase
         .from('profiles')
         .select('user_id')
         .eq('user_id', user.id)
         .maybeSingle()
 
-      if (!profile) {
-        router.push('/onboarding')
-        return
-      }
+      if (!profile) { router.push('/login'); return }
 
       setUser(user)
-      const { data } = await supabase
-        .from('karma_balance')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single()
+      const { data } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (data) setBalance(data.balance)
       setLoading(false)
     }
     checkAccess()
   }, [router])
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <Spinner />
-      </div>
-    )
-  }
+  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   const karmikWord = getKarmikWord(balance)
 
@@ -69,8 +52,7 @@ export default function Home() {
               <div className="black-hole" />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
-                <div className="text-5xl font-extrabold text-yellow-400 mb-2"
-                     style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
+                <div className="text-5xl font-extrabold text-yellow-400 mb-2" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
                   {balance.toLocaleString()}
                 </div>
                 <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
