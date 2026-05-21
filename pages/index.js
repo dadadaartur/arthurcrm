@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 
-// Склонение слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -36,10 +35,9 @@ export default function Home() {
     checkUser()
   }, [])
 
-  // Загрузка – показываем спиннер
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
         <Spinner />
       </div>
     )
@@ -53,11 +51,10 @@ export default function Home() {
         {/* Левая колонка – блок баланса */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
-            {/* Центральная область с нимбом */}
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div className="text-sm font-bold text-gray-400 mb-2">Баланс</div>
+                <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
                 <div
                   className="text-5xl font-extrabold text-yellow-400 mb-2"
                   style={{
@@ -72,7 +69,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Кнопки действий */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">Перевести</button>
               <button onClick={() => window.location.href = '/shop'} className="action-btn">Магазин</button>
