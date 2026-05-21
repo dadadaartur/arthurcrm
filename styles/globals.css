@@ -6,7 +6,7 @@
   cursor: default !important;
   user-select: none;
 }
-a, button, .clickable, .btn-gold, .btn-outline, .nav-btn, .action-btn, .wide-btn {
+a, button, .clickable, .action-btn, .wide-btn {
   cursor: pointer !important;
 }
 *:focus {
@@ -17,7 +17,7 @@ body {
   margin: 0;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   color: #eaf0fb;
-  background: linear-gradient(145deg, #0a1628 0%, #0f1f35 50%, #0c1b30 100%);
+  background: #0a1628;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -46,13 +46,6 @@ body {
   100% { opacity: 0.9; transform: scale(1.2); }
 }
 
-/* Анимированное сияние (aurora) */
-@keyframes aurora {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 /* Анимированная рамка borderShine */
 @keyframes borderShine {
   0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
@@ -60,50 +53,40 @@ body {
   100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
 }
 
-/* Стеклянная шапка */
-.glass-header {
-  background: rgba(21, 38, 56, 0.7);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #1f3350;
-}
-
-/* Заголовок с градиентным текстом */
-.gradient-text {
-  background: linear-gradient(135deg, #f97316, #c084fc);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: 800;
-}
-
 /* Баланс-карточка */
 .balance-card {
-  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  background: #0a0a0a;
   border-radius: 24px;
   padding: 28px 20px 20px;
   text-align: center;
-  border: 1px solid #1f3350;
+  border: 1px solid rgba(249,115,22,0.5);
   position: relative;
   box-shadow: 0 15px 30px rgba(0,0,0,0.4);
   overflow: hidden;
   animation: borderShine 4s infinite;
 }
 
-.balance-card::before {
-  content: '';
+/* Нимб – чёрная дыра с горизонтом событий */
+.black-hole {
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 20% 30%, rgba(99,102,241,0.1) 0%, transparent 40%),
-              radial-gradient(circle at 80% 70%, rgba(16,185,129,0.08) 0%, transparent 40%);
-  background-size: 200% 200%;
-  animation: aurora 12s ease infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 60%, transparent 70%);
+  box-shadow: 0 0 20px rgba(249,115,22,0.2), 0 0 40px rgba(249,115,22,0.1);
+  animation: blackHolePulse 3s infinite ease-in-out;
   pointer-events: none;
+  z-index: 0;
 }
 
-.balance-card > * { position: relative; z-index: 1; }
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 20px rgba(249,115,22,0.2), 0 0 40px rgba(249,115,22,0.1); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.4), 0 0 60px rgba(249,115,22,0.2); }
+  100% { box-shadow: 0 0 20px rgba(249,115,22,0.2), 0 0 40px rgba(249,115,22,0.1); }
+}
 
 /* Кнопки действий */
 .action-btn {
@@ -176,7 +159,7 @@ body {
   color: transparent;
 }
 
-/* Спиннер и прочее */
+/* Спиннер */
 .spinner {
   display: inline-block;
   width: 24px;
@@ -205,7 +188,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Остальные стили (модалки, инпуты и т.д.) */
+/* Остальные общие стили */
 .premium-card { background: #152238; border: 1px solid rgba(249,115,22,0.5); border-radius: 20px; padding: 28px 32px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
 .btn-gold { background: linear-gradient(135deg, #f97316, #e65c00); border: none; color: #FFFFFF; font-weight: 600; padding: 10px 24px; border-radius: 50px; font-size: 14px; cursor: pointer; transition: all 0.3s; }
 .btn-gold:hover { background: linear-gradient(135deg, #ea580c, #cc5200); }
