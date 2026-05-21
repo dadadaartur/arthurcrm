@@ -11,6 +11,7 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
+// SVG-иконки с градиентами (как в вашем HTML)
 const icons = {
   transfer: (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -96,23 +97,26 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка (точь-в-точь как раньше) */}
+        {/* Левая колонка (стабильная структура) */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
-            {/* Чёрная дыра */}
-            <div className="black-hole" />
+            {/* Область цифр и нимба */}
+            <div style={{ position: 'relative', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {/* Чёрная дыра точно под цифрами */}
+              <div className="black-hole" />
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div className="text-sm font-bold text-gray-400 mb-2">БАЛАНС</div>
-              <div className="text-5xl font-extrabold text-yellow-400 mb-2"
-                   style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
-                {balance.toLocaleString()}
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <div className="text-sm font-bold text-gray-400 mb-2">БАЛАНС</div>
+                <div className="text-5xl font-extrabold text-yellow-400 mb-2"
+                     style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
+                  {balance.toLocaleString()}
+                </div>
+                <div className="text-lg font-bold text-yellow-500">{karmikWord}</div>
               </div>
-              <div className="text-lg font-bold text-yellow-500 mb-6">{karmikWord}</div>
             </div>
 
             {/* Кнопки (старая структура) */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">
                 {icons.transfer}
                 <span>Перевести</span>
