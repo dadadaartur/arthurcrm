@@ -11,7 +11,6 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// SVG-иконки с градиентами
 const icons = {
   transfer: (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -95,46 +94,47 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
-        {/* Левая колонка */}
-        <div className="flex flex-col gap-5">
+    <div className="flex flex-col items-start px-6 py-8">
+      <div className="flex flex-col lg:flex-row gap-8 w-full">
+        {/* Левая колонка (точь-в-точь как раньше) */}
+        <div className="flex flex-col items-start">
           <div className="balance-card">
-            {/* Чёрная дыра (нимб) */}
+            {/* Чёрная дыра */}
             <div className="black-hole" />
 
-            <div className="relative z-10">
-              <div className="text-sm font-bold text-gray-400 mb-1">БАЛАНС</div>
-              <div className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 mb-1"
-                   style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div className="text-sm font-bold text-gray-400 mb-2">БАЛАНС</div>
+              <div className="text-5xl font-extrabold text-yellow-400 mb-2"
+                   style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
                 {balance.toLocaleString()}
               </div>
               <div className="text-lg font-bold text-yellow-500 mb-6">{karmikWord}</div>
             </div>
 
-            <div className="flex gap-4 justify-center flex-wrap mb-5 relative z-10">
+            {/* Кнопки (старая структура) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', position: 'relative', zIndex: 1 }}>
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">
-                <span className="flex items-center justify-center w-8 h-8">{icons.transfer}</span>
+                {icons.transfer}
                 <span>Перевести</span>
               </button>
               <button onClick={() => window.location.href = '/shop'} className="action-btn">
-                <span className="flex items-center justify-center w-8 h-8">{icons.shop}</span>
+                {icons.shop}
                 <span>Магазин</span>
               </button>
               <button onClick={() => window.location.href = '/history'} className="action-btn">
-                <span className="flex items-center justify-center w-8 h-8">{icons.history}</span>
+                {icons.history}
                 <span>Операции</span>
               </button>
+              <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn">
+                {icons.purchases}
+                Мои покупки
+              </button>
             </div>
-            <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn relative z-10">
-              {icons.purchases}
-              Мои покупки
-            </button>
           </div>
         </div>
 
         {/* Правая колонка */}
-        <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="dash-card">
             <h3>Задания</h3>
             <p className="text-sm text-gray-400">Выполняй миссии и расти над собой</p>
