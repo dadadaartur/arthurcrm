@@ -11,12 +11,13 @@ a, button, .clickable, .action-btn, .wide-btn {
 }
 *:focus { outline: none !important; }
 
-/* КОСМИЧЕСКИЙ ФОН */
-body {
+/* ГАРАНТИРОВАННЫЙ ТЁМНЫЙ ФОН */
+html, body {
   margin: 0 !important;
-  font-family: 'Inter', system-ui, sans-serif;
+  padding: 0 !important;
   background: #0a1628 !important;
   color: #eaf0fb;
+  font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
   position: relative;
 }
@@ -79,7 +80,7 @@ body::before {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА (НИМБ) С БОКОВЫМИ ЛУЧАМИ */
+/* ЧЁРНАЯ ДЫРА (НИМБ) С ГОРИЗОНТОМ СОБЫТИЙ */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -97,17 +98,19 @@ body::before {
   pointer-events: none;
 }
 
-/* Боковые лучи (отлив горизонта событий) */
+/* Аккреционный диск (кольца) */
 .black-hole::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.4), transparent);
-  box-shadow: 0 0 10px rgba(249,115,22,0.3);
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  border: 1px solid rgba(249,115,22,0.3);
+  box-shadow: 0 0 20px rgba(249,115,22,0.2);
+  animation: diskRotate 10s linear infinite;
   z-index: -1;
 }
 
@@ -117,9 +120,11 @@ body::before {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 1px;
-  height: 300px;
-  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.2), transparent);
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 1px dashed rgba(249,115,22,0.2);
+  animation: diskRotate 15s linear infinite reverse;
   z-index: -1;
 }
 
@@ -127,6 +132,11 @@ body::before {
   0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
   50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
   100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+}
+
+@keyframes diskRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
@@ -191,28 +201,32 @@ body::before {
   color: transparent;
 }
 
-/* Спиннер */
+/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА */
 .spinner {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid transparent;
-  border-top-color: #f97316;
-  border-right-color: #c084fc;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.9) 50%, transparent 65%);
+  box-shadow: 0 0 10px rgba(249,115,22,0.4);
+  animation: spin 1s linear infinite, blackHolePulse 2s infinite;
+  position: relative;
 }
 .spinner::before {
   content: '';
   position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
-  border: 2px solid transparent;
-  border-left-color: rgba(249,115,22,0.6);
-  border-bottom-color: rgba(192,132,252,0.6);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  animation: spin 1.2s linear infinite reverse;
+  border: 1px solid rgba(249,115,22,0.6);
+  animation: diskRotate 2s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 /* Остальные общие стили */
 .premium-card { background: #152238; border: 1px solid rgba(249,115,22,0.5); border-radius: 20px; padding: 28px 32px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
