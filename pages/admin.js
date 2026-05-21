@@ -21,7 +21,7 @@ export default function Admin() {
   // Сотрудники
   const [profiles, setProfiles] = useState([])
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('')
+  const [inviteRoleId, setInviteRoleId] = useState('')
   const [roles, setRoles] = useState([])
   const [showInvite, setShowInvite] = useState(false)
   const [inviteLink, setInviteLink] = useState('')
@@ -36,7 +36,7 @@ export default function Admin() {
       setUser(user)
       await fetchStickers()
       await fetchProfiles()
-      await fetchRoles()
+      await fetchAllRoles()
     }
     checkUser()
   }, [])
@@ -52,13 +52,13 @@ export default function Admin() {
     setProfiles(data || [])
   }
 
-  async function fetchRoles() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-    if (!profile) return
-    const { data } = await supabase.from('roles').select('*').eq('company_id', profile.company_id)
+  // Загружаем все роли (позже можно отфильтровать по компании)
+  async function fetchAllRoles() {
+    const { data } = await supabase.from('roles').select('*').order('name')
     setRoles(data || [])
+    if (data && data.length > 0 && !inviteRoleId) {
+      setInviteRoleId(data[0].id) // по умолчанию первая роль
+    }
   }
 
   async function createSticker(e) {
@@ -81,24 +81,30 @@ export default function Admin() {
   // Приглашение сотрудника
   async function handleInvite(e) {
     e.preventDefault()
-    if (!inviteEmail || !inviteRole) return
+    if (!inviteEmail || !inviteRoleId) return
     const token = crypto.randomUUID()
     const { data: { user } } = await supabase.auth.getUser()
     const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-    if (!profile) return
+
+    if (!profile?.company_id) {
+      alert('Ваш профиль не привязан к компании')
+      return
+    }
+
     await supabase.from('invitations').insert({
       company_id: profile.company_id,
-      role_id: parseInt(inviteRole),
+      role_id: parseInt(inviteRoleId),
       email: inviteEmail,
       token,
       created_by: user.id,
     })
+
     setInviteLink(`${window.location.origin}/register?token=${token}`)
     setInviteEmail('')
-    setInviteRole('')
+    setInviteRoleId(roles[0]?.id || '')
   }
 
-  // Удаление сотрудника (пока без заявки – прямое удаление, позже заменим на approval)
+  // Удаление сотрудника
   async function handleDeleteEmployee(targetUserId) {
     if (!confirm('Удалить сотрудника? Это действие нельзя отменить.')) return
     await supabase.from('profiles').delete().eq('user_id', targetUserId)
@@ -159,8 +165,7 @@ export default function Admin() {
             {showInvite && (
               <form onSubmit={handleInvite} className="mt-4 space-y-3">
                 <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="Email сотрудника" className="input-field" required />
-                <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="input-field" required>
-                  <option value="">Выберите роль</option>
+                <select value={inviteRoleId} onChange={e => setInviteRoleId(e.target.value)} className="input-field" required>
                   {roles.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
