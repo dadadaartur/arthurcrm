@@ -11,7 +11,7 @@ a, button, .clickable, .action-btn, .wide-btn {
 }
 *:focus { outline: none !important; }
 
-/* КОСМИЧЕСКИЙ ФОН (гарантированно) */
+/* КОСМИЧЕСКИЙ ФОН */
 body {
   margin: 0 !important;
   font-family: 'Inter', system-ui, sans-serif;
