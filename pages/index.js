@@ -11,55 +11,6 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// SVG-иконки с градиентами (как в вашем HTML)
-const icons = {
-  transfer: (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-      <defs>
-        <linearGradient id="gradTransfer" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#c084fc"/>
-          <stop offset="100%" stopColor="#38bdf8"/>
-        </linearGradient>
-      </defs>
-      <path d="M7 16 L17 8 M17 8 L13 8 M17 8 L17 12" stroke="url(#gradTransfer)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M17 16 L7 8 M7 8 L11 8 M7 8 L7 12" stroke="url(#gradTransfer)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  shop: (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-      <defs>
-        <linearGradient id="gradShop" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f97316"/>
-          <stop offset="100%" stopColor="#fbbf24"/>
-        </linearGradient>
-      </defs>
-      <path d="M6 7 L18 7 L17 20 L7 20 Z" stroke="url(#gradShop)" strokeWidth="1.8" strokeLinejoin="round"/>
-      <path d="M9 7 L9 5 C9 3.5 10.5 2 12 2 C13.5 2 15 3.5 15 5 L15 7" stroke="url(#gradShop)" strokeWidth="1.8" strokeLinecap="round"/>
-      <circle cx="10" cy="12" r="0.8" fill="url(#gradShop)"/>
-      <circle cx="14" cy="12" r="0.8" fill="url(#gradShop)"/>
-    </svg>
-  ),
-  history: (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-      <defs>
-        <linearGradient id="gradHistory" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#10b981"/>
-          <stop offset="100%" stopColor="#34d399"/>
-        </linearGradient>
-      </defs>
-      <rect x="4" y="5" width="16" height="15" rx="2" stroke="url(#gradHistory)" strokeWidth="1.8"/>
-      <path d="M8 10 L16 10 M8 14 L14 14" stroke="url(#gradHistory)" strokeWidth="1.8" strokeLinecap="round"/>
-      <polyline points="16 8 10 13 7 11" stroke="url(#gradHistory)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  purchases: (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-      <path d="M5 7h14l-1 13H6L5 7z" stroke="#f97316" strokeWidth="1.8"/>
-      <path d="M9 7V5a2 2 0 0 1 4 0v2" stroke="#f97316" strokeWidth="1.8"/>
-    </svg>
-  )
-}
-
 export default function Home() {
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
@@ -97,12 +48,11 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка (стабильная структура) */}
+        {/* Левая колонка (блок баланса) */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             {/* Область цифр и нимба */}
-            <div style={{ position: 'relative', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {/* Чёрная дыра точно под цифрами */}
+            <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
 
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
@@ -115,24 +65,12 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Кнопки (старая структура) */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
-              <button onClick={() => window.location.href = '/transfer'} className="action-btn">
-                {icons.transfer}
-                <span>Перевести</span>
-              </button>
-              <button onClick={() => window.location.href = '/shop'} className="action-btn">
-                {icons.shop}
-                <span>Магазин</span>
-              </button>
-              <button onClick={() => window.location.href = '/history'} className="action-btn">
-                {icons.history}
-                <span>Операции</span>
-              </button>
-              <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn">
-                {icons.purchases}
-                Мои покупки
-              </button>
+            {/* Кнопки (только текст, без иконок) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
+              <button onClick={() => window.location.href = '/transfer'} className="action-btn">Перевести</button>
+              <button onClick={() => window.location.href = '/shop'} className="action-btn">Магазин</button>
+              <button onClick={() => window.location.href = '/history'} className="action-btn">Операции</button>
+              <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn">Мои покупки</button>
             </div>
           </div>
         </div>
