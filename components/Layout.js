@@ -18,7 +18,6 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col">
       <header className="bg-transparent relative z-10">
         <div className="flex justify-between items-center px-12 py-6">
-          {/* Левая часть: логотип + навигация */}
           <div className="flex items-center gap-8">
             <Link href="/" className="select-none" style={{
               fontSize: '1.5rem',
@@ -29,8 +28,8 @@ export default function Layout({ children }) {
               background: 'rgba(255,255,255,0.85)',
               backdropFilter: 'blur(4px)',
               borderRadius: '12px',
-              color: '#FFFFFF',                              // белый текст
-              textShadow: '0 0 15px rgba(76,175,80,0.7), 0 0 30px rgba(249,168,37,0.5)',  // зелёная + жёлтая тень
+              color: '#FFFFFF',
+              textShadow: '0 0 15px rgba(76,175,80,0.7), 0 0 30px rgba(249,168,37,0.5)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.7)',
               display: 'inline-block'
             }}>
@@ -43,7 +42,6 @@ export default function Layout({ children }) {
             </nav>
           </div>
 
-          {/* Правая часть: имя + выход */}
           <div className="flex items-center gap-4 text-sm font-medium">
             {user && <span className="text-gray-700">Артур</span>}
             {user && (
