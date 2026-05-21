@@ -2,15 +2,12 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
     if (!container || container.children.length > 0) return
 
-    const colors = [
-      '#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366',
-    ]
+    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
     for (let i = 0; i < 40; i++) {
       const star = document.createElement('div')
       const size = Math.random() * 4 + 1.5
@@ -28,7 +25,6 @@ function StarsBackground() {
       container.appendChild(star)
     }
   }, [])
-
   return <div id="real-stars" className="stars-bg" />
 }
 
@@ -40,12 +36,11 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Загружаем профиль
         supabase
           .from('profiles')
-          .select('display_name, roles(name)')
+          .select('display_name, roles(name, is_system)')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
           .then(({ data }) => setProfile(data))
       }
     })
@@ -56,8 +51,10 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Проверка, может ли пользователь видеть админку (РОП или СМ)
-  const canSeeAdmin = profile?.roles?.name === 'РОП' || profile?.roles?.name === 'СМ'
+  const isSuperAdmin = profile?.roles?.is_system === true
+  const isCompanyAdmin = profile?.roles?.name === 'РОП' ||
+                         profile?.roles?.name === 'СМ' ||
+                         profile?.roles?.name === 'Администратор'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -71,8 +68,11 @@ export default function Layout({ children }) {
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <Link href="/supd" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</Link>
-            {canSeeAdmin && (
+            {isSuperAdmin && (
               <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>
+            )}
+            {isCompanyAdmin && (
+              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
             )}
           </nav>
         </div>
