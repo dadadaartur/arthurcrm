@@ -21,6 +21,20 @@ html, body {
   position: relative;
 }
 
+/* Звёздный фон (контейнер) */
+.stars-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Медленное мерцание настоящих звёзд */
+@keyframes realTwinkle {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
 /* АНИМАЦИЯ РАМОК BORDERSHINE */
 @keyframes borderShine {
   0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
