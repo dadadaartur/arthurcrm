@@ -48,7 +48,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка (блок баланса) */}
+        {/* Левая колонка */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             {/* Область цифр и нимба */}
@@ -56,7 +56,7 @@ export default function Home() {
               <div className="black-hole" />
 
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div className="text-sm font-bold text-gray-400 mb-2">БАЛАНС</div>
+                <div className="text-sm font-bold text-gray-400 mb-2">Баланс</div>
                 <div className="text-5xl font-extrabold text-yellow-400 mb-2"
                      style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
                   {balance.toLocaleString()}
@@ -65,7 +65,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Кнопки (только текст, без иконок) */}
+            {/* Кнопки */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">Перевести</button>
               <button onClick={() => window.location.href = '/shop'} className="action-btn">Магазин</button>
