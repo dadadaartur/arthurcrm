@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Реалистичные звёзды (как снимки МКС)
+// Реалистичные звёзды (40 штук, равномерно по всему экрану)
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
@@ -16,7 +16,7 @@ function StarsBackground() {
       '#ffb366', // оранжевый
     ]
 
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 40; i++) {
       const star = document.createElement('div')
       const size = Math.random() * 4 + 1.5 // от 1.5 до 5.5 пикселей
       star.style.width = size + 'px'
@@ -24,6 +24,7 @@ function StarsBackground() {
       star.style.borderRadius = '50%'
       star.style.background = colors[Math.floor(Math.random() * colors.length)]
       star.style.position = 'absolute'
+      // Равномерно по всей ширине и высоте, без скучивания у краёв
       star.style.left = Math.random() * 100 + '%'
       star.style.top = Math.random() * 100 + '%'
       star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
