@@ -11,7 +11,6 @@ a, button, .clickable, .action-btn, .wide-btn {
 }
 *:focus { outline: none !important; }
 
-/* ГАРАНТИРОВАННЫЙ ТЁМНЫЙ ФОН */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
@@ -20,44 +19,6 @@ html, body {
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
   position: relative;
-}
-
-/* Звёзды */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: 
-    radial-gradient(1px 1px at 10% 20%, white, transparent),
-    radial-gradient(1px 1px at 20% 40%, white, transparent),
-    radial-gradient(1px 1px at 30% 10%, white, transparent),
-    radial-gradient(1px 1px at 40% 60%, white, transparent),
-    radial-gradient(1px 1px at 50% 30%, white, transparent),
-    radial-gradient(1px 1px at 60% 80%, white, transparent),
-    radial-gradient(1px 1px at 70% 15%, white, transparent),
-    radial-gradient(1px 1px at 80% 50%, white, transparent),
-    radial-gradient(1px 1px at 90% 70%, white, transparent),
-    radial-gradient(1px 1px at 15% 85%, white, transparent),
-    radial-gradient(1px 1px at 25% 55%, white, transparent),
-    radial-gradient(1px 1px at 35% 95%, white, transparent),
-    radial-gradient(1px 1px at 45% 5%, white, transparent),
-    radial-gradient(1px 1px at 55% 45%, white, transparent),
-    radial-gradient(1px 1px at 65% 75%, white, transparent),
-    radial-gradient(1px 1px at 75% 25%, white, transparent),
-    radial-gradient(1px 1px at 85% 35%, white, transparent),
-    radial-gradient(1px 1px at 95% 65%, white, transparent),
-    radial-gradient(1px 1px at 5% 50%, white, transparent),
-    radial-gradient(1px 1px at 12% 12%, white, transparent);
-  background-size: 200px 200px;
-  animation: twinkle 3s infinite alternate;
-  opacity: 0.7;
-  z-index: 0;
-  pointer-events: none;
-}
-
-@keyframes twinkle {
-  0% { opacity: 0.5; }
-  100% { opacity: 0.9; }
 }
 
 /* АНИМАЦИЯ РАМОК BORDERSHINE */
@@ -80,7 +41,7 @@ body::before {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА (НИМБ) С УСИЛЕННЫМ ГОРИЗОНТАЛЬНЫМ СВЕТОМ */
+/* ЧЁРНАЯ ДЫРА (НИМБ) С ГОРИЗОНТАЛЬНЫМ СВЕТОМ */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -98,7 +59,6 @@ body::before {
   pointer-events: none;
 }
 
-/* Горизонтальный световой поток (яркий, широкий) */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -118,7 +78,6 @@ body::before {
   animation: streamFlow 4s infinite ease-in-out;
 }
 
-/* Вертикальный луч остаётся очень тонким */
 .black-hole::after {
   content: '';
   position: absolute;
@@ -143,7 +102,7 @@ body::before {
   100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
 }
 
-/* КНОПКИ ДЕЙСТВИЙ – ТЕПЕРЬ КАК КАРТОЧКИ */
+/* КНОПКИ ДЕЙСТВИЙ */
 .action-btn {
   flex: 1 1 0;
   font-size: 14px;
