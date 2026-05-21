@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Компонент звёздного фона (чистый JSX)
+// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('stars-container')
@@ -42,13 +42,16 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col relative">
       <StarsBackground />
 
-      <header className="glass-header flex justify-between items-center px-8 py-4 relative z-10">
+      {/* Прозрачная шапка без видимых границ */}
+      <header className="flex justify-between items-center px-8 py-4 relative z-10">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-xl font-bold gradient-text">Кармический банк</Link>
+          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+            Кармический банк
+          </Link>
           <nav className="flex gap-3 text-sm font-medium">
             <Link href="/path-to-perfection" className="action-btn !flex-row !py-2 !px-4 !text-sm">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !flex-row !py-2 !px-4 !text-sm">Забота о здоровье</Link>
-            <Link href="/supd" className="action-btn !flex-row !py-2 !px-4 !text-sm">СУПД</Link>
+            <Link href="/supd" className="action-btn !flex-row !py-2 !px-4 !text-sm">Кармическая CRM</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm font-medium">
