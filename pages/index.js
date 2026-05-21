@@ -11,7 +11,7 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// SVG-иконки с градиентами (как в оригинале)
+// SVG-иконки с градиентами
 const icons = {
   transfer: (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -97,16 +97,22 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
-        {/* Левая колонка: баланс и кнопки */}
+        {/* Левая колонка */}
         <div className="flex flex-col gap-5">
           <div className="balance-card">
-            <div className="text-lg font-bold gradient-text mb-1">БАЛАНС</div>
-            <div className="text-5xl font-extrabold bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent drop-shadow-md mb-1">
-              {balance.toLocaleString()}
-            </div>
-            <div className="text-lg font-bold gradient-text mb-6">{karmikWord}</div>
+            {/* Чёрная дыра (нимб) */}
+            <div className="black-hole" />
 
-            <div className="flex gap-4 justify-center flex-wrap mb-5">
+            <div className="relative z-10">
+              <div className="text-sm font-bold text-gray-400 mb-1">БАЛАНС</div>
+              <div className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 mb-1"
+                   style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {balance.toLocaleString()}
+              </div>
+              <div className="text-lg font-bold text-yellow-500 mb-6">{karmikWord}</div>
+            </div>
+
+            <div className="flex gap-4 justify-center flex-wrap mb-5 relative z-10">
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">
                 <span className="flex items-center justify-center w-8 h-8">{icons.transfer}</span>
                 <span>Перевести</span>
@@ -120,14 +126,14 @@ export default function Home() {
                 <span>Операции</span>
               </button>
             </div>
-            <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn">
+            <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn relative z-10">
               {icons.purchases}
               Мои покупки
             </button>
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения */}
+        {/* Правая колонка */}
         <div className="flex flex-col gap-5">
           <div className="dash-card">
             <h3>Задания</h3>
