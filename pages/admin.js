@@ -34,12 +34,59 @@ export default function Admin() {
         return
       }
       setUser(user)
+
+      // Убедимся, что профиль существует (создаст, если нет)
+      await ensureProfile(user)
       await fetchStickers()
       await fetchProfiles()
       await fetchAllRoles()
     }
     checkUser()
   }, [])
+
+  // Автоматически создаёт профиль, если его ещё нет
+  async function ensureProfile(user) {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (existing) return
+
+    // Попробуем найти приглашение (если регистрировался по инвайту)
+    // или привяжем к первой компании, если их несколько.
+    // Пока используем компанию "ПродажиПро" и роль "РОП" для первого пользователя.
+    const { data: company } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('name', 'ПродажиПро')
+      .single()
+
+    if (!company) return
+
+    const { data: role } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'РОП')
+      .eq('company_id', company.id)
+      .single()
+
+    const { data: department } = await supabase
+      .from('departments')
+      .select('id')
+      .eq('name', 'Отдел продаж')
+      .eq('company_id', company.id)
+      .single()
+
+    await supabase.from('profiles').insert({
+      user_id: user.id,
+      company_id: company.id,
+      department_id: department?.id || null,
+      role_id: role?.id || null,
+      display_name: user.email,
+    })
+  }
 
   async function fetchStickers() {
     const { data } = await supabase.from('admin_stickers').select('*').order('created_at', { ascending: false })
@@ -52,12 +99,11 @@ export default function Admin() {
     setProfiles(data || [])
   }
 
-  // Загружаем все роли (позже можно отфильтровать по компании)
   async function fetchAllRoles() {
     const { data } = await supabase.from('roles').select('*').order('name')
     setRoles(data || [])
     if (data && data.length > 0 && !inviteRoleId) {
-      setInviteRoleId(data[0].id) // по умолчанию первая роль
+      setInviteRoleId(data[0].id)
     }
   }
 
@@ -82,15 +128,19 @@ export default function Admin() {
   async function handleInvite(e) {
     e.preventDefault()
     if (!inviteEmail || !inviteRoleId) return
-    const token = crypto.randomUUID()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single()
 
     if (!profile?.company_id) {
       alert('Ваш профиль не привязан к компании')
       return
     }
 
+    const token = crypto.randomUUID()
     await supabase.from('invitations').insert({
       company_id: profile.company_id,
       role_id: parseInt(inviteRoleId),
@@ -122,7 +172,6 @@ export default function Admin() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Левая колонка: дашборд и фильтры */}
         <div className="w-full lg:w-1/3">
           <div className="dash-card mb-6">
             <h3>Дашборд компании</h3>
@@ -147,7 +196,6 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Сотрудники */}
           <div className="dash-card">
             <h3>Сотрудники</h3>
             <div className="mt-4 space-y-2">
@@ -182,7 +230,6 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Правая колонка: стикеры */}
         <div className="flex-1">
           <div className="dash-card mb-6">
             <h3>Новый стикер</h3>
