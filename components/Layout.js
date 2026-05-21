@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('stars-container')
@@ -42,8 +41,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col relative">
       <StarsBackground />
 
-      {/* Прозрачная шапка без видимых границ */}
-      <header className="flex justify-between items-center px-8 py-4 relative z-10">
+      <header className="flex justify-between items-center px-6 py-4 relative z-10">
         <div className="flex items-center gap-6">
           <Link href="/" className="text-xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
             Кармический банк
