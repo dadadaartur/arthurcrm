@@ -2,29 +2,23 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Реалистичные звёзды (40 штук, равномерно по всему экрану)
+// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
     if (!container || container.children.length > 0) return
 
     const colors = [
-      '#ff4d4d', // красный
-      '#4d79ff', // синий
-      '#ffff66', // жёлтый
-      '#e0f0ff', // бело-ледяной
-      '#ffb366', // оранжевый
+      '#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366',
     ]
-
     for (let i = 0; i < 40; i++) {
       const star = document.createElement('div')
-      const size = Math.random() * 4 + 1.5 // от 1.5 до 5.5 пикселей
+      const size = Math.random() * 4 + 1.5
       star.style.width = size + 'px'
       star.style.height = size + 'px'
       star.style.borderRadius = '50%'
       star.style.background = colors[Math.floor(Math.random() * colors.length)]
       star.style.position = 'absolute'
-      // Равномерно по всей ширине и высоте, без скучивания у краёв
       star.style.left = Math.random() * 100 + '%'
       star.style.top = Math.random() * 100 + '%'
       star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
@@ -40,15 +34,30 @@ function StarsBackground() {
 
 export default function Layout({ children }) {
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      if (user) {
+        // Загружаем профиль
+        supabase
+          .from('profiles')
+          .select('display_name, roles(name)')
+          .eq('user_id', user.id)
+          .single()
+          .then(({ data }) => setProfile(data))
+      }
+    })
   }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
+
+  // Проверка, может ли пользователь видеть админку (РОП или СМ)
+  const canSeeAdmin = profile?.roles?.name === 'РОП' || profile?.roles?.name === 'СМ'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -62,10 +71,17 @@ export default function Layout({ children }) {
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <Link href="/supd" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</Link>
+            {canSeeAdmin && (
+              <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2 text-xs font-medium">
-          {user && <span className="text-white font-semibold">Артур</span>}
+          {user && (
+            <span className="text-white font-semibold">
+              {profile?.display_name || user.email}
+            </span>
+          )}
           {user && (
             <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">
               Выйти
