@@ -80,7 +80,7 @@ body::before {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА (НИМБ) С ГОРИЗОНТОМ СОБЫТИЙ */
+/* ЧЁРНАЯ ДЫРА (НИМБ) */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -98,21 +98,32 @@ body::before {
   pointer-events: none;
 }
 
-/* Горизонт событий: горизонтальный луч */
+/* Внешний световой поток (только горизонталь) */
 .black-hole::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.5), transparent);
-  box-shadow: 0 0 10px rgba(249,115,22,0.3);
+  width: 400px;                /* широкий поток */
+  height: 80px;                /* небольшая высота, чтобы не перекрывать цифры */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(249, 115, 22, 0.25) 0%,
+    transparent 70%
+  );
+  filter: blur(10px);
   z-index: -1;
+  animation: streamFlow 4s infinite ease-in-out;
 }
 
-/* Вертикальный луч */
+@keyframes streamFlow {
+  0% { opacity: 0.6; transform: translate(-50%, -50%) scaleX(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.1); }
+  100% { opacity: 0.6; transform: translate(-50%, -50%) scaleX(1); }
+}
+
+/* Вертикальный луч (оставим очень тонким, не перечёркивает) */
 .black-hole::after {
   content: '';
   position: absolute;
@@ -121,7 +132,7 @@ body::before {
   transform: translate(-50%, -50%);
   width: 1px;
   height: 300px;
-  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.2), transparent);
+  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.15), transparent);
   z-index: -1;
 }
 
@@ -143,6 +154,7 @@ body::before {
   color: rgba(255,255,255,0.82);
   transition: all 0.25s;
   text-align: center;
+  white-space: nowrap;           /* запрещаем перенос */
 }
 .action-btn:hover {
   background: rgba(249,115,22,0.1);
