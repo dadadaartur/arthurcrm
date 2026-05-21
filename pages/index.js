@@ -11,6 +11,55 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
+// SVG-иконки с градиентами (как в оригинале)
+const icons = {
+  transfer: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="gradTransfer" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#c084fc"/>
+          <stop offset="100%" stopColor="#38bdf8"/>
+        </linearGradient>
+      </defs>
+      <path d="M7 16 L17 8 M17 8 L13 8 M17 8 L17 12" stroke="url(#gradTransfer)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M17 16 L7 8 M7 8 L11 8 M7 8 L7 12" stroke="url(#gradTransfer)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  shop: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="gradShop" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f97316"/>
+          <stop offset="100%" stopColor="#fbbf24"/>
+        </linearGradient>
+      </defs>
+      <path d="M6 7 L18 7 L17 20 L7 20 Z" stroke="url(#gradShop)" strokeWidth="1.8" strokeLinejoin="round"/>
+      <path d="M9 7 L9 5 C9 3.5 10.5 2 12 2 C13.5 2 15 3.5 15 5 L15 7" stroke="url(#gradShop)" strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="10" cy="12" r="0.8" fill="url(#gradShop)"/>
+      <circle cx="14" cy="12" r="0.8" fill="url(#gradShop)"/>
+    </svg>
+  ),
+  history: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="gradHistory" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#10b981"/>
+          <stop offset="100%" stopColor="#34d399"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="5" width="16" height="15" rx="2" stroke="url(#gradHistory)" strokeWidth="1.8"/>
+      <path d="M8 10 L16 10 M8 14 L14 14" stroke="url(#gradHistory)" strokeWidth="1.8" strokeLinecap="round"/>
+      <polyline points="16 8 10 13 7 11" stroke="url(#gradHistory)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  purchases: (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+      <path d="M5 7h14l-1 13H6L5 7z" stroke="#f97316" strokeWidth="1.8"/>
+      <path d="M9 7V5a2 2 0 0 1 4 0v2" stroke="#f97316" strokeWidth="1.8"/>
+    </svg>
+  )
+}
+
 export default function Home() {
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
@@ -44,178 +93,57 @@ export default function Home() {
   }
 
   const karmikWord = getKarmikWord(balance)
-  const balanceStr = balance.toLocaleString()
-  const dynamicFontSize = balanceStr.length > 5 ? '38px' :
-                          balanceStr.length > 4 ? '46px' :
-                          balanceStr.length > 3 ? '54px' : '62px'
 
   return (
-    <div className="flex flex-col items-start px-12 py-8">
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
         {/* Левая колонка: баланс и кнопки */}
-        <div className="flex flex-col items-start">
-          {/* Блок баланса — чёрный фон, золотые детали */}
-          <div style={{
-            background: '#0A0A0A',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '28px',
-            padding: '24px 32px',
-            boxShadow: `
-              0 0 0 2px rgba(197,160,78,.3),
-              0 0 40px rgba(197,160,78,.2),
-              0 0 80px rgba(197,160,78,.1),
-              inset 0 2px 8px rgba(255,255,255,.08),
-              inset 0 0 40px rgba(255,220,140,.04),
-              inset 0 -4px 12px rgba(0,0,0,.35)
-            `,
-            width: '460px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            {/* Верхний золотой блик */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '70px',
-              background: 'linear-gradient(180deg, rgba(197,160,78,.2), transparent)',
-              pointerEvents: 'none'
-            }} />
-
-            {/* Центральная область с нимбом */}
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '200px'
-            }}>
-              {/* Тонкое золотое кольцо */}
-              <div style={{
-                position: 'absolute',
-                width: '180px',
-                height: '180px',
-                borderRadius: '50%',
-                border: '1px solid rgba(197,160,78,.7)',
-                boxShadow: '0 0 12px rgba(197,160,78,0.3)',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background: 'transparent'
-              }} />
-
-              {/* Левая стрелка (золотая) */}
-              <div style={{ position: 'absolute', left: '10px', display: 'flex', alignItems: 'center' }}>
-                <div style={{
-                  width: '7px', height: '7px', borderRadius: '50%',
-                  background: 'radial-gradient(circle at 30% 30%, #FFD700, #B8860B)',
-                  boxShadow: '0 0 10px rgba(197,160,78,0.9)',
-                  border: '1px solid rgba(197,160,78,0.8)'
-                }} />
-                <div style={{
-                  width: '60px', height: '1px', marginLeft: '6px',
-                  background: 'linear-gradient(90deg, rgba(197,160,78,.6), rgba(197,160,78,1))'
-                }} />
-                <div style={{
-                  width: '5px', height: '5px',
-                  borderTop: '1px solid rgba(197,160,78,1)', borderRight: '1px solid rgba(197,160,78,1)',
-                  transform: 'rotate(45deg)', marginLeft: '-2px'
-                }} />
-              </div>
-
-              {/* Центр: цифра и надписи (золото на чёрном) */}
-              <div style={{ position: 'relative', zIndex: 5, textAlign: 'center' }}>
-                <div style={{
-                  fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.5)',
-                  textTransform: 'uppercase', letterSpacing: '2px',
-                  marginBottom: '4px', filter: 'blur(0.3px)'
-                }}>
-                  БАЛАНС
-                </div>
-                <div style={{
-                  fontSize: dynamicFontSize, fontWeight: 700, lineHeight: 1,
-                  letterSpacing: '-2px',
-                  background: 'linear-gradient(180deg,#FFD700 0%,#C5A04E 60%,#8B7300 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  WebkitTextStroke: '1px rgba(0,0,0,.25)',
-                  filter: 'drop-shadow(0 0 10px rgba(197,160,78,.6))',
-                  marginTop: '4px'
-                }}>
-                  {balanceStr}
-                </div>
-                <div style={{
-                  fontSize: '13px', color: 'rgba(255,255,255,0.6)',
-                  letterSpacing: '.3px', opacity: 0.8, marginTop: '4px'
-                }}>
-                  {karmikWord}
-                </div>
-              </div>
-
-              {/* Правая стрелка (золотая) */}
-              <div style={{ position: 'absolute', right: '10px', display: 'flex', alignItems: 'center' }}>
-                <div style={{
-                  width: '5px', height: '5px',
-                  borderTop: '1px solid rgba(197,160,78,1)', borderRight: '1px solid rgba(197,160,78,1)',
-                  transform: 'rotate(225deg)', marginRight: '-2px'
-                }} />
-                <div style={{
-                  width: '60px', height: '1px', marginRight: '6px',
-                  background: 'linear-gradient(90deg, rgba(197,160,78,1), rgba(197,160,78,.6))'
-                }} />
-                <div style={{
-                  width: '7px', height: '7px', borderRadius: '50%',
-                  background: 'radial-gradient(circle at 30% 30%, #FFD700, #B8860B)',
-                  boxShadow: '0 0 10px rgba(197,160,78,0.9)',
-                  border: '1px solid rgba(197,160,78,0.8)'
-                }} />
-              </div>
+        <div className="flex flex-col gap-5">
+          <div className="balance-card">
+            <div className="text-lg font-bold gradient-text mb-1">БАЛАНС</div>
+            <div className="text-5xl font-extrabold bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent drop-shadow-md mb-1">
+              {balance.toLocaleString()}
             </div>
-          </div>
+            <div className="text-lg font-bold gradient-text mb-6">{karmikWord}</div>
 
-          {/* Кнопки действий (голограммные, без изменений) */}
-          <div style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', width: '460px' }}>
-            {['История', 'Покупки', 'Перевести'].map((label) => (
-              <button
-                key={label}
-                onClick={() => {
-                  if (label === 'История') window.location.href = '/history'
-                  if (label === 'Покупки') window.location.href = '/my-purchases'
-                  if (label === 'Перевести') window.location.href = '/transfer'
-                }}
-                className="btn-hologram"
-                style={{ flex: '1 1 0' }}
-              >
-                {label}
+            <div className="flex gap-4 justify-center flex-wrap mb-5">
+              <button onClick={() => window.location.href = '/transfer'} className="action-btn">
+                <span className="flex items-center justify-center w-8 h-8">{icons.transfer}</span>
+                <span>Перевести</span>
               </button>
-            ))}
-            <button
-              onClick={() => window.location.href = '/shop'}
-              className="btn-hologram"
-              style={{ flexBasis: '100%', marginTop: '4px' }}
-            >
-              Магазин
+              <button onClick={() => window.location.href = '/shop'} className="action-btn">
+                <span className="flex items-center justify-center w-8 h-8">{icons.shop}</span>
+                <span>Магазин</span>
+              </button>
+              <button onClick={() => window.location.href = '/history'} className="action-btn">
+                <span className="flex items-center justify-center w-8 h-8">{icons.history}</span>
+                <span>Операции</span>
+              </button>
+            </div>
+            <button onClick={() => window.location.href = '/my-purchases'} className="wide-btn">
+              {icons.purchases}
+              Мои покупки
             </button>
           </div>
         </div>
 
-        {/* Правая колонка: разделы-украшения (фиолетовые заголовки) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
-          <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#C71AC6' }}>Задания</h3>
-            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Выполняй миссии и расти над собой</p>
+        {/* Правая колонка: разделы-украшения */}
+        <div className="flex flex-col gap-5">
+          <div className="dash-card">
+            <h3>Задания</h3>
+            <p className="text-sm text-gray-400">Выполняй миссии и расти над собой</p>
           </div>
-          <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#C71AC6' }}>Рейтинг</h3>
-            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Твоя позиция среди лучших</p>
+          <div className="dash-card">
+            <h3>Рейтинг</h3>
+            <p className="text-sm text-gray-400">Твоя позиция среди лучших</p>
           </div>
-          <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#C71AC6' }}>Соревнования</h3>
-            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Докажи своё мастерство в битве</p>
+          <div className="dash-card">
+            <h3>Соревнования</h3>
+            <p className="text-sm text-gray-400">Докажи своё мастерство в битве</p>
           </div>
-          <div className="card-hologram">
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#C71AC6' }}>Битва экспертов</h3>
-            <p className="text-sm" style={{ background: 'linear-gradient(135deg, #2E7D32, #4CAF50)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Всероссийский чемпионат профессионалов</p>
+          <div className="dash-card">
+            <h3>Битва экспертов</h3>
+            <p className="text-sm text-gray-400">Всероссийский чемпионат профессионалов</p>
           </div>
         </div>
       </div>
