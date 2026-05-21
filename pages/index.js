@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 
+// Склонение слова "кармик"
 function getKarmikWord(n) {
   const lastDigit = n % 10
   const lastTwoDigits = n % 100
@@ -35,6 +36,7 @@ export default function Home() {
     checkUser()
   }, [])
 
+  // Загрузка – показываем спиннер
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -48,24 +50,29 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка */}
+        {/* Левая колонка – блок баланса */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
-            {/* Область цифр и нимба */}
+            {/* Центральная область с нимбом */}
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
-
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div className="text-sm font-bold text-gray-400 mb-2">Баланс</div>
-                <div className="text-5xl font-extrabold text-yellow-400 mb-2"
-                     style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
+                <div
+                  className="text-5xl font-extrabold text-yellow-400 mb-2"
+                  style={{
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)'
+                  }}
+                >
                   {balance.toLocaleString()}
                 </div>
                 <div className="text-lg font-bold text-yellow-500">{karmikWord}</div>
               </div>
             </div>
 
-            {/* Кнопки */}
+            {/* Кнопки действий */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
               <button onClick={() => window.location.href = '/transfer'} className="action-btn">Перевести</button>
               <button onClick={() => window.location.href = '/shop'} className="action-btn">Магазин</button>
@@ -75,7 +82,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка */}
+        {/* Правая колонка – разделы */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="dash-card">
             <h3>Задания</h3>
