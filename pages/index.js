@@ -65,7 +65,7 @@ export default function Home() {
                 >
                   {balance.toLocaleString()}
                 </div>
-                <div className="text-lg font-bold text-yellow-500">{karmikWord}</div>
+                <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
               </div>
             </div>
 
