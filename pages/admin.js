@@ -5,31 +5,31 @@ import Spinner from '../components/Spinner'
 const COLORS = {
   red: {
     label: 'Срочный фикс',
-    bg: 'rgba(239, 68, 68, 0.25)',
-    border: 'rgba(239, 68, 68, 0.7)',
+    bg: 'rgba(239, 68, 68, 0.85)',
+    border: 'rgba(239, 68, 68, 0.9)',
     text: '#FFFFFF',
-    shadow: '0 0 20px rgba(239, 68, 68, 0.4)',
+    shadow: '0 0 25px rgba(239, 68, 68, 0.5)',
   },
   yellow: {
     label: 'Срочно, но есть время',
-    bg: 'rgba(234, 179, 8, 0.25)',
-    border: 'rgba(234, 179, 8, 0.7)',
+    bg: 'rgba(234, 179, 8, 0.85)',
+    border: 'rgba(234, 179, 8, 0.9)',
     text: '#FFFFFF',
-    shadow: '0 0 20px rgba(234, 179, 8, 0.4)',
+    shadow: '0 0 25px rgba(234, 179, 8, 0.5)',
   },
   green: {
     label: 'Идея на будущее',
-    bg: 'rgba(34, 197, 94, 0.25)',
-    border: 'rgba(34, 197, 94, 0.7)',
+    bg: 'rgba(34, 197, 94, 0.85)',
+    border: 'rgba(34, 197, 94, 0.9)',
     text: '#FFFFFF',
-    shadow: '0 0 20px rgba(34, 197, 94, 0.4)',
+    shadow: '0 0 25px rgba(34, 197, 94, 0.5)',
   },
   blue: {
     label: 'Путь проекта',
-    bg: 'rgba(59, 130, 246, 0.3)',
-    border: 'rgba(59, 130, 246, 0.9)',
+    bg: 'rgba(59, 130, 246, 0.9)',
+    border: 'rgba(59, 130, 246, 1)',
     text: '#FFFFFF',
-    shadow: '0 0 25px rgba(59, 130, 246, 0.6)',
+    shadow: '0 0 30px rgba(59, 130, 246, 0.7)',
   },
 }
 
@@ -40,7 +40,7 @@ export default function Admin() {
   const [color, setColor] = useState('blue')
   const [filter, setFilter] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState({}) // id стикера -> bool
+  const [expanded, setExpanded] = useState({})
 
   useEffect(() => {
     const checkUser = async () => {
@@ -198,7 +198,7 @@ export default function Admin() {
                     color: style.text,
                   }}
                 >
-                  <p className="text-sm whitespace-pre-wrap flex-1">{displayText}</p>
+                  <p className="text-sm whitespace-pre-wrap flex-1 sticker-text">{displayText}</p>
                   <div className="flex justify-between items-center mt-4">
                     <span className="text-xs opacity-70">{new Date(sticker.created_at).toLocaleString('ru')}</span>
                     <div className="flex gap-2">
