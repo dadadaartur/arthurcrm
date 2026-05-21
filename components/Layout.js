@@ -2,6 +2,30 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+// Компонент звёздного фона (чистый JSX)
+function StarsBackground() {
+  useEffect(() => {
+    const container = document.getElementById('stars-container')
+    if (!container) return
+    const colors = ['#ffffff', '#e0f0ff', '#fbbf24', '#c084fc', '#38bdf8']
+    for (let i = 0; i < 50; i++) {
+      const star = document.createElement('div')
+      star.className = 'star-dot'
+      const size = Math.random() * 2.5 + 0.8
+      star.style.width = size + 'px'
+      star.style.height = size + 'px'
+      star.style.left = Math.random() * 100 + '%'
+      star.style.top = Math.random() * 100 + '%'
+      star.style.background = colors[Math.floor(Math.random() * colors.length)]
+      star.style.animationDelay = Math.random() * 2 + 's'
+      star.style.animationDuration = (Math.random() * 2 + 1.8) + 's'
+      container.appendChild(star)
+    }
+  }, [])
+
+  return <div id="stars-container" className="stars-bg" />
+}
+
 export default function Layout({ children }) {
   const [user, setUser] = useState(null)
 
@@ -15,41 +39,25 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-transparent relative z-10">
-        <div className="flex justify-between items-center px-12 py-6">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="select-none" style={{
-              fontSize: '1.5rem',
-              fontWeight: '400',
-              letterSpacing: '-0.3px',
-              lineHeight: '1.2',
-              padding: '4px 14px',
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(4px)',
-              borderRadius: '12px',
-              color: '#FFFFFF',
-              textShadow: '0 0 15px rgba(76,175,80,0.7), 0 0 30px rgba(249,168,37,0.5)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.7)',
-              display: 'inline-block'
-            }}>
-              Кармический банк
-            </Link>
-            <nav className="flex gap-3 text-sm font-medium">
-              <Link href="/path-to-perfection" className="btn-hologram" style={{ padding: '8px 20px' }}>Путь к совершенству</Link>
-              <Link href="/healthcare" className="btn-hologram" style={{ padding: '8px 20px' }}>Забота о здоровье</Link>
-              <Link href="/supd" className="btn-hologram" style={{ padding: '8px 20px' }}>СУПД</Link>
-            </nav>
-          </div>
+    <div className="min-h-screen flex flex-col relative">
+      <StarsBackground />
 
-          <div className="flex items-center gap-4 text-sm font-medium">
-            {user && <span className="text-gray-700">Артур</span>}
-            {user && (
-              <button onClick={handleLogout} className="btn-hologram" style={{ padding: '8px 20px' }}>
-                Выйти
-              </button>
-            )}
-          </div>
+      <header className="glass-header flex justify-between items-center px-8 py-4 relative z-10">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="text-xl font-bold gradient-text">Кармический банк</Link>
+          <nav className="flex gap-3 text-sm font-medium">
+            <Link href="/path-to-perfection" className="action-btn !flex-row !py-2 !px-4 !text-sm">Путь к совершенству</Link>
+            <Link href="/healthcare" className="action-btn !flex-row !py-2 !px-4 !text-sm">Забота о здоровье</Link>
+            <Link href="/supd" className="action-btn !flex-row !py-2 !px-4 !text-sm">СУПД</Link>
+          </nav>
+        </div>
+        <div className="flex items-center gap-4 text-sm font-medium">
+          {user && <span className="text-white font-semibold">Артур</span>}
+          {user && (
+            <button onClick={handleLogout} className="action-btn !flex-row !py-2 !px-4 !text-sm">
+              Выйти
+            </button>
+          )}
         </div>
       </header>
 
@@ -57,7 +65,7 @@ export default function Layout({ children }) {
         {children}
       </main>
 
-      <footer className="text-center py-4 text-xs text-gray-400 relative z-10">
+      <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>
