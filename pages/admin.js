@@ -25,6 +25,7 @@ export default function Admin() {
   const [roles, setRoles] = useState([])
   const [showInvite, setShowInvite] = useState(false)
   const [inviteLink, setInviteLink] = useState('')
+  const [copySuccess, setCopySuccess] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -35,7 +36,6 @@ export default function Admin() {
       }
       setUser(user)
 
-      // Убедимся, что профиль существует (создаст, если нет)
       await ensureProfile(user)
       await fetchStickers()
       await fetchProfiles()
@@ -44,7 +44,6 @@ export default function Admin() {
     checkUser()
   }, [])
 
-  // Автоматически создаёт профиль, если его ещё нет
   async function ensureProfile(user) {
     const { data: existing } = await supabase
       .from('profiles')
@@ -54,9 +53,6 @@ export default function Admin() {
 
     if (existing) return
 
-    // Попробуем найти приглашение (если регистрировался по инвайту)
-    // или привяжем к первой компании, если их несколько.
-    // Пока используем компанию "ПродажиПро" и роль "РОП" для первого пользователя.
     const { data: company } = await supabase
       .from('companies')
       .select('id')
@@ -154,6 +150,24 @@ export default function Admin() {
     setInviteRoleId(roles[0]?.id || '')
   }
 
+  async function copyInviteLink() {
+    if (!inviteLink) return
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      // fallback: выделить текст
+      const input = document.getElementById('invite-link-input')
+      if (input) {
+        input.select()
+        document.execCommand('copy')
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+      }
+    }
+  }
+
   // Удаление сотрудника
   async function handleDeleteEmployee(targetUserId) {
     if (!confirm('Удалить сотрудника? Это действие нельзя отменить.')) return
@@ -220,9 +234,18 @@ export default function Admin() {
                 </select>
                 <button type="submit" className="btn-gold w-full">Создать приглашение</button>
                 {inviteLink && (
-                  <div className="mt-3 p-3 bg-gray-800 rounded-lg break-all">
-                    <p className="text-xs text-gray-300 mb-1">Ссылка для регистрации:</p>
-                    <code className="text-xs text-green-400">{inviteLink}</code>
+                  <div className="mt-3 space-y-2">
+                    <input
+                      id="invite-link-input"
+                      type="text"
+                      value={inviteLink}
+                      readOnly
+                      className="input-field text-xs text-green-400 bg-gray-900 border-gray-700"
+                      style={{ cursor: 'text', userSelect: 'text' }}
+                    />
+                    <button type="button" onClick={copyInviteLink} className="btn-gold w-full text-xs">
+                      {copySuccess ? 'Скопировано!' : 'Копировать ссылку'}
+                    </button>
                   </div>
                 )}
               </form>
