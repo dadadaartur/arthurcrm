@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 
 export default function CRM() {
   useEffect(() => {
-    // Листопад и кнопка ветра
     const leafContainer = document.getElementById('leafContainer')
     const windButton = document.getElementById('windButton')
     let leafInterval = null
@@ -49,13 +48,11 @@ export default function CRM() {
       }, delay)
     }
 
-    // Приветственный листопад
     startLeafFall(5000, 200)
     const nextScheduleTimeout = setTimeout(() => {
       scheduleNextLeafFall()
     }, 5000)
 
-    // Кнопка ручного вызова ветра
     windButton.addEventListener('click', () => {
       if (leafInterval) {
         clearInterval(leafInterval)
@@ -72,26 +69,96 @@ export default function CRM() {
       clearInterval(leafInterval)
       clearTimeout(nextScheduleTimeout)
       clearTimeout(window._leafSchedule)
-      // Очистка листьев
       if (leafContainer) leafContainer.innerHTML = ''
     }
   }, [])
 
   return (
     <div className="crm-wrapper">
-      {/* Глобальные стили ТОЛЬКО для этой страницы (переопределяем body) */}
+      {/* Глобальные стили только для этой страницы */}
       <style jsx global>{`
+        /* Скрываем звёзды с главной */
+        #real-stars {
+          display: none !important;
+        }
+        /* Светлый фон и облака */
         body {
-          background: #F8FCF9 !important;
+          background: #E8F4FD !important;
           font-family: 'Inter', 'Segoe UI', sans-serif;
           color: #1F2E23;
-        }
-        .crm-wrapper {
-          display: flex;
-          height: 100vh;
+          margin: 0;
+          padding: 0;
           overflow: hidden;
-          position: relative;
         }
+        /* Облака */
+        .cloud-bg {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .cloud {
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 0 30px rgba(255,255,255,0.6);
+          animation: floatCloud linear infinite;
+        }
+        .cloud::before,
+        .cloud::after {
+          content: '';
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+        }
+        .cloud1 {
+          width: 120px; height: 60px;
+          top: 80px; left: 10%;
+          animation-duration: 35s;
+        }
+        .cloud1::before {
+          width: 60px; height: 60px;
+          top: -30px; left: 20px;
+        }
+        .cloud1::after {
+          width: 80px; height: 50px;
+          top: -20px; left: 50px;
+        }
+        .cloud2 {
+          width: 150px; height: 70px;
+          top: 200px; left: 70%;
+          animation-duration: 40s;
+        }
+        .cloud2::before {
+          width: 70px; height: 70px;
+          top: -35px; left: 30px;
+        }
+        .cloud2::after {
+          width: 90px; height: 55px;
+          top: -25px; left: 60px;
+        }
+        .cloud3 {
+          width: 100px; height: 50px;
+          top: 350px; left: 40%;
+          animation-duration: 30s;
+        }
+        .cloud3::before {
+          width: 50px; height: 50px;
+          top: -25px; left: 15px;
+        }
+        .cloud3::after {
+          width: 70px; height: 40px;
+          top: -15px; left: 45px;
+        }
+        @keyframes floatCloud {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(100vw + 200px)); }
+        }
+
+        /* Остальные стили CRM */
         :root {
           --bg-primary: #F8FCF9;
           --bg-panel: #FFFFFF;
@@ -108,6 +175,13 @@ export default function CRM() {
           --radius-lg: 24px;
           --radius-md: 16px;
         }
+        .crm-wrapper {
+          display: flex;
+          height: 100vh;
+          overflow: hidden;
+          position: relative;
+          z-index: 2;
+        }
         .leaf-container {
           position: fixed;
           top: 0;
@@ -115,7 +189,7 @@ export default function CRM() {
           width: 100%;
           height: 100%;
           pointer-events: none;
-          z-index: 0;
+          z-index: 3;
         }
         .leaf {
           position: absolute;
@@ -136,7 +210,7 @@ export default function CRM() {
           padding: 32px 24px;
           display: flex;
           flex-direction: column;
-          z-index: 2;
+          z-index: 4;
           position: relative;
         }
         .user-panel { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
@@ -164,7 +238,7 @@ export default function CRM() {
           gap: 24px;
           padding: 32px 36px;
           overflow-y: auto;
-          z-index: 2;
+          z-index: 4;
           position: relative;
         }
         .left-col {
@@ -284,7 +358,6 @@ export default function CRM() {
           height: 28px;
           pointer-events: none;
         }
-        /* Планета Земля в углу */
         .planet-label {
           position: fixed;
           top: 16px;
@@ -304,6 +377,13 @@ export default function CRM() {
           100% { filter: drop-shadow(0 0 12px rgba(244,184,96,0.8)); }
         }
       `}</style>
+
+      {/* Фон с облаками */}
+      <div className="cloud-bg">
+        <div className="cloud cloud1"></div>
+        <div className="cloud cloud2"></div>
+        <div className="cloud cloud3"></div>
+      </div>
 
       {/* Листопад */}
       <div className="leaf-container" id="leafContainer" />
