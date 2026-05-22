@@ -11,11 +11,11 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [initialCheck, setInitialCheck] = useState(!!token) // true, если есть токен и нужно проверить
 
-  const [step, setStep] = useState('login') // login | tempPass | setNewPass
+  const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
 
-  // При прямом переходе по ссылке с токеном – сразу ищем инвайт
   useEffect(() => {
     if (token) {
       fetchInvite(token)
@@ -23,7 +23,7 @@ export default function Login() {
   }, [token])
 
   async function fetchInvite(t) {
-    setLoading(true)
+    setInitialCheck(true)
     const { data } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
@@ -38,7 +38,7 @@ export default function Login() {
     } else {
       setError('Приглашение не найдено или уже использовано')
     }
-    setLoading(false)
+    setInitialCheck(false)
   }
 
   async function handleLogin(e) {
@@ -165,6 +165,15 @@ export default function Login() {
     }
   }
 
+  // Если идёт проверка токена – показываем загрузку
+  if (initialCheck) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-400">Проверка приглашения...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
@@ -172,7 +181,7 @@ export default function Login() {
           {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход в Кармический банк'}
         </h1>
 
-        {step === 'login' && !token && (
+        {step === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
