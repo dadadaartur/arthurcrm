@@ -31,6 +31,7 @@ export default function CompanyAdmin() {
   const [newRoleId, setNewRoleId] = useState('')
   const [roles, setRoles] = useState([])
   const [invitations, setInvitations] = useState([])
+  const [showAllInvitations, setShowAllInvitations] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [copied, setCopied] = useState({})
 
@@ -181,8 +182,12 @@ export default function CompanyAdmin() {
   }
 
   async function deleteInvitation(id) {
-    await supabase.from('invitations').delete().eq('id', id)
-    fetchInvitations(profile.company_id)
+    const { error } = await supabase.from('invitations').delete().eq('id', id)
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      fetchInvitations(profile.company_id)
+    }
   }
 
   async function sendInviteEmail(email, link, tempPassword) {
@@ -271,6 +276,8 @@ export default function CompanyAdmin() {
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
+  const visibleInvitations = showAllInvitations ? invitations : invitations.slice(0, 5)
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="dash-card mb-6">
@@ -341,7 +348,7 @@ export default function CompanyAdmin() {
           </form>
         )}
         <div className="space-y-4 mt-4">
-          {invitations.map(inv => (
+          {visibleInvitations.map(inv => (
             <div key={inv.id} className="premium-card flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <div>
@@ -370,6 +377,11 @@ export default function CompanyAdmin() {
             </div>
           ))}
         </div>
+        {invitations.length > 5 && (
+          <button onClick={() => setShowAllInvitations(!showAllInvitations)} className="text-xs text-gray-400 mt-2 hover:text-white transition">
+            {showAllInvitations ? 'Скрыть' : `Показать все (${invitations.length})`}
+          </button>
+        )}
       </div>
 
       {/* Сотрудники */}
