@@ -11,7 +11,6 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Этапы: email -> (существует? 'login' : (инвайт? 'tempPass' : 'noAccess'))
   const [step, setStep] = useState('email')
   const [invite, setInvite] = useState(null)
 
@@ -22,38 +21,51 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    // 1. Ищем профиль по email (существующий пользователь)
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .ilike('email', normalizedEmail)
-      .maybeSingle()
+    // Проверяем, существует ли аккаунт в Auth, пытаясь войти с заведомо неверным паролем
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: 'this-is-a-test-to-check-existence',
+    })
 
-    if (existingProfile) {
+    // Если ошибка "Invalid login credentials" (аккаунта нет) — ищем инвайт
+    if (signInError && signInError.message.includes('Invalid login credentials')) {
+      const { data: inviteData, error: fetchError } = await supabase
+        .from('invitations')
+        .select('*, companies(name), roles(name)')
+        .ilike('email', normalizedEmail)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (fetchError || !inviteData) {
+        setError('Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации')
+        setLoading(false)
+        return
+      }
+
+      setInvite(inviteData)
+      setEmail(inviteData.email)
+      setStep('tempPass')
+      setLoading(false)
+      return
+    }
+
+    // Если ошибка "Invalid password" (аккаунт есть) — всё хорошо, переходим к вводу пароля
+    if (signInError && signInError.message.includes('Invalid password')) {
       setEmail(normalizedEmail)
       setStep('login')
       setLoading(false)
       return
     }
 
-    // 2. Если профиля нет – ищем активный инвайт
-    const { data: inviteData, error: fetchError } = await supabase
-      .from('invitations')
-      .select('*, companies(name), roles(name)')
-      .ilike('email', normalizedEmail)
-      .eq('status', 'pending')
-      .maybeSingle()
-
-    if (fetchError || !inviteData) {
-      setError('Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации')
+    // Любая другая ошибка
+    if (signInError) {
+      setError(signInError.message)
       setLoading(false)
       return
     }
 
-    setInvite(inviteData)
-    setEmail(inviteData.email)
-    setStep('tempPass')
-    setLoading(false)
+    // На всякий случай, если авторизация почему-то прошла
+    router.push('/')
   }
 
   async function handleLogin(e) {
