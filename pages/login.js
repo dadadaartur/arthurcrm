@@ -11,61 +11,57 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Этапы: email -> (existingUser ? 'login' : (invite ? 'tempPass' : 'noAccess'))
-  const [step, setStep] = useState('email') // 'email' | 'login' | 'tempPass' | 'setNewPass'
+  // Этапы: email -> (существующий? 'login' : (приглашение? 'tempPass' : 'noAccess'))
+  const [step, setStep] = useState('email')
   const [invite, setInvite] = useState(null)
 
-  // Проверка email: сначала ищем существующего пользователя, потом инвайт
+  // Проверка email: сначала ищем профиль, потом инвайт
   async function handleEmailSubmit(e) {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     setError('')
 
-    // 1. Пробуем найти пользователя в auth.users (только для проверки существования)
-    const { data: existingUser, error: userError } = await supabase
+    // 1. Ищем профиль (значит, пользователь уже активирован)
+    const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
-      .eq('display_name', email)
+      .or(`display_name.eq.${email},user_id.eq.${email}`)
       .maybeSingle()
 
-    // Если профиль уже существует — пользователь зарегистрирован
-    if (existingUser) {
+    if (existingProfile) {
       setStep('login')
       setLoading(false)
       return
     }
 
-    // 2. Если нет профиля — ищем активный инвайт
-    const { data, error: fetchError } = await supabase
+    // 2. Если профиля нет — ищем активный инвайт
+    const { data: inviteData, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
       .eq('email', email)
       .eq('status', 'pending')
       .maybeSingle()
 
-    if (fetchError || !data) {
+    if (fetchError || !inviteData) {
       setError('Доступ к платформе выдаёт руководитель')
       setLoading(false)
       return
     }
 
-    setInvite(data)
+    setInvite(inviteData)
     setStep('tempPass')
     setLoading(false)
   }
 
-  // Стандартный вход (для уже зарегистрированных пользователей)
+  // Стандартный вход
   async function handleLogin(e) {
     e.preventDefault()
     if (!password) return
     setLoading(true)
     setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (signInError) {
       setError('Неверный email или пароль')
@@ -76,7 +72,7 @@ export default function Login() {
     router.push('/')
   }
 
-  // Проверка временного пароля и переход к установке постоянного
+  // Проверка временного пароля
   async function handleTempPassSubmit(e) {
     e.preventDefault()
     if (!tempPassword) return
@@ -93,7 +89,7 @@ export default function Login() {
     setLoading(false)
   }
 
-  // Создание аккаунта с постоянным паролем
+  // Активация аккаунта
   async function handleSetNewPass(e) {
     e.preventDefault()
     if (!newPassword || newPassword.length < 6) {
@@ -122,7 +118,8 @@ export default function Login() {
         return
       }
 
-      const { error: profileError } = await supabase.from('profiles').insert({
+      // Создаём профиль
+      await supabase.from('profiles').insert({
         user_id: user.id,
         company_id: invite.company_id,
         department_id: null,
@@ -131,13 +128,9 @@ export default function Login() {
         manager_id: invite.created_by,
       })
 
-      if (profileError) {
-        setError('Ошибка при создании профиля: ' + profileError.message)
-        setLoading(false)
-        return
-      }
-
+      // Помечаем инвайт использованным
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
+
       router.push('/')
     } catch (err) {
       setError('Непредвиденная ошибка')
@@ -170,7 +163,7 @@ export default function Login() {
           </form>
         )}
 
-        {/* Шаг 2: стандартный вход (для существующих пользователей) */}
+        {/* Шаг 2: стандартный вход */}
         {step === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <p className="text-sm text-gray-400">Введите пароль для {email}</p>
@@ -189,7 +182,7 @@ export default function Login() {
           </form>
         )}
 
-        {/* Шаг 3: ввод временного пароля (для новых сотрудников) */}
+        {/* Шаг 3: временный пароль */}
         {step === 'tempPass' && (
           <form onSubmit={handleTempPassSubmit} className="space-y-4">
             <p className="text-sm text-gray-400">На ваш email отправлен временный пароль. Введите его ниже.</p>
