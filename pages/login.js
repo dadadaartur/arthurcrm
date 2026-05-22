@@ -5,22 +5,38 @@ import { useRouter } from 'next/router'
 export default function Login() {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [tempPassword, setTempPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Этапы: email -> tempPass -> setNewPass
-  const [step, setStep] = useState('email') // 'email' | 'tempPass' | 'setNewPass'
+  // Этапы: email -> (existingUser ? 'login' : (invite ? 'tempPass' : 'noAccess'))
+  const [step, setStep] = useState('email') // 'email' | 'login' | 'tempPass' | 'setNewPass'
   const [invite, setInvite] = useState(null)
 
-  // Проверка email (есть ли инвайт)
+  // Проверка email: сначала ищем существующего пользователя, потом инвайт
   async function handleEmailSubmit(e) {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     setError('')
 
+    // 1. Пробуем найти пользователя в auth.users (только для проверки существования)
+    const { data: existingUser, error: userError } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('display_name', email)
+      .maybeSingle()
+
+    // Если профиль уже существует — пользователь зарегистрирован
+    if (existingUser) {
+      setStep('login')
+      setLoading(false)
+      return
+    }
+
+    // 2. Если нет профиля — ищем активный инвайт
     const { data, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
@@ -29,7 +45,6 @@ export default function Login() {
       .maybeSingle()
 
     if (fetchError || !data) {
-      // Нет приглашения – показываем модальное окно
       setError('Доступ к платформе выдаёт руководитель')
       setLoading(false)
       return
@@ -38,6 +53,27 @@ export default function Login() {
     setInvite(data)
     setStep('tempPass')
     setLoading(false)
+  }
+
+  // Стандартный вход (для уже зарегистрированных пользователей)
+  async function handleLogin(e) {
+    e.preventDefault()
+    if (!password) return
+    setLoading(true)
+    setError('')
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setError('Неверный email или пароль')
+      setLoading(false)
+      return
+    }
+
+    router.push('/')
   }
 
   // Проверка временного пароля и переход к установке постоянного
@@ -68,7 +104,6 @@ export default function Login() {
     setError('')
 
     try {
-      // Создаём аккаунт в Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: invite.email,
         password: newPassword,
@@ -87,7 +122,6 @@ export default function Login() {
         return
       }
 
-      // Создаём профиль
       const { error: profileError } = await supabase.from('profiles').insert({
         user_id: user.id,
         company_id: invite.company_id,
@@ -103,9 +137,7 @@ export default function Login() {
         return
       }
 
-      // Помечаем инвайт использованным
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
-
       router.push('/')
     } catch (err) {
       setError('Непредвиденная ошибка')
@@ -113,7 +145,6 @@ export default function Login() {
     }
   }
 
-  // Модальное окно закрывается кнопкой "Понятно"
   const isModalOpen = error === 'Доступ к платформе выдаёт руководитель'
 
   return (
@@ -139,7 +170,26 @@ export default function Login() {
           </form>
         )}
 
-        {/* Шаг 2: ввод временного пароля */}
+        {/* Шаг 2: стандартный вход (для существующих пользователей) */}
+        {step === 'login' && (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <p className="text-sm text-gray-400">Введите пароль для {email}</p>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Пароль"
+              className="input-field"
+              required
+            />
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <button type="submit" className="btn-gold w-full" disabled={loading}>
+              {loading ? 'Вход...' : 'Войти'}
+            </button>
+          </form>
+        )}
+
+        {/* Шаг 3: ввод временного пароля (для новых сотрудников) */}
         {step === 'tempPass' && (
           <form onSubmit={handleTempPassSubmit} className="space-y-4">
             <p className="text-sm text-gray-400">На ваш email отправлен временный пароль. Введите его ниже.</p>
@@ -151,14 +201,14 @@ export default function Login() {
               className="input-field"
               required
             />
-            {error && !isModalOpen && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? 'Проверка...' : 'Далее'}
             </button>
           </form>
         )}
 
-        {/* Шаг 3: установка постоянного пароля */}
+        {/* Шаг 4: установка постоянного пароля */}
         {step === 'setNewPass' && (
           <form onSubmit={handleSetNewPass} className="space-y-4">
             <p className="text-sm text-gray-400">Придумайте новый пароль для входа в систему.</p>
@@ -170,7 +220,7 @@ export default function Login() {
               className="input-field"
               required
             />
-            {error && !isModalOpen && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? 'Активация...' : 'Активировать аккаунт'}
             </button>
