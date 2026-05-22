@@ -22,21 +22,25 @@ export default function Invite() {
 
   async function fetchInvite(t) {
     setInitialCheck(true)
-    const { data } = await supabase
+    setError('')
+    const { data, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
       .eq('token', t)
       .eq('status', 'pending')
       .maybeSingle()
 
-    if (data) {
-      setInvite(data)
-    } else {
+    if (fetchError) {
+      setError('Ошибка при проверке приглашения: ' + fetchError.message)
+    } else if (!data) {
       setError('Приглашение не найдено или уже использовано')
+    } else {
+      setInvite(data)
     }
     setInitialCheck(false)
   }
 
+  // Обработка ввода временного пароля
   async function handleTempPassSubmit(e) {
     e.preventDefault()
     if (!tempPassword) return
@@ -49,11 +53,12 @@ export default function Invite() {
       return
     }
 
-    // Переходим к установке постоянного пароля
+    // Временный пароль верен – переходим к установке постоянного
     setInvite({ ...invite, tempPassConfirmed: true })
     setLoading(false)
   }
 
+  // Установка постоянного пароля и завершение активации
   async function handleSetNewPass(e) {
     e.preventDefault()
     if (!newPassword || newPassword.length < 6) {
@@ -64,6 +69,7 @@ export default function Invite() {
     setError('')
 
     try {
+      // 1. Создаём пользователя в Supabase Auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: invite.email,
         password: newPassword,
@@ -82,7 +88,7 @@ export default function Invite() {
         return
       }
 
-      // Создаём профиль, если его нет
+      // 2. Создаём профиль (если ещё нет)
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('user_id')
@@ -101,10 +107,12 @@ export default function Invite() {
         })
       }
 
-      // Помечаем инвайт использованным
-      await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
+      // 3. Помечаем приглашение как использованное
+      await supabase.from('invitations')
+        .update({ status: 'accepted', temp_password: null })
+        .eq('id', invite.id)
 
-      // Чистая сессия
+      // 4. Принудительно перелогиниваемся, чтобы сессия была чистой
       await supabase.auth.signOut()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: invite.email,
@@ -124,6 +132,7 @@ export default function Invite() {
     }
   }
 
+  // Показываем загрузку, пока идёт проверка
   if (initialCheck) {
     return (
       <div className="min-h-screen flex items-center justify-center">
