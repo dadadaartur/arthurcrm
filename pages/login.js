@@ -11,70 +11,62 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [step, setStep] = useState('email')
+  const [step, setStep] = useState('login') // login | tempPass | setNewPass
   const [invite, setInvite] = useState(null)
 
-  // Шаг 1: обработка email
-  async function handleEmailSubmit(e) {
-    e.preventDefault()
-    const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail) return
-    setLoading(true)
-    setError('')
-
-    // 1. Ищем активный инвайт
-    const { data: inviteData } = await supabase
-      .from('invitations')
-      .select('*, companies(name), roles(name)')
-      .eq('email', normalizedEmail)
-      .eq('status', 'pending')
-      .maybeSingle()
-
-    if (inviteData) {
-      setInvite(inviteData)
-      setEmail(inviteData.email)
-      setStep('tempPass')
-      setLoading(false)
-      return
-    }
-
-    // 2. Инвайта нет – ищем существующий профиль
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('email', normalizedEmail)
-      .maybeSingle()
-
-    if (existingProfile) {
-      setEmail(normalizedEmail)
-      setStep('login')
-      setLoading(false)
-      return
-    }
-
-    // 3. Ничего не найдено
-    setError('Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации')
-    setLoading(false)
-  }
-
-  // Обычный вход
+  // Основной вход
   async function handleLogin(e) {
     e.preventDefault()
-    if (!password) return
+    if (!email || !password) return
     setLoading(true)
     setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+    const normalizedEmail = email.trim().toLowerCase()
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
       password,
     })
 
-    if (signInError) {
-      setError('Неверный email или пароль')
-      setLoading(false)
-    } else {
+    if (!signInError) {
       router.push('/')
+      return
     }
+
+    // Ошибка входа – проверяем, есть ли инвайт
+    if (signInError.message.includes('Invalid login credentials')) {
+      const { data: inviteData } = await supabase
+        .from('invitations')
+        .select('*, companies(name), roles(name)')
+        .eq('email', normalizedEmail)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (inviteData) {
+        setInvite(inviteData)
+        setEmail(inviteData.email)
+        setStep('tempPass')
+        setLoading(false)
+        return
+      }
+
+      // Инвайта нет – создаём гостевой профиль и переходим на витрину
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        // Пользователь вообще не авторизован – создаём анонимный вход через signUp (но это невозможно без пароля)
+        // Вместо этого отправим на /welcome без авторизации
+        setError('')
+        setLoading(false)
+        router.push('/welcome')
+        return
+      }
+
+      // Если уже авторизован, но нет профиля – просто идём на /welcome
+      router.push('/welcome')
+      return
+    }
+
+    setError('Неверный email или пароль')
+    setLoading(false)
   }
 
   // Проверка временного пароля
@@ -142,27 +134,15 @@ export default function Login() {
     }
   }
 
-  const isModalOpen = error === 'Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации'
-
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
         <h1 className="text-2xl font-bold text-deep-blue mb-4">Вход в Кармический банк</h1>
 
-        {step === 'email' && (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ваш email" className="input-field" required autoComplete="off" />
-            {error && !isModalOpen && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
-              {loading ? 'Проверка...' : 'Продолжить'}
-            </button>
-          </form>
-        )}
-
         {step === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
-            <p className="text-sm text-gray-400">Введите пароль для {email}</p>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required autoComplete="new-password" />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? 'Вход...' : 'Войти'}
@@ -173,7 +153,7 @@ export default function Login() {
         {step === 'tempPass' && invite && (
           <form onSubmit={handleTempPassSubmit} className="space-y-4">
             <p className="text-sm text-gray-400">Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.</p>
-            <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required autoComplete="off" />
+            <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? 'Проверка...' : 'Далее'}
@@ -184,22 +164,12 @@ export default function Login() {
         {step === 'setNewPass' && (
           <form onSubmit={handleSetNewPass} className="space-y-4">
             <p className="text-sm text-gray-400">Придумайте новый пароль для входа в систему.</p>
-            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required autoComplete="new-password" />
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
               {loading ? 'Активация...' : 'Активировать аккаунт'}
             </button>
           </form>
-        )}
-
-        {isModalOpen && (
-          <div className="modal-overlay" onClick={() => setError('')}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xl font-semibold mb-4">Доступ к платформе</h3>
-              <p className="text-gray-600">{error}</p>
-              <button onClick={() => setError('')} className="btn-gold mt-6">Понятно</button>
-            </div>
-          </div>
         )}
       </div>
     </div>
