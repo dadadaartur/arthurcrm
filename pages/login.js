@@ -11,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Этапы: email -> (существует? 'login' : (инвайт? 'tempPass' : 'noAccess'))
   const [step, setStep] = useState('email')
   const [invite, setInvite] = useState(null)
 
