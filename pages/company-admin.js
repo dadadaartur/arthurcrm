@@ -205,7 +205,6 @@ export default function CompanyAdmin() {
       setCopied(prev => ({ ...prev, [field]: true }))
       setTimeout(() => setCopied(prev => ({ ...prev, [field]: false })), 2000)
     } catch (err) {
-      // Fallback для старых браузеров
       const el = document.createElement('textarea')
       el.value = text
       document.body.appendChild(el)
