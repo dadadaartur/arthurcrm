@@ -358,13 +358,13 @@ export default function CompanyAdmin() {
                 <div className="flex gap-2">
                   {inv.status === 'pending' && (
                     <>
-                      <button onClick={() => copyToClipboard(`${window.location.origin}/login?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
+                      <button onClick={() => copyToClipboard(`${window.location.origin}/invite?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
                         {copied[`link-${inv.id}`] ? 'Ссылка скопирована' : 'Копировать ссылку'}
                       </button>
                       <button onClick={() => copyToClipboard(inv.temp_password, `pass-${inv.id}`)} className="text-xs text-yellow-400 hover:text-yellow-300">
                         {copied[`pass-${inv.id}`] ? 'Пароль скопирован' : 'Копировать пароль'}
                       </button>
-                      <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/login?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
+                      <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/invite?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
                         Отправить на email
                       </button>
                       <button onClick={() => deleteInvitation(inv.id)} className="text-xs text-red-400 hover:text-red-300">
