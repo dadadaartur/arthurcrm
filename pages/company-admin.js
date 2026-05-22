@@ -30,9 +30,9 @@ export default function CompanyAdmin() {
   const [newEmail, setNewEmail] = useState('')
   const [newRoleId, setNewRoleId] = useState('')
   const [roles, setRoles] = useState([])
-  const [inviteResult, setInviteResult] = useState(null)
+  const [invitations, setInvitations] = useState([])
   const [sendingEmail, setSendingEmail] = useState(false)
-  const [copied, setCopied] = useState({ link: false, pass: false })
+  const [copied, setCopied] = useState({})
 
   // Редактирование и удаление сотрудников
   const [editingEmployee, setEditingEmployee] = useState(null)
@@ -42,9 +42,6 @@ export default function CompanyAdmin() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [resetPasswordTarget, setResetPasswordTarget] = useState(null)
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '' })
-
-  // Задания на проверку
-  const [pendingReviews, setPendingReviews] = useState([])
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -74,7 +71,7 @@ export default function CompanyAdmin() {
 
       await fetchEmployees(profile.company_id)
       await fetchTasks(profile.company_id)
-      await fetchPendingReviews(profile.company_id)
+      await fetchInvitations(profile.company_id)
     }
     checkAccess()
   }, [])
@@ -98,14 +95,13 @@ export default function CompanyAdmin() {
     setTasks(data || [])
   }
 
-  async function fetchPendingReviews(companyId) {
-    // Назначения со статусом pending_review, задача которых принадлежит компании
+  async function fetchInvitations(companyId) {
     const { data } = await supabase
-      .from('task_assignments')
-      .select('*, tasks(*)')
-      .eq('status', 'pending_review')
-      .in('task_id', tasks.map(t => t.id))
-    setPendingReviews(data || [])
+      .from('invitations')
+      .select('*, roles(name)')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+    setInvitations(data || [])
   }
 
   // --- Задания ---
@@ -160,44 +156,6 @@ export default function CompanyAdmin() {
     }
   }
 
-  // --- Проверка заданий ---
-  async function approveReview(assignmentId) {
-    // Подтверждаем выполнение, начисляем кармики и энергию
-    const { data: assignment } = await supabase
-      .from('task_assignments')
-      .select('*, tasks(*)')
-      .eq('id', assignmentId)
-      .single()
-
-    if (!assignment) return
-
-    // Обновляем статус
-    await supabase.from('task_assignments').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', assignmentId)
-
-    // Начисляем кармики
-    if (assignment.tasks.reward_karma > 0) {
-      await supabase.from('karma_events').insert({
-        user_id: assignment.user_id,
-        description: `Задание: ${assignment.tasks.title}`,
-        amount: assignment.tasks.reward_karma,
-        status: 'auto_approved',
-        category: 'task',
-      })
-    }
-
-    // Обновляем баланс (функция update_balance сама сработает через триггер, но на всякий случай можно явно)
-    // Энергию пока просто записываем в поле energy в profiles (если оно есть) — позже доработаем
-
-    setModal({ isOpen: true, title: 'Готово', message: 'Задание подтверждено, кармики начислены' })
-    fetchPendingReviews(profile.company_id)
-  }
-
-  async function rejectReview(assignmentId) {
-    await supabase.from('task_assignments').update({ status: 'in_progress' }).eq('id', assignmentId)
-    setModal({ isOpen: true, title: 'Отклонено', message: 'Задание возвращено на доработку' })
-    fetchPendingReviews(profile.company_id)
-  }
-
   // --- Сотрудники ---
   async function handleCreateEmployee(e) {
     e.preventDefault()
@@ -213,28 +171,98 @@ export default function CompanyAdmin() {
         temp_password: tempPassword,
         created_by: user.id,
       })
-      setInviteResult({
-        link: `${window.location.origin}/login?token=${token}`,
-        tempPassword,
-      })
       setNewName('')
       setNewEmail('')
       setNewRoleId(roles[0]?.id || '')
+      fetchInvitations(profile.company_id) // обновляем список приглашений
     } catch (err) {
       setModal({ isOpen: true, title: 'Ошибка', message: err.message })
     }
   }
 
-  async function sendInviteEmail() { /* ... как раньше ... */ }
+  async function sendInviteEmail(email, link, tempPassword) {
+    setSendingEmail(true)
+    try {
+      const res = await fetch('/api/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, link, tempPassword }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setModal({ isOpen: true, title: 'Успешно', message: 'Приглашение отправлено на email' })
+      } else {
+        setModal({ isOpen: true, title: 'Ошибка', message: data.error || 'Не удалось отправить письмо. Возможно, не настроен SMTP сервер.' })
+      }
+    } catch (err) {
+      setModal({ isOpen: true, title: 'Ошибка', message: 'Не удалось отправить письмо. Проверьте настройки SMTP.' })
+    } finally {
+      setSendingEmail(false)
+    }
+  }
 
-  async function copyToClipboard(text, field) { /* ... как раньше ... */ }
+  async function copyToClipboard(text, id) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied({ ...copied, [id]: true })
+      setTimeout(() => setCopied({ ...copied, [id]: false }), 2000)
+    } catch (err) {
+      const el = document.createElement('textarea')
+      el.value = text
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopied({ ...copied, [id]: true })
+      setTimeout(() => setCopied({ ...copied, [id]: false }), 2000)
+    }
+  }
 
-  function openEdit(emp) { /* ... как раньше ... */ }
-  async function saveEdit() { /* ... как раньше ... */ }
+  function openEdit(emp) {
+    setEditingEmployee(emp)
+    setEditName(emp.display_name || '')
+    setEditEmail(emp.email || '')
+    setEditRoleId(emp.role_id || '')
+  }
+
+  async function saveEdit() {
+    if (!editingEmployee) return
+    const { error } = await supabase.from('profiles').update({
+      display_name: editName,
+      email: editEmail,
+      role_id: parseInt(editRoleId),
+    }).eq('user_id', editingEmployee.user_id)
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      setEditingEmployee(null)
+      fetchEmployees(profile.company_id)
+    }
+  }
+
   function confirmDelete(emp) { setDeleteTarget(emp) }
-  async function executeDelete() { /* ... как раньше ... */ }
+  async function executeDelete() {
+    if (!deleteTarget) return
+    await supabase.from('profiles').delete().eq('user_id', deleteTarget.user_id)
+    setDeleteTarget(null)
+    fetchEmployees(profile.company_id)
+  }
+
   function confirmResetPassword(emp) { setResetPasswordTarget(emp) }
-  async function executeResetPassword() { /* ... как раньше ... */ }
+  async function executeResetPassword() {
+    if (!resetPasswordTarget) return
+    const tempPassword = Math.random().toString(36).slice(-8)
+    await supabase.from('invitations').insert({
+      company_id: profile.company_id,
+      role_id: resetPasswordTarget.role_id,
+      email: resetPasswordTarget.email,
+      token: crypto.randomUUID(),
+      temp_password: tempPassword,
+      created_by: user.id,
+    })
+    setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
+    setResetPasswordTarget(null)
+  }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
@@ -244,27 +272,6 @@ export default function CompanyAdmin() {
         <h3>Панель управления компанией</h3>
         <p className="text-sm text-gray-400 mt-2">Добро пожаловать, {profile?.display_name || user?.email}. Ваша роль: {profile?.roles?.name}</p>
       </div>
-
-      {/* Задания на проверку */}
-      {pendingReviews.length > 0 && (
-        <div className="dash-card mb-6">
-          <h3>Задания на проверку</h3>
-          <div className="space-y-4 mt-4">
-            {pendingReviews.map(rev => (
-              <div key={rev.id} className="premium-card flex justify-between items-center">
-                <div>
-                  <p className="text-white font-medium">{rev.tasks?.title}</p>
-                  <p className="text-xs text-gray-400">Сотрудник: {rev.user_id}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => approveReview(rev.id)} className="text-xs text-green-400 hover:text-green-300">Подтвердить</button>
-                  <button onClick={() => rejectReview(rev.id)} className="text-xs text-red-400 hover:text-red-300">Отклонить</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Задания */}
       <div className="dash-card mb-6">
@@ -314,47 +321,48 @@ export default function CompanyAdmin() {
         </div>
       </div>
 
-      {/* Сотрудники */}
+      {/* Приглашения */}
       <div className="dash-card mb-6">
-        <h3>Новый сотрудник</h3>
-        <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Добавить сотрудника</button>
+        <h3>Приглашения</h3>
+        <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Новое приглашение</button>
         {showNewEmployee && (
-          <form onSubmit={handleCreateEmployee} className="space-y-3">
+          <form onSubmit={handleCreateEmployee} className="space-y-3 mb-4">
             <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="ФИО" className="input-field" required />
             <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Email" className="input-field" required />
             <select value={newRoleId} onChange={e => setNewRoleId(e.target.value)} className="input-field">
               {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
             <button type="submit" className="btn-gold w-full">Создать приглашение</button>
-            {inviteResult && (
-              <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-3">
-                <div>
-                  <p className="text-xs text-gray-300 mb-1">Ссылка для активации:</p>
-                  <div className="flex gap-2 items-center">
-                    <input type="text" value={inviteResult.link} readOnly className="input-field text-xs text-green-400 bg-gray-900 border-gray-700 flex-1" style={{ cursor: 'text', userSelect: 'text' }} />
-                    <button onClick={() => copyToClipboard(inviteResult.link, 'link')} className="btn-gold text-xs px-3 py-1.5 whitespace-nowrap">
-                      {copied.link ? 'Скопировано' : 'Копировать'}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-300 mb-1">Временный пароль:</p>
-                  <div className="flex gap-2 items-center">
-                    <input type="text" value={inviteResult.tempPassword} readOnly className="input-field text-xs text-yellow-400 bg-gray-900 border-gray-700 flex-1 font-mono" style={{ cursor: 'text', userSelect: 'text' }} />
-                    <button onClick={() => copyToClipboard(inviteResult.tempPassword, 'pass')} className="btn-gold text-xs px-3 py-1.5 whitespace-nowrap">
-                      {copied.pass ? 'Скопировано' : 'Копировать'}
-                    </button>
-                  </div>
-                </div>
-                <button onClick={sendInviteEmail} disabled={sendingEmail} className="btn-gold w-full text-xs">
-                  {sendingEmail ? 'Отправка...' : 'Отправить на email'}
-                </button>
-              </div>
-            )}
           </form>
         )}
+        <div className="space-y-4 mt-4">
+          {invitations.map(inv => (
+            <div key={inv.id} className="premium-card flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-white font-medium">{inv.email}</p>
+                  <p className="text-xs text-gray-400">{inv.roles?.name} · {inv.status === 'pending' ? 'Ожидает' : 'Принято'}</p>
+                </div>
+                {inv.status === 'pending' && (
+                  <div className="flex gap-2">
+                    <button onClick={() => copyToClipboard(`${window.location.origin}/login?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
+                      {copied[`link-${inv.id}`] ? 'Ссылка скопирована' : 'Копировать ссылку'}
+                    </button>
+                    <button onClick={() => copyToClipboard(inv.temp_password, `pass-${inv.id}`)} className="text-xs text-yellow-400 hover:text-yellow-300">
+                      {copied[`pass-${inv.id}`] ? 'Пароль скопирован' : 'Копировать пароль'}
+                    </button>
+                    <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/login?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
+                      Отправить на email
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
+      {/* Сотрудники */}
       <div className="dash-card">
         <h3>Сотрудники</h3>
         <div className="mt-4 space-y-2">
