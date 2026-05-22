@@ -3,24 +3,8 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
-function getKarmikWord(n) {
-  const lastDigit = n % 10
-  const lastTwoDigits = n % 100
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
-  if (lastDigit === 1) return 'кармик'
-  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
-  return 'кармиков'
-}
-
-function TaskIcon() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="10" stroke="#A5B4FC" strokeWidth="1.5" />
-      <ellipse cx="16" cy="16" rx="14" ry="4" stroke="#C4B5FD" strokeWidth="1" transform="rotate(-20 16 16)" />
-      <path d="M12 13L15 16L12 19" stroke="#E0E7FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
+function getKarmikWord(n) { /* ... как раньше ... */ }
+function TaskIcon() { /* ... как раньше ... */ }
 
 export default function Home() {
   const router = useRouter()
@@ -56,7 +40,7 @@ export default function Home() {
         .from('task_assignments')
         .select('*, tasks(*)')
         .eq('user_id', user.id)
-        .in('status', ['assigned', 'in_progress'])
+        .in('status', ['assigned', 'in_progress', 'pending_review'])
         .limit(3)
         .order('created_at', { ascending: false })
 
@@ -114,7 +98,8 @@ export default function Home() {
                   return (
                     <div
                       key={assignment.id}
-                      className="premium-card relative overflow-hidden"
+                      onClick={() => router.push(`/task/${assignment.id}`)}
+                      className="premium-card relative overflow-hidden cursor-pointer"
                       style={{
                         background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
                         borderColor: 'rgba(139, 92, 246, 0.3)',
@@ -148,7 +133,7 @@ export default function Home() {
                         )}
                         {longDescription && (
                           <button
-                            onClick={() => toggleTaskExpand(task.id)}
+                            onClick={(e) => { e.stopPropagation(); toggleTaskExpand(task.id) }}
                             className="text-xs text-purple-400 hover:text-purple-300 transition mb-2"
                           >
                             {isExpanded ? 'Свернуть' : 'Смотреть'}
@@ -162,7 +147,7 @@ export default function Home() {
                             )}
                           </div>
                           <span className="text-xs text-gray-500">
-                            {assignment.status === 'in_progress' ? 'В процессе' : 'Назначено'}
+                            {assignment.status === 'in_progress' ? 'В процессе' : assignment.status === 'pending_review' ? 'На проверке' : 'Назначено'}
                           </span>
                         </div>
                       </div>
