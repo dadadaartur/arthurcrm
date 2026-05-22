@@ -21,18 +21,21 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    // Сначала пробуем понять, существует ли аккаунт в Supabase Auth
-    // Для этого делаем запрос на сброс пароля – он точно проверяет наличие пользователя
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail)
-    if (!resetError) {
-      // Аккаунт есть – переходим к вводу пароля
+    // 1. Ищем профиль по email (существующий пользователь)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .ilike('email', normalizedEmail)
+      .maybeSingle()
+
+    if (existingProfile) {
       setEmail(normalizedEmail)
       setStep('login')
       setLoading(false)
       return
     }
 
-    // Аккаунта нет – ищем активный инвайт
+    // 2. Если профиля нет – ищем активный инвайт
     const { data: inviteData, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
@@ -41,7 +44,7 @@ export default function Login() {
       .maybeSingle()
 
     if (fetchError || !inviteData) {
-      setError('Доступ к платформе выдаёт руководитель')
+      setError('Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации')
       setLoading(false)
       return
     }
@@ -135,7 +138,7 @@ export default function Login() {
     }
   }
 
-  const isModalOpen = error === 'Доступ к платформе выдаёт руководитель'
+  const isModalOpen = error === 'Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации'
 
   return (
     <div className="max-w-md mx-auto px-4 py-12">
@@ -181,7 +184,7 @@ export default function Login() {
           <div className="modal-overlay" onClick={() => setError('')}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <h3 className="text-xl font-semibold mb-4">Доступ к платформе</h3>
-              <p className="text-gray-600">Доступ к платформе выдаёт руководитель. Пожалуйста, обратитесь к администратору компании.</p>
+              <p className="text-gray-600">{error}</p>
               <button onClick={() => setError('')} className="btn-gold mt-6">Понятно</button>
             </div>
           </div>
