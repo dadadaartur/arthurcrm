@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
@@ -71,8 +70,17 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Пользователь без компании (гость)
-  if (user && !profile?.company_id) {
+  // Пользователь без компании и без системной роли → гость
+  const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
+  // Суперадмин или администратор компании
+  const isSuperAdmin = profile?.roles?.is_system === true
+  const isCompanyAdmin =
+    profile?.roles?.name === 'РОП' ||
+    profile?.roles?.name === 'СМ' ||
+    profile?.roles?.name === 'Администратор'
+
+  // Гостевой режим (только фон и контент)
+  if (isGuest) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
@@ -94,13 +102,7 @@ export default function Layout({ children }) {
     )
   }
 
-  // Полный интерфейс для сотрудников
-  const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin =
-    profile?.roles?.name === 'РОП' ||
-    profile?.roles?.name === 'СМ' ||
-    profile?.roles?.name === 'Администратор'
-
+  // Полный интерфейс для авторизованных (сотрудники, администраторы, суперадмин)
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
