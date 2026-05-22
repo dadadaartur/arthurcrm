@@ -21,21 +21,18 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    // 1. Ищем профиль по email (без учёта регистра)
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .ilike('email', normalizedEmail)
-      .maybeSingle()
-
-    if (existingProfile) {
-      setEmail(normalizedEmail) // приводим к нижнему регистру для дальнейшего входа
+    // Сначала пробуем понять, существует ли аккаунт в Supabase Auth
+    // Для этого делаем запрос на сброс пароля – он точно проверяет наличие пользователя
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail)
+    if (!resetError) {
+      // Аккаунт есть – переходим к вводу пароля
+      setEmail(normalizedEmail)
       setStep('login')
       setLoading(false)
       return
     }
 
-    // 2. Если профиля нет – ищем активный инвайт
+    // Аккаунта нет – ищем активный инвайт
     const { data: inviteData, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
@@ -50,7 +47,7 @@ export default function Login() {
     }
 
     setInvite(inviteData)
-    setEmail(inviteData.email) // используем email из инвайта
+    setEmail(inviteData.email)
     setStep('tempPass')
     setLoading(false)
   }
@@ -62,7 +59,7 @@ export default function Login() {
     setError('')
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email,
+      email,
       password,
     })
 
