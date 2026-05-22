@@ -10,84 +10,55 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  const [step, setStep] = useState('email')
+  const [showInvite, setShowInvite] = useState(false)
   const [invite, setInvite] = useState(null)
 
-  async function handleEmailSubmit(e) {
-    e.preventDefault()
-    const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail) return
-    setLoading(true)
-    setError('')
-
-    // Проверяем, существует ли аккаунт в Auth, пытаясь войти с заведомо неверным паролем
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password: 'this-is-a-test-to-check-existence',
-    })
-
-    // Если ошибка "Invalid login credentials" (аккаунта нет) — ищем инвайт
-    if (signInError && signInError.message.includes('Invalid login credentials')) {
-      const { data: inviteData, error: fetchError } = await supabase
-        .from('invitations')
-        .select('*, companies(name), roles(name)')
-        .ilike('email', normalizedEmail)
-        .eq('status', 'pending')
-        .maybeSingle()
-
-      if (fetchError || !inviteData) {
-        setError('Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации')
-        setLoading(false)
-        return
-      }
-
-      setInvite(inviteData)
-      setEmail(inviteData.email)
-      setStep('tempPass')
-      setLoading(false)
-      return
-    }
-
-    // Если ошибка "Invalid password" (аккаунт есть) — всё хорошо, переходим к вводу пароля
-    if (signInError && signInError.message.includes('Invalid password')) {
-      setEmail(normalizedEmail)
-      setStep('login')
-      setLoading(false)
-      return
-    }
-
-    // Любая другая ошибка
-    if (signInError) {
-      setError(signInError.message)
-      setLoading(false)
-      return
-    }
-
-    // На всякий случай, если авторизация почему-то прошла
-    router.push('/')
-  }
-
+  // Прямой вход
   async function handleLogin(e) {
     e.preventDefault()
-    if (!password) return
+    if (!email || !password) return
     setLoading(true)
     setError('')
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     })
 
     if (signInError) {
       setError('Неверный email или пароль')
       setLoading(false)
+    } else {
+      router.push('/')
+    }
+  }
+
+  // Шаг 1: проверка email для активации
+  async function handleInviteCheck(e) {
+    e.preventDefault()
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) return
+    setLoading(true)
+    setError('')
+
+    const { data: inviteData, error: fetchError } = await supabase
+      .from('invitations')
+      .select('*, companies(name), roles(name)')
+      .eq('email', normalizedEmail)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (fetchError || !inviteData) {
+      setError('Код приглашения не найден для этого email')
+      setLoading(false)
       return
     }
 
-    router.push('/')
+    setInvite(inviteData)
+    setLoading(false)
   }
 
+  // Активация: временный пароль
   async function handleTempPassSubmit(e) {
     e.preventDefault()
     if (!tempPassword) return
@@ -100,10 +71,11 @@ export default function Login() {
       return
     }
 
-    setStep('setNewPass')
+    setInvite({ ...invite, tempPassConfirmed: true })
     setLoading(false)
   }
 
+  // Активация: установка постоянного пароля
   async function handleSetNewPass(e) {
     e.preventDefault()
     if (!newPassword || newPassword.length < 6) {
@@ -151,55 +123,53 @@ export default function Login() {
     }
   }
 
-  const isModalOpen = error === 'Вашего email нет в базе данных, обратитесь к вашему руководителю для регистрации'
-
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
         <h1 className="text-2xl font-bold text-deep-blue mb-4">Вход в Кармический банк</h1>
 
-        {step === 'email' && (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ваш email" className="input-field" required />
-            {error && !isModalOpen && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Проверка...' : 'Продолжить'}</button>
-          </form>
-        )}
+        {/* Основная форма входа */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
+            {loading ? 'Вход...' : 'Войти'}
+          </button>
+        </form>
 
-        {step === 'login' && (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <p className="text-sm text-gray-400">Введите пароль для {email}</p>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Вход...' : 'Войти'}</button>
-          </form>
-        )}
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setShowInvite(!showInvite)}
+            className="text-sm text-gray-400 hover:text-white transition"
+          >
+            У меня есть код приглашения
+          </button>
+        </div>
 
-        {step === 'tempPass' && (
-          <form onSubmit={handleTempPassSubmit} className="space-y-4">
-            <p className="text-sm text-gray-400">На ваш email отправлен временный пароль. Введите его ниже.</p>
-            <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Проверка...' : 'Далее'}</button>
-          </form>
-        )}
+        {/* Блок активации */}
+        {showInvite && (
+          <div className="mt-6 border-t border-gray-700 pt-4">
+            <form onSubmit={handleInviteCheck} className="space-y-4">
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email из приглашения" className="input-field" required />
+              <button type="submit" className="btn-gold w-full" disabled={loading}>Проверить</button>
+            </form>
 
-        {step === 'setNewPass' && (
-          <form onSubmit={handleSetNewPass} className="space-y-4">
-            <p className="text-sm text-gray-400">Придумайте новый пароль для входа в систему.</p>
-            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль" className="input-field" required />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Активация...' : 'Активировать аккаунт'}</button>
-          </form>
-        )}
+            {invite && !invite.tempPassConfirmed && (
+              <form onSubmit={handleTempPassSubmit} className="mt-4 space-y-4">
+                <p className="text-sm text-gray-400">Временный пароль из письма</p>
+                <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
+                <button type="submit" className="btn-gold w-full" disabled={loading}>Далее</button>
+              </form>
+            )}
 
-        {isModalOpen && (
-          <div className="modal-overlay" onClick={() => setError('')}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <h3 className="text-xl font-semibold mb-4">Доступ к платформе</h3>
-              <p className="text-gray-600">{error}</p>
-              <button onClick={() => setError('')} className="btn-gold mt-6">Понятно</button>
-            </div>
+            {invite && invite.tempPassConfirmed && (
+              <form onSubmit={handleSetNewPass} className="mt-4 space-y-4">
+                <p className="text-sm text-gray-400">Придумайте новый пароль</p>
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль" className="input-field" required />
+                <button type="submit" className="btn-gold w-full" disabled={loading}>Активировать</button>
+              </form>
+            )}
           </div>
         )}
       </div>
