@@ -13,6 +13,11 @@ export default function Invite() {
   const [initialCheck, setInitialCheck] = useState(true)
 
   useEffect(() => {
+    // Сбрасываем старый кэш и сессии, чтобы избежать конфликтов
+    localStorage.clear()
+    sessionStorage.clear()
+    supabase.auth.signOut()
+
     if (!token) {
       router.push('/login')
       return
@@ -30,9 +35,7 @@ export default function Invite() {
       .eq('status', 'pending')
       .maybeSingle()
 
-    if (fetchError) {
-      setError('Ошибка при проверке приглашения: ' + fetchError.message)
-    } else if (!data) {
+    if (fetchError || !data) {
       setError('Приглашение не найдено или уже использовано')
     } else {
       setInvite(data)
@@ -49,71 +52,50 @@ export default function Invite() {
     setLoading(true)
     setError('')
 
-    // 1. Сверяем временный пароль
+    // Проверяем временный пароль
     if (tempPassword !== invite.temp_password) {
       setError('Неверный временный пароль')
       setLoading(false)
       return
     }
 
-    // 2. Пытаемся зарегистрировать пользователя
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    // Пытаемся войти, если пользователь уже существует
+    let user;
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: invite.email,
       password: newPassword,
     })
 
-    // Если ошибка "User already registered" – значит, пользователь уже существует.
-    if (signUpError && signUpError.message.includes('already registered')) {
-      // Логинимся с новым паролем
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+    if (signInError) {
+      // Если вход не удался – пробуем зарегистрировать
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: invite.email,
         password: newPassword,
       })
-      if (signInError) {
-        setError('Не удалось войти. Возможно, пароль не подходит.')
+
+      if (signUpError && signUpError.message.includes('already registered')) {
+        // Уже зарегистрирован, но пароль не подошёл
+        setError('Неверный новый пароль или аккаунт уже существует с другим паролем')
+        setLoading(false)
+        return
+      } else if (signUpError) {
+        setError(signUpError.message)
         setLoading(false)
         return
       }
-      // Создаём профиль, если его нет
-      const user = (await supabase.auth.getUser()).data.user
-      if (user) {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .maybeSingle()
-        if (!existingProfile) {
-          await supabase.from('profiles').insert({
-            user_id: user.id,
-            company_id: invite.company_id,
-            department_id: null,
-            role_id: invite.role_id,
-            display_name: invite.email,
-            email: invite.email,
-            manager_id: invite.created_by,
-          })
-        }
-      }
-      await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
-      router.push('/')
-      return
+
+      user = signUpData?.user
+    } else {
+      user = signInData?.user
     }
 
-    // Если другая ошибка
-    if (signUpError) {
-      setError(signUpError.message)
-      setLoading(false)
-      return
-    }
-
-    // 3. Успешная регистрация – создаём профиль
-    const user = signUpData?.user
     if (!user) {
-      setError('Не удалось создать аккаунт')
+      setError('Не удалось войти')
       setLoading(false)
       return
     }
 
+    // Создаём профиль, если его нет
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
@@ -132,16 +114,16 @@ export default function Invite() {
       })
     }
 
-    // 4. Помечаем инвайт использованным
+    // Помечаем инвайт использованным
     await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
 
-    // 5. Перелогиниваемся для чистой сессии
+    // Чистая сессия
     await supabase.auth.signOut()
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: finalSignInError } = await supabase.auth.signInWithPassword({
       email: invite.email,
       password: newPassword,
     })
-    if (signInError) {
+    if (finalSignInError) {
       setError('Не удалось войти после активации')
       setLoading(false)
       return
