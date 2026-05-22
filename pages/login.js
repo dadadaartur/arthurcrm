@@ -11,10 +11,9 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [step, setStep] = useState('login') // login | tempPass | setNewPass
+  const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
 
-  // Основной вход
   async function handleLogin(e) {
     e.preventDefault()
     if (!email || !password) return
@@ -22,7 +21,7 @@ export default function Login() {
     setError('')
 
     const normalizedEmail = email.trim().toLowerCase()
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password,
     })
@@ -32,7 +31,6 @@ export default function Login() {
       return
     }
 
-    // Ошибка входа – проверяем, есть ли инвайт
     if (signInError.message.includes('Invalid login credentials')) {
       const { data: inviteData } = await supabase
         .from('invitations')
@@ -49,18 +47,6 @@ export default function Login() {
         return
       }
 
-      // Инвайта нет – создаём гостевой профиль и переходим на витрину
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        // Пользователь вообще не авторизован – создаём анонимный вход через signUp (но это невозможно без пароля)
-        // Вместо этого отправим на /welcome без авторизации
-        setError('')
-        setLoading(false)
-        router.push('/welcome')
-        return
-      }
-
-      // Если уже авторизован, но нет профиля – просто идём на /welcome
       router.push('/welcome')
       return
     }
@@ -69,7 +55,6 @@ export default function Login() {
     setLoading(false)
   }
 
-  // Проверка временного пароля
   async function handleTempPassSubmit(e) {
     e.preventDefault()
     if (!tempPassword) return
@@ -86,7 +71,6 @@ export default function Login() {
     setLoading(false)
   }
 
-  // Установка постоянного пароля и активация
   async function handleSetNewPass(e) {
     e.preventDefault()
     if (!newPassword || newPassword.length < 6) {
@@ -115,17 +99,39 @@ export default function Login() {
         return
       }
 
-      await supabase.from('profiles').insert({
-        user_id: user.id,
-        company_id: invite.company_id,
-        department_id: null,
-        role_id: invite.role_id,
-        display_name: email,
-        email: invite.email,
-        manager_id: invite.created_by,
-      })
+      // Проверим, не существует ли уже профиль (на случай коллизий)
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          company_id: invite.company_id,
+          department_id: null,
+          role_id: invite.role_id,
+          display_name: email,
+          email: invite.email,
+          manager_id: invite.created_by,
+        })
+      }
 
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
+
+      // Гарантируем чистую сессию нового пользователя
+      await supabase.auth.signOut()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: invite.email,
+        password: newPassword,
+      })
+
+      if (signInError) {
+        setError('Не удалось войти после активации')
+        setLoading(false)
+        return
+      }
 
       router.push('/')
     } catch (err) {
