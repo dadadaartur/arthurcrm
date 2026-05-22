@@ -3,40 +3,44 @@ import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 import PremiumModal from '../components/PremiumModal'
 
-const COLORS = {
-  red: { label: 'Срочный фикс', bg: 'rgba(239, 68, 68, 0.85)', border: 'rgba(239, 68, 68, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(239, 68, 68, 0.5)' },
-  yellow: { label: 'Срочно, но есть время', bg: 'rgba(234, 179, 8, 0.85)', border: 'rgba(234, 179, 8, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(234, 179, 8, 0.5)' },
-  green: { label: 'Идея на будущее', bg: 'rgba(34, 197, 94, 0.85)', border: 'rgba(34, 197, 94, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(34, 197, 94, 0.5)' },
-  blue: { label: 'Путь проекта', bg: 'rgba(59, 130, 246, 0.9)', border: 'rgba(59, 130, 246, 1)', text: '#FFFFFF', shadow: '0 0 30px rgba(59, 130, 246, 0.7)' },
-}
-
-export default function Admin() {
+export default function CompanyAdmin() {
   const [user, setUser] = useState(null)
-  const [stickers, setStickers] = useState([])
-  const [content, setContent] = useState('')
-  const [color, setColor] = useState('blue')
-  const [filter, setFilter] = useState([])
+  const [profile, setProfile] = useState(null)
+  const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState({})
 
-  const [profiles, setProfiles] = useState([])
+  const [tasks, setTasks] = useState([])
+  const [showNewTask, setShowNewTask] = useState(false)
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    reward_karma: 10,
+    reward_energy: 0,
+    task_type: 'manual',
+    frequency: 'once',
+    max_completions: 1,
+    is_active: true,
+  })
+  const [editingTask, setEditingTask] = useState(null)
+
+  const [showNewEmployee, setShowNewEmployee] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newRoleId, setNewRoleId] = useState('')
   const [roles, setRoles] = useState([])
-  const [companies, setCompanies] = useState([])
-  const [showInvite, setShowInvite] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRoleId, setInviteRoleId] = useState('')
-  const [inviteLink, setInviteLink] = useState('')
-  const [inviteTempPassword, setInviteTempPassword] = useState('')
-  const [copySuccess, setCopySuccess] = useState(false)
+  const [inviteResult, setInviteResult] = useState(null)
 
-  // Модалки
-  const [modal, setModal] = useState({ isOpen: false, title: '', message: '' })
-  const [editingProfile, setEditingProfile] = useState(null)
+  const [editingEmployee, setEditingEmployee] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editRoleId, setEditRoleId] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [resetPasswordTarget, setResetPasswordTarget] = useState(null)
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '' })
+
+  // Состояние для email-отправки
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -46,263 +50,311 @@ export default function Admin() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('roles(name, is_system)')
+        .select('*, roles(name, is_system)')
         .eq('user_id', user.id)
-        .maybeSingle()
+        .single()
 
-      if (!profile?.roles?.is_system) { window.location.href = '/'; return }
+      if (!profile || (!profile.roles?.is_system &&
+          profile.roles?.name !== 'РОП' &&
+          profile.roles?.name !== 'СМ' &&
+          profile.roles?.name !== 'Администратор')) {
+        window.location.href = '/'
+        return
+      }
 
-      await fetchStickers()
-      await fetchAllProfiles()
-      await fetchAllRoles()
-      await fetchCompanies()
+      setProfile(profile)
+
+      const { data: rolesData } = await supabase.from('roles').select('*').eq('company_id', profile.company_id)
+      setRoles(rolesData || [])
+      if (rolesData && rolesData.length > 0 && !newRoleId) setNewRoleId(rolesData[0].id)
+
+      await fetchEmployees(profile.company_id)
+      await fetchTasks(profile.company_id)
     }
     checkAccess()
   }, [])
 
-  async function fetchStickers() {
-    const { data } = await supabase.from('admin_stickers').select('*').order('created_at', { ascending: false })
-    setStickers(data || [])
+  async function fetchEmployees(companyId) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*, roles(name), departments(name)')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+    setEmployees(data || [])
     setLoading(false)
   }
 
-  async function fetchAllProfiles() {
-    const { data } = await supabase.from('profiles').select('*, roles(name), departments(name), companies(name)')
-    setProfiles(data || [])
+  async function fetchTasks(companyId) {
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+    setTasks(data || [])
   }
 
-  async function fetchAllRoles() {
-    const { data } = await supabase.from('roles').select('*').order('name')
-    setRoles(data || [])
-    if (data && data.length > 0 && !inviteRoleId) setInviteRoleId(data[0].id)
-  }
-
-  async function fetchCompanies() {
-    const { data } = await supabase.from('companies').select('*').order('created_at', { ascending: false })
-    setCompanies(data || [])
-  }
-
-  async function createSticker(e) {
+  // --- Задания ---
+  async function handleCreateTask(e) {
     e.preventDefault()
-    if (!content.trim()) return
-    await supabase.from('admin_stickers').insert({ user_id: user.id, content, color })
-    setContent('')
-    fetchStickers()
+    const { error } = await supabase.from('tasks').insert({
+      company_id: profile.company_id,
+      ...newTask,
+      created_by: user.id,
+    })
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      setNewTask({ title: '', description: '', reward_karma: 10, reward_energy: 0, task_type: 'manual', frequency: 'once', max_completions: 1, is_active: true })
+      setShowNewTask(false)
+      fetchTasks(profile.company_id)
+    }
   }
 
-  async function deleteSticker(id) {
-    await supabase.from('admin_stickers').delete().eq('id', id)
-    fetchStickers()
+  async function toggleTaskActive(task) {
+    await supabase.from('tasks').update({ is_active: !task.is_active }).eq('id', task.id)
+    fetchTasks(profile.company_id)
   }
 
-  const toggleFilter = (c) => setFilter(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
-  const toggleExpand = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
-  const filtered = filter.length === 0 ? stickers : stickers.filter(s => filter.includes(s.color))
+  async function deleteTask(id) {
+    await supabase.from('tasks').delete().eq('id', id)
+    fetchTasks(profile.company_id)
+  }
 
-  // Приглашение сотрудника
-  async function handleInvite(e) {
+  function openEditTask(task) {
+    setEditingTask(task)
+    setNewTask({
+      title: task.title,
+      description: task.description || '',
+      reward_karma: task.reward_karma,
+      reward_energy: task.reward_energy,
+      task_type: task.task_type,
+      frequency: task.frequency,
+      max_completions: task.max_completions || 1,
+      is_active: task.is_active,
+    })
+  }
+
+  async function saveEditedTask() {
+    if (!editingTask) return
+    const { error } = await supabase.from('tasks').update(newTask).eq('id', editingTask.id)
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      setEditingTask(null)
+      fetchTasks(profile.company_id)
+    }
+  }
+
+  // --- Сотрудники ---
+  async function handleCreateEmployee(e) {
     e.preventDefault()
-    if (!inviteEmail || !inviteRoleId) return
-
+    if (!newName || !newEmail || !newRoleId) return
     try {
       const token = crypto.randomUUID()
       const tempPassword = Math.random().toString(36).slice(-8)
       await supabase.from('invitations').insert({
-        company_id: companies[0]?.id, // первая компания для суперадмина
-        role_id: parseInt(inviteRoleId),
-        email: inviteEmail,
+        company_id: profile.company_id,
+        role_id: parseInt(newRoleId),
+        email: newEmail,
         token,
         temp_password: tempPassword,
         created_by: user.id,
       })
-
-      setInviteLink(`${window.location.origin}/invite?token=${token}`)
-      setInviteTempPassword(tempPassword)
-      setInviteEmail('')
-      setInviteRoleId(roles[0]?.id || '')
+      setInviteResult({ link: `${window.location.origin}/invite?token=${token}`, tempPassword, email: newEmail })
+      setNewName('')
+      setNewEmail('')
+      setNewRoleId(roles[0]?.id || '')
+      setEmailSent(false) // сбрасываем статус отправки
     } catch (err) {
       setModal({ isOpen: true, title: 'Ошибка', message: err.message })
     }
   }
 
-  async function copyInviteLink() {
-    if (!inviteLink) return
+  // Отправка приглашения на email через API-маршрут
+  async function sendInviteEmail() {
+    if (!inviteResult) return
+    setEmailSending(true)
     try {
-      await navigator.clipboard.writeText(inviteLink)
-      setCopySuccess(true)
-      setTimeout(() => setCopySuccess(false), 2000)
+      const res = await fetch('/api/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteResult.email,
+          link: inviteResult.link,
+          tempPassword: inviteResult.tempPassword,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setEmailSent(true)
+      } else {
+        setModal({ isOpen: true, title: 'Ошибка отправки', message: data.error || 'Не удалось отправить письмо' })
+      }
     } catch (err) {
-      const input = document.getElementById('invite-link-input')
-      if (input) { input.select(); document.execCommand('copy'); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000) }
+      setModal({ isOpen: true, title: 'Ошибка', message: 'Ошибка соединения' })
+    } finally {
+      setEmailSending(false)
     }
   }
 
-  // Редактирование сотрудника
-  async function openEdit(profile) {
-    setEditingProfile(profile)
-    setEditName(profile.display_name || '')
-    setEditEmail(profile.email || '')
-    setEditRoleId(profile.role_id || '')
+  function openEdit(emp) {
+    setEditingEmployee(emp)
+    setEditName(emp.display_name || '')
+    setEditEmail(emp.email || '')
+    setEditRoleId(emp.role_id || '')
   }
 
   async function saveEdit() {
-    if (!editingProfile) return
+    if (!editingEmployee) return
     const { error } = await supabase.from('profiles').update({
       display_name: editName,
       email: editEmail,
       role_id: parseInt(editRoleId),
-    }).eq('user_id', editingProfile.user_id)
+    }).eq('user_id', editingEmployee.user_id)
     if (error) {
       setModal({ isOpen: true, title: 'Ошибка', message: error.message })
     } else {
-      setEditingProfile(null)
-      fetchAllProfiles()
+      setEditingEmployee(null)
+      fetchEmployees(profile.company_id)
     }
   }
 
-  // Удаление сотрудника
-  function confirmDelete(profile) {
-    setDeleteTarget(profile)
-  }
-
+  function confirmDelete(emp) { setDeleteTarget(emp) }
   async function executeDelete() {
     if (!deleteTarget) return
     await supabase.from('profiles').delete().eq('user_id', deleteTarget.user_id)
     setDeleteTarget(null)
-    fetchAllProfiles()
+    fetchEmployees(profile.company_id)
   }
 
-  // Сброс пароля
-  function confirmResetPassword(profile) {
-    setResetPasswordTarget(profile)
-  }
-
+  function confirmResetPassword(emp) { setResetPasswordTarget(emp) }
   async function executeResetPassword() {
     if (!resetPasswordTarget) return
     const tempPassword = Math.random().toString(36).slice(-8)
-    const { error } = await supabase.from('invitations').insert({
-      company_id: companies[0]?.id,
+    await supabase.from('invitations').insert({
+      company_id: profile.company_id,
       role_id: resetPasswordTarget.role_id,
       email: resetPasswordTarget.email,
       token: crypto.randomUUID(),
       temp_password: tempPassword,
       created_by: user.id,
     })
-    if (error) {
-      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
-    } else {
-      setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
-      setResetPasswordTarget(null)
-    }
+    setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
+    setResetPasswordTarget(null)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Левая колонка: Дашборд, Компании, Сотрудники */}
-        <div className="w-full lg:w-1/3">
-          <div className="dash-card mb-6">
-            <h3>Дашборд платформы</h3>
-            <div className="space-y-4 mt-4">
-              <div><p className="text-sm text-gray-400">Компаний</p><p className="text-2xl font-bold text-white">{companies.length}</p></div>
-              <div><p className="text-sm text-gray-400">Сотрудников</p><p className="text-2xl font-bold text-white">{profiles.length}</p></div>
-              <div><p className="text-sm text-gray-400">Срочных фиксов</p><p className="text-2xl font-bold text-red-400">{stickers.filter(s => s.color === 'red').length}</p></div>
-              <div><p className="text-sm text-gray-400">Путь проекта</p><p className="text-2xl font-bold text-blue-400">{stickers.filter(s => s.color === 'blue').length}</p></div>
-            </div>
-          </div>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="dash-card mb-6">
+        <h3>Панель управления компанией</h3>
+        <p className="text-sm text-gray-400 mt-2">Добро пожаловать, {profile?.display_name || user?.email}. Ваша роль: {profile?.roles?.name}</p>
+      </div>
 
-          <div className="dash-card mb-6">
-            <h3>Фильтры стикеров</h3>
-            <div className="flex flex-wrap gap-2 mt-4">
-              {Object.entries(COLORS).map(([key, val]) => (
-                <button key={key} onClick={() => toggleFilter(key)} className={`filter-pill ${filter.includes(key) ? 'active' : ''}`}
-                  style={filter.includes(key) ? { background: val.border, color: 'white', borderColor: 'transparent' } : {}}>
-                  {val.label}
-                </button>
-              ))}
+      {/* Задания */}
+      <div className="dash-card mb-6">
+        <h3>Задания</h3>
+        <button onClick={() => setShowNewTask(!showNewTask)} className="btn-gold mb-4">+ Новое задание</button>
+        {showNewTask && (
+          <form onSubmit={editingTask ? saveEditedTask : handleCreateTask} className="space-y-3 mb-4">
+            <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="Название" className="input-field" required />
+            <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Описание" className="input-field" rows={3} />
+            <div className="grid grid-cols-2 gap-3">
+              <input type="number" value={newTask.reward_karma} onChange={e => setNewTask({ ...newTask, reward_karma: parseInt(e.target.value) })} placeholder="Кармики" className="input-field" />
+              <input type="number" value={newTask.reward_energy} onChange={e => setNewTask({ ...newTask, reward_energy: parseInt(e.target.value) })} placeholder="Энергия" className="input-field" />
             </div>
-          </div>
-
-          <div className="dash-card mb-6">
-            <h3>Сотрудники</h3>
-            <div className="mt-4 space-y-2">
-              {profiles.map(p => (
-                <div key={p.user_id} className="flex justify-between items-center py-2 border-b border-gray-700">
-                  <div>
-                    <p className="text-white font-medium">{p.display_name || 'Без имени'}</p>
-                    <p className="text-xs text-gray-400">{p.roles?.name} · {p.companies?.name}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(p)} className="text-xs text-blue-400 hover:text-blue-300">Изменить</button>
-                    <button onClick={() => confirmDelete(p)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-                    <button onClick={() => confirmResetPassword(p)} className="text-xs text-yellow-400 hover:text-yellow-300">Пароль</button>
-                  </div>
-                </div>
-              ))}
-              <button onClick={() => setShowInvite(!showInvite)} className="btn-gold w-full mt-4">+ Пригласить сотрудника</button>
-            </div>
-            {showInvite && (
-              <form onSubmit={handleInvite} className="mt-4 space-y-3">
-                <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="Email сотрудника" className="input-field" required />
-                <select value={inviteRoleId} onChange={e => setInviteRoleId(e.target.value)} className="input-field" required>
-                  {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
-                <button type="submit" className="btn-gold w-full">Создать приглашение</button>
-                {inviteLink && (
-                  <div className="mt-3 space-y-2">
-                    <input id="invite-link-input" type="text" value={inviteLink} readOnly className="input-field text-xs text-green-400 bg-gray-900 border-gray-700" style={{ cursor: 'text', userSelect: 'text' }} />
-                    <button type="button" onClick={copyInviteLink} className="btn-gold w-full text-xs">{copySuccess ? 'Скопировано!' : 'Копировать ссылку'}</button>
-                  </div>
-                )}
-              </form>
+            <select value={newTask.task_type} onChange={e => setNewTask({ ...newTask, task_type: e.target.value })} className="input-field">
+              <option value="manual">Ручная проверка</option>
+              <option value="auto_crm">Автоматическая из CRM</option>
+            </select>
+            <select value={newTask.frequency} onChange={e => setNewTask({ ...newTask, frequency: e.target.value })} className="input-field">
+              <option value="once">Один раз</option>
+              <option value="daily">Ежедневно</option>
+              <option value="unlimited">Неограниченно</option>
+              <option value="limited_count">Ограниченное количество</option>
+            </select>
+            {newTask.frequency === 'limited_count' && (
+              <input type="number" value={newTask.max_completions} onChange={e => setNewTask({ ...newTask, max_completions: parseInt(e.target.value) })} placeholder="Максимум выполнений" className="input-field" />
             )}
-          </div>
-        </div>
-
-        {/* Правая колонка: Стикеры */}
-        <div className="flex-1">
-          <div className="dash-card mb-6">
-            <h3>Новый стикер</h3>
-            <form onSubmit={createSticker} className="space-y-4 mt-4">
-              <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Опишите задачу или идею..." className="input-field" rows={3} required />
-              <div className="flex gap-3 items-center">
-                <select value={color} onChange={e => setColor(e.target.value)} className="input-field w-auto">
-                  <option value="red">🔴 Срочный фикс</option>
-                  <option value="yellow">🟡 Срочно, но есть время</option>
-                  <option value="green">🟢 Идея на будущее</option>
-                  <option value="blue">🔵 Путь проекта</option>
-                </select>
-                <button type="submit" className="btn-gold">Создать</button>
+            <button type="submit" className="btn-gold w-full">{editingTask ? 'Сохранить' : 'Создать задание'}</button>
+            {editingTask && <button onClick={() => setEditingTask(null)} className="btn-outline w-full mt-2">Отмена</button>}
+          </form>
+        )}
+        <div className="space-y-4">
+          {tasks.map(task => (
+            <div key={task.id} className="premium-card flex justify-between items-center">
+              <div>
+                <p className="text-white font-medium">{task.title}</p>
+                <p className="text-xs text-gray-400">{task.task_type} · {task.frequency} · {task.reward_karma} кармиков</p>
               </div>
-            </form>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filtered.map(sticker => {
-              const style = COLORS[sticker.color]
-              const isExpanded = expanded[sticker.id]
-              const longText = sticker.content.length > 120
-              const displayText = isExpanded || !longText ? sticker.content : sticker.content.slice(0, 120) + '...'
-              return (
-                <div key={sticker.id} className="premium-card relative flex flex-col" style={{ background: style.bg, borderColor: style.border, boxShadow: style.shadow, color: style.text }}>
-                  <p className="text-sm whitespace-pre-wrap flex-1 sticker-text">{displayText}</p>
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="text-xs opacity-70">{new Date(sticker.created_at).toLocaleString('ru')}</span>
-                    <div className="flex gap-2">
-                      {longText && <button onClick={() => toggleExpand(sticker.id)} className="text-xs opacity-80 hover:opacity-100 transition">{isExpanded ? 'Свернуть' : 'Далее'}</button>}
-                      <button onClick={() => deleteSticker(sticker.id)} className="text-xs text-red-300 hover:text-red-200 transition">Удалить</button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+              <div className="flex gap-2">
+                <button onClick={() => openEditTask(task)} className="text-xs text-blue-400 hover:text-blue-300">Ред.</button>
+                <button onClick={() => toggleTaskActive(task)} className={`text-xs ${task.is_active ? 'text-green-400' : 'text-gray-400'}`}>
+                  {task.is_active ? 'Акт.' : 'Неакт.'}
+                </button>
+                <button onClick={() => deleteTask(task.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Модалка редактирования сотрудника */}
-      <PremiumModal isOpen={!!editingProfile} onClose={() => setEditingProfile(null)} title="Редактировать сотрудника">
+      {/* Новый сотрудник */}
+      <div className="dash-card mb-6">
+        <h3>Новый сотрудник</h3>
+        <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Добавить сотрудника</button>
+        {showNewEmployee && (
+          <form onSubmit={handleCreateEmployee} className="space-y-3">
+            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="ФИО" className="input-field" required />
+            <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Email" className="input-field" required />
+            <select value={newRoleId} onChange={e => setNewRoleId(e.target.value)} className="input-field">
+              {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+            <button type="submit" className="btn-gold w-full">Создать приглашение</button>
+            {inviteResult && (
+              <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-2">
+                <p className="text-xs text-gray-300">Ссылка: <span className="text-green-400">{inviteResult.link}</span></p>
+                <p className="text-xs text-gray-300">Временный пароль: <span className="text-yellow-400 font-mono">{inviteResult.tempPassword}</span></p>
+                <button
+                  onClick={sendInviteEmail}
+                  disabled={emailSending || emailSent}
+                  className="btn-gold w-full text-xs"
+                >
+                  {emailSent ? '✓ Отправлено' : emailSending ? 'Отправка...' : 'Отправить на email'}
+                </button>
+              </div>
+            )}
+          </form>
+        )}
+      </div>
+
+      <div className="dash-card">
+        <h3>Сотрудники</h3>
+        <div className="mt-4 space-y-2">
+          {employees.map(emp => (
+            <div key={emp.user_id} className="flex justify-between items-center py-2 border-b border-gray-700">
+              <div>
+                <p className="text-white font-medium">{emp.display_name || 'Без имени'}</p>
+                <p className="text-xs text-gray-400">{emp.roles?.name} · {emp.position || '—'}</p>
+              </div>
+              <div className="flex gap-2">
+                {emp.user_id !== user?.id && (
+                  <>
+                    <button onClick={() => openEdit(emp)} className="text-xs text-blue-400 hover:text-blue-300">Изменить</button>
+                    <button onClick={() => confirmDelete(emp)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                    <button onClick={() => confirmResetPassword(emp)} className="text-xs text-yellow-400 hover:text-yellow-300">Пароль</button>
+                  </>
+                )}
+                {emp.user_id === user?.id && <span className="text-xs text-gray-500">(вы)</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Модалки */}
+      <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника">
         <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Имя" className="input-field mb-3" />
         <input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email" className="input-field mb-3" />
         <select value={editRoleId} onChange={e => setEditRoleId(e.target.value)} className="input-field mb-3">
@@ -311,19 +363,16 @@ export default function Admin() {
         <button onClick={saveEdit} className="btn-gold w-full">Сохранить</button>
       </PremiumModal>
 
-      {/* Подтверждение удаления */}
       <PremiumModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Удалить сотрудника?">
         <p>Вы уверены, что хотите удалить {deleteTarget?.display_name}? Это действие необратимо.</p>
         <button onClick={executeDelete} className="btn-gold w-full mt-4">Удалить</button>
       </PremiumModal>
 
-      {/* Сброс пароля */}
       <PremiumModal isOpen={!!resetPasswordTarget} onClose={() => setResetPasswordTarget(null)} title="Сброс пароля?">
         <p>Будет сгенерирован новый временный пароль для {resetPasswordTarget?.display_name}.</p>
         <button onClick={executeResetPassword} className="btn-gold w-full mt-4">Сбросить</button>
       </PremiumModal>
 
-      {/* Общее уведомление */}
       <PremiumModal isOpen={modal.isOpen} onClose={() => setModal({ ...modal, isOpen: false })} title={modal.title}>
         <p>{modal.message}</p>
       </PremiumModal>
