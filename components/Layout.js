@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
@@ -33,7 +32,6 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
 
-  // Проверяем сессию при монтировании и при каждом переходе
   useEffect(() => {
     const loadProfile = async (currentUser) => {
       if (!currentUser) {
@@ -48,22 +46,18 @@ export default function Layout({ children }) {
       setProfile(data || null)
     }
 
-    // Получаем текущую сессию
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       loadProfile(user)
     })
 
-    // Подписываемся на изменения аутентификации
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user || null
       setUser(currentUser)
       loadProfile(currentUser)
     })
 
-    return () => {
-      authListener?.subscription.unsubscribe()
-    }
+    return () => authListener?.subscription.unsubscribe()
   }, [])
 
   async function handleLogout() {
@@ -89,31 +83,17 @@ export default function Layout({ children }) {
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <Link href="/supd" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</Link>
-            {isSuperAdmin && (
-              <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>
-            )}
-            {isCompanyAdmin && (
-              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
-            )}
+            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {isCompanyAdmin && <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>}
           </nav>
         </div>
         <div className="flex items-center gap-2 text-xs font-medium">
-          {user && (
-            <span className="text-white font-semibold">
-              {profile?.display_name || user.email}
-            </span>
-          )}
-          {user && (
-            <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">
-              Выйти
-            </button>
-          )}
+          {user && <span className="text-white font-semibold">{profile?.display_name || user.email}</span>}
+          {user && <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>}
         </div>
       </header>
 
-      <main className="flex-grow relative z-10">
-        {children}
-      </main>
+      <main className="flex-grow relative z-10">{children}</main>
 
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
