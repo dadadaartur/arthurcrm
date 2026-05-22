@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
+// Звёздный фон
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
@@ -38,7 +39,7 @@ export default function Layout({ children }) {
       if (user) {
         supabase
           .from('profiles')
-          .select('display_name, roles(name, is_system)')
+          .select('display_name, roles(name, is_system), company_id')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => setProfile(data))
@@ -53,7 +54,7 @@ export default function Layout({ children }) {
       if (currentUser) {
         supabase
           .from('profiles')
-          .select('display_name, roles(name, is_system)')
+          .select('display_name, roles(name, is_system), company_id')
           .eq('user_id', currentUser.id)
           .maybeSingle()
           .then(({ data }) => setProfile(data))
@@ -70,13 +71,20 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin =
-    profile?.roles?.name === 'РОП' ||
-    profile?.roles?.name === 'СМ' ||
-    profile?.roles?.name === 'Администратор'
+  // Пользователь без компании (гость)
+  if (user && !profile?.company_id) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <main className="flex-grow relative z-10">{children}</main>
+        <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
+          © {new Date().getFullYear()} Кармический банк
+        </footer>
+      </div>
+    )
+  }
 
-  // Если пользователь не авторизован – показываем только фон и контент (страницу входа)
+  // Неавторизованный
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -86,7 +94,13 @@ export default function Layout({ children }) {
     )
   }
 
-  // Полный интерфейс для авторизованных
+  // Полный интерфейс для сотрудников
+  const isSuperAdmin = profile?.roles?.is_system === true
+  const isCompanyAdmin =
+    profile?.roles?.name === 'РОП' ||
+    profile?.roles?.name === 'СМ' ||
+    profile?.roles?.name === 'Администратор'
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
