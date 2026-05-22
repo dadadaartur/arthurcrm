@@ -11,22 +11,20 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Этапы: email -> (существующий? 'login' : (приглашение? 'tempPass' : 'noAccess'))
   const [step, setStep] = useState('email')
   const [invite, setInvite] = useState(null)
 
-  // Проверка email: сначала ищем профиль, потом инвайт
   async function handleEmailSubmit(e) {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     setError('')
 
-    // 1. Ищем профиль (значит, пользователь уже активирован)
+    // 1. Ищем профиль по email
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
-      .or(`display_name.eq.${email},user_id.eq.${email}`)
+      .eq('email', email)
       .maybeSingle()
 
     if (existingProfile) {
@@ -54,7 +52,6 @@ export default function Login() {
     setLoading(false)
   }
 
-  // Стандартный вход
   async function handleLogin(e) {
     e.preventDefault()
     if (!password) return
@@ -72,7 +69,6 @@ export default function Login() {
     router.push('/')
   }
 
-  // Проверка временного пароля
   async function handleTempPassSubmit(e) {
     e.preventDefault()
     if (!tempPassword) return
@@ -89,7 +85,6 @@ export default function Login() {
     setLoading(false)
   }
 
-  // Активация аккаунта
   async function handleSetNewPass(e) {
     e.preventDefault()
     if (!newPassword || newPassword.length < 6) {
@@ -118,17 +113,16 @@ export default function Login() {
         return
       }
 
-      // Создаём профиль
       await supabase.from('profiles').insert({
         user_id: user.id,
         company_id: invite.company_id,
         department_id: null,
         role_id: invite.role_id,
         display_name: email,
+        email: invite.email,
         manager_id: invite.created_by,
       })
 
-      // Помечаем инвайт использованным
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
 
       router.push('/')
@@ -145,82 +139,41 @@ export default function Login() {
       <div className="premium-card">
         <h1 className="text-2xl font-bold text-deep-blue mb-4">Вход в Кармический банк</h1>
 
-        {/* Шаг 1: ввод email */}
         {step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Ваш email"
-              className="input-field"
-              required
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ваш email" className="input-field" required />
             {error && !isModalOpen && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
-              {loading ? 'Проверка...' : 'Продолжить'}
-            </button>
+            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Проверка...' : 'Продолжить'}</button>
           </form>
         )}
 
-        {/* Шаг 2: стандартный вход */}
         {step === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <p className="text-sm text-gray-400">Введите пароль для {email}</p>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Пароль"
-              className="input-field"
-              required
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
-              {loading ? 'Вход...' : 'Войти'}
-            </button>
+            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Вход...' : 'Войти'}</button>
           </form>
         )}
 
-        {/* Шаг 3: временный пароль */}
         {step === 'tempPass' && (
           <form onSubmit={handleTempPassSubmit} className="space-y-4">
             <p className="text-sm text-gray-400">На ваш email отправлен временный пароль. Введите его ниже.</p>
-            <input
-              type="text"
-              value={tempPassword}
-              onChange={e => setTempPassword(e.target.value)}
-              placeholder="Временный пароль"
-              className="input-field"
-              required
-            />
+            <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
-              {loading ? 'Проверка...' : 'Далее'}
-            </button>
+            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Проверка...' : 'Далее'}</button>
           </form>
         )}
 
-        {/* Шаг 4: установка постоянного пароля */}
         {step === 'setNewPass' && (
           <form onSubmit={handleSetNewPass} className="space-y-4">
             <p className="text-sm text-gray-400">Придумайте новый пароль для входа в систему.</p>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Новый пароль"
-              className="input-field"
-              required
-            />
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={loading}>
-              {loading ? 'Активация...' : 'Активировать аккаунт'}
-            </button>
+            <button type="submit" className="btn-gold w-full" disabled={loading}>{loading ? 'Активация...' : 'Активировать аккаунт'}</button>
           </form>
         )}
 
-        {/* Модальное окно "Доступ выдаёт руководитель" */}
         {isModalOpen && (
           <div className="modal-overlay" onClick={() => setError('')}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
