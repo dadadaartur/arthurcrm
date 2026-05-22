@@ -33,20 +33,37 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
 
+  // Проверяем сессию при монтировании и при каждом переходе
   useEffect(() => {
+    const loadProfile = async (currentUser) => {
+      if (!currentUser) {
+        setProfile(null)
+        return
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, roles(name, is_system)')
+        .eq('user_id', currentUser.id)
+        .maybeSingle()
+      setProfile(data || null)
+    }
+
+    // Получаем текущую сессию
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('display_name, roles(name, is_system)')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => setProfile(data))
-      } else {
-        setProfile(null)
-      }
+      loadProfile(user)
     })
+
+    // Подписываемся на изменения аутентификации
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+      loadProfile(currentUser)
+    })
+
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
   }, [])
 
   async function handleLogout() {
