@@ -31,6 +31,8 @@ export default function CompanyAdmin() {
   const [newRoleId, setNewRoleId] = useState('')
   const [roles, setRoles] = useState([])
   const [inviteResult, setInviteResult] = useState(null)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [copied, setCopied] = useState({ link: false, pass: false })
 
   // Редактирование и удаление сотрудников
   const [editingEmployee, setEditingEmployee] = useState(null)
@@ -144,7 +146,7 @@ export default function CompanyAdmin() {
     }
   }
 
-  // --- Сотрудники (старый код) ---
+  // --- Сотрудники ---
   async function handleCreateEmployee(e) {
     e.preventDefault()
     if (!newName || !newEmail || !newRoleId) return
@@ -159,12 +161,59 @@ export default function CompanyAdmin() {
         temp_password: tempPassword,
         created_by: user.id,
       })
-      setInviteResult({ link: `${window.location.origin}/invite?token=${token}`, tempPassword })
+      setInviteResult({
+        link: `${window.location.origin}/login?token=${token}`,
+        tempPassword,
+      })
       setNewName('')
       setNewEmail('')
       setNewRoleId(roles[0]?.id || '')
     } catch (err) {
       setModal({ isOpen: true, title: 'Ошибка', message: err.message })
+    }
+  }
+
+  async function sendInviteEmail() {
+    if (!inviteResult) return
+    setSendingEmail(true)
+    try {
+      const res = await fetch('/api/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newEmail || inviteResult.email,
+          link: inviteResult.link,
+          tempPassword: inviteResult.tempPassword,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setModal({ isOpen: true, title: 'Успешно', message: 'Приглашение отправлено на email' })
+      } else {
+        setModal({ isOpen: true, title: 'Ошибка', message: data.error || 'Не удалось отправить письмо. Возможно, не настроен SMTP сервер.' })
+      }
+    } catch (err) {
+      setModal({ isOpen: true, title: 'Ошибка', message: 'Не удалось отправить письмо. Проверьте настройки SMTP.' })
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
+  async function copyToClipboard(text, field) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(prev => ({ ...prev, [field]: true }))
+      setTimeout(() => setCopied(prev => ({ ...prev, [field]: false })), 2000)
+    } catch (err) {
+      // Fallback для старых браузеров
+      const el = document.createElement('textarea')
+      el.value = text
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopied(prev => ({ ...prev, [field]: true }))
+      setTimeout(() => setCopied(prev => ({ ...prev, [field]: false })), 2000)
     }
   }
 
@@ -271,7 +320,7 @@ export default function CompanyAdmin() {
         </div>
       </div>
 
-      {/* Сотрудники (старый код) */}
+      {/* Сотрудники */}
       <div className="dash-card mb-6">
         <h3>Новый сотрудник</h3>
         <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Добавить сотрудника</button>
@@ -284,9 +333,50 @@ export default function CompanyAdmin() {
             </select>
             <button type="submit" className="btn-gold w-full">Создать приглашение</button>
             {inviteResult && (
-              <div className="mt-3 p-3 bg-gray-800 rounded-lg">
-                <p className="text-xs text-gray-300">Ссылка: <span className="text-green-400">{inviteResult.link}</span></p>
-                <p className="text-xs text-gray-300">Временный пароль: <span className="text-yellow-400 font-mono">{inviteResult.tempPassword}</span></p>
+              <div className="mt-3 p-3 bg-gray-800 rounded-lg space-y-3">
+                <div>
+                  <p className="text-xs text-gray-300 mb-1">Ссылка для активации:</p>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={inviteResult.link}
+                      readOnly
+                      className="input-field text-xs text-green-400 bg-gray-900 border-gray-700 flex-1"
+                      style={{ cursor: 'text', userSelect: 'text' }}
+                    />
+                    <button
+                      onClick={() => copyToClipboard(inviteResult.link, 'link')}
+                      className="btn-gold text-xs px-3 py-1.5 whitespace-nowrap"
+                    >
+                      {copied.link ? 'Скопировано' : 'Копировать'}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-300 mb-1">Временный пароль:</p>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={inviteResult.tempPassword}
+                      readOnly
+                      className="input-field text-xs text-yellow-400 bg-gray-900 border-gray-700 flex-1 font-mono"
+                      style={{ cursor: 'text', userSelect: 'text' }}
+                    />
+                    <button
+                      onClick={() => copyToClipboard(inviteResult.tempPassword, 'pass')}
+                      className="btn-gold text-xs px-3 py-1.5 whitespace-nowrap"
+                    >
+                      {copied.pass ? 'Скопировано' : 'Копировать'}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={sendInviteEmail}
+                  disabled={sendingEmail}
+                  className="btn-gold w-full text-xs"
+                >
+                  {sendingEmail ? 'Отправка...' : 'Отправить на email'}
+                </button>
               </div>
             )}
           </form>
@@ -317,7 +407,7 @@ export default function CompanyAdmin() {
         </div>
       </div>
 
-      {/* Модалки (старый код) */}
+      {/* Модалки */}
       <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника">
         <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Имя" className="input-field mb-3" />
         <input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email" className="input-field mb-3" />
