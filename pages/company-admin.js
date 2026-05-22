@@ -24,7 +24,7 @@ export default function CompanyAdmin() {
   })
   const [editingTask, setEditingTask] = useState(null)
 
-  // Сотрудники (форма приглашения)
+  // Приглашения
   const [showNewEmployee, setShowNewEmployee] = useState(false)
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
@@ -156,7 +156,7 @@ export default function CompanyAdmin() {
     }
   }
 
-  // --- Сотрудники ---
+  // --- Приглашения ---
   async function handleCreateEmployee(e) {
     e.preventDefault()
     if (!newName || !newEmail || !newRoleId) return
@@ -174,10 +174,15 @@ export default function CompanyAdmin() {
       setNewName('')
       setNewEmail('')
       setNewRoleId(roles[0]?.id || '')
-      fetchInvitations(profile.company_id) // обновляем список приглашений
+      fetchInvitations(profile.company_id)
     } catch (err) {
       setModal({ isOpen: true, title: 'Ошибка', message: err.message })
     }
+  }
+
+  async function deleteInvitation(id) {
+    await supabase.from('invitations').delete().eq('id', id)
+    fetchInvitations(profile.company_id)
   }
 
   async function sendInviteEmail(email, link, tempPassword) {
@@ -343,19 +348,24 @@ export default function CompanyAdmin() {
                   <p className="text-white font-medium">{inv.email}</p>
                   <p className="text-xs text-gray-400">{inv.roles?.name} · {inv.status === 'pending' ? 'Ожидает' : 'Принято'}</p>
                 </div>
-                {inv.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <button onClick={() => copyToClipboard(`${window.location.origin}/login?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
-                      {copied[`link-${inv.id}`] ? 'Ссылка скопирована' : 'Копировать ссылку'}
-                    </button>
-                    <button onClick={() => copyToClipboard(inv.temp_password, `pass-${inv.id}`)} className="text-xs text-yellow-400 hover:text-yellow-300">
-                      {copied[`pass-${inv.id}`] ? 'Пароль скопирован' : 'Копировать пароль'}
-                    </button>
-                    <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/login?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
-                      Отправить на email
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  {inv.status === 'pending' && (
+                    <>
+                      <button onClick={() => copyToClipboard(`${window.location.origin}/login?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
+                        {copied[`link-${inv.id}`] ? 'Ссылка скопирована' : 'Копировать ссылку'}
+                      </button>
+                      <button onClick={() => copyToClipboard(inv.temp_password, `pass-${inv.id}`)} className="text-xs text-yellow-400 hover:text-yellow-300">
+                        {copied[`pass-${inv.id}`] ? 'Пароль скопирован' : 'Копировать пароль'}
+                      </button>
+                      <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/login?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
+                        Отправить на email
+                      </button>
+                      <button onClick={() => deleteInvitation(inv.id)} className="text-xs text-red-400 hover:text-red-300">
+                        Удалить
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))}
