@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 
 export default function Login() {
   const router = useRouter()
+  const { token } = router.query
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [tempPassword, setTempPassword] = useState('')
@@ -11,8 +12,34 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [step, setStep] = useState('login')
+  const [step, setStep] = useState('login') // login | tempPass | setNewPass
   const [invite, setInvite] = useState(null)
+
+  // При прямом переходе по ссылке с токеном – сразу ищем инвайт
+  useEffect(() => {
+    if (token) {
+      fetchInvite(token)
+    }
+  }, [token])
+
+  async function fetchInvite(t) {
+    setLoading(true)
+    const { data } = await supabase
+      .from('invitations')
+      .select('*, companies(name), roles(name)')
+      .eq('token', t)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (data) {
+      setInvite(data)
+      setEmail(data.email || '')
+      setStep('tempPass')
+    } else {
+      setError('Приглашение не найдено или уже использовано')
+    }
+    setLoading(false)
+  }
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -99,7 +126,6 @@ export default function Login() {
         return
       }
 
-      // Проверим, не существует ли уже профиль (на случай коллизий)
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('user_id')
@@ -120,7 +146,6 @@ export default function Login() {
 
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
 
-      // Гарантируем чистую сессию нового пользователя
       await supabase.auth.signOut()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: invite.email,
@@ -143,9 +168,11 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-4">Вход в Кармический банк</h1>
+        <h1 className="text-2xl font-bold text-deep-blue mb-4">
+          {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход в Кармический банк'}
+        </h1>
 
-        {step === 'login' && (
+        {step === 'login' && !token && (
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
@@ -158,7 +185,9 @@ export default function Login() {
 
         {step === 'tempPass' && invite && (
           <form onSubmit={handleTempPassSubmit} className="space-y-4">
-            <p className="text-sm text-gray-400">Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.</p>
+            <p className="text-sm text-gray-400">
+              Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.
+            </p>
             <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <button type="submit" className="btn-gold w-full" disabled={loading}>
