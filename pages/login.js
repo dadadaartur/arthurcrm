@@ -16,28 +16,30 @@ export default function Login() {
 
   async function handleEmailSubmit(e) {
     e.preventDefault()
-    if (!email.trim()) return
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) return
     setLoading(true)
     setError('')
 
-    // 1. Ищем профиль по email
+    // 1. Ищем профиль по email (без учёта регистра)
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
-      .eq('email', email)
+      .ilike('email', normalizedEmail)
       .maybeSingle()
 
     if (existingProfile) {
+      setEmail(normalizedEmail) // приводим к нижнему регистру для дальнейшего входа
       setStep('login')
       setLoading(false)
       return
     }
 
-    // 2. Если профиля нет — ищем активный инвайт
+    // 2. Если профиля нет – ищем активный инвайт
     const { data: inviteData, error: fetchError } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
-      .eq('email', email)
+      .ilike('email', normalizedEmail)
       .eq('status', 'pending')
       .maybeSingle()
 
@@ -48,6 +50,7 @@ export default function Login() {
     }
 
     setInvite(inviteData)
+    setEmail(inviteData.email) // используем email из инвайта
     setStep('tempPass')
     setLoading(false)
   }
@@ -58,7 +61,10 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email,
+      password,
+    })
 
     if (signInError) {
       setError('Неверный email или пароль')
