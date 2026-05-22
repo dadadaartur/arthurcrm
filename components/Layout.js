@@ -33,28 +33,33 @@ export default function Layout({ children }) {
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    const loadProfile = async (currentUser) => {
-      if (!currentUser) {
-        setProfile(null)
-        return
-      }
-      const { data } = await supabase
-        .from('profiles')
-        .select('display_name, roles(name, is_system)')
-        .eq('user_id', currentUser.id)
-        .maybeSingle()
-      setProfile(data || null)
-    }
-
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      loadProfile(user)
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('display_name, roles(name, is_system)')
+          .eq('user_id', user.id)
+          .maybeSingle()
+          .then(({ data }) => setProfile(data))
+      } else {
+        setProfile(null)
+      }
     })
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user || null
       setUser(currentUser)
-      loadProfile(currentUser)
+      if (currentUser) {
+        supabase
+          .from('profiles')
+          .select('display_name, roles(name, is_system)')
+          .eq('user_id', currentUser.id)
+          .maybeSingle()
+          .then(({ data }) => setProfile(data))
+      } else {
+        setProfile(null)
+      }
     })
 
     return () => authListener?.subscription.unsubscribe()
@@ -71,6 +76,17 @@ export default function Layout({ children }) {
     profile?.roles?.name === 'СМ' ||
     profile?.roles?.name === 'Администратор'
 
+  // Если пользователь не авторизован – показываем только фон и контент (страницу входа)
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <main className="flex-grow relative z-10">{children}</main>
+      </div>
+    )
+  }
+
+  // Полный интерфейс для авторизованных
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
@@ -88,8 +104,8 @@ export default function Layout({ children }) {
           </nav>
         </div>
         <div className="flex items-center gap-2 text-xs font-medium">
-          {user && <span className="text-white font-semibold">{profile?.display_name || user.email}</span>}
-          {user && <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>}
+          <span className="text-white font-semibold">{profile?.display_name || user.email}</span>
+          <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
         </div>
       </header>
 
