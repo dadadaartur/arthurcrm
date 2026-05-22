@@ -9,14 +9,30 @@ export default function CompanyAdmin() {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const [roles, setRoles] = useState([])
+  // Задания
+  const [tasks, setTasks] = useState([])
+  const [showNewTask, setShowNewTask] = useState(false)
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    reward_karma: 10,
+    reward_energy: 0,
+    task_type: 'manual',
+    frequency: 'once',
+    max_completions: 1,
+    is_active: true,
+  })
+  const [editingTask, setEditingTask] = useState(null)
+
+  // Сотрудники (форма приглашения)
   const [showNewEmployee, setShowNewEmployee] = useState(false)
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newRoleId, setNewRoleId] = useState('')
+  const [roles, setRoles] = useState([])
   const [inviteResult, setInviteResult] = useState(null)
 
-  // Редактирование и удаление
+  // Редактирование и удаление сотрудников
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
@@ -52,6 +68,7 @@ export default function CompanyAdmin() {
       if (rolesData && rolesData.length > 0 && !newRoleId) setNewRoleId(rolesData[0].id)
 
       await fetchEmployees(profile.company_id)
+      await fetchTasks(profile.company_id)
     }
     checkAccess()
   }, [])
@@ -66,11 +83,71 @@ export default function CompanyAdmin() {
     setLoading(false)
   }
 
-  // Добавление сотрудника
+  async function fetchTasks(companyId) {
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+    setTasks(data || [])
+  }
+
+  // --- Задания ---
+  async function handleCreateTask(e) {
+    e.preventDefault()
+    const { error } = await supabase.from('tasks').insert({
+      company_id: profile.company_id,
+      ...newTask,
+      created_by: user.id,
+    })
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      setNewTask({ title: '', description: '', reward_karma: 10, reward_energy: 0, task_type: 'manual', frequency: 'once', max_completions: 1, is_active: true })
+      setShowNewTask(false)
+      fetchTasks(profile.company_id)
+    }
+  }
+
+  async function toggleTaskActive(task) {
+    await supabase.from('tasks').update({ is_active: !task.is_active }).eq('id', task.id)
+    fetchTasks(profile.company_id)
+  }
+
+  async function deleteTask(id) {
+    await supabase.from('tasks').delete().eq('id', id)
+    fetchTasks(profile.company_id)
+  }
+
+  function openEditTask(task) {
+    setEditingTask(task)
+    setNewTask({
+      title: task.title,
+      description: task.description || '',
+      reward_karma: task.reward_karma,
+      reward_energy: task.reward_energy,
+      task_type: task.task_type,
+      frequency: task.frequency,
+      max_completions: task.max_completions || 1,
+      is_active: task.is_active,
+    })
+  }
+
+  async function saveEditedTask() {
+    if (!editingTask) return
+    const { error } = await supabase.from('tasks').update(newTask).eq('id', editingTask.id)
+    if (error) {
+      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
+    } else {
+      setEditingTask(null)
+      fetchTasks(profile.company_id)
+    }
+  }
+
+  // --- Сотрудники (старый код) ---
   async function handleCreateEmployee(e) {
     e.preventDefault()
     if (!newName || !newEmail || !newRoleId) return
-
     try {
       const token = crypto.randomUUID()
       const tempPassword = Math.random().toString(36).slice(-8)
@@ -91,7 +168,6 @@ export default function CompanyAdmin() {
     }
   }
 
-  // Редактирование
   function openEdit(emp) {
     setEditingEmployee(emp)
     setEditName(emp.display_name || '')
@@ -114,7 +190,6 @@ export default function CompanyAdmin() {
     }
   }
 
-  // Удаление
   function confirmDelete(emp) { setDeleteTarget(emp) }
   async function executeDelete() {
     if (!deleteTarget) return
@@ -123,12 +198,11 @@ export default function CompanyAdmin() {
     fetchEmployees(profile.company_id)
   }
 
-  // Сброс пароля
   function confirmResetPassword(emp) { setResetPasswordTarget(emp) }
   async function executeResetPassword() {
     if (!resetPasswordTarget) return
     const tempPassword = Math.random().toString(36).slice(-8)
-    const { error } = await supabase.from('invitations').insert({
+    await supabase.from('invitations').insert({
       company_id: profile.company_id,
       role_id: resetPasswordTarget.role_id,
       email: resetPasswordTarget.email,
@@ -136,23 +210,68 @@ export default function CompanyAdmin() {
       temp_password: tempPassword,
       created_by: user.id,
     })
-    if (error) {
-      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
-    } else {
-      setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
-      setResetPasswordTarget(null)
-    }
+    setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
+    setResetPasswordTarget(null)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="dash-card mb-6">
         <h3>Панель управления компанией</h3>
         <p className="text-sm text-gray-400 mt-2">Добро пожаловать, {profile?.display_name || user?.email}. Ваша роль: {profile?.roles?.name}</p>
       </div>
 
+      {/* Задания */}
+      <div className="dash-card mb-6">
+        <h3>Задания</h3>
+        <button onClick={() => setShowNewTask(!showNewTask)} className="btn-gold mb-4">+ Новое задание</button>
+        {showNewTask && (
+          <form onSubmit={editingTask ? saveEditedTask : handleCreateTask} className="space-y-3 mb-4">
+            <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="Название" className="input-field" required />
+            <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Описание" className="input-field" rows={3} />
+            <div className="grid grid-cols-2 gap-3">
+              <input type="number" value={newTask.reward_karma} onChange={e => setNewTask({ ...newTask, reward_karma: parseInt(e.target.value) })} placeholder="Кармики" className="input-field" />
+              <input type="number" value={newTask.reward_energy} onChange={e => setNewTask({ ...newTask, reward_energy: parseInt(e.target.value) })} placeholder="Энергия" className="input-field" />
+            </div>
+            <select value={newTask.task_type} onChange={e => setNewTask({ ...newTask, task_type: e.target.value })} className="input-field">
+              <option value="manual">Ручная проверка</option>
+              <option value="auto_crm">Автоматическая из CRM</option>
+            </select>
+            <select value={newTask.frequency} onChange={e => setNewTask({ ...newTask, frequency: e.target.value })} className="input-field">
+              <option value="once">Один раз</option>
+              <option value="daily">Ежедневно</option>
+              <option value="unlimited">Неограниченно</option>
+              <option value="limited_count">Ограниченное количество</option>
+            </select>
+            {newTask.frequency === 'limited_count' && (
+              <input type="number" value={newTask.max_completions} onChange={e => setNewTask({ ...newTask, max_completions: parseInt(e.target.value) })} placeholder="Максимум выполнений" className="input-field" />
+            )}
+            <button type="submit" className="btn-gold w-full">{editingTask ? 'Сохранить' : 'Создать задание'}</button>
+            {editingTask && <button onClick={() => setEditingTask(null)} className="btn-outline w-full mt-2">Отмена</button>}
+          </form>
+        )}
+        <div className="space-y-4">
+          {tasks.map(task => (
+            <div key={task.id} className="premium-card flex justify-between items-center">
+              <div>
+                <p className="text-white font-medium">{task.title}</p>
+                <p className="text-xs text-gray-400">{task.task_type} · {task.frequency} · {task.reward_karma} кармиков</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => openEditTask(task)} className="text-xs text-blue-400 hover:text-blue-300">Ред.</button>
+                <button onClick={() => toggleTaskActive(task)} className={`text-xs ${task.is_active ? 'text-green-400' : 'text-gray-400'}`}>
+                  {task.is_active ? 'Акт.' : 'Неакт.'}
+                </button>
+                <button onClick={() => deleteTask(task.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Сотрудники (старый код) */}
       <div className="dash-card mb-6">
         <h3>Новый сотрудник</h3>
         <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Добавить сотрудника</button>
@@ -198,7 +317,7 @@ export default function CompanyAdmin() {
         </div>
       </div>
 
-      {/* Модалки */}
+      {/* Модалки (старый код) */}
       <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника">
         <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Имя" className="input-field mb-3" />
         <input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email" className="input-field mb-3" />
