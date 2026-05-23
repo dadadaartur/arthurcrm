@@ -32,18 +32,26 @@ export default function Home() {
   useEffect(() => {
     const checkAccess = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-      const { data: profile } = await supabase
+      // Проверяем наличие профиля
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id')
+        .select('user_id, role_id')
         .eq('user_id', user.id)
-        .maybeSingle()
+        .single()
 
-      if (!profile) { router.push('/login'); return }
+      if (profileError || !profile) {
+        router.push('/login')
+        return
+      }
 
       setUser(user)
 
+      // Баланс
       const { data: balanceData } = await supabase
         .from('karma_balance')
         .select('balance')
@@ -51,13 +59,15 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      const { data: assignments } = await supabase
+      // Все назначенные и активные задания (не завершённые)
+      const { data: assignments, error: taskError } = await supabase
         .from('task_assignments')
         .select('*, tasks(*)')
         .eq('user_id', user.id)
         .neq('status', 'completed')
         .order('created_at', { ascending: false })
 
+      if (taskError) console.error('Ошибка загрузки заданий:', taskError)
       setTasks(assignments || [])
       setLoading(false)
     }
