@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 export default function Invite() {
   const router = useRouter()
   const { token } = router.query
-  const [tempPassword, setTempPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,11 +12,6 @@ export default function Invite() {
   const [initialCheck, setInitialCheck] = useState(true)
 
   useEffect(() => {
-    // Сбрасываем старый кэш и сессии, чтобы избежать конфликтов
-    localStorage.clear()
-    sessionStorage.clear()
-    supabase.auth.signOut()
-
     if (!token) {
       router.push('/login')
       return
@@ -43,39 +37,31 @@ export default function Invite() {
     setInitialCheck(false)
   }
 
-  async function handleActivation(e) {
+  async function handleSetPassword(e) {
     e.preventDefault()
-    if (!tempPassword || !newPassword || newPassword.length < 6) {
-      setError('Проверьте правильность заполнения полей')
+    if (!newPassword || newPassword.length < 6) {
+      setError('Пароль должен быть не менее 6 символов')
       return
     }
     setLoading(true)
     setError('')
 
-    // Проверяем временный пароль
-    if (tempPassword !== invite.temp_password) {
-      setError('Неверный временный пароль')
-      setLoading(false)
-      return
-    }
-
-    // Пытаемся войти, если пользователь уже существует
-    let user;
+    // Пробуем войти с новым паролем (вдруг пользователь уже существует)
+    let user
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: invite.email,
       password: newPassword,
     })
 
     if (signInError) {
-      // Если вход не удался – пробуем зарегистрировать
+      // Пользователь не найден – регистрируем
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: invite.email,
         password: newPassword,
       })
 
       if (signUpError && signUpError.message.includes('already registered')) {
-        // Уже зарегистрирован, но пароль не подошёл
-        setError('Неверный новый пароль или аккаунт уже существует с другим паролем')
+        setError('Аккаунт уже зарегистрирован, но пароль не подходит')
         setLoading(false)
         return
       } else if (signUpError) {
@@ -83,14 +69,13 @@ export default function Invite() {
         setLoading(false)
         return
       }
-
       user = signUpData?.user
     } else {
       user = signInData?.user
     }
 
     if (!user) {
-      setError('Не удалось войти')
+      setError('Не удалось войти или зарегистрироваться')
       setLoading(false)
       return
     }
@@ -159,31 +144,17 @@ export default function Invite() {
         <p className="text-sm text-gray-400 mb-6">
           Для {invite.email}. Роль: {invite.roles?.name}, компания: {invite.companies?.name}
         </p>
-        <form onSubmit={handleActivation} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-500 mb-1">Временный пароль (от руководителя)</label>
-            <input
-              type="text"
-              value={tempPassword}
-              onChange={e => setTempPassword(e.target.value)}
-              placeholder="Временный пароль"
-              className="input-field"
-              required
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-500 mb-1">Придумайте новый пароль</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Новый пароль (мин. 6 символов)"
-              className="input-field"
-              required
-              autoComplete="new-password"
-            />
-          </div>
+        <p className="text-sm text-gray-500 mb-4">Придумайте пароль для входа в систему.</p>
+        <form onSubmit={handleSetPassword} className="space-y-4">
+          <input
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="Новый пароль (мин. 6 символов)"
+            className="input-field"
+            required
+            autoComplete="new-password"
+          />
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? 'Активация...' : 'Активировать аккаунт'}
