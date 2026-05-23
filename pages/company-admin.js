@@ -21,6 +21,7 @@ export default function CompanyAdmin() {
     frequency: 'once',
     max_completions: 1,
     is_active: true,
+    target_users: [] // массив user_id сотрудников, которым назначить
   })
   const [editingTask, setEditingTask] = useState(null)
 
@@ -99,18 +100,63 @@ export default function CompanyAdmin() {
   // --- Задания ---
   async function handleCreateTask(e) {
     e.preventDefault()
-    const { error } = await supabase.from('tasks').insert({
+    if (!newTask.title) return
+
+    // Создаём задание
+    const { data: createdTasks, error } = await supabase.from('tasks').insert({
       company_id: profile.company_id,
-      ...newTask,
+      title: newTask.title,
+      description: newTask.description,
+      reward_karma: newTask.reward_karma,
+      reward_energy: newTask.reward_energy,
+      task_type: newTask.task_type,
+      frequency: newTask.frequency,
+      max_completions: newTask.max_completions,
+      is_active: newTask.is_active,
       created_by: user.id,
-    })
+    }).select('id')
+
     if (error) {
       setModal({ isOpen: true, title: 'Ошибка', message: error.message })
-    } else {
-      setNewTask({ title: '', description: '', reward_karma: 10, reward_energy: 0, task_type: 'manual', frequency: 'once', max_completions: 1, is_active: true })
-      setShowNewTask(false)
-      fetchTasks(profile.company_id)
+      return
     }
+
+    const taskId = createdTasks[0].id
+
+    // Определяем, кому назначить
+    let targetUserIds = newTask.target_users
+    if (targetUserIds.includes('all_mop')) {
+      // Назначаем всем МОПам компании
+      const mopIds = employees
+        .filter(emp => emp.roles?.name === 'МОП')
+        .map(emp => emp.user_id)
+      targetUserIds = mopIds
+    }
+
+    // Создаём назначения
+    if (targetUserIds.length > 0) {
+      const assignments = targetUserIds.map(uid => ({
+        task_id: taskId,
+        user_id: uid,
+        status: 'assigned',
+      }))
+      await supabase.from('task_assignments').insert(assignments)
+    }
+
+    // Сбрасываем форму
+    setNewTask({
+      title: '',
+      description: '',
+      reward_karma: 10,
+      reward_energy: 0,
+      task_type: 'manual',
+      frequency: 'once',
+      max_completions: 1,
+      is_active: true,
+      target_users: [],
+    })
+    setShowNewTask(false)
+    fetchTasks(profile.company_id)
   }
 
   async function toggleTaskActive(task) {
@@ -119,6 +165,8 @@ export default function CompanyAdmin() {
   }
 
   async function deleteTask(id) {
+    // Удаляем связанные назначения
+    await supabase.from('task_assignments').delete().eq('task_id', id)
     await supabase.from('tasks').delete().eq('id', id)
     fetchTasks(profile.company_id)
   }
@@ -134,12 +182,22 @@ export default function CompanyAdmin() {
       frequency: task.frequency,
       max_completions: task.max_completions || 1,
       is_active: task.is_active,
+      target_users: [], // при редактировании можно будет изменить, но пока оставим
     })
   }
 
   async function saveEditedTask() {
     if (!editingTask) return
-    const { error } = await supabase.from('tasks').update(newTask).eq('id', editingTask.id)
+    const { error } = await supabase.from('tasks').update({
+      title: newTask.title,
+      description: newTask.description,
+      reward_karma: newTask.reward_karma,
+      reward_energy: newTask.reward_energy,
+      task_type: newTask.task_type,
+      frequency: newTask.frequency,
+      max_completions: newTask.max_completions,
+      is_active: newTask.is_active,
+    }).eq('id', editingTask.id)
     if (error) {
       setModal({ isOpen: true, title: 'Ошибка', message: error.message })
     } else {
@@ -154,18 +212,24 @@ export default function CompanyAdmin() {
     if (!newEmail) return
     setSendingInvite(true)
     try {
-      // Сохраняем запись о приглашении (без пароля)
       const token = crypto.randomUUID()
+      const { data: rolesData } = await supabase.from('roles').select('id').eq('company_id', profile.company_id).limit(1)
+      const defaultRoleId = rolesData?.[0]?.id
+      if (!defaultRoleId) {
+        setModal({ isOpen: true, title: 'Ошибка', message: 'Не найдена роль для компании' })
+        setSendingInvite(false)
+        return
+      }
+
       await supabase.from('invitations').insert({
         company_id: profile.company_id,
-        role_id: roles?.[0]?.id, // первая роль компании (обычно "Сотрудник")
+        role_id: defaultRoleId,
         email: newEmail,
         token,
         created_by: user.id,
         status: 'pending',
       })
 
-      // Отправляем магическую ссылку
       const res = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -224,7 +288,6 @@ export default function CompanyAdmin() {
   function confirmResetPassword(emp) { setResetPasswordTarget(emp) }
   async function executeResetPassword() {
     if (!resetPasswordTarget) return
-    // Отправляем ссылку для сброса пароля через Supabase
     await supabase.auth.resetPasswordForEmail(resetPasswordTarget.email)
     setModal({ isOpen: true, title: 'Готово', message: 'Ссылка для сброса пароля отправлена на email сотрудника' })
     setResetPasswordTarget(null)
@@ -266,7 +329,47 @@ export default function CompanyAdmin() {
             {newTask.frequency === 'limited_count' && (
               <input type="number" value={newTask.max_completions} onChange={e => setNewTask({ ...newTask, max_completions: parseInt(e.target.value) })} placeholder="Максимум выполнений" className="input-field" />
             )}
-            <button type="submit" className="btn-gold w-full">{editingTask ? 'Сохранить' : 'Создать задание'}</button>
+
+            {/* Выбор сотрудников */}
+            <div>
+              <p className="text-sm text-gray-400 mb-2">Назначить сотрудникам:</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newTask.target_users.includes('all_mop')) {
+                      setNewTask({ ...newTask, target_users: [] })
+                    } else {
+                      setNewTask({ ...newTask, target_users: ['all_mop'] })
+                    }
+                  }}
+                  className={`filter-pill ${newTask.target_users.includes('all_mop') ? 'active' : ''}`}
+                >
+                  Всем МОП
+                </button>
+                {employees
+                  .filter(emp => emp.roles?.name === 'МОП')
+                  .map(emp => (
+                    <button
+                      key={emp.user_id}
+                      type="button"
+                      onClick={() => {
+                        const current = newTask.target_users.filter(id => id !== 'all_mop')
+                        if (current.includes(emp.user_id)) {
+                          setNewTask({ ...newTask, target_users: current.filter(id => id !== emp.user_id) })
+                        } else {
+                          setNewTask({ ...newTask, target_users: [...current, emp.user_id] })
+                        }
+                      }}
+                      className={`filter-pill ${newTask.target_users.includes(emp.user_id) ? 'active' : ''}`}
+                    >
+                      {emp.display_name || emp.email}
+                    </button>
+                  ))}
+              </div>
+            </div>
+
+            <button type="submit" className="btn-gold w-full">{editingTask ? 'Сохранить' : 'Создать и назначить'}</button>
             {editingTask && <button onClick={() => setEditingTask(null)} className="btn-outline w-full mt-2">Отмена</button>}
           </form>
         )}
