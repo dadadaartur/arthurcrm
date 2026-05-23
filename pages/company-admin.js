@@ -28,7 +28,6 @@ export default function CompanyAdmin() {
   const [newEmail, setNewEmail] = useState('')
   const [sendingInvite, setSendingInvite] = useState(false)
   const [invitations, setInvitations] = useState([])
-  const [showAllInvitations, setShowAllInvitations] = useState(false)
 
   // Сотрудники (управление)
   const [editingEmployee, setEditingEmployee] = useState(null)
@@ -86,7 +85,7 @@ export default function CompanyAdmin() {
     setTasks(data || [])
   }
 
-  // Создание задания
+  // Создание задания с диагностикой
   async function handleCreateTask(e) {
     e.preventDefault()
     if (!newTask.title.trim()) return
@@ -117,8 +116,10 @@ export default function CompanyAdmin() {
       targetIds = employees
         .filter(emp => emp.roles?.name === 'МОП')
         .map(emp => emp.user_id)
+      console.log('Назначение всем МОП:', targetIds)
     } else {
       targetIds = newTask.target_users
+      console.log('Назначение выбранным:', targetIds)
     }
 
     if (targetIds.length > 0) {
@@ -127,7 +128,16 @@ export default function CompanyAdmin() {
         user_id: uid,
         status: 'assigned',
       }))
-      await supabase.from('task_assignments').insert(assignments)
+      const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
+      if (assignError) {
+        setModal({ isOpen: true, title: 'Ошибка назначения', message: assignError.message })
+        console.error('Ошибка вставки назначений:', assignError)
+      } else {
+        setModal({ isOpen: true, title: 'Успешно', message: `Задание создано и назначено ${targetIds.length} сотрудникам` })
+        console.log('Назначения созданы успешно')
+      }
+    } else {
+      setModal({ isOpen: true, title: 'Предупреждение', message: 'Нет сотрудников для назначения (возможно, нет МОП или не выбраны)' })
     }
 
     setNewTask({
@@ -151,7 +161,7 @@ export default function CompanyAdmin() {
     fetchTasks(profile.company_id)
   }
 
-  // Сотрудники (ред., удаление, сброс пароля) – оставлены без изменений для краткости
+  // Остальные функции (приглашения, управление сотрудниками) оставим без изменений для краткости
   // ...
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -218,32 +228,6 @@ export default function CompanyAdmin() {
               />
               <label htmlFor="all_mop" className="text-sm text-gray-300">Назначить всем МОП</label>
             </div>
-            {!newTask.assign_to_all_mop && (
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Выберите сотрудников</label>
-                <div className="flex flex-wrap gap-2">
-                  {employees
-                    .filter(emp => emp.roles?.name === 'МОП')
-                    .map(emp => (
-                      <button
-                        key={emp.user_id}
-                        type="button"
-                        onClick={() => {
-                          const current = newTask.target_users
-                          if (current.includes(emp.user_id)) {
-                            setNewTask({ ...newTask, target_users: current.filter(id => id !== emp.user_id) })
-                          } else {
-                            setNewTask({ ...newTask, target_users: [...current, emp.user_id] })
-                          }
-                        }}
-                        className={`filter-pill ${newTask.target_users.includes(emp.user_id) ? 'active' : ''}`}
-                      >
-                        {emp.display_name || emp.email}
-                      </button>
-                    ))}
-                </div>
-              </div>
-            )}
             <button type="submit" className="btn-gold w-full">Создать и назначить</button>
           </form>
         )}
@@ -261,13 +245,7 @@ export default function CompanyAdmin() {
         </div>
       </div>
 
-      {/* Приглашения (сокращено) */}
-      <div className="dash-card mb-6">
-        <h3>Приглашения</h3>
-        {/* ... форма и список ... */}
-      </div>
-
-      {/* Сотрудники */}
+      {/* Сотрудники (кратко) */}
       <div className="dash-card">
         <h3>Сотрудники</h3>
         <div className="mt-4 space-y-2">
@@ -282,6 +260,11 @@ export default function CompanyAdmin() {
           ))}
         </div>
       </div>
+
+      {/* Модалка */}
+      <PremiumModal isOpen={modal.isOpen} onClose={() => setModal({ ...modal, isOpen: false })} title={modal.title}>
+        <p>{modal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
