@@ -24,16 +24,11 @@ export default function CompanyAdmin() {
   })
   const [editingTask, setEditingTask] = useState(null)
 
-  // Приглашения
-  const [showNewEmployee, setShowNewEmployee] = useState(false)
-  const [newName, setNewName] = useState('')
+  // Приглашения (упрощённые)
   const [newEmail, setNewEmail] = useState('')
-  const [newRoleId, setNewRoleId] = useState('')
-  const [roles, setRoles] = useState([])
+  const [sendingInvite, setSendingInvite] = useState(false)
   const [invitations, setInvitations] = useState([])
   const [showAllInvitations, setShowAllInvitations] = useState(false)
-  const [sendingEmail, setSendingEmail] = useState(false)
-  const [copied, setCopied] = useState({})
 
   // Редактирование и удаление сотрудников
   const [editingEmployee, setEditingEmployee] = useState(null)
@@ -65,10 +60,6 @@ export default function CompanyAdmin() {
       }
 
       setProfile(profile)
-
-      const { data: rolesData } = await supabase.from('roles').select('*').eq('company_id', profile.company_id)
-      setRoles(rolesData || [])
-      if (rolesData && rolesData.length > 0 && !newRoleId) setNewRoleId(rolesData[0].id)
 
       await fetchEmployees(profile.company_id)
       await fetchTasks(profile.company_id)
@@ -157,75 +148,47 @@ export default function CompanyAdmin() {
     }
   }
 
-  // --- Приглашения ---
-  async function handleCreateEmployee(e) {
+  // --- Приглашение (магическая ссылка) ---
+  async function handleInvite(e) {
     e.preventDefault()
-    if (!newName || !newEmail || !newRoleId) return
+    if (!newEmail) return
+    setSendingInvite(true)
     try {
+      // Сохраняем запись о приглашении (без пароля)
       const token = crypto.randomUUID()
-      const tempPassword = Math.random().toString(36).slice(-8)
       await supabase.from('invitations').insert({
         company_id: profile.company_id,
-        role_id: parseInt(newRoleId),
+        role_id: roles?.[0]?.id, // первая роль компании (обычно "Сотрудник")
         email: newEmail,
         token,
-        temp_password: tempPassword,
         created_by: user.id,
+        status: 'pending',
       })
-      setNewName('')
-      setNewEmail('')
-      setNewRoleId(roles[0]?.id || '')
-      fetchInvitations(profile.company_id)
-    } catch (err) {
-      setModal({ isOpen: true, title: 'Ошибка', message: err.message })
-    }
-  }
 
-  async function deleteInvitation(id) {
-    const { error } = await supabase.from('invitations').delete().eq('id', id)
-    if (error) {
-      setModal({ isOpen: true, title: 'Ошибка', message: error.message })
-    } else {
-      fetchInvitations(profile.company_id)
-    }
-  }
-
-  async function sendInviteEmail(email, link, tempPassword) {
-    setSendingEmail(true)
-    try {
-      const res = await fetch('/api/send-invite', {
+      // Отправляем магическую ссылку
+      const res = await fetch('/api/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, link, tempPassword }),
+        body: JSON.stringify({ email: newEmail }),
       })
       const data = await res.json()
       if (data.success) {
         setModal({ isOpen: true, title: 'Успешно', message: 'Приглашение отправлено на email' })
+        setNewEmail('')
+        fetchInvitations(profile.company_id)
       } else {
-        setModal({ isOpen: true, title: 'Ошибка', message: data.error || 'Не удалось отправить письмо. Возможно, не настроен SMTP сервер.' })
+        setModal({ isOpen: true, title: 'Ошибка', message: data.error || 'Не удалось отправить приглашение' })
       }
     } catch (err) {
-      setModal({ isOpen: true, title: 'Ошибка', message: 'Не удалось отправить письмо. Проверьте настройки SMTP.' })
+      setModal({ isOpen: true, title: 'Ошибка', message: 'Не удалось отправить приглашение' })
     } finally {
-      setSendingEmail(false)
+      setSendingInvite(false)
     }
   }
 
-  async function copyToClipboard(text, id) {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied({ ...copied, [id]: true })
-      setTimeout(() => setCopied({ ...copied, [id]: false }), 2000)
-    } catch (err) {
-      const el = document.createElement('textarea')
-      el.value = text
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-      setCopied({ ...copied, [id]: true })
-      setTimeout(() => setCopied({ ...copied, [id]: false }), 2000)
-    }
+  async function deleteInvitation(id) {
+    await supabase.from('invitations').delete().eq('id', id)
+    fetchInvitations(profile.company_id)
   }
 
   function openEdit(emp) {
@@ -261,16 +224,9 @@ export default function CompanyAdmin() {
   function confirmResetPassword(emp) { setResetPasswordTarget(emp) }
   async function executeResetPassword() {
     if (!resetPasswordTarget) return
-    const tempPassword = Math.random().toString(36).slice(-8)
-    await supabase.from('invitations').insert({
-      company_id: profile.company_id,
-      role_id: resetPasswordTarget.role_id,
-      email: resetPasswordTarget.email,
-      token: crypto.randomUUID(),
-      temp_password: tempPassword,
-      created_by: user.id,
-    })
-    setModal({ isOpen: true, title: 'Пароль сброшен', message: `Временный пароль: ${tempPassword}` })
+    // Отправляем ссылку для сброса пароля через Supabase
+    await supabase.auth.resetPasswordForEmail(resetPasswordTarget.email)
+    setModal({ isOpen: true, title: 'Готово', message: 'Ссылка для сброса пароля отправлена на email сотрудника' })
     setResetPasswordTarget(null)
   }
 
@@ -335,44 +291,26 @@ export default function CompanyAdmin() {
 
       {/* Приглашения */}
       <div className="dash-card mb-6">
-        <h3>Приглашения</h3>
-        <button onClick={() => setShowNewEmployee(!showNewEmployee)} className="btn-gold mb-4">+ Новое приглашение</button>
-        {showNewEmployee && (
-          <form onSubmit={handleCreateEmployee} className="space-y-3 mb-4">
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="ФИО" className="input-field" required />
-            <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Email" className="input-field" required />
-            <select value={newRoleId} onChange={e => setNewRoleId(e.target.value)} className="input-field">
-              {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-            <button type="submit" className="btn-gold w-full">Создать приглашение</button>
-          </form>
-        )}
+        <h3>Пригласить сотрудника</h3>
+        <form onSubmit={handleInvite} className="space-y-3 mb-4">
+          <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Email сотрудника" className="input-field" required />
+          <button type="submit" className="btn-gold w-full" disabled={sendingInvite}>
+            {sendingInvite ? 'Отправка...' : 'Отправить приглашение'}
+          </button>
+        </form>
+
+        <h3 className="mt-6">История приглашений</h3>
         <div className="space-y-4 mt-4">
           {visibleInvitations.map(inv => (
-            <div key={inv.id} className="premium-card flex flex-col gap-2">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-white font-medium">{inv.email}</p>
-                  <p className="text-xs text-gray-400">{inv.roles?.name} · {inv.status === 'pending' ? 'Ожидает' : 'Принято'}</p>
-                </div>
-                <div className="flex gap-2">
-                  {inv.status === 'pending' && (
-                    <>
-                      <button onClick={() => copyToClipboard(`${window.location.origin}/invite?token=${inv.token}`, `link-${inv.id}`)} className="text-xs text-blue-400 hover:text-blue-300">
-                        {copied[`link-${inv.id}`] ? 'Ссылка скопирована' : 'Копировать ссылку'}
-                      </button>
-                      <button onClick={() => copyToClipboard(inv.temp_password, `pass-${inv.id}`)} className="text-xs text-yellow-400 hover:text-yellow-300">
-                        {copied[`pass-${inv.id}`] ? 'Пароль скопирован' : 'Копировать пароль'}
-                      </button>
-                      <button onClick={() => sendInviteEmail(inv.email, `${window.location.origin}/invite?token=${inv.token}`, inv.temp_password)} disabled={sendingEmail} className="text-xs text-green-400 hover:text-green-300">
-                        Отправить на email
-                      </button>
-                      <button onClick={() => deleteInvitation(inv.id)} className="text-xs text-red-400 hover:text-red-300">
-                        Удалить
-                      </button>
-                    </>
-                  )}
-                </div>
+            <div key={inv.id} className="premium-card flex justify-between items-center">
+              <div>
+                <p className="text-white font-medium">{inv.email}</p>
+                <p className="text-xs text-gray-400">{inv.roles?.name} · {inv.status === 'pending' ? 'Ожидает' : 'Принято'}</p>
+              </div>
+              <div className="flex gap-2">
+                {inv.status === 'pending' && (
+                  <button onClick={() => deleteInvitation(inv.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                )}
               </div>
             </div>
           ))}
@@ -413,9 +351,6 @@ export default function CompanyAdmin() {
       <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника">
         <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Имя" className="input-field mb-3" />
         <input value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Email" className="input-field mb-3" />
-        <select value={editRoleId} onChange={e => setEditRoleId(e.target.value)} className="input-field mb-3">
-          {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-        </select>
         <button onClick={saveEdit} className="btn-gold w-full">Сохранить</button>
       </PremiumModal>
 
@@ -425,8 +360,8 @@ export default function CompanyAdmin() {
       </PremiumModal>
 
       <PremiumModal isOpen={!!resetPasswordTarget} onClose={() => setResetPasswordTarget(null)} title="Сброс пароля?">
-        <p>Будет сгенерирован новый временный пароль для {resetPasswordTarget?.display_name}.</p>
-        <button onClick={executeResetPassword} className="btn-gold w-full mt-4">Сбросить</button>
+        <p>Сотрудник получит ссылку для сброса пароля на email.</p>
+        <button onClick={executeResetPassword} className="btn-gold w-full mt-4">Отправить ссылку</button>
       </PremiumModal>
 
       <PremiumModal isOpen={modal.isOpen} onClose={() => setModal({ ...modal, isOpen: false })} title={modal.title}>
