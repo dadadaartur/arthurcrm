@@ -5,74 +5,77 @@ import { useRouter } from 'next/router'
 export default function Welcome() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [goal, setGoal] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
-      } else {
-        setUser(user)
-        // Проверяем, не привязан ли уже к компании
-        supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (data?.company_id) router.push('/')
-          })
+        return
       }
-    })
+      setUser(user)
+
+      // Проверяем, есть ли профиль
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, company_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (profile?.company_id) {
+        // Уже привязан к компании — на главную
+        router.push('/')
+        return
+      }
+
+      // Профиля нет — ищем активное приглашение для этого email
+      const { data: invite } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('email', user.email)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (invite) {
+        // Создаём профиль на основе приглашения
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          company_id: invite.company_id,
+          department_id: null,
+          role_id: invite.role_id,
+          display_name: user.email,
+          email: user.email,
+          manager_id: invite.created_by,
+        })
+        // Помечаем приглашение как принятое
+        await supabase.from('invitations').update({ status: 'accepted' }).eq('id', invite.id)
+        router.push('/')
+      } else {
+        // Приглашения нет — остаёмся на странице с предложением обратиться к администратору
+        setLoading(false)
+      }
+    }
+    init()
   }, [router])
 
-  async function handleGoalSubmit(e) {
-    e.preventDefault()
-    if (!goal.trim()) return
-
-    // Сохраняем цель в профиле (можно добавить поле goal в таблицу profiles)
-    // Пока просто покажем сообщение и ссылку на HRDNK
-    setGoal('')
-    alert('Спасибо! Ваша цель отмечена. Перейдите на HRDNK.ru для развития вне компании.')
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-400">Проверка данных...</div>
+      </div>
+    )
   }
-
-  if (!user) return <div className="p-8 text-center text-gray-400">Загрузка...</div>
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 text-center">
       <div className="premium-card">
         <h1 className="text-3xl font-bold text-deep-blue mb-4">Добро пожаловать в экосистему</h1>
         <p className="text-gray-400 mb-6">
-          Ваш аккаунт ещё не привязан к компании. Пожалуйста, отметьте цель регистрации, и мы поможем вам развиваться уже сейчас.
+          Ваш аккаунт ещё не привязан к компании. Обратитесь к администратору для получения приглашения.
         </p>
-
-        <form onSubmit={handleGoalSubmit} className="mb-6">
-          <select value={goal} onChange={e => setGoal(e.target.value)} className="input-field mb-3" required>
-            <option value="">Выберите цель</option>
-            <option value="Хочу прокачать рейтинг без компании">Хочу прокачать рейтинг без компании</option>
-            <option value="Ищу работу">Ищу работу</option>
-            <option value="Хочу учиться">Хочу учиться</option>
-            <option value="Другое">Другое</option>
-          </select>
-          <button type="submit" className="btn-gold w-full">Отправить</button>
-        </form>
-
-        <div className="border-t border-gray-700 pt-6">
-          <p className="text-gray-300 mb-4">
-            Вы можете пройти обучение, тесты и квизы на портале HRDNK, чтобы повысить свой профессиональный рейтинг.
-          </p>
-          <a
-            href="https://hrdnk.ru"
-            target="_blank"
-            rel="noopener"
-            className="btn-gold inline-block"
-          >
-            Перейти на HRDNK.ru
-          </a>
-        </div>
-
-        <p className="text-sm text-gray-500 mt-6">
-          Если вы уже являетесь сотрудником компании, обратитесь к администратору за приглашением.
+        <p className="text-sm text-gray-500">
+          Если вы уже получили приглашение, перейдите по ссылке из письма ещё раз.
         </p>
       </div>
     </div>
