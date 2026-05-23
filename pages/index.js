@@ -14,7 +14,7 @@ function getKarmikWord(n) {
 
 function TaskIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
       <circle cx="16" cy="16" r="10" stroke="#A5B4FC" strokeWidth="1.5" />
       <ellipse cx="16" cy="16" rx="14" ry="4" stroke="#C4B5FD" strokeWidth="1" transform="rotate(-20 16 16)" />
       <path d="M12 13L15 16L12 19" stroke="#E0E7FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -71,7 +71,6 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка (баланс + кнопки) */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -92,46 +91,40 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Доступные задания */}
           {tasks.length > 0 && (
             <div className="mt-8 w-full max-w-[500px]">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <TaskIcon />
-                Доступные задания
+                <TaskIcon /> Доступные задания
               </h3>
               <div className="space-y-4">
-                {tasks.map(assignment => {
-                  const task = assignment.tasks
-                  return (
-                    <div
-                      key={assignment.id}
-                      onClick={() => router.push(`/task/${assignment.id}`)}
-                      className="premium-card relative overflow-hidden cursor-pointer"
-                      style={{
-                        background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                        borderColor: 'rgba(139, 92, 246, 0.3)',
-                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
-                      }}
-                    >
-                      <div className="relative z-10">
-                        <h4 className="text-white font-semibold mb-2">{task.title}</h4>
-                        <p className="text-gray-400 text-sm mb-2">{task.description?.slice(0, 100)}</p>
-                        <div className="flex justify-between items-center mt-3">
-                          <span className="text-xs text-yellow-400">+{task.reward_karma} кармиков</span>
-                          <span className="text-xs text-gray-500">
-                            {assignment.status === 'in_progress' ? 'В процессе' : 'Назначено'}
-                          </span>
-                        </div>
+                {tasks.map(assignment => (
+                  <div
+                    key={assignment.id}
+                    onClick={() => router.push(`/task/${assignment.id}`)}
+                    className="premium-card relative overflow-hidden cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
+                      borderColor: 'rgba(139, 92, 246, 0.3)',
+                      boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
+                    }}
+                  >
+                    <div className="relative z-10">
+                      <h4 className="text-white font-semibold mb-2">{assignment.tasks.title}</h4>
+                      <p className="text-gray-400 text-sm mb-2">{assignment.tasks.description?.slice(0, 100)}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-yellow-400">+{assignment.tasks.reward_karma} кармиков</span>
+                        <span className="text-xs text-gray-500">
+                          {assignment.status === 'in_progress' ? 'В процессе' : 'Назначено'}
+                        </span>
                       </div>
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* Правая колонка (разделы) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="dash-card"><h3>Задания</h3><p className="text-sm text-gray-400">Выполняй миссии и расти над собой</p></div>
           <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
