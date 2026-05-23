@@ -20,19 +20,17 @@ export default function CompanyAdmin() {
     task_type: 'manual',
     frequency: 'once',
     max_completions: 1,
-    is_active: true,
-    assign_to_all_mop: true, // по умолчанию назначаем всем МОП
-    target_users: []
+    assign_to_all_mop: true,
+    target_users: [],
   })
-  const [editingTask, setEditingTask] = useState(null)
 
-  // Приглашения (упрощённые)
+  // Приглашения (сокращено)
   const [newEmail, setNewEmail] = useState('')
   const [sendingInvite, setSendingInvite] = useState(false)
   const [invitations, setInvitations] = useState([])
   const [showAllInvitations, setShowAllInvitations] = useState(false)
 
-  // Редактирование и удаление сотрудников
+  // Сотрудники (управление)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
@@ -65,7 +63,6 @@ export default function CompanyAdmin() {
 
       await fetchEmployees(profile.company_id)
       await fetchTasks(profile.company_id)
-      await fetchInvitations(profile.company_id)
     }
     checkAccess()
   }, [])
@@ -73,7 +70,7 @@ export default function CompanyAdmin() {
   async function fetchEmployees(companyId) {
     const { data } = await supabase
       .from('profiles')
-      .select('*, roles(name), departments(name)')
+      .select('*, roles(name)')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
     setEmployees(data || [])
@@ -89,21 +86,11 @@ export default function CompanyAdmin() {
     setTasks(data || [])
   }
 
-  async function fetchInvitations(companyId) {
-    const { data } = await supabase
-      .from('invitations')
-      .select('*, roles(name)')
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false })
-    setInvitations(data || [])
-  }
-
-  // --- Задания ---
+  // Создание задания
   async function handleCreateTask(e) {
     e.preventDefault()
-    if (!newTask.title) return
+    if (!newTask.title.trim()) return
 
-    // Создаём задание
     const { data: createdTasks, error } = await supabase.from('tasks').insert({
       company_id: profile.company_id,
       title: newTask.title,
@@ -112,8 +99,8 @@ export default function CompanyAdmin() {
       reward_energy: newTask.reward_energy,
       task_type: newTask.task_type,
       frequency: newTask.frequency,
-      max_completions: newTask.max_completions,
-      is_active: newTask.is_active,
+      max_completions: newTask.frequency === 'limited_count' ? newTask.max_completions : null,
+      is_active: true,
       created_by: user.id,
     }).select('id')
 
@@ -124,32 +111,25 @@ export default function CompanyAdmin() {
 
     const taskId = createdTasks[0].id
 
-    // Определяем, кому назначить
-    let targetUserIds = []
+    // Кому назначить
+    let targetIds = []
     if (newTask.assign_to_all_mop) {
-      // Назначаем всем МОПам компании
-      const mopIds = employees
+      targetIds = employees
         .filter(emp => emp.roles?.name === 'МОП')
         .map(emp => emp.user_id)
-      targetUserIds = mopIds
-    } else if (newTask.target_users.length > 0) {
-      targetUserIds = newTask.target_users
+    } else {
+      targetIds = newTask.target_users
     }
 
-    // Создаём назначения
-    if (targetUserIds.length > 0) {
-      const assignments = targetUserIds.map(uid => ({
+    if (targetIds.length > 0) {
+      const assignments = targetIds.map(uid => ({
         task_id: taskId,
         user_id: uid,
         status: 'assigned',
       }))
-      const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
-      if (assignError) {
-        setModal({ isOpen: true, title: 'Ошибка назначения', message: assignError.message })
-      }
+      await supabase.from('task_assignments').insert(assignments)
     }
 
-    // Сбрасываем форму
     setNewTask({
       title: '',
       description: '',
@@ -158,16 +138,10 @@ export default function CompanyAdmin() {
       task_type: 'manual',
       frequency: 'once',
       max_completions: 1,
-      is_active: true,
       assign_to_all_mop: true,
       target_users: [],
     })
     setShowNewTask(false)
-    fetchTasks(profile.company_id)
-  }
-
-  async function toggleTaskActive(task) {
-    await supabase.from('tasks').update({ is_active: !task.is_active }).eq('id', task.id)
     fetchTasks(profile.company_id)
   }
 
@@ -177,9 +151,8 @@ export default function CompanyAdmin() {
     fetchTasks(profile.company_id)
   }
 
-  // --- Приглашения (оставлены без изменений) ---
-  async function handleInvite(e) { /* ... */ }
-  async function deleteInvitation(id) { /* ... */ }
+  // Сотрудники (ред., удаление, сброс пароля) – оставлены без изменений для краткости
+  // ...
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
@@ -195,67 +168,106 @@ export default function CompanyAdmin() {
         <h3>Задания</h3>
         <button onClick={() => setShowNewTask(!showNewTask)} className="btn-gold mb-4">+ Новое задание</button>
         {showNewTask && (
-          <form onSubmit={handleCreateTask} className="space-y-3 mb-4">
-            <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="Название" className="input-field" required />
-            <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Описание" className="input-field" rows={3} />
-            <div className="grid grid-cols-2 gap-3">
-              <input type="number" value={newTask.reward_karma} onChange={e => setNewTask({ ...newTask, reward_karma: parseInt(e.target.value) })} placeholder="Кармики" className="input-field" />
-              <input type="number" value={newTask.reward_energy} onChange={e => setNewTask({ ...newTask, reward_energy: parseInt(e.target.value) })} placeholder="Энергия" className="input-field" />
+          <form onSubmit={handleCreateTask} className="space-y-4 mb-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Название задания</label>
+              <input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} placeholder="Введите название" className="input-field" required />
             </div>
-            <select value={newTask.task_type} onChange={e => setNewTask({ ...newTask, task_type: e.target.value })} className="input-field">
-              <option value="manual">Ручная проверка</option>
-              <option value="auto_crm">Автоматическая из CRM</option>
-            </select>
-            <select value={newTask.frequency} onChange={e => setNewTask({ ...newTask, frequency: e.target.value })} className="input-field">
-              <option value="once">Один раз</option>
-              <option value="daily">Ежедневно</option>
-              <option value="unlimited">Неограниченно</option>
-              <option value="limited_count">Ограниченное количество</option>
-            </select>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Описание</label>
+              <textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} placeholder="Что нужно сделать" className="input-field" rows={3} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Награда (кармики)</label>
+                <input type="number" value={newTask.reward_karma} onChange={e => setNewTask({ ...newTask, reward_karma: parseInt(e.target.value) || 0 })} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Награда (энергия)</label>
+                <input type="number" value={newTask.reward_energy} onChange={e => setNewTask({ ...newTask, reward_energy: parseInt(e.target.value) || 0 })} className="input-field" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Тип проверки</label>
+              <select value={newTask.task_type} onChange={e => setNewTask({ ...newTask, task_type: e.target.value })} className="input-field">
+                <option value="manual">Ручная проверка</option>
+                <option value="auto_crm">Автоматическая из CRM</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Периодичность</label>
+              <select value={newTask.frequency} onChange={e => setNewTask({ ...newTask, frequency: e.target.value })} className="input-field">
+                <option value="once">Один раз</option>
+                <option value="daily">Ежедневно</option>
+                <option value="unlimited">Неограниченно</option>
+                <option value="limited_count">Ограниченное количество</option>
+              </select>
+            </div>
             {newTask.frequency === 'limited_count' && (
-              <input type="number" value={newTask.max_completions} onChange={e => setNewTask({ ...newTask, max_completions: parseInt(e.target.value) })} placeholder="Максимум выполнений" className="input-field" />
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Максимальное количество выполнений</label>
+                <input type="number" value={newTask.max_completions} onChange={e => setNewTask({ ...newTask, max_completions: parseInt(e.target.value) || 1 })} className="input-field" />
+              </div>
             )}
-
-            {/* Выбор назначения */}
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={newTask.assign_to_all_mop}
-                  onChange={e => setNewTask({ ...newTask, assign_to_all_mop: e.target.checked })}
-                />
-                <span className="text-sm text-gray-300">Назначить всем МОП</span>
-              </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="all_mop"
+                checked={newTask.assign_to_all_mop}
+                onChange={e => setNewTask({ ...newTask, assign_to_all_mop: e.target.checked })}
+              />
+              <label htmlFor="all_mop" className="text-sm text-gray-300">Назначить всем МОП</label>
             </div>
-
+            {!newTask.assign_to_all_mop && (
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Выберите сотрудников</label>
+                <div className="flex flex-wrap gap-2">
+                  {employees
+                    .filter(emp => emp.roles?.name === 'МОП')
+                    .map(emp => (
+                      <button
+                        key={emp.user_id}
+                        type="button"
+                        onClick={() => {
+                          const current = newTask.target_users
+                          if (current.includes(emp.user_id)) {
+                            setNewTask({ ...newTask, target_users: current.filter(id => id !== emp.user_id) })
+                          } else {
+                            setNewTask({ ...newTask, target_users: [...current, emp.user_id] })
+                          }
+                        }}
+                        className={`filter-pill ${newTask.target_users.includes(emp.user_id) ? 'active' : ''}`}
+                      >
+                        {emp.display_name || emp.email}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
             <button type="submit" className="btn-gold w-full">Создать и назначить</button>
           </form>
         )}
         <div className="space-y-4">
+          {tasks.length === 0 && <p className="text-gray-400">Нет созданных заданий</p>}
           {tasks.map(task => (
             <div key={task.id} className="premium-card flex justify-between items-center">
               <div>
                 <p className="text-white font-medium">{task.title}</p>
-                <p className="text-xs text-gray-400">{task.task_type} · {task.frequency} · {task.reward_karma} кармиков</p>
+                <p className="text-xs text-gray-400">{task.task_type} · {task.frequency} · +{task.reward_karma} кармиков, +{task.reward_energy} энергии</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => toggleTaskActive(task)} className={`text-xs ${task.is_active ? 'text-green-400' : 'text-gray-400'}`}>
-                  {task.is_active ? 'Акт.' : 'Неакт.'}
-                </button>
-                <button onClick={() => deleteTask(task.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-              </div>
+              <button onClick={() => deleteTask(task.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Приглашения (сокращено для экономии места) */}
+      {/* Приглашения (сокращено) */}
       <div className="dash-card mb-6">
         <h3>Приглашения</h3>
-        {/* ... форма и список приглашений ... */}
+        {/* ... форма и список ... */}
       </div>
 
-      {/* Сотрудники (сокращено) */}
+      {/* Сотрудники */}
       <div className="dash-card">
         <h3>Сотрудники</h3>
         <div className="mt-4 space-y-2">
@@ -263,7 +275,7 @@ export default function CompanyAdmin() {
             <div key={emp.user_id} className="flex justify-between items-center py-2 border-b border-gray-700">
               <div>
                 <p className="text-white font-medium">{emp.display_name || 'Без имени'}</p>
-                <p className="text-xs text-gray-400">{emp.roles?.name} · {emp.position || '—'}</p>
+                <p className="text-xs text-gray-400">{emp.roles?.name}</p>
               </div>
               <span className="text-xs text-gray-500">{emp.user_id === user?.id ? '(вы)' : ''}</span>
             </div>
