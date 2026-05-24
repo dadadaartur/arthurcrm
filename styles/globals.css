@@ -55,7 +55,31 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (финальная версия) ========== */
+/* Лучи – горизонтальная полоса на фоне карточки */
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(249,115,22,0.7) 15%,
+    rgba(249,115,22,0.9) 30%,
+    transparent 50%,
+    rgba(249,115,22,0.9) 70%,
+    rgba(249,115,22,0.7) 85%,
+    transparent 100%
+  );
+  z-index: 0;                           /* фон карточки, ниже дыры и текста */
+  animation: raysBreathe 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ЧЁРНАЯ ДЫРА (убраны лучи) */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,9 +88,9 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* Абсолютно чёрный центр */
+  background: #000;                     /* абсолютная чернота внутри */
   box-shadow: none;
-  z-index: 1;                           /* Перекрывает середину */
+  z-index: 1;                           /* выше полосы, перекрывает её середину */
   pointer-events: none;
 }
 
@@ -85,28 +109,9 @@ html, body {
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи – аккуратные линии слева и справа (середина вырезана) */
+/* Второй псевдоэлемент чёрной дыры не используется */
 .black-hole::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;                        /* общая длина */
-  height: 2px;                         /* толщина луча */
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(249,115,22,0.8) 20%,
-    rgba(249,115,22,0.9) 50%,
-    rgba(249,115,22,0.8) 80%,
-    transparent 100%
-  );
-  /* Вырезаем центральную часть так, чтобы она не перекрывала чёрную дыру */
-  clip-path: inset(0 120px 0 120px);   /* отступ от левого и правого края = 120px (середина 400-240=160px скрыта) */
-  z-index: -2;
-  animation: raysBreathe 3s ease-in-out infinite;
-  filter: none;                        /* никакого размытия – никаких клякс */
+  display: none;
 }
 
 @keyframes ringGlow {
