@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА – оригинальная, только центр чёрный */
+/* ЧЁРНАЯ ДЫРА – ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: ФОН СТАЛ ЧЁРНЫМ */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,7 +64,7 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: убран градиент, теперь чисто чёрный */
+  background: #000;                     /* было radial-gradient(...), теперь просто чёрный */
   box-shadow: 
     0 0 20px rgba(249,115,22,0.3),
     0 0 40px rgba(249,115,22,0.15);
