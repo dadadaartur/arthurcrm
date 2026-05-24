@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ТОНКИЕ ПРЕРЫВИСТЫЕ ШТРИХИ-ЛУЧИ (заполняют пустоту) ========== */
+/* ========== ТОНКИЕ ПРЕРЫВИСТЫЕ ШТРИХИ (заполняют пустоту) ========== */
 .balance-card::before {
   content: '';
   position: absolute;
@@ -65,14 +65,14 @@ html, body {
   width: 0;
   height: 0;
   box-shadow:
-    /* Левый луч: три коротких штриха */
-    -95px 0 2px 0 rgba(249,115,22,0.7),
-    -110px 0 2px 0 rgba(249,115,22,0.5),
-    -125px 0 2px 0 rgba(249,115,22,0.3),
-    /* Правый луч */
-    95px 0 2px 0 rgba(249,115,22,0.7),
-    110px 0 2px 0 rgba(249,115,22,0.5),
-    125px 0 2px 0 rgba(249,115,22,0.3);
+    /* Левые штрихи */
+    -100px 0 2px 0 rgba(249,115,22,0.7),
+    -115px 0 2px 0 rgba(249,115,22,0.5),
+    -130px 0 2px 0 rgba(249,115,22,0.3),
+    /* Правые штрихи */
+    100px 0 2px 0 rgba(249,115,22,0.7),
+    115px 0 2px 0 rgba(249,115,22,0.5),
+    130px 0 2px 0 rgba(249,115,22,0.3);
   z-index: 0;
   animation: strokesPulse 3s ease-in-out infinite;
   pointer-events: none;
@@ -83,7 +83,7 @@ html, body {
   50% { opacity: 1; }
 }
 
-/* ЧЁРНАЯ ДЫРА – оригинальная, без изменений */
+/* ЧЁРНАЯ ДЫРА – полностью чёрная, без свечения внутри */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -92,58 +92,16 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* ЧИСТО ЧЁРНЫЙ ЦЕНТР */
-  box-shadow: 
-    0 0 20px rgba(249,115,22,0.3),
-    0 0 40px rgba(249,115,22,0.15);
-  animation: blackHolePulse 3s infinite;
-  z-index: 1;
+  background: #000;                     /* Абсолютная чернота, никаких градиентов */
+  box-shadow: none;                     /* Убираем любое внешнее свечение */
+  z-index: 1;                           /* Перекрывает центр карточки */
   pointer-events: none;
 }
 
-/* Горизонтальный овал – как был */
-.black-hole::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 450px;
-  height: 100px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(249, 115, 22, 0.35) 0%,
-    rgba(249, 115, 22, 0.15) 30%,
-    transparent 70%
-  );
-  filter: blur(8px);
-  z-index: -1;
-  animation: streamFlow 4s infinite ease-in-out;
-}
-
-/* Вертикальная линия – как была */
+/* Убираем все псевдоэлементы чёрной дыры */
+.black-hole::before,
 .black-hole::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1px;
-  height: 300px;
-  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.15), transparent);
-  z-index: -1;
-}
-
-@keyframes streamFlow {
-  0% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.15); }
-  100% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
-}
-
-@keyframes blackHolePulse {
-  0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
-  50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
-  100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+  display: none;
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
