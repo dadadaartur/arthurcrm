@@ -55,35 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ТОНКИЕ ПРЕРЫВИСТЫЕ ШТРИХИ (заполняют пустоту) ========== */
-.balance-card::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 0;
-  height: 0;
-  box-shadow:
-    /* Левые штрихи */
-    -100px 0 2px 0 rgba(249,115,22,0.7),
-    -115px 0 2px 0 rgba(249,115,22,0.5),
-    -130px 0 2px 0 rgba(249,115,22,0.3),
-    /* Правые штрихи */
-    100px 0 2px 0 rgba(249,115,22,0.7),
-    115px 0 2px 0 rgba(249,115,22,0.5),
-    130px 0 2px 0 rgba(249,115,22,0.3);
-  z-index: 0;
-  animation: strokesPulse 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes strokesPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-/* ЧЁРНАЯ ДЫРА – полностью чёрная, без свечения внутри */
+/* ЧЁРНАЯ ДЫРА – оригинальная, только ярче */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -92,16 +64,56 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* Абсолютная чернота, никаких градиентов */
-  box-shadow: none;                     /* Убираем любое внешнее свечение */
-  z-index: 1;                           /* Перекрывает центр карточки */
+  background: #000;
+  box-shadow: 
+    0 0 25px rgba(249,115,22,0.4),   /* было 0.3 → 0.4 */
+    0 0 50px rgba(249,115,22,0.2);   /* было 0.15 → 0.2 */
+  animation: blackHolePulse 3s infinite;
+  z-index: 0;
   pointer-events: none;
 }
 
-/* Убираем все псевдоэлементы чёрной дыры */
-.black-hole::before,
+.black-hole::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px;
+  height: 100px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(249, 115, 22, 0.4) 0%,    /* было 0.35 → 0.4 */
+    rgba(249, 115, 22, 0.2) 30%,   /* было 0.15 → 0.2 */
+    transparent 70%
+  );
+  filter: blur(8px);
+  z-index: -1;
+  animation: streamFlow 4s infinite ease-in-out;
+}
+
 .black-hole::after {
-  display: none;
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 300px;
+  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.2), transparent); /* было 0.15 → 0.2 */
+  z-index: -1;
+}
+
+@keyframes streamFlow {
+  0% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.15); }
+  100% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
+}
+
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
+  50% { box-shadow: 0 0 35px rgba(249,115,22,0.6), 0 0 70px rgba(249,115,22,0.3); } /* было 0.5 → 0.6, 0.25 → 0.3 */
+  100% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
