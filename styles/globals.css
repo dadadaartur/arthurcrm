@@ -55,7 +55,47 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (твоя основа, чуть ярче) ========== */
+/* ========== ТОНКИЕ ШТРИХИ-ЛУЧИ (только по бокам) ========== */
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 8px,
+    rgba(249,115,22,0.65) 8px,
+    rgba(249,115,22,0.65) 14px
+  );
+  /* Маска скрывает центр, оставляя только левую и правую части */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    black 25%,
+    transparent 40%,
+    transparent 60%,
+    black 75%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    black 25%,
+    transparent 40%,
+    transparent 60%,
+    black 75%
+  );
+  z-index: 0;                /* фон карточки, ниже дыры и текста */
+  animation: strokesPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes strokesPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ЧЁРНАЯ ДЫРА – оригинальная, как была */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,42 +104,34 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* ЧИСТО ЧЁРНЫЙ ЦЕНТР */
+  background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 55%, transparent 70%);
   box-shadow: 
-    0 0 25px rgba(249,115,22,0.4),    /* было 0.3 -> стало 0.4 */
-    0 0 50px rgba(249,115,22,0.2);    /* было 0.15 -> стало 0.2 */
+    0 0 20px rgba(249,115,22,0.3),
+    0 0 40px rgba(249,115,22,0.15);
   animation: blackHolePulse 3s infinite;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
 }
 
-/* Горизонтальные лучи – вместо овала */
 .black-hole::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 400px;                        /* общая длина линии */
-  height: 2px;                         /* тонкий луч */
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 15%,
-    rgba(249,115,22,0.7) 25%,
-    rgba(249,115,22,0.9) 40%,
-    transparent 50%,
-    rgba(249,115,22,0.9) 60%,
-    rgba(249,115,22,0.7) 75%,
-    transparent 85%,
-    transparent 100%
+  width: 450px;
+  height: 100px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(249, 115, 22, 0.35) 0%,
+    rgba(249, 115, 22, 0.15) 30%,
+    transparent 70%
   );
-  filter: none;                        /* чёткие линии, без размытия */
+  filter: blur(8px);
   z-index: -1;
-  animation: raysBreathe 3s ease-in-out infinite;
+  animation: streamFlow 4s infinite ease-in-out;
 }
 
-/* Вертикальная линия – как была */
 .black-hole::after {
   content: '';
   position: absolute;
@@ -112,16 +144,16 @@ html, body {
   z-index: -1;
 }
 
-/* Пульсация кольца и лучей */
-@keyframes blackHolePulse {
-  0% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
-  50% { box-shadow: 0 0 35px rgba(249,115,22,0.6), 0 0 70px rgba(249,115,22,0.3); }
-  100% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
+@keyframes streamFlow {
+  0% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.15); }
+  100% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
 }
 
-@keyframes raysBreathe {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
+  100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
