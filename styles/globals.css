@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА (НИМБ) – обновлённый блок */
+/* ЧЁРНАЯ ДЫРА – обновлённый блок: центр абсолютно чёрный, горизонт событий и джеты */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,56 +64,68 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                          /* абсолютно чёрный центр – убрано внутреннее свечение */
-  box-shadow: 
-    0 0 15px rgba(249,115,22,0.4),
-    0 0 30px rgba(249,115,22,0.2);
-  animation: blackHolePulse 3s infinite;
+  background: #000;                     /* полная чернота, без градиента */
+  box-shadow: none;                     /* убираем любые тени */
   z-index: 0;
   pointer-events: none;
 }
 
+/* Горизонт событий – светящееся кольцо */
 .black-hole::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 600px;                               /* расширено, чтобы заполнить пустоту по бокам */
-  height: 140px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(249, 115, 22, 0.6) 0%,
-    rgba(249, 115, 22, 0.25) 40%,
-    transparent 70%
-  );
-  filter: blur(10px);
+  top: -14px;
+  left: -14px;
+  right: -14px;
+  bottom: -14px;
+  border-radius: 50%;
+  border: 2px solid rgba(249,115,22,0.9);
+  box-shadow:
+    0 0 12px rgba(249,115,22,0.8),
+    0 0 30px rgba(249,115,22,0.5);
+  animation: ringPulse 3s ease-in-out infinite;
   z-index: -1;
-  animation: horizonPulse 3s infinite ease-in-out;  /* новая пульсация */
 }
 
+/* Джеты – аккуратные лучи влево и вправо, заполняющие пустоту */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1px;
-  height: 300px;
-  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.15), transparent);
+  width: 0;
+  height: 0;
+  box-shadow:
+    /* основные широкие лучи */
+    150px 0 20px 10px rgba(249,115,22,0.5),
+    -150px 0 20px 10px rgba(249,115,22,0.5),
+    /* дополнительные тонкие яркие лучи */
+    200px 0 2px 0 rgba(249,115,22,0.8),
+    -200px 0 2px 0 rgba(249,115,22,0.8);
   z-index: -1;
+  animation: raysPulse 3s ease-in-out infinite;
 }
 
-@keyframes blackHolePulse {
-  0% { box-shadow: 0 0 15px rgba(249,115,22,0.4), 0 0 30px rgba(249,115,22,0.2); }
-  50% { box-shadow: 0 0 25px rgba(249,115,22,0.7), 0 0 50px rgba(249,115,22,0.35); }
-  100% { box-shadow: 0 0 15px rgba(249,115,22,0.4), 0 0 30px rgba(249,115,22,0.2); }
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
 }
 
-@keyframes horizonPulse {
-  0% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.25); }  /* расширяется сильнее */
-  100% { opacity: 0.7; transform: translate(-50%, -50%) scaleX(1); }
+@keyframes raysPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(1.15);
+  }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
