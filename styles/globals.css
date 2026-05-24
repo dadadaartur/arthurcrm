@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (исправлено) ========== */
+/* ========== ЧЁРНАЯ ДЫРА (новая версия) ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,54 +64,60 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* ПОЛНАЯ ЧЕРНОТА, НИЧЕГО ВНУТРИ */
+  background: #000;                     /* Абсолютная чернота внутри */
   box-shadow: none;
-  z-index: 1;                           /* Перекрывает всё, что сзади */
+  z-index: 1;                           /* Перекрывает середину полосы */
   pointer-events: none;
 }
 
-/* Горизонт событий – тонкое кольцо (без расширения) */
+/* Тонкое кольцо горизонта событий (только свечение) */
 .black-hole::before {
   content: '';
   position: absolute;
-  top: -12px;
-  left: -12px;
-  right: -12px;
-  bottom: -12px;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
   border-radius: 50%;
-  border: 2px solid rgba(249,115,22,0.8);
-  box-shadow:
-    0 0 8px rgba(249,115,22,0.6),
-    0 0 20px rgba(249,115,22,0.3);
+  border: 2px solid rgba(249,115,22,0.7);
+  box-shadow: 0 0 8px rgba(249,115,22,0.5);
   z-index: -1;
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи – два мягких световых пятна слева и справа от круга */
+/* Горизонтальная полоса – разорвана в центре, заполняет пустоту */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 0;
-  height: 0;
-  /* Смещённые тени создают размытые лучи */
-  box-shadow:
-    160px 0 35px 30px rgba(249,115,22,0.35),   /* правое пятно */
-    -160px 0 35px 30px rgba(249,115,22,0.35),  /* левое пятно */
-    100px 0 15px 8px rgba(249,115,22,0.5),     /* более яркий центр */
-    -100px 0 15px 8px rgba(249,115,22,0.5);
-  z-index: -2;                                 /* позади круга */
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 15%,
+    rgba(249,115,22,0.5) 25%,
+    rgba(249,115,22,0.8) 40%,
+    transparent 50%,
+    rgba(249,115,22,0.8) 60%,
+    rgba(249,115,22,0.5) 75%,
+    transparent 85%,
+    transparent 100%
+  );
+  filter: blur(3px);
+  z-index: -2;
   animation: raysBreathe 3s ease-in-out infinite;
 }
 
 @keyframes ringGlow {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
 
 @keyframes raysBreathe {
-  0%, 100% { opacity: 0.6; }
+  0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
 }
 
