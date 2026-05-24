@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (новая версия) ========== */
+/* ========== ЧЁРНАЯ ДЫРА – ФИНАЛЬНАЯ ВЕРСИЯ ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -66,11 +66,11 @@ html, body {
   border-radius: 50%;
   background: #000;                     /* Абсолютная чернота внутри */
   box-shadow: none;
-  z-index: 1;                           /* Перекрывает середину полосы */
+  z-index: 1;                           /* Перекрывает всё, что сзади */
   pointer-events: none;
 }
 
-/* Тонкое кольцо горизонта событий (только свечение) */
+/* Тонкое кольцо горизонта событий (только свечение, без расширения) */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -85,29 +85,25 @@ html, body {
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Горизонтальная полоса – разорвана в центре, заполняет пустоту */
+/* Лучи-джеты – исходят от краёв горизонта событий */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  height: 6px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 15%,
-    rgba(249,115,22,0.5) 25%,
-    rgba(249,115,22,0.8) 40%,
-    transparent 50%,
-    rgba(249,115,22,0.8) 60%,
-    rgba(249,115,22,0.5) 75%,
-    transparent 85%,
-    transparent 100%
-  );
-  filter: blur(3px);
-  z-index: -2;
+  width: 0;
+  height: 0;
+  /* Смещённые тени создают два луча: тонкий яркий + мягкое гало */
+  box-shadow:
+    /* Правый луч */
+    125px 0 2px 0 rgba(249,115,22,0.9),
+    125px 0 14px 8px rgba(249,115,22,0.5),
+    95px 0 5px 2px rgba(249,115,22,0.4),
+    /* Левый луч */
+    -125px 0 2px 0 rgba(249,115,22,0.9),
+    -125px 0 14px 8px rgba(249,115,22,0.5),
+    -95px 0 5px 2px rgba(249,115,22,0.4);
+  z-index: -2;                           /* Позади круга */
   animation: raysBreathe 3s ease-in-out infinite;
 }
 
