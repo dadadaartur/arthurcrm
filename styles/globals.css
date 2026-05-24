@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА – только свечение изменено */
+/* ========== ЧЁРНАЯ ДЫРА (обновлено) ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,14 +64,13 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* ПОЛНАЯ ЧЕРНОТА ВНУТРИ */
-  box-shadow: none;                     /* никакого внутреннего свечения */
+  background: #000;                     /* ПОЛНАЯ ЧЕРНОТА, НИКАКОГО СВЕЧЕНИЯ ВНУТРИ */
+  box-shadow: none;
   z-index: 0;
   pointer-events: none;
-  /* КРУГ НЕ ПУЛЬСИРУЕТ, РАЗМЕР НЕ МЕНЯЕТСЯ */
 }
 
-/* Горизонт событий – тонкое аккуратное кольцо */
+/* Кольцо горизонта событий (без расширения) */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -85,10 +84,10 @@ html, body {
     0 0 8px rgba(249,115,22,0.6),
     0 0 20px rgba(249,115,22,0.3);
   z-index: -1;
-  animation: ringPulse 3s ease-in-out infinite;
+  animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи – аккуратные световые полосы только влево и вправо */
+/* Лучи (джеты) – только влево и вправо, не касаются круга */
 .black-hole::after {
   content: '';
   position: absolute;
@@ -98,24 +97,22 @@ html, body {
   width: 0;
   height: 0;
   box-shadow:
-    /* тонкие яркие лучи */
     120px 0 1px 0 rgba(249,115,22,0.7),
     -120px 0 1px 0 rgba(249,115,22,0.7),
-    /* чуть шире и мягче */
     80px 0 3px 2px rgba(249,115,22,0.4),
     -80px 0 3px 2px rgba(249,115,22,0.4);
   z-index: -2;
-  animation: raysPulse 3s ease-in-out infinite;
+  animation: raysBreathe 3s ease-in-out infinite;
 }
 
-/* Анимация кольца – едва заметная пульсация яркости */
-@keyframes ringPulse {
-  0%, 100% { opacity: 0.8; }
+/* Анимация кольца – только яркость */
+@keyframes ringGlow {
+  0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
 }
 
-/* Анимация лучей – мягкое дыхание, не расширяет круг */
-@keyframes raysPulse {
+/* Анимация лучей – мягкое дыхание, без изменения размера круга */
+@keyframes raysBreathe {
   0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scaleX(1); }
   50% { opacity: 0.9; transform: translate(-50%, -50%) scaleX(1.05); }
 }
