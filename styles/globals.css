@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА – обновлённый блок: центр абсолютно чёрный, горизонт событий и джеты */
+/* ЧЁРНАЯ ДЫРА – только свечение изменено */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,68 +64,60 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* полная чернота, без градиента */
-  box-shadow: none;                     /* убираем любые тени */
+  background: #000;                     /* ПОЛНАЯ ЧЕРНОТА ВНУТРИ */
+  box-shadow: none;                     /* никакого внутреннего свечения */
   z-index: 0;
   pointer-events: none;
+  /* КРУГ НЕ ПУЛЬСИРУЕТ, РАЗМЕР НЕ МЕНЯЕТСЯ */
 }
 
-/* Горизонт событий – светящееся кольцо */
+/* Горизонт событий – тонкое аккуратное кольцо */
 .black-hole::before {
   content: '';
   position: absolute;
-  top: -14px;
-  left: -14px;
-  right: -14px;
-  bottom: -14px;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
   border-radius: 50%;
-  border: 2px solid rgba(249,115,22,0.9);
+  border: 2px solid rgba(249,115,22,0.8);
   box-shadow:
-    0 0 12px rgba(249,115,22,0.8),
-    0 0 30px rgba(249,115,22,0.5);
-  animation: ringPulse 3s ease-in-out infinite;
+    0 0 8px rgba(249,115,22,0.6),
+    0 0 20px rgba(249,115,22,0.3);
   z-index: -1;
+  animation: ringPulse 3s ease-in-out infinite;
 }
 
-/* Джеты – аккуратные лучи влево и вправо, заполняющие пустоту */
+/* Лучи – аккуратные световые полосы только влево и вправо */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   width: 0;
   height: 0;
   box-shadow:
-    /* основные широкие лучи */
-    150px 0 20px 10px rgba(249,115,22,0.5),
-    -150px 0 20px 10px rgba(249,115,22,0.5),
-    /* дополнительные тонкие яркие лучи */
-    200px 0 2px 0 rgba(249,115,22,0.8),
-    -200px 0 2px 0 rgba(249,115,22,0.8);
-  z-index: -1;
+    /* тонкие яркие лучи */
+    120px 0 1px 0 rgba(249,115,22,0.7),
+    -120px 0 1px 0 rgba(249,115,22,0.7),
+    /* чуть шире и мягче */
+    80px 0 3px 2px rgba(249,115,22,0.4),
+    -80px 0 3px 2px rgba(249,115,22,0.4);
+  z-index: -2;
   animation: raysPulse 3s ease-in-out infinite;
 }
 
+/* Анимация кольца – едва заметная пульсация яркости */
 @keyframes ringPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.06);
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
+/* Анимация лучей – мягкое дыхание, не расширяет круг */
 @keyframes raysPulse {
-  0%, 100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scaleX(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scaleX(1.15);
-  }
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scaleX(1); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) scaleX(1.05); }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
