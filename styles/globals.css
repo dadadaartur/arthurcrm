@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА – ФИНАЛЬНАЯ ВЕРСИЯ ========== */
+/* ========== ЧЁРНАЯ ДЫРА ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,13 +64,13 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* Абсолютная чернота внутри */
+  background: #000;                     /* абсолютная чернота внутри */
   box-shadow: none;
-  z-index: 1;                           /* Перекрывает всё, что сзади */
+  z-index: 1;                           /* перекрывает середину луча */
   pointer-events: none;
 }
 
-/* Тонкое кольцо горизонта событий (только свечение, без расширения) */
+/* Тонкое кольцо горизонта событий (только свечение) */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -85,26 +85,30 @@ html, body {
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи-джеты – исходят от краёв горизонта событий */
+/* Лучи – чёткие отрезки слева и справа от дыры */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 0;
-  height: 0;
-  /* Смещённые тени создают два луча: тонкий яркий + мягкое гало */
-  box-shadow:
-    /* Правый луч */
-    125px 0 2px 0 rgba(249,115,22,0.9),
-    125px 0 14px 8px rgba(249,115,22,0.5),
-    95px 0 5px 2px rgba(249,115,22,0.4),
-    /* Левый луч */
-    -125px 0 2px 0 rgba(249,115,22,0.9),
-    -125px 0 14px 8px rgba(249,115,22,0.5),
-    -95px 0 5px 2px rgba(249,115,22,0.4);
-  z-index: -2;                           /* Позади круга */
+  transform: translate(-50%, -50%);
+  width: 300px;                        /* общая длина линии */
+  height: 2px;                         /* толщина луча */
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 10%,
+    rgba(249,115,22,0.9) 25%,
+    rgba(249,115,22,0.9) 45%,
+    transparent 50%,
+    rgba(249,115,22,0.9) 55%,
+    rgba(249,115,22,0.9) 75%,
+    transparent 90%,
+    transparent 100%
+  );
+  z-index: -2;                         /* позади круга */
   animation: raysBreathe 3s ease-in-out infinite;
+  filter: none;                        /* без размытия, чтобы не было клякс */
 }
 
 @keyframes ringGlow {
