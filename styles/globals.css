@@ -55,51 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== КРИВЫЕ ЛУЧИ ГОРИЗОНТА СОБЫТИЙ ========== */
-/* Левый луч */
-.balance-card::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  border-top-color: rgba(249,115,22,0.7);
-  border-right-color: rgba(249,115,22,0.4);
-  transform: translate(-50%, -50%) rotate(-30deg);
-  clip-path: inset(0 0 50% 50%);      /* оставляем левую верхнюю четверть */
-  z-index: 0;
-  animation: curveGlow 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(249,115,22,0.6));
-}
-
-/* Правый луч */
-.balance-card::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  border-top-color: rgba(249,115,22,0.7);
-  border-left-color: rgba(249,115,22,0.4);
-  transform: translate(-50%, -50%) rotate(30deg);
-  clip-path: inset(0 50% 50% 0);      /* оставляем правую верхнюю четверть */
-  z-index: 0;
-  animation: curveGlow 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(249,115,22,0.6));
-}
-
-@keyframes curveGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* ЧЁРНАЯ ДЫРА – оригинальная, без изменений */
+/* ========== ЧЁРНАЯ ДЫРА (твоя основа, чуть ярче) ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -108,36 +64,64 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;
+  background: #000;                     /* ЧИСТО ЧЁРНЫЙ ЦЕНТР */
   box-shadow: 
-    0 0 20px rgba(249,115,22,0.3),
-    0 0 40px rgba(249,115,22,0.15);
-  z-index: 1;                           /* перекрывает лучи в центре */
+    0 0 25px rgba(249,115,22,0.4),    /* было 0.3 -> стало 0.4 */
+    0 0 50px rgba(249,115,22,0.2);    /* было 0.15 -> стало 0.2 */
+  animation: blackHolePulse 3s infinite;
+  z-index: 0;
   pointer-events: none;
 }
 
-/* Кольцо горизонта событий (оставлено для красоты) */
+/* Горизонтальные лучи – вместо овала */
 .black-hole::before {
   content: '';
   position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  border-radius: 50%;
-  border: 2px solid rgba(249,115,22,0.5);
-  box-shadow: 0 0 8px rgba(249,115,22,0.4);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;                        /* общая длина линии */
+  height: 2px;                         /* тонкий луч */
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 15%,
+    rgba(249,115,22,0.7) 25%,
+    rgba(249,115,22,0.9) 40%,
+    transparent 50%,
+    rgba(249,115,22,0.9) 60%,
+    rgba(249,115,22,0.7) 75%,
+    transparent 85%,
+    transparent 100%
+  );
+  filter: none;                        /* чёткие линии, без размытия */
   z-index: -1;
-  animation: ringGlow 3s ease-in-out infinite;
+  animation: raysBreathe 3s ease-in-out infinite;
 }
 
+/* Вертикальная линия – как была */
 .black-hole::after {
-  display: none;                        /* убираем старые лучи */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 300px;
+  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.15), transparent);
+  z-index: -1;
 }
 
-@keyframes ringGlow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
+/* Пульсация кольца и лучей */
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
+  50% { box-shadow: 0 0 35px rgba(249,115,22,0.6), 0 0 70px rgba(249,115,22,0.3); }
+  100% { box-shadow: 0 0 25px rgba(249,115,22,0.4), 0 0 50px rgba(249,115,22,0.2); }
+}
+
+@keyframes raysBreathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
