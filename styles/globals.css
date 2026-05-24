@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА ========== */
+/* ========== ЧЁРНАЯ ДЫРА (финальная версия) ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,13 +64,13 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* абсолютная чернота внутри */
+  background: #000;                     /* Абсолютно чёрный центр */
   box-shadow: none;
-  z-index: 1;                           /* перекрывает середину луча */
+  z-index: 1;                           /* Перекрывает середину */
   pointer-events: none;
 }
 
-/* Тонкое кольцо горизонта событий (только свечение) */
+/* Тонкое кольцо горизонта событий */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -85,30 +85,28 @@ html, body {
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи – чёткие отрезки слева и справа от дыры */
+/* Лучи – аккуратные линии слева и справа (середина вырезана) */
 .black-hole::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300px;                        /* общая длина линии */
+  width: 400px;                        /* общая длина */
   height: 2px;                         /* толщина луча */
   background: linear-gradient(
     90deg,
     transparent 0%,
-    transparent 10%,
-    rgba(249,115,22,0.9) 25%,
-    rgba(249,115,22,0.9) 45%,
-    transparent 50%,
-    rgba(249,115,22,0.9) 55%,
-    rgba(249,115,22,0.9) 75%,
-    transparent 90%,
+    rgba(249,115,22,0.8) 20%,
+    rgba(249,115,22,0.9) 50%,
+    rgba(249,115,22,0.8) 80%,
     transparent 100%
   );
-  z-index: -2;                         /* позади круга */
+  /* Вырезаем центральную часть так, чтобы она не перекрывала чёрную дыру */
+  clip-path: inset(0 120px 0 120px);   /* отступ от левого и правого края = 120px (середина 400-240=160px скрыта) */
+  z-index: -2;
   animation: raysBreathe 3s ease-in-out infinite;
-  filter: none;                        /* без размытия, чтобы не было клякс */
+  filter: none;                        /* никакого размытия – никаких клякс */
 }
 
 @keyframes ringGlow {
