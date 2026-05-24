@@ -55,7 +55,7 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (исправленные лучи) ========== */
+/* ========== ЧЁРНАЯ ДЫРА (лучи света) ========== */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -65,9 +65,21 @@ html, body {
   height: 180px;
   border-radius: 50%;
   background: #000;                     /* Полная чернота внутри */
-  box-shadow: none;
-  z-index: 1;                           /* Перекрывает середину лучей */
+  /* Лучи света – исходят от краёв наружу */
+  box-shadow:
+    /* Правый луч */
+    70px 0 2px 0 rgba(249,115,22,1),
+    90px 0 8px 4px rgba(249,115,22,0.8),
+    110px 0 16px 8px rgba(249,115,22,0.6),
+    130px 0 24px 12px rgba(249,115,22,0.3),
+    /* Левый луч */
+    -70px 0 2px 0 rgba(249,115,22,1),
+    -90px 0 8px 4px rgba(249,115,22,0.8),
+    -110px 0 16px 8px rgba(249,115,22,0.6),
+    -130px 0 24px 12px rgba(249,115,22,0.3);
+  z-index: 1;
   pointer-events: none;
+  animation: raysPulse 3s ease-in-out infinite;
 }
 
 /* Тонкое кольцо горизонта событий */
@@ -85,39 +97,18 @@ html, body {
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Лучи – теперь строго внутри дыры, с широким прозрачным центром */
+/* Псевдоэлемент ::after больше не нужен */
 .black-hole::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;                        /* общая длина */
-  height: 2px;                         /* толщина луча */
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 15%,
-    rgba(249,115,22,0.8) 25%,
-    rgba(249,115,22,0.9) 40%,
-    transparent 50%,
-    rgba(249,115,22,0.9) 60%,
-    rgba(249,115,22,0.8) 75%,
-    transparent 85%,
-    transparent 100%
-  );
-  z-index: -2;                         /* Позади круга и кольца, не перекрывает текст */
-  animation: raysBreathe 3s ease-in-out infinite;
-  filter: none;                        /* Чёткие линии */
+  display: none;
+}
+
+@keyframes raysPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
 @keyframes ringGlow {
   0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-@keyframes raysBreathe {
-  0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
 }
 
