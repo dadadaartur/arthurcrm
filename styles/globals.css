@@ -55,7 +55,51 @@ html, body {
   overflow: hidden;
 }
 
-/* ========== ЧЁРНАЯ ДЫРА (лучи света) ========== */
+/* ========== КРИВЫЕ ЛУЧИ ГОРИЗОНТА СОБЫТИЙ ========== */
+/* Левый луч */
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: rgba(249,115,22,0.7);
+  border-right-color: rgba(249,115,22,0.4);
+  transform: translate(-50%, -50%) rotate(-30deg);
+  clip-path: inset(0 0 50% 50%);      /* оставляем левую верхнюю четверть */
+  z-index: 0;
+  animation: curveGlow 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(249,115,22,0.6));
+}
+
+/* Правый луч */
+.balance-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: rgba(249,115,22,0.7);
+  border-left-color: rgba(249,115,22,0.4);
+  transform: translate(-50%, -50%) rotate(30deg);
+  clip-path: inset(0 50% 50% 0);      /* оставляем правую верхнюю четверть */
+  z-index: 0;
+  animation: curveGlow 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(249,115,22,0.6));
+}
+
+@keyframes curveGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ЧЁРНАЯ ДЫРА – оригинальная, без изменений */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -64,25 +108,15 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* Полная чернота внутри */
-  /* Лучи света – исходят от краёв наружу */
-  box-shadow:
-    /* Правый луч */
-    70px 0 2px 0 rgba(249,115,22,1),
-    90px 0 8px 4px rgba(249,115,22,0.8),
-    110px 0 16px 8px rgba(249,115,22,0.6),
-    130px 0 24px 12px rgba(249,115,22,0.3),
-    /* Левый луч */
-    -70px 0 2px 0 rgba(249,115,22,1),
-    -90px 0 8px 4px rgba(249,115,22,0.8),
-    -110px 0 16px 8px rgba(249,115,22,0.6),
-    -130px 0 24px 12px rgba(249,115,22,0.3);
-  z-index: 1;
+  background: #000;
+  box-shadow: 
+    0 0 20px rgba(249,115,22,0.3),
+    0 0 40px rgba(249,115,22,0.15);
+  z-index: 1;                           /* перекрывает лучи в центре */
   pointer-events: none;
-  animation: raysPulse 3s ease-in-out infinite;
 }
 
-/* Тонкое кольцо горизонта событий */
+/* Кольцо горизонта событий (оставлено для красоты) */
 .black-hole::before {
   content: '';
   position: absolute;
@@ -91,25 +125,19 @@ html, body {
   right: -10px;
   bottom: -10px;
   border-radius: 50%;
-  border: 2px solid rgba(249,115,22,0.7);
-  box-shadow: 0 0 8px rgba(249,115,22,0.5);
+  border: 2px solid rgba(249,115,22,0.5);
+  box-shadow: 0 0 8px rgba(249,115,22,0.4);
   z-index: -1;
   animation: ringGlow 3s ease-in-out infinite;
 }
 
-/* Псевдоэлемент ::after больше не нужен */
 .black-hole::after {
-  display: none;
-}
-
-@keyframes raysPulse {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  display: none;                        /* убираем старые лучи */
 }
 
 @keyframes ringGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }
 
 /* КНОПКИ ДЕЙСТВИЙ */
