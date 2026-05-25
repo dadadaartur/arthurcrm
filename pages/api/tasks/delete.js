@@ -10,18 +10,32 @@ export default async function handler(req, res) {
   const { taskId } = req.body
   if (!taskId) return res.status(400).json({ error: 'taskId required' })
 
-  // Используем сервисный клиент для удаления (чтобы обойти RLS, если есть)
   const serviceClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  const { error } = await serviceClient
+  // Сначала удаляем все назначения, связанные с этим заданием
+  const { error: deleteAssignmentsError } = await serviceClient
+    .from('task_assignments')
+    .delete()
+    .eq('task_id', taskId)
+
+  if (deleteAssignmentsError) {
+    console.error('Ошибка удаления назначений:', deleteAssignmentsError)
+    return res.status(500).json({ error: 'Не удалось удалить назначения' })
+  }
+
+  // Теперь удаляем само задание
+  const { error: deleteTaskError } = await serviceClient
     .from('tasks')
     .delete()
     .eq('id', taskId)
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (deleteTaskError) {
+    console.error('Ошибка удаления задания:', deleteTaskError)
+    return res.status(500).json({ error: 'Не удалось удалить задание' })
+  }
 
   return res.status(200).json({ success: true })
 }
