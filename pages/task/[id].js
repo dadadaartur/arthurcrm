@@ -102,9 +102,6 @@ export default function TaskDetail() {
 
   return (
     <Layout>
-      {/* Звёздный фон */}
-      <div className="stars-bg" />
-
       <div className="container mx-auto px-4 py-12 flex flex-col items-center">
         <div className="dash-card max-w-lg w-full">
           <div className="flex justify-between items-start mb-4">
