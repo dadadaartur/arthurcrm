@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  // Сначала удаляем все назначения, связанные с этим заданием
+  // Удаляем все назначения, связанные с заданием
   const { error: deleteAssignmentsError } = await serviceClient
     .from('task_assignments')
     .delete()
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Не удалось удалить назначения' })
   }
 
-  // Теперь удаляем само задание
+  // Удаляем само задание
   const { error: deleteTaskError } = await serviceClient
     .from('tasks')
     .delete()
