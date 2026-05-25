@@ -7,6 +7,12 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Временный клиент с service_role для удаления (только пока не работает API)
+const serviceSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
 function ConfirmModal({ onConfirm, onCancel }) {
   return (
     <div className="modal-overlay" style={{ cursor: 'pointer' }} onClick={onCancel}>
@@ -125,17 +131,28 @@ export default function CompanyAdmin() {
     setDeleteModal(null)
     if (!taskId) return
 
-    const res = await fetch('/api/tasks/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',          // важно для отправки кук
-      body: JSON.stringify({ taskId })
-    })
-    if (res.ok) fetchTasks()
-    else {
-      const err = await res.json()
-      console.error('Ошибка удаления:', err)
+    // Удаляем через service_role клиент (временное решение)
+    const { error: deleteAssignmentsError } = await serviceSupabase
+      .from('task_assignments')
+      .delete()
+      .eq('task_id', taskId)
+
+    if (deleteAssignmentsError) {
+      console.error('Ошибка удаления назначений:', deleteAssignmentsError)
+      return
     }
+
+    const { error: deleteTaskError } = await serviceSupabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+
+    if (deleteTaskError) {
+      console.error('Ошибка удаления задания:', deleteTaskError)
+      return
+    }
+
+    fetchTasks()
   }
 
   const cancelDelete = () => setDeleteModal(null)
