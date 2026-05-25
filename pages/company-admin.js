@@ -100,7 +100,19 @@ export default function CompanyAdmin() {
     if (res.ok) {
       setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: false, deadline_hours: '' })
       fetchTasks()
+    } else {
+      console.error('Ошибка создания задания')
     }
+  }
+
+  const handleDeleteTask = async (taskId) => {
+    if (!confirm('Удалить задание?')) return
+    const res = await fetch('/api/tasks/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId })
+    })
+    if (res.ok) fetchTasks()
   }
 
   const handleSendInvite = async (email) => {
@@ -255,9 +267,15 @@ export default function CompanyAdmin() {
                   </span>
                 </div>
                 <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{task.description}</p>
-                <div className="flex justify-between mt-2 text-sm" style={{ color: 'rgba(249,115,22,0.9)' }}>
+                <div className="flex justify-between items-center mt-2 text-sm" style={{ color: 'rgba(249,115,22,0.9)' }}>
                   <span>+{task.reward_karma} кармиков</span>
-                  <span>{task.target_role === 'all' ? 'Все' : task.target_role === 'new' ? 'Новые' : 'Опытные'}</span>
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="text-xs underline hover:text-red-400"
+                    style={{ color: 'rgba(255,100,100,0.8)', cursor: 'pointer' }}
+                  >
+                    Удалить
+                  </button>
                 </div>
               </div>
             ))}
