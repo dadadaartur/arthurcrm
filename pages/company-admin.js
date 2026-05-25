@@ -7,29 +7,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Временный клиент с service_role для удаления (только пока не работает API)
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-
-function ConfirmModal({ onConfirm, onCancel }) {
-  return (
-    <div className="modal-overlay" style={{ cursor: 'pointer' }} onClick={onCancel}>
-      <div className="modal-content" style={{ cursor: 'default' }} onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: '#d4af37' }}>Подтверждение</h3>
-        <p className="mb-6" style={{ color: 'rgba(255,255,255,0.8)' }}>
-          Вы уверены, что хотите удалить задание?
-        </p>
-        <div className="flex justify-center gap-4">
-          <button onClick={onCancel} className="btn-outline">Отмена</button>
-          <button onClick={onConfirm} className="btn-gold">Удалить</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function CompanyAdmin() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
@@ -37,7 +14,6 @@ export default function CompanyAdmin() {
   const [tasks, setTasks] = useState([])
   const [employees, setEmployees] = useState([])
   const [invites, setInvites] = useState([])
-  const [deleteModal, setDeleteModal] = useState(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -103,7 +79,6 @@ export default function CompanyAdmin() {
     const res = await fetch('/api/tasks/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({
         title: form.title,
         description: form.description,
@@ -122,46 +97,10 @@ export default function CompanyAdmin() {
     }
   }
 
-  const handleDeleteTask = (taskId) => {
-    setDeleteModal(taskId)
-  }
-
-  const confirmDelete = async () => {
-    const taskId = deleteModal
-    setDeleteModal(null)
-    if (!taskId) return
-
-    // Удаляем через service_role клиент (временное решение)
-    const { error: deleteAssignmentsError } = await serviceSupabase
-      .from('task_assignments')
-      .delete()
-      .eq('task_id', taskId)
-
-    if (deleteAssignmentsError) {
-      console.error('Ошибка удаления назначений:', deleteAssignmentsError)
-      return
-    }
-
-    const { error: deleteTaskError } = await serviceSupabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId)
-
-    if (deleteTaskError) {
-      console.error('Ошибка удаления задания:', deleteTaskError)
-      return
-    }
-
-    fetchTasks()
-  }
-
-  const cancelDelete = () => setDeleteModal(null)
-
   const handleSendInvite = async (email) => {
     await fetch('/api/send-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email })
     })
     fetchInvites()
@@ -310,15 +249,8 @@ export default function CompanyAdmin() {
                   </span>
                 </div>
                 <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{task.description}</p>
-                <div className="flex justify-between items-center mt-2 text-sm" style={{ color: 'rgba(249,115,22,0.9)' }}>
+                <div className="flex justify-between mt-2 text-sm" style={{ color: 'rgba(249,115,22,0.9)' }}>
                   <span>+{task.reward_karma} кармиков</span>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="text-xs underline hover:text-red-400"
-                    style={{ color: 'rgba(255,100,100,0.8)', cursor: 'pointer' }}
-                  >
-                    Удалить
-                  </button>
                 </div>
               </div>
             ))}
@@ -379,10 +311,6 @@ export default function CompanyAdmin() {
             </div>
           )}
         </div>
-      )}
-
-      {deleteModal && (
-        <ConfirmModal onConfirm={confirmDelete} onCancel={cancelDelete} />
       )}
     </div>
   )
