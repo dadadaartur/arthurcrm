@@ -1,126 +1,186 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Spinner from '../../components/Spinner'
+import { createClient } from '@supabase/supabase-js'
+import Layout from '../../components/Layout'
+import StarsBackground from '../../components/StarsBackground'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export default function TaskDetail() {
   const router = useRouter()
   const { id } = router.query
-  const [user, setUser] = useState(null)
   const [assignment, setAssignment] = useState(null)
-  const [task, setTask] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(false)
+  const [comment, setComment] = useState('')
+  const [timeLeft, setTimeLeft] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!id) return
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      setUser(user)
+    fetchAssignment()
+  }, [id])
 
-      // Загружаем назначение вместе с заданием
-      const { data: assignData } = await supabase
-        .from('task_assignments')
-        .select('*, tasks(*)')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single()
+  const fetchAssignment = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-      if (!assignData) {
-        router.push('/')
+    const { data, error } = await supabase
+      .from('task_assignments')
+      .select('id, status, started_at, completed_at, deadline_at, comment, review_comment, reward_karma, tasks ( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      setError('Задание не найдено')
+      return
+    }
+    setAssignment(data)
+    if (data.deadline_at) updateTimer(data.deadline_at)
+  }
+
+  const updateTimer = (deadline) => {
+    const calc = () => {
+      const diff = new Date(deadline) - new Date()
+      if (diff <= 0) {
+        setTimeLeft('00:00')
         return
       }
-
-      setAssignment(assignData)
-      setTask(assignData.tasks)
-      setLoading(false)
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      setTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
     }
-    init()
-  }, [id, router])
-
-  async function handleStart() {
-    setActionLoading(true)
-    await supabase.from('task_assignments').update({
-      status: 'in_progress',
-      started_at: new Date().toISOString(),
-    }).eq('id', assignment.id)
-
-    // Обновляем локальное состояние
-    setAssignment(prev => ({ ...prev, status: 'in_progress', started_at: new Date().toISOString() }))
-    setActionLoading(false)
+    calc()
+    const interval = setInterval(() => {
+      calc()
+      if (new Date(deadline) - new Date() <= 0) clearInterval(interval)
+    }, 60000)
+    return () => clearInterval(interval)
   }
 
-  async function handleSubmitForReview() {
-    setActionLoading(true)
-    // Для ручной проверки — просто переводим в статус 'pending_review'
-    await supabase.from('task_assignments').update({
-      status: 'pending_review',
-    }).eq('id', assignment.id)
-
-    setAssignment(prev => ({ ...prev, status: 'pending_review' }))
-    setActionLoading(false)
-    alert('Задание отправлено на проверку администратору')
+  const handleStart = async () => {
+    const res = await fetch('/api/tasks/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId: id })
+    })
+    if (res.ok) fetchAssignment()
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
-  if (!task) return <div className="text-center text-gray-400 py-8">Задание не найдено</div>
+  const handleComplete = async () => {
+    const res = await fetch('/api/tasks/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId: id, comment })
+    })
+    if (res.ok) {
+      setComment('')
+      fetchAssignment()
+    }
+  }
 
-  const isManual = task.task_type === 'manual'
-  const canStart = assignment.status === 'assigned'
-  const canSubmit = assignment.status === 'in_progress' && isManual
-  const isPending = assignment.status === 'pending_review'
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          {error}
+        </div>
+      </Layout>
+    )
+  }
+
+  if (!assignment) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="spinner" />
+        </div>
+      </Layout>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)', borderColor: 'rgba(139, 92, 246, 0.3)', boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
-        <h2 className="text-2xl font-bold text-white mb-4">{task.title}</h2>
-        <p className="text-gray-300 mb-6">{task.description}</p>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <span className="text-xs text-gray-400">Награда</span>
-            <p className="text-yellow-400 font-bold">{task.reward_karma} кармиков</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-400">Энергия</span>
-            <p className="text-blue-400 font-bold">{task.reward_energy}</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-400">Тип проверки</span>
-            <p className="text-white">{isManual ? 'Ручная' : 'Автоматическая'}</p>
-          </div>
-          <div>
-            <span className="text-xs text-gray-400">Статус</span>
-            <p className="text-white">
-              {assignment.status === 'assigned' && 'Назначено'}
-              {assignment.status === 'in_progress' && 'В процессе'}
+    <Layout>
+      <StarsBackground />
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center">
+        <div className="dash-card max-w-lg w-full">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-bold" style={{ color: '#fff' }}>{assignment.tasks.title}</h2>
+            <span className="task-status-badge" style={{
+              background: assignment.status === 'pending_review' ? 'rgba(192,132,252,0.4)' :
+                          assignment.status === 'in_progress' ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.2)',
+              padding: '4px 12px',
+              borderRadius: '50px',
+              fontSize: '0.75rem',
+              color: '#fff',
+              textTransform: 'uppercase'
+            }}>
+              {assignment.status === 'assigned' && 'Новое'}
+              {assignment.status === 'in_progress' && 'В работе'}
               {assignment.status === 'pending_review' && 'На проверке'}
               {assignment.status === 'completed' && 'Выполнено'}
-            </p>
+            </span>
           </div>
+
+          <p style={{ color: 'rgba(255,255,255,0.8)' }}>{assignment.tasks.description}</p>
+
+          <div className="flex justify-between items-center mt-4" style={{ color: 'rgba(249,115,22,0.9)' }}>
+            <span className="font-bold">+{assignment.tasks.reward_karma} кармиков</span>
+            {timeLeft && (
+              <span className="task-timer" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                {timeLeft}
+              </span>
+            )}
+          </div>
+
+          {assignment.tasks.deadline_hours && (
+            <div className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Срок выполнения: {assignment.tasks.deadline_hours} ч.
+            </div>
+          )}
+
+          {assignment.review_comment && (
+            <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(249,115,22,0.3)' }}>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Комментарий проверяющего:</p>
+              <p style={{ color: '#fff' }}>{assignment.review_comment}</p>
+            </div>
+          )}
+
+          <div className="mt-6">
+            {assignment.status === 'assigned' && (
+              <button onClick={handleStart} className="action-btn w-full">Начать выполнение</button>
+            )}
+            {assignment.status === 'in_progress' && (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Ссылка на результат или комментарий"
+                  className="input-field"
+                  style={{ resize: 'vertical', height: '80px' }}
+                />
+                <button onClick={handleComplete} className="action-btn w-full">Отправить на проверку</button>
+              </div>
+            )}
+            {assignment.status === 'pending_review' && (
+              <div className="text-center py-2" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                Задание отправлено на проверку руководителю
+              </div>
+            )}
+            {assignment.status === 'completed' && (
+              <div className="text-center py-2" style={{ color: 'rgba(249,115,22,0.9)' }}>
+                Задание выполнено! Кармики начислены.
+              </div>
+            )}
+          </div>
+
+          <button onClick={() => router.push('/')} className="action-btn w-full mt-4" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
+            Назад
+          </button>
         </div>
-
-        {canStart && (
-          <button onClick={handleStart} disabled={actionLoading} className="btn-gold w-full">
-            {actionLoading ? 'Запуск...' : 'Начать выполнение'}
-          </button>
-        )}
-
-        {canSubmit && (
-          <button onClick={handleSubmitForReview} disabled={actionLoading} className="btn-gold w-full">
-            {actionLoading ? 'Отправка...' : 'Отправить на проверку'}
-          </button>
-        )}
-
-        {isPending && (
-          <div className="text-center text-yellow-400 font-semibold">Ожидает проверки администратором</div>
-        )}
-
-        {assignment.status === 'completed' && (
-          <div className="text-center text-green-400 font-semibold">Задание выполнено!</div>
-        )}
       </div>
-    </div>
+    </Layout>
   )
 }
