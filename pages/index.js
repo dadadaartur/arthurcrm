@@ -12,14 +12,13 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-function TaskIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="10" stroke="#A5B4FC" strokeWidth="1.5" />
-      <ellipse cx="16" cy="16" rx="14" ry="4" stroke="#C4B5FD" strokeWidth="1" transform="rotate(-20 16 16)" />
-      <path d="M12 13L15 16L12 19" stroke="#E0E7FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+function formatTimeLeft(deadline) {
+  const now = new Date()
+  const diff = new Date(deadline) - now
+  if (diff <= 0) return '00:00'
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 export default function Home() {
@@ -29,6 +28,18 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const fetchTasks = async (userId) => {
+    const { data: assignments, error } = await supabase
+      .from('task_assignments')
+      .select('*, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
+      .eq('user_id', userId)
+      .neq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(3)
+    if (error) console.error('Ошибка загрузки заданий:', error)
+    else setTasks(assignments || [])
+  }
+
   useEffect(() => {
     const checkAccess = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -37,7 +48,6 @@ export default function Home() {
         return
       }
 
-      // Проверяем наличие профиля
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, role_id')
@@ -51,7 +61,6 @@ export default function Home() {
 
       setUser(user)
 
-      // Баланс
       const { data: balanceData } = await supabase
         .from('karma_balance')
         .select('balance')
@@ -59,20 +68,29 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      // Все назначенные и активные задания (не завершённые)
-      const { data: assignments, error: taskError } = await supabase
-        .from('task_assignments')
-        .select('*, tasks(*)')
-        .eq('user_id', user.id)
-        .neq('status', 'completed')
-        .order('created_at', { ascending: false })
-
-      if (taskError) console.error('Ошибка загрузки заданий:', taskError)
-      setTasks(assignments || [])
+      await fetchTasks(user.id)
       setLoading(false)
     }
     checkAccess()
   }, [router])
+
+  const handleStart = async (assignmentId) => {
+    await fetch('/api/tasks/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId })
+    })
+    if (user) fetchTasks(user.id)
+  }
+
+  const handleComplete = async (assignmentId, comment = '') => {
+    await fetch('/api/tasks/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId, comment })
+    })
+    if (user) fetchTasks(user.id)
+  }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
@@ -103,15 +121,12 @@ export default function Home() {
 
           {tasks.length > 0 && (
             <div className="mt-8 w-full max-w-[500px]">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <TaskIcon /> Доступные задания
-              </h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
               <div className="space-y-4">
                 {tasks.map(assignment => (
                   <div
                     key={assignment.id}
-                    onClick={() => router.push(`/task/${assignment.id}`)}
-                    className="premium-card relative overflow-hidden cursor-pointer"
+                    className="premium-card relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
                       borderColor: 'rgba(139, 92, 246, 0.3)',
@@ -119,13 +134,63 @@ export default function Home() {
                     }}
                   >
                     <div className="relative z-10">
-                      <h4 className="text-white font-semibold mb-2">{assignment.tasks.title}</h4>
-                      <p className="text-gray-400 text-sm mb-2">{assignment.tasks.description?.slice(0, 100)}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-yellow-400">+{assignment.tasks.reward_karma} кармиков</span>
-                        <span className="text-xs text-gray-500">
-                          {assignment.status === 'in_progress' ? 'В процессе' : 'Назначено'}
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-white font-semibold">{assignment.tasks.title}</h4>
+                        <span className="text-xs px-2 py-1 rounded-full" style={{
+                          background:
+                            assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
+                            assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
+                          color: '#fff'
+                        }}>
+                          {assignment.status === 'assigned' && 'Новое'}
+                          {assignment.status === 'in_progress' && 'В работе'}
+                          {assignment.status === 'pending_review' && 'На проверке'}
                         </span>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-2">{assignment.tasks.description?.slice(0, 100)}</p>
+                      <div className="flex justify-between items-center text-xs mb-3">
+                        <span className="text-yellow-400">+{assignment.tasks.reward_karma} кармиков</span>
+                        {assignment.deadline_at && (
+                          <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {assignment.status === 'assigned' && (
+                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                            Начать
+                          </button>
+                        )}
+                        {assignment.status === 'in_progress' && (
+                          <>
+                            {assignment.tasks.requires_review ? (
+                              <button
+                                onClick={() => router.push(`/task/${assignment.id}`)}
+                                className="action-btn w-full text-xs py-1.5"
+                              >
+                                Завершить и отправить на проверку
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleComplete(assignment.id)}
+                                className="action-btn w-full text-xs py-1.5"
+                              >
+                                Завершить
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {assignment.status === 'pending_review' && (
+                          <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                            Ожидает проверки
+                          </div>
+                        )}
+                        <button
+                          onClick={() => router.push(`/task/${assignment.id}`)}
+                          className="action-btn text-xs py-1.5"
+                          style={{ minWidth: '40px' }}
+                        >
+                          &gt;
+                        </button>
                       </div>
                     </div>
                   </div>
