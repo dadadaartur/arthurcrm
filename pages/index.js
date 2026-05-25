@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
 import Layout from '../components/Layout'
-import StarsBackground from '../components/StarsBackground'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -79,7 +78,6 @@ export default function Home() {
 
   return (
     <Layout>
-      <StarsBackground />
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row items-start justify-center gap-8">
           {/* Баланс */}
