@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
-import Layout from '../../components/Layout'
+import Layout from '../components/Layout'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -125,9 +125,6 @@ export default function CompanyAdmin() {
 
   return (
     <Layout>
-      {/* Звёздный фон */}
-      <div className="stars-bg" />
-
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
 
