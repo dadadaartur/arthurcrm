@@ -16,18 +16,8 @@ function ConfirmModal({ onConfirm, onCancel }) {
           Вы уверены, что хотите удалить задание?
         </p>
         <div className="flex justify-center gap-4">
-          <button
-            onClick={onCancel}
-            className="btn-outline"
-          >
-            Отмена
-          </button>
-          <button
-            onClick={onConfirm}
-            className="btn-gold"
-          >
-            Удалить
-          </button>
+          <button onClick={onCancel} className="btn-outline">Отмена</button>
+          <button onClick={onConfirm} className="btn-gold">Удалить</button>
         </div>
       </div>
     </div>
@@ -55,10 +45,7 @@ export default function CompanyAdmin() {
     deadline_hours: ''
   })
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
+  useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
     if (profile) {
       if (activeTab === 'tasks') fetchTasks()
@@ -75,11 +62,8 @@ export default function CompanyAdmin() {
       .select('*, roles(name)')
       .eq('user_id', user.id)
       .single()
-    if (data && (data.role_id === 1 || data.role_id === 2)) {
-      setProfile(data)
-    } else {
-      router.push('/')
-    }
+    if (data && (data.role_id === 1 || data.role_id === 2)) setProfile(data)
+    else router.push('/')
   }
 
   const fetchTasks = async () => {
@@ -113,6 +97,7 @@ export default function CompanyAdmin() {
     const res = await fetch('/api/tasks/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         title: form.title,
         description: form.description,
@@ -128,8 +113,6 @@ export default function CompanyAdmin() {
     if (res.ok) {
       setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: false, deadline_hours: '' })
       fetchTasks()
-    } else {
-      console.error('Ошибка создания задания')
     }
   }
 
@@ -145,21 +128,23 @@ export default function CompanyAdmin() {
     const res = await fetch('/api/tasks/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',          // важно для отправки кук
       body: JSON.stringify({ taskId })
     })
-    if (res.ok) {
-      fetchTasks()
+    if (res.ok) fetchTasks()
+    else {
+      const err = await res.json()
+      console.error('Ошибка удаления:', err)
     }
   }
 
-  const cancelDelete = () => {
-    setDeleteModal(null)
-  }
+  const cancelDelete = () => setDeleteModal(null)
 
   const handleSendInvite = async (email) => {
     await fetch('/api/send-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email })
     })
     fetchInvites()
@@ -380,10 +365,7 @@ export default function CompanyAdmin() {
       )}
 
       {deleteModal && (
-        <ConfirmModal
-          onConfirm={confirmDelete}
-          onCancel={cancelDelete}
-        />
+        <ConfirmModal onConfirm={confirmDelete} onCancel={cancelDelete} />
       )}
     </div>
   )
