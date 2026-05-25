@@ -41,7 +41,7 @@ export default function CompanyAdmin() {
   const [tasks, setTasks] = useState([])
   const [employees, setEmployees] = useState([])
   const [invites, setInvites] = useState([])
-  const [deleteModal, setDeleteModal] = useState(null) // id задания для удаления
+  const [deleteModal, setDeleteModal] = useState(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -133,8 +133,8 @@ export default function CompanyAdmin() {
     }
   }
 
-  const handleDeleteTask = async (taskId) => {
-    setDeleteModal(taskId) // показываем модалку для подтверждения
+  const handleDeleteTask = (taskId) => {
+    setDeleteModal(taskId)
   }
 
   const confirmDelete = async () => {
@@ -197,7 +197,6 @@ export default function CompanyAdmin() {
           <div className="dash-card lg:w-1/2">
             <h3 className="text-lg font-bold mb-4">Создать задание</h3>
             <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
-              {/* ... все поля формы без изменений ... */}
               <input
                 type="text"
                 placeholder="Название задания"
@@ -325,11 +324,61 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Остальные вкладки без изменений */}
-      {activeTab === 'employees' && ( ... )}
-      {activeTab === 'invites' && ( ... )}
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
+          {employees.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.6)' }}>Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <span>{emp.display_name || emp.email}</span>
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>ID: {emp.user_id?.slice(0,8)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Модальное окно подтверждения удаления */}
+      {activeTab === 'invites' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Приглашения</h3>
+          <div className="flex gap-2 mb-4">
+            <input
+              type="email"
+              placeholder="Email сотрудника"
+              className="input-field"
+              id="inviteEmail"
+            />
+            <button
+              onClick={() => {
+                const email = document.getElementById('inviteEmail').value
+                if (email) handleSendInvite(email)
+              }}
+              className="btn-gold"
+            >
+              Отправить
+            </button>
+          </div>
+          {invites.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.6)' }}>Нет приглашений</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {invites.map(inv => (
+                <div key={inv.id} className="flex justify-between items-center p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <span>{inv.email}</span>
+                  <span className="text-sm" style={{ color: inv.status === 'accepted' ? 'rgba(50,205,50,0.8)' : 'rgba(255,215,0,0.8)' }}>
+                    {inv.status === 'pending' ? 'Ожидает' : 'Принято'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {deleteModal && (
         <ConfirmModal
           onConfirm={confirmDelete}
