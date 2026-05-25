@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
-import Layout from '../../components/Layout'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -82,106 +81,97 @@ export default function TaskDetail() {
 
   if (error) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-12 text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          {error}
-        </div>
-      </Layout>
+      <div className="container mx-auto px-4 py-12 text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
+        {error}
+      </div>
     )
   }
 
   if (!assignment) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="spinner" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="spinner" />
+      </div>
     )
   }
 
   return (
-    <Layout>
-      {/* Звёздный фон */}
-      <div className="stars-bg" />
-
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center">
-        <div className="dash-card max-w-lg w-full">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-bold" style={{ color: '#fff' }}>{assignment.tasks.title}</h2>
-            <span className="task-status-badge" style={{
-              background: assignment.status === 'pending_review' ? 'rgba(192,132,252,0.4)' :
-                          assignment.status === 'in_progress' ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.2)',
-              padding: '4px 12px',
-              borderRadius: '50px',
-              fontSize: '0.75rem',
-              color: '#fff',
-              textTransform: 'uppercase'
-            }}>
-              {assignment.status === 'assigned' && 'Новое'}
-              {assignment.status === 'in_progress' && 'В работе'}
-              {assignment.status === 'pending_review' && 'На проверке'}
-              {assignment.status === 'completed' && 'Выполнено'}
-            </span>
-          </div>
-
-          <p style={{ color: 'rgba(255,255,255,0.8)' }}>{assignment.tasks.description}</p>
-
-          <div className="flex justify-between items-center mt-4" style={{ color: 'rgba(249,115,22,0.9)' }}>
-            <span className="font-bold">+{assignment.tasks.reward_karma} кармиков</span>
-            {timeLeft && (
-              <span className="task-timer" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                {timeLeft}
-              </span>
-            )}
-          </div>
-
-          {assignment.tasks.deadline_hours && (
-            <div className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Срок выполнения: {assignment.tasks.deadline_hours} ч.
-            </div>
-          )}
-
-          {assignment.review_comment && (
-            <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(249,115,22,0.3)' }}>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Комментарий проверяющего:</p>
-              <p style={{ color: '#fff' }}>{assignment.review_comment}</p>
-            </div>
-          )}
-
-          <div className="mt-6">
-            {assignment.status === 'assigned' && (
-              <button onClick={handleStart} className="action-btn w-full">Начать выполнение</button>
-            )}
-            {assignment.status === 'in_progress' && (
-              <div className="flex flex-col gap-3">
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Ссылка на результат или комментарий"
-                  className="input-field"
-                  style={{ resize: 'vertical', height: '80px' }}
-                />
-                <button onClick={handleComplete} className="action-btn w-full">Отправить на проверку</button>
-              </div>
-            )}
-            {assignment.status === 'pending_review' && (
-              <div className="text-center py-2" style={{ color: 'rgba(192,132,252,0.9)' }}>
-                Задание отправлено на проверку руководителю
-              </div>
-            )}
-            {assignment.status === 'completed' && (
-              <div className="text-center py-2" style={{ color: 'rgba(249,115,22,0.9)' }}>
-                Задание выполнено! Кармики начислены.
-              </div>
-            )}
-          </div>
-
-          <button onClick={() => router.push('/')} className="action-btn w-full mt-4" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
-            Назад
-          </button>
+    <div className="container mx-auto px-4 py-12 flex flex-col items-center">
+      <div className="dash-card max-w-lg w-full">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-xl font-bold" style={{ color: '#fff' }}>{assignment.tasks.title}</h2>
+          <span className="task-status-badge" style={{
+            background: assignment.status === 'pending_review' ? 'rgba(192,132,252,0.4)' :
+                        assignment.status === 'in_progress' ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.2)',
+            padding: '4px 12px',
+            borderRadius: '50px',
+            fontSize: '0.75rem',
+            color: '#fff',
+            textTransform: 'uppercase'
+          }}>
+            {assignment.status === 'assigned' && 'Новое'}
+            {assignment.status === 'in_progress' && 'В работе'}
+            {assignment.status === 'pending_review' && 'На проверке'}
+            {assignment.status === 'completed' && 'Выполнено'}
+          </span>
         </div>
+
+        <p style={{ color: 'rgba(255,255,255,0.8)' }}>{assignment.tasks.description}</p>
+
+        <div className="flex justify-between items-center mt-4" style={{ color: 'rgba(249,115,22,0.9)' }}>
+          <span className="font-bold">+{assignment.tasks.reward_karma} кармиков</span>
+          {timeLeft && (
+            <span className="task-timer" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', fontSize: '1.1rem' }}>
+              {timeLeft}
+            </span>
+          )}
+        </div>
+
+        {assignment.tasks.deadline_hours && (
+          <div className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Срок выполнения: {assignment.tasks.deadline_hours} ч.
+          </div>
+        )}
+
+        {assignment.review_comment && (
+          <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(249,115,22,0.3)' }}>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Комментарий проверяющего:</p>
+            <p style={{ color: '#fff' }}>{assignment.review_comment}</p>
+          </div>
+        )}
+
+        <div className="mt-6">
+          {assignment.status === 'assigned' && (
+            <button onClick={handleStart} className="action-btn w-full">Начать выполнение</button>
+          )}
+          {assignment.status === 'in_progress' && (
+            <div className="flex flex-col gap-3">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Ссылка на результат или комментарий"
+                className="input-field"
+                style={{ resize: 'vertical', height: '80px' }}
+              />
+              <button onClick={handleComplete} className="action-btn w-full">Отправить на проверку</button>
+            </div>
+          )}
+          {assignment.status === 'pending_review' && (
+            <div className="text-center py-2" style={{ color: 'rgba(192,132,252,0.9)' }}>
+              Задание отправлено на проверку руководителю
+            </div>
+          )}
+          {assignment.status === 'completed' && (
+            <div className="text-center py-2" style={{ color: 'rgba(249,115,22,0.9)' }}>
+              Задание выполнено! Кармики начислены.
+            </div>
+          )}
+        </div>
+
+        <button onClick={() => router.push('/')} className="action-btn w-full mt-4" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
+          Назад
+        </button>
       </div>
-    </Layout>
+    </div>
   )
 }
