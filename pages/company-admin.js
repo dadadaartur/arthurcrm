@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createClient } from '@supabase/supabase-js'
-import Layout from '../components/Layout'
+import Layout from '../../components/Layout'
+import StarsBackground from '../../components/StarsBackground'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -11,11 +12,12 @@ const supabase = createClient(
 export default function CompanyAdmin() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
-  const [activeTab, setActiveTab] = useState('tasks')
+  const [activeTab, setActiveTab] = useState('tasks') // 'tasks', 'employees', 'invites'
   const [tasks, setTasks] = useState([])
   const [employees, setEmployees] = useState([])
   const [invites, setInvites] = useState([])
 
+  // Форма создания задания
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -125,9 +127,11 @@ export default function CompanyAdmin() {
 
   return (
     <Layout>
+      <StarsBackground />
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
 
+        {/* Вкладки */}
         <div className="flex gap-4 mb-8">
           {['tasks', 'employees', 'invites'].map(tab => (
             <button
@@ -143,8 +147,10 @@ export default function CompanyAdmin() {
           ))}
         </div>
 
+        {/* Контент вкладок */}
         {activeTab === 'tasks' && (
           <div className="flex flex-col lg:flex-row gap-8">
+            {/* Форма создания */}
             <div className="dash-card lg:w-1/2">
               <h3 className="text-lg font-bold mb-4">Создать задание</h3>
               <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
@@ -248,6 +254,7 @@ export default function CompanyAdmin() {
               </form>
             </div>
 
+            {/* Список заданий */}
             <div className="lg:w-1/2 flex flex-col gap-4">
               <h3 className="text-lg font-bold">Все задания ({tasks.length})</h3>
               {tasks.map(task => (
