@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Битва за Пирожок — Живой ИИ</title>
+  <title>Битва за Пирожок — Живой ИИ (исправлено)</title>
   <style>
     body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
     #ui {
@@ -24,6 +24,7 @@
     .thought-bubble {
       color: #ff0; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 12px;
       font-size: 11px; max-width: 150px; text-align: center; pointer-events: none;
+      position: absolute; transform: translate(-50%, -100%); white-space: nowrap;
     }
   </style>
 </head>
@@ -40,6 +41,7 @@
     </div>
   </div>
   <div id="crosshair"></div>
+  <div id="thoughts-container" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:5;"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
@@ -124,6 +126,7 @@
     // ======================== ПЕРСОНАЖИ ========================
     const allies = [];
     const enemies = [];
+    const characterToDiv = new Map(); // для обновления позиций мыслей
 
     function createCharacter(name, teamColor, pos, isPlayer = false) {
       const group = new THREE.Group();
@@ -162,16 +165,12 @@
       legR.add(new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x2244aa })).translateY(-0.35));
       legR.position.set(0.2, 0, 0); group.add(legR);
 
-      // Мысли (CSS2D)
+      // Создаём HTML-облачко для мыслей
       const thoughtDiv = document.createElement('div');
       thoughtDiv.className = 'thought-bubble';
       thoughtDiv.style.display = 'none';
-      thoughtDiv.style.position = 'absolute';
-      thoughtDiv.style.transform = 'translate(-50%, -100%)';
-      thoughtDiv.style.whiteSpace = 'nowrap';
-      const thoughtLabel = new THREE.CSS2DObject(thoughtDiv);
-      thoughtLabel.position.set(0, 2.2, 0);
-      group.add(thoughtLabel);
+      document.getElementById('thoughts-container').appendChild(thoughtDiv);
+      characterToDiv.set(group, thoughtDiv);
 
       group.position.set(pos.x, 0, pos.z);
       scene.add(group);
@@ -180,7 +179,7 @@
         name, team: teamColor, stunned: false, heldItem: null,
         lastThrow: 0, lastPickup: 0, armL, armR, legL, legR,
         falling: false, speed: 0.07, isPlayer,
-        moveTarget: null, thoughtDiv, thoughtLabel, lastThink: 0,
+        moveTarget: null, thoughtDiv, lastThink: 0,
         goal: null
       };
       return group;
@@ -279,12 +278,12 @@
     }
 
     function showThought(char, text) {
-      const td = char.userData.thoughtDiv;
-      if (td) {
-        td.textContent = text;
-        td.style.display = 'block';
+      const div = characterToDiv.get(char);
+      if (div) {
+        div.textContent = text;
+        div.style.display = 'block';
         clearTimeout(char._thoughtTimer);
-        char._thoughtTimer = setTimeout(() => { td.style.display = 'none'; }, 4000);
+        char._thoughtTimer = setTimeout(() => { div.style.display = 'none'; }, 4000);
       }
     }
 
@@ -342,7 +341,7 @@
           if (!npc.userData.heldItem) pickUpItem(npc);
           if (npc.userData.heldItem && performance.now() / 1000 - npc.userData.lastThrow > 1.8) {
             throwItem(npc, 0.6);
-            npc.userData.goal = null; // закончили атаку
+            npc.userData.goal = null;
           }
         }
       } else if (goal.type === 'move') {
@@ -365,7 +364,7 @@
             npc.lookAt(rand.mesh.position.x, npc.position.y, rand.mesh.position.z);
           }
         }
-        npc.userData.goal = null; // одноразовое действие
+        npc.userData.goal = null;
       }
     }
 
@@ -393,11 +392,11 @@
         player.rotation.y = yaw;
       }
 
-      // ИИ для всех NPC (думают асинхронно, но цели выполняются в цикле)
+      // ИИ
       allies.forEach(ally => { if (ally !== player) { npcThink(ally); executeGoal(ally); } });
       enemies.forEach(enemy => { npcThink(enemy); executeGoal(enemy); });
 
-      // Физика брошенных предметов
+      // Физика предметов
       for (let i = throwables.length - 1; i >= 0; i--) {
         const t = throwables[i];
         if (t.holder) continue;
@@ -420,6 +419,17 @@
           }
         }
       }
+
+      // Обновляем позиции HTML-облачков
+      characterToDiv.forEach((div, char) => {
+        if (div.style.display === 'block') {
+          const pos = char.position.clone();
+          pos.y += 2.2;
+          const screenPos = pos.clone().project(camera);
+          div.style.left = ((screenPos.x + 1) / 2 * window.innerWidth) + 'px';
+          div.style.top = (-(screenPos.y - 1) / 2 * window.innerHeight) + 'px';
+        }
+      });
 
       // Анимации
       [player, ...allies, ...enemies].forEach(char => {
@@ -447,7 +457,7 @@
     }
     animate();
 
-    // Кнопки команд для союзников
+    // Кнопки команд
     document.getElementById('btn-attack').addEventListener('click', () => {
       allies.forEach(ally => { if (ally !== player) ally.userData.goal = { type: 'attack', target: enemies[Math.floor(Math.random() * enemies.length)] }; });
     });
@@ -465,7 +475,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    console.log('🧠 Игра с живым ИИ запущена! Кликни по экрану для управления.');
+    console.log('✅ Игра запущена! Управление через клик.');
   </script>
 </body>
 </html>
