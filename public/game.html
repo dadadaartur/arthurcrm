@@ -2,31 +2,15 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Битва за Пирожок — Игра</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Битва за Пирожок — 2D версия</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+    body { margin: 0; overflow: hidden; background: #2d5a27; font-family: Arial; }
+    canvas { display: block; }
     #ui {
-      position: absolute; top: 20px; left: 20px; color: white;
-      background: rgba(0,0,0,0.6); padding: 10px 16px; border-radius: 12px;
-      pointer-events: none; z-index: 10;
-    }
-    #crosshair {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;
-      z-index: 10;
-    }
-    #power-bar {
-      position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
-      width: 200px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px;
-      display: none; z-index: 10;
-    }
-    #power-fill {
-      height: 100%; background: #ffaa00; border-radius: 5px; width: 0%;
-    }
-    .thought {
-      position: absolute; color: yellow; background: rgba(0,0,0,0.7); padding: 4px 8px;
-      border-radius: 8px; font-size: 11px; pointer-events: none; z-index: 5;
+      position: absolute; top: 10px; left: 10px; color: white;
+      background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 8px;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -34,270 +18,378 @@
   <div id="ui">
     <div>🛡️ Союзников: <span id="ally-count">3</span></div>
     <div>💀 Врагов: <span id="enemy-count">3</span></div>
-    <div id="item-hold">🎒 Пусто</div>
-    <div style="font-size:12px;margin-top:4px;">Кликни для захвата мыши | WASD — ходьба | E — подобрать | ЛКМ — бросок</div>
+    <div>🎒 <span id="item-hold">Пусто</span></div>
+    <div>Кликни по земле — идти, по врагу — атаковать (если есть предмет)</div>
   </div>
-  <div id="crosshair"></div>
-  <div id="power-bar"><div id="power-fill"></div></div>
-  <div id="thoughts" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></div>
+  <canvas id="game"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // ==================== НАСТРОЙКИ ====================
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    // Размеры
+    const WIDTH = window.innerWidth;
+    const HEIGHT = window.innerHeight;
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+
+    // Конфигурация
     const GROQ_KEY = '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';
     const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
-    // ==================== СЦЕНА ====================
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 30, 90);
-    const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.5, 150);
-    camera.position.set(0, 6, 10);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
+    // ==================== ИГРОВЫЕ ОБЪЕКТЫ ====================
+    const players = []; // все персонажи
+    const items = [];   // все предметы на земле
+    const projectiles = []; // летящие предметы
 
-    scene.add(new THREE.AmbientLight(0x99bbff, 0.7));
-    const sun = new THREE.DirectionalLight(0xfff5e6, 1);
-    sun.position.set(40, 60, 30);
-    sun.castShadow = true; sun.receiveShadow = true;
-    scene.add(sun);
-
-    // Земля
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 64), new THREE.MeshStandardMaterial({ color: 0x7ec850 }));
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
-
-    // Деревья
-    for (let i = 0; i < 50; i++) {
-      const a = Math.random() * Math.PI * 2, r = 15 + Math.random() * 40;
-      const tree = new THREE.Group();
-      tree.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b })).translateY(1));
-      tree.add(new THREE.Mesh(new THREE.SphereGeometry(1, 6), new THREE.MeshStandardMaterial({ color: 0x2d5a27 })).translateY(2.5));
-      tree.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-      scene.add(tree);
-    }
-
-    // Предметы
-    const throwables = [];
-    function addItem(x, z, type) {
-      let geo, mat;
-      if (type === 'stone') { geo = new THREE.SphereGeometry(0.22); mat = new THREE.MeshStandardMaterial({ color: 0x888888 }); }
-      else if (type === 'apple') { geo = new THREE.SphereGeometry(0.25); mat = new THREE.MeshStandardMaterial({ color: 0xe74c3c }); }
-      else if (type === 'stick') { geo = new THREE.CylinderGeometry(0.1, 0.12, 0.5); mat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b }); }
-      else { geo = new THREE.SphereGeometry(0.2); mat = new THREE.MeshStandardMaterial({ color: 0x6b4c3b }); }
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, 0.2, z);
-      scene.add(mesh);
-      throwables.push({ mesh, vel: new THREE.Vector3(), holder: null, type });
-    }
-    for (let i = 0; i < 80; i++) {
-      const a = Math.random() * Math.PI * 2, r = 10 + Math.random() * 45;
-      addItem(Math.cos(a) * r, Math.sin(a) * r, ['stone','apple','stick','mud'][Math.floor(Math.random()*4)]);
-    }
-
-    // ==================== ПЕРСОНАЖИ ====================
-    const allies = [], enemies = [];
-    const charToDiv = new Map();
-
-    function createChar(name, color, pos, isPlayer = false) {
-      const g = new THREE.Group();
-      g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), new THREE.MeshStandardMaterial({ color })).translateY(0.6));
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8), new THREE.MeshStandardMaterial({ color: 0xffccaa }));
-      head.position.y = 1.4; g.add(head);
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      eye.position.set(-0.13, 1.5, 0.33); g.add(eye);
-      g.add(eye.clone().translate(0.26, 0, 0));
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color: 0x111122 }));
-      pupil.position.set(-0.13, 1.48, 0.4); g.add(pupil);
-      g.add(pupil.clone().translate(0.26, 0, 0));
-      g.add(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x552222 })).translate(0, 1.3, 0.35).rotateX(0.2));
-
-      const armL = new THREE.Group(), armR = new THREE.Group();
-      const armGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.8, 6);
-      armL.add(new THREE.Mesh(armGeo, new THREE.MeshStandardMaterial({ color })).translateY(-0.4));
-      armL.position.set(-0.55, 1.1, 0); g.add(armL);
-      armR.add(new THREE.Mesh(armGeo, new THREE.MeshStandardMaterial({ color })).translateY(-0.4));
-      armR.position.set(0.55, 1.1, 0); g.add(armR);
-      const legL = new THREE.Group(), legR = new THREE.Group();
-      const legGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.7, 6);
-      legL.add(new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x2244aa })).translateY(-0.35));
-      legL.position.set(-0.2, 0, 0); g.add(legL);
-      legR.add(new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x2244aa })).translateY(-0.35));
-      legR.position.set(0.2, 0, 0); g.add(legR);
-
-      if (isPlayer) {
-        g.add(new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xffaa33 })).translateY(1.75));
+    // Класс персонажа
+    class Character {
+      constructor(name, team, x, y, isPlayer = false) {
+        this.name = name;
+        this.team = team; // 'ally' или 'enemy'
+        this.x = x;
+        this.y = y;
+        this.radius = 20;
+        this.speed = 2;
+        this.isPlayer = isPlayer;
+        this.heldItem = null;
+        this.lastThrow = 0;
+        this.stunned = false;
+        this.stunTimer = 0;
+        this.target = null; // цель движения
+        this.attackTarget = null; // для атаки
+        this.lastThink = 0;
+        this.thought = '';
+        this.thoughtTimer = 0;
       }
 
-      const div = document.createElement('div'); div.className = 'thought';
-      document.getElementById('thoughts').appendChild(div);
-      charToDiv.set(g, div);
-
-      g.position.set(pos.x, 0, pos.z);
-      scene.add(g);
-      g.userData = { name, team: color, stunned: false, held: null, lastThrow: 0, lastPick: 0, armL, armR, legL, legR, goal: null, lastThink: 0, speed: 0.06, div };
-      return g;
-    }
-
-    const player = createChar('Артур', 0xffaa33, new THREE.Vector3(-5, 0, -5), true);
-    allies.push(player);
-    allies.push(createChar('Бряк', 0x4488ff, new THREE.Vector3(-12, 0, -12)));
-    allies.push(createChar('Листик', 0x44aa44, new THREE.Vector3(-8, 0, -16)));
-    allies.push(createChar('Гром', 0xaa4444, new THREE.Vector3(-16, 0, -8)));
-    enemies.push(createChar('Зубан', 0xcc6644, new THREE.Vector3(12, 0, 12)));
-    enemies.push(createChar('Дылда', 0x6666aa, new THREE.Vector3(8, 0, 16)));
-    enemies.push(createChar('Шустря', 0xaa88cc, new THREE.Vector3(16, 0, 8)));
-
-    // ==================== УПРАВЛЕНИЕ (3-е лицо) ====================
-    const keys = {};
-    window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; e.preventDefault(); });
-    window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; e.preventDefault(); });
-    let yaw = 0, pitch = 0.3;
-    window.addEventListener('mousemove', e => {
-      if (document.pointerLockElement) {
-        yaw -= e.movementX * 0.002;
-        pitch -= e.movementY * 0.002;
-        pitch = Math.max(-0.5, Math.min(1.0, pitch));
-      }
-    });
-    renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
-
-    let throwPower = 0, charging = false;
-    window.addEventListener('mousedown', e => { if (e.button === 0 && document.pointerLockElement) { charging = true; throwPower = 0; } });
-    window.addEventListener('mouseup', e => {
-      if (e.button === 0 && charging && document.pointerLockElement) {
-        throwItem(player, Math.min(throwPower / 1000, 1.0));
-        charging = false;
-        document.getElementById('power-bar').style.display = 'none';
-      }
-    });
-
-    function pickUp(char) {
-      if (char.userData.held) return;
-      let closest = null, min = 1.8;
-      throwables.forEach(t => { if (!t.holder) { const d = char.position.distanceTo(t.mesh.position); if (d < min) { min = d; closest = t; } } });
-      if (closest) { char.userData.held = closest; closest.holder = char; scene.remove(closest.mesh); }
-    }
-
-    function throwItem(char, power) {
-      if (!char.userData.held) return;
-      const item = char.userData.held;
-      item.holder = null; char.userData.held = null;
-      item.mesh.position.copy(char.position).add(new THREE.Vector3(0, 1.2, 0));
-      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(char.quaternion);
-      item.vel.copy(dir.multiplyScalar(7 + power * 10));
-      item.vel.y = 4 + power * 6;
-      scene.add(item.mesh);
-      char.userData.lastThrow = performance.now() / 1000;
-    }
-
-    function stun(char) {
-      if (char.userData.stunned) return;
-      char.userData.stunned = true;
-      setTimeout(() => { char.userData.stunned = false; }, 1500);
-    }
-
-    // ==================== БАЗОВЫЙ ИИ (всегда активен) ====================
-    function basicAI(char) {
-      if (char.userData.stunned) return;
-      const opponents = (allies.includes(char) && char !== player) || char === player ? enemies : allies;
-      if (!opponents.length) return;
-      let target = null, minDist = Infinity;
-      opponents.forEach(o => { const d = char.position.distanceTo(o.position); if (d < minDist) { minDist = d; target = o; } });
-      if (!target) return;
-      if (minDist > 2.5) {
-        const dir = target.position.clone().sub(char.position).normalize();
-        char.position.add(dir.multiplyScalar(char.userData.speed));
-        char.lookAt(target.position.x, char.position.y, target.position.z);
-        char.userData.legL.rotation.x = Math.sin(Date.now() * 0.02) * 0.5;
-        char.userData.legR.rotation.x = -char.userData.legL.rotation.x;
-      } else {
-        if (!char.userData.held) pickUp(char);
-        if (char.userData.held && performance.now() / 1000 - char.userData.lastThrow > 2) throwItem(char, 0.5);
-      }
-    }
-
-    // ==================== ИИ ЧЕРЕЗ GROQ (меняет цели) ====================
-    async function think(char) {
-      if (char.userData.stunned || performance.now()/1000 - char.userData.lastThink < 8) return;
-      char.userData.lastThink = performance.now()/1000;
-      const team = allies.includes(char) ? 'Храпоглазы' : 'Зубоскалы';
-      const others = [...allies, ...enemies].filter(c => c !== char).map(c => `${c.userData.name}(${c.position.x.toFixed(0)},${c.position.z.toFixed(0)})`).join(',');
-      const prompt = `Ты ${char.userData.name} (${team}). Позиция: (${char.position.x.toFixed(0)},${char.position.z.toFixed(0)}). Другие: ${others}. Что делаешь? Ответь кратко: "атакую Имя" или "иду к базе".`;
-      try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST', headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: GROQ_MODEL, messages: [{ role: 'user', content: prompt }], max_tokens: 20 })
-        });
-        const data = await res.json();
-        const text = data.choices?.[0]?.message?.content?.toLowerCase() || '';
-        const div = charToDiv.get(char); if (div) { div.textContent = text; div.style.display = 'block'; setTimeout(() => div.style.display = 'none', 4000); }
-        if (text.includes('атакую')) {
-          const name = text.split(' ').pop();
-          const target = [...allies, ...enemies].find(c => c.userData.name.toLowerCase() === name);
-          if (target) char.userData.goal = { type: 'attack', target };
+      draw() {
+        ctx.save();
+        // Тело
+        ctx.fillStyle = this.team === 'ally' ? '#4488ff' : '#aa4444';
+        if (this.isPlayer) ctx.fillStyle = '#ffaa33';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Глаза
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(this.x - 8, this.y - 8, 5, 0, Math.PI * 2);
+        ctx.arc(this.x + 8, this.y - 8, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(this.x - 8, this.y - 8, 2, 0, Math.PI * 2);
+        ctx.arc(this.x + 8, this.y - 8, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Рот
+        ctx.strokeStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 2, 8, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+        // Имя
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, this.x, this.y - 30);
+        // Предмет в руках
+        if (this.heldItem) {
+          ctx.fillStyle = this.heldItem.color;
+          ctx.beginPath();
+          ctx.arc(this.x + 20, this.y - 10, 6, 0, Math.PI * 2);
+          ctx.fill();
         }
-      } catch(e) {}
-    }
-
-    // ==================== ЦИКЛ ====================
-    function update() {
-      if (!player.userData.stunned && document.pointerLockElement) {
-        const spd = 0.1;
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).setY(0).normalize();
-        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).setY(0).normalize();
-        if (keys['w']) player.position.add(forward.multiplyScalar(spd));
-        if (keys['s']) player.position.add(forward.multiplyScalar(-spd));
-        if (keys['a']) player.position.add(right.multiplyScalar(-spd));
-        if (keys['d']) player.position.add(right.multiplyScalar(spd));
-        if (keys['e']) { pickUp(player); keys['e'] = false; }
-        player.lookAt(player.position.clone().add(forward));
-      }
-      // Камера
-      const camDist = 5.5, camHeight = 2.5;
-      const camTarget = player.position.clone().add(new THREE.Vector3(0, 1.2, 0));
-      camera.position.copy(camTarget).add(new THREE.Vector3(Math.sin(yaw) * camDist, camHeight, Math.cos(yaw) * camDist));
-      camera.lookAt(camTarget);
-
-      // Зарядка броска
-      if (charging) {
-        throwPower += 16;
-        document.getElementById('power-bar').style.display = 'block';
-        document.getElementById('power-fill').style.width = Math.min(throwPower / 10, 100) + '%';
+        // Мысль
+        if (this.thought && Date.now() - this.thoughtTimer < 3000) {
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(this.x - 40, this.y - 60, 80, 20);
+          ctx.fillStyle = '#ff0';
+          ctx.font = '10px Arial';
+          ctx.fillText(this.thought, this.x, this.y - 47);
+        }
+        ctx.restore();
       }
 
-      // ИИ
-      allies.forEach(a => { if (a !== player) { basicAI(a); think(a); } });
-      enemies.forEach(e => { basicAI(e); think(e); });
+      moveTo(targetX, targetY) {
+        if (this.stunned) return;
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 2) return false;
+        const step = Math.min(this.speed, dist);
+        this.x += (dx / dist) * step;
+        this.y += (dy / dist) * step;
+        return true;
+      }
 
-      // Физика снарядов
-      for (let i = throwables.length-1; i >= 0; i--) {
-        const t = throwables[i];
-        if (t.holder) continue;
-        t.mesh.position.add(t.vel.clone().multiplyScalar(0.16));
-        t.vel.y -= 0.3;
-        if (t.mesh.position.y < 0.15) { t.mesh.position.y = 0.15; t.vel.set(0,0,0); }
-        const all = [player, ...allies, ...enemies];
-        for (const c of all) {
-          if (c === t.holder || c.userData.stunned) continue;
-          if (c.position.distanceTo(t.mesh.position) < 1.0 && t.vel.length() > 0.5) {
-            stun(c); t.vel.set(0,0,0); scene.remove(t.mesh); throwables.splice(i,1); break;
+      pickUpItem() {
+        if (this.heldItem) return;
+        for (let i = items.length - 1; i >= 0; i--) {
+          const item = items[i];
+          const dx = this.x - item.x;
+          const dy = this.y - item.y;
+          if (Math.sqrt(dx * dx + dy * dy) < 30) {
+            this.heldItem = item;
+            items.splice(i, 1);
+            break;
           }
         }
       }
 
-      // UI
-      document.getElementById('ally-count').textContent = allies.filter(a => !a.userData.stunned).length;
-      document.getElementById('enemy-count').textContent = enemies.filter(e => !e.userData.stunned).length;
-      document.getElementById('item-hold').textContent = player.userData.held ? '🎒 ' + player.userData.held.type : '🎒 Пусто';
+      throwItem(power = 0.8) {
+        if (!this.heldItem) return;
+        if (Date.now() - this.lastThrow < 1500) return;
+        this.lastThrow = Date.now();
+        const item = this.heldItem;
+        this.heldItem = null;
+        // Цель – либо attackTarget, либо направление "вперёд"
+        let targetX, targetY;
+        if (this.attackTarget) {
+          targetX = this.attackTarget.x;
+          targetY = this.attackTarget.y;
+          this.attackTarget = null;
+        } else {
+          // бросаем по направлению последнего движения
+          targetX = this.x + (this.target ? (this.target.x - this.x) : 0) * 100;
+          targetY = this.y + (this.target ? (this.target.y - this.y) : 0) * 100;
+        }
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const speed = 8 * power;
+        projectiles.push({
+          x: this.x, y: this.y,
+          vx: (dx / dist) * speed,
+          vy: (dy / dist) * speed,
+          color: item.color,
+          radius: 6,
+          life: 100
+        });
+      }
     }
 
-    function animate() { requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
-    animate();
+    // Предмет
+    class Item {
+      constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        switch (type) {
+          case 'stone': this.color = '#888888'; break;
+          case 'apple': this.color = '#e74c3c'; break;
+          case 'stick': this.color = '#8b5a2b'; break;
+          default: this.color = '#6b4c3b'; break;
+        }
+      }
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
-    window.addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+    // ==================== СОЗДАНИЕ МИРА ====================
+    function init() {
+      // Союзники
+      players.push(new Character('Артур', 'ally', 300, 300, true)); // игрок
+      players.push(new Character('Бряк', 'ally', 200, 400));
+      players.push(new Character('Листик', 'ally', 400, 200));
+      players.push(new Character('Гром', 'ally', 150, 250));
+
+      // Враги
+      players.push(new Character('Зубан', 'enemy', 700, 500));
+      players.push(new Character('Дылда', 'enemy', 800, 600));
+      players.push(new Character('Шустря', 'enemy', 650, 700));
+
+      // Предметы
+      for (let i = 0; i < 40; i++) {
+        const x = 100 + Math.random() * (WIDTH - 200);
+        const y = 100 + Math.random() * (HEIGHT - 200);
+        const type = ['stone','apple','stick','mud'][Math.floor(Math.random()*4)];
+        items.push(new Item(x, y, type));
+      }
+    }
+
+    // ==================== ЛОГИКА ИГРОКА ====================
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const playerChar = players.find(p => p.isPlayer);
+      if (!playerChar || playerChar.stunned) return;
+
+      // Проверяем, попали ли во врага
+      const enemies = players.filter(p => p.team === 'enemy' && !p.stunned);
+      for (const enemy of enemies) {
+        const dx = mouseX - enemy.x;
+        const dy = mouseY - enemy.y;
+        if (Math.sqrt(dx * dx + dy * dy) < enemy.radius + 10) {
+          // Атакуем врага, если есть предмет
+          if (playerChar.heldItem) {
+            playerChar.attackTarget = enemy;
+            playerChar.throwItem(0.9);
+          }
+          return;
+        }
+      }
+
+      // Иначе идём в точку клика
+      playerChar.target = { x: mouseX, y: mouseY };
+    });
+
+    // ==================== ИИ (простой, постоянно активен) ====================
+    function basicAI(character) {
+      if (character.stunned || character.isPlayer) return;
+
+      const opponents = players.filter(p => p.team !== character.team && !p.stunned);
+      if (opponents.length === 0) return;
+
+      // Выбираем ближайшего противника
+      let closest = opponents[0];
+      let minDist = Infinity;
+      opponents.forEach(o => {
+        const d = Math.hypot(o.x - character.x, o.y - character.y);
+        if (d < minDist) { minDist = d; closest = o; }
+      });
+
+      if (minDist < 50) {
+        // Близко – атакуем
+        if (!character.heldItem) character.pickUpItem();
+        if (character.heldItem && Date.now() - character.lastThrow > 2000) {
+          character.attackTarget = closest;
+          character.throwItem(0.5 + Math.random() * 0.3);
+        }
+      } else {
+        // Двигаемся к врагу
+        character.moveTo(closest.x, closest.y);
+      }
+    }
+
+    // ==================== ИИ ЧЕРЕЗ GROQ ====================
+    async function advancedAI(character) {
+      if (character.stunned || character.isPlayer) return;
+      if (Date.now() - character.lastThink < 6000) return; // раз в 6 сек
+      character.lastThink = Date.now();
+
+      const team = character.team === 'ally' ? 'Храпоглазы' : 'Зубоскалы';
+      const others = players.filter(p => p !== character).map(p => `${p.name}(${Math.round(p.x)},${Math.round(p.y)})`).join(', ');
+      const prompt = `Ты ${character.name} (${team}). Позиция: (${Math.round(character.x)},${Math.round(character.y)}). Другие: ${others}. Что делаешь? Ответь кратко: "атакую Имя" или "иду к базе".`;
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: GROQ_MODEL, messages: [{ role: 'user', content: prompt }], max_tokens: 20, temperature: 0.9 })
+        });
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content?.toLowerCase() || '';
+        character.thought = text;
+        character.thoughtTimer = Date.now();
+        // Парсим команду
+        if (text.includes('атакую')) {
+          const name = text.split(' ').pop();
+          const target = players.find(p => p.name.toLowerCase() === name && p.team !== character.team && !p.stunned);
+          if (target) {
+            character.target = { x: target.x, y: target.y };
+            character.attackTarget = target;
+          }
+        } else if (text.includes('баз')) {
+          // Идём в условную базу
+          if (character.team === 'ally') character.target = { x: 200, y: 200 };
+          else character.target = { x: 700, y: 600 };
+        }
+      } catch (e) {
+        console.error('Ошибка Groq:', e);
+      }
+    }
+
+    // ==================== ОБНОВЛЕНИЕ ИГРЫ ====================
+    function update() {
+      // Двигаем игрока, если есть цель
+      const playerChar = players.find(p => p.isPlayer);
+      if (playerChar && !playerChar.stunned && playerChar.target) {
+        const reached = !playerChar.moveTo(playerChar.target.x, playerChar.target.y);
+        if (reached) playerChar.target = null;
+      }
+
+      // ИИ для всех
+      players.forEach(p => {
+        if (p !== playerChar) {
+          basicAI(p);
+          advancedAI(p); // асинхронно
+        }
+      });
+
+      // Обновляем снаряды
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        // Попадание в персонажей
+        const hit = players.find(char => {
+          if (char.stunned) return false;
+          const dx = char.x - p.x;
+          const dy = char.y - p.y;
+          return Math.sqrt(dx * dx + dy * dy) < char.radius + 5;
+        });
+        if (hit) {
+          hit.stunned = true;
+          hit.stunTimer = Date.now() + 1500;
+          projectiles.splice(i, 1);
+          continue;
+        }
+        if (p.life <= 0 || p.x < 0 || p.x > WIDTH || p.y < 0 || p.y > HEIGHT) {
+          projectiles.splice(i, 1);
+        }
+      }
+
+      // Снятие оглушения
+      players.forEach(p => {
+        if (p.stunned && Date.now() > p.stunTimer) p.stunned = false;
+      });
+
+      // Подбор предметов (автоматический для игрока тоже)
+      if (playerChar && !playerChar.heldItem) playerChar.pickUpItem();
+    }
+
+    // ==================== ОТРИСОВКА ====================
+    function draw() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      // Трава
+      ctx.fillStyle = '#7ec850';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      // Предметы
+      items.forEach(item => item.draw());
+      // Персонажи
+      players.forEach(p => p.draw());
+      // Снаряды
+      projectiles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // UI
+      document.getElementById('ally-count').textContent = players.filter(p => p.team === 'ally' && !p.stunned).length;
+      document.getElementById('enemy-count').textContent = players.filter(p => p.team === 'enemy' && !p.stunned).length;
+      document.getElementById('item-hold').textContent = playerChar?.heldItem ? playerChar.heldItem.type : 'Пусто';
+    }
+
+    // ==================== ЗАПУСК ====================
+    init();
+    setInterval(() => {
+      update();
+      draw();
+    }, 1000 / 60); // 60 FPS
+
+    window.addEventListener('resize', () => {
+      // Можно обновить размеры, но оставим как есть
+    });
   </script>
 </body>
 </html>
