@@ -242,25 +242,21 @@
     ground.receiveShadow = true;
     scene.add(ground);
     
-    // Ангар
     const hangar = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 3), new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.7 }));
     hangar.position.set(-3, 1.25, -3);
     hangar.castShadow = true; hangar.receiveShadow = true;
     scene.add(hangar);
     
-    // Верстак
     const bench = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
     bench.position.set(-2.5, 0.4, -1.8);
     bench.castShadow = true; bench.receiveShadow = true;
     scene.add(bench);
     
-    // Кровать
     const bed = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, 1), new THREE.MeshStandardMaterial({ color: 0xddccaa }));
     bed.position.set(2.5, 0.2, -2.5);
     bed.castShadow = true; bed.receiveShadow = true;
     scene.add(bed);
     
-    // Яблоня
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
     trunk.position.set(-2.5, 1, 2.5);
     trunk.castShadow = true; trunk.receiveShadow = true;
@@ -276,7 +272,6 @@
       scene.add(apple);
     }
     
-    // Сундук
     const chest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xaa7744 }));
     chest.position.set(3.5, 0.25, 1.5);
     chest.castShadow = true; chest.receiveShadow = true;
@@ -293,19 +288,16 @@
       const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xffffff });
       const pupil = new THREE.MeshStandardMaterial({ color: 0x111122 });
       
-      // Тело
       const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), cloth);
       torso.position.y = 0.6;
       torso.castShadow = true; torso.receiveShadow = true;
       group.add(torso);
       
-      // Голова
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), skin);
       head.position.y = 1.35;
       head.castShadow = true; head.receiveShadow = true;
       group.add(head);
       
-      // Глаза
       const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), eyeWhite);
       leftEye.position.set(-0.13, 1.45, 0.32);
       group.add(leftEye);
@@ -319,13 +311,11 @@
       rightPupil.position.set(0.13, 1.43, 0.38);
       group.add(rightPupil);
       
-      // Рот
       const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 8, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x552222 }));
       mouth.position.set(0, 1.3, 0.33);
       mouth.rotation.x = 0.2;
       group.add(mouth);
       
-      // Волосы
       const hairPos = [[0, 1.68, 0.05], [0.18, 1.63, 0.15], [-0.18, 1.63, 0.15], [0.13, 1.65, -0.2], [-0.13, 1.65, -0.2], [0, 1.6, -0.25]];
       hairPos.forEach(p => {
         const hair = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), hairMat);
@@ -333,7 +323,6 @@
         group.add(hair);
       });
       
-      // Руки
       const armGroupL = new THREE.Group();
       const armGroupR = new THREE.Group();
       const upperArmGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.6, 6);
@@ -364,7 +353,6 @@
       armGroupR.position.set(0.55, 1.25, 0);
       group.add(armGroupR);
       
-      // Ноги
       const legGroupL = new THREE.Group();
       const legGroupR = new THREE.Group();
       const thighGeo = new THREE.CylinderGeometry(0.13, 0.15, 0.55, 6);
@@ -397,7 +385,6 @@
       legGroupR.position.set(0.2, 0.0, 0);
       group.add(legGroupR);
       
-      // Имя
       const nameDiv = document.createElement('div');
       nameDiv.textContent = name;
       nameDiv.style.color = 'white';
@@ -409,18 +396,14 @@
       label.position.set(0, 2.1, 0);
       group.add(label);
       
-      // Сохраняем ссылки на конечности для анимации
       group.userData = { armL: armGroupL, armR: armGroupR, legL: legGroupL, legR: legGroupR };
-      
       return group;
     }
     
-    // Игрок
     playerCharacter = createDetailedCharacter(0xffaa33, 'Ты (Артур)', true);
     playerCharacter.position.set(0, 0, 0);
     scene.add(playerCharacter);
     
-    // NPC
     const bryak = createDetailedCharacter(npcData.bryak.color, npcData.bryak.name);
     bryak.position.set(npcData.bryak.pos.x, 0, npcData.bryak.pos.z);
     scene.add(bryak);
@@ -502,7 +485,7 @@
       addChatMessage('Система', `${npc.data.name} получил задачу: ${task}`);
     }
     
-    // --- Игровой цикл (потребности, движение, анимация) ---
+    // --- Игровой цикл ---
     let lastTime = performance.now();
     
     function animateNPCs(deltaTime) {
@@ -527,15 +510,14 @@
           n.mesh.lookAt(target.x, n.mesh.position.y, target.z);
         }
         
-        // Добыча ресурсов, если рядом с точкой
         if (d.currentTask === 'wood' && n.mesh.position.distanceTo(new THREE.Vector3(-2,0,1)) < 1.2) {
-          if (Math.random() < 0.01) resources.wood += 1;
+          if (Math.random() < 0.02) resources.wood += 1;
         }
         if (d.currentTask === 'iron' && n.mesh.position.distanceTo(new THREE.Vector3(3,0,-1)) < 1.2) {
-          if (Math.random() < 0.01) resources.iron += 1;
+          if (Math.random() < 0.02) resources.iron += 1;
         }
         if (d.currentTask === 'cloth' && n.mesh.position.distanceTo(new THREE.Vector3(1,0,2)) < 1.2) {
-          if (Math.random() < 0.01) resources.cloth += 1;
+          if (Math.random() < 0.02) resources.cloth += 1;
         }
         if (d.hunger < 30 && n.mesh.position.distanceTo(new THREE.Vector3(-2.5,0,2.5)) < 1.2) {
           d.hunger = Math.min(100, d.hunger + 2);
@@ -544,8 +526,7 @@
           d.fatigue = Math.min(100, d.fatigue + 2);
         }
         
-        // Анимация конечностей при движении
-        const speed = n.mesh.position.distanceTo(target) > 0.1 ? 1 : 0;
+        const speed = dist > 0.1 ? 1 : 0;
         if (n.mesh.userData.armL) {
           n.mesh.userData.armL.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0)) * 0.4 * speed;
           n.mesh.userData.armR.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0) + Math.PI) * 0.4 * speed;
@@ -557,10 +538,9 @@
     
     function gameLoop() {
       const now = performance.now();
-      const deltaTime = Math.min(0.05, (now - lastTime) / 1000); // секунды
+      const deltaTime = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
       
-      // Движение игрока
       const speed = 3 * deltaTime;
       if (keyState['ArrowUp']) playerCharacter.position.z -= speed;
       if (keyState['ArrowDown']) playerCharacter.position.z += speed;
@@ -577,29 +557,30 @@
       requestAnimationFrame(gameLoop);
     }
     
-    // --- WebLLM загрузка (исправлено) ---
+    // --- WebLLM загрузка (ИСПРАВЛЕНО) ---
     document.getElementById('load-model-btn').addEventListener('click', async () => {
       const status = document.getElementById('model-status');
       status.textContent = 'Загрузка модели... (1-2 мин)';
       try {
         const { CreateMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.46/lib/index.js');
-        const modelId = 'Llama-3.2-1B-Instruct-q4f16_1-MLC';
+        // Гарантированная модель из официального списка
+        const modelId = 'RedPajama-INCITE-Chat-3B-v1-q4f16_1-MLC';
         chatEngine = await CreateMLCEngine({ model: modelId });
         modelLoaded = true;
         status.textContent = `✅ Модель ${modelId} готова!`;
         for (let npc of npcs) npcEngines[npc.id] = chatEngine;
       } catch (e) {
         console.error(e);
-        status.textContent = '❌ ' + e.message;
+        status.textContent = '❌ Ошибка: ' + e.message;
         try {
-          status.textContent = 'Пробую gemma-2-2b-it...';
+          status.textContent = 'Пробую Llama-3.2-1B...';
           const { CreateMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.46/lib/index.js');
-          chatEngine = await CreateMLCEngine({ model: 'gemma-2-2b-it-q4f16_1-MLC' });
+          chatEngine = await CreateMLCEngine({ model: 'Llama-3.2-1B-Instruct-q4f16_1-MLC' });
           modelLoaded = true;
-          status.textContent = '✅ gemma готова!';
+          status.textContent = '✅ Llama готова!';
           for (let npc of npcs) npcEngines[npc.id] = chatEngine;
-        } catch (err2) {
-          status.textContent = '❌ Обе модели не загрузились.';
+        } catch (e2) {
+          status.textContent = '❌ Все модели не загрузились. Попробуй обновить страницу.';
         }
       }
     });
