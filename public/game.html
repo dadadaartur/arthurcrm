@@ -132,10 +132,6 @@
       cursor: pointer;
       font-size: 12px;
     }
-    .highlight {
-      color: #ffaa00;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -183,7 +179,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-    // --- Глобальные переменные WebLLM ---
+    // --- WebLLM ---
     let chatEngine = null;
     let modelLoaded = false;
     const npcEngines = {};
@@ -194,14 +190,13 @@
     let selectedNpc = null;
     let playerCharacter = null;
     
-    // Потребности NPC (будут обновляться)
     const npcData = {
       bryak: { name: 'Бряк', role: 'Инженер', hunger: 80, fatigue: 80, mood: 80, color: 0x4488ff, pos: {x: -2, z: 1.5} },
       listik: { name: 'Листик', role: 'Травница', hunger: 80, fatigue: 80, mood: 80, color: 0x44aa44, pos: {x: 1.5, z: -1.5} },
       grom: { name: 'Гром', role: 'Охотник', hunger: 80, fatigue: 80, mood: 80, color: 0xaa4444, pos: {x: 2, z: 2} }
     };
 
-    // --- Инициализация Three.js ---
+    // --- Three.js инициализация ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87CEEB);
     scene.fog = new THREE.Fog(0x87CEEB, 5, 30);
@@ -233,8 +228,7 @@
     controls.update();
     
     // Освещение
-    const ambient = new THREE.AmbientLight(0x666688);
-    scene.add(ambient);
+    scene.add(new THREE.AmbientLight(0x666688));
     const sun = new THREE.DirectionalLight(0xfff5e6, 1);
     sun.position.set(15, 20, 5);
     sun.castShadow = true;
@@ -242,51 +236,39 @@
     sun.shadow.mapSize.set(1024, 1024);
     scene.add(sun);
     
-    // --- Постройка мира ---
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x5a8f4a, roughness: 0.8 });
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(8, 64), groundMat);
+    // --- Мир ---
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(8, 64), new THREE.MeshStandardMaterial({ color: 0x5a8f4a, roughness: 0.8 }));
     ground.rotation.x = -Math.PI/2;
     ground.receiveShadow = true;
     scene.add(ground);
     
     // Ангар
-    const hangarMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.7 });
-    const hangar = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 3), hangarMat);
+    const hangar = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 3), new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.7 }));
     hangar.position.set(-3, 1.25, -3);
-    hangar.castShadow = true;
-    hangar.receiveShadow = true;
+    hangar.castShadow = true; hangar.receiveShadow = true;
     scene.add(hangar);
     
     // Верстак
-    const benchMat = new THREE.MeshStandardMaterial({ color: 0xccaa88 });
-    const bench = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), benchMat);
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
     bench.position.set(-2.5, 0.4, -1.8);
-    bench.castShadow = true;
-    bench.receiveShadow = true;
+    bench.castShadow = true; bench.receiveShadow = true;
     scene.add(bench);
     
     // Кровать
-    const bedMat = new THREE.MeshStandardMaterial({ color: 0xddccaa });
-    const bed = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, 1), bedMat);
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(2, 0.4, 1), new THREE.MeshStandardMaterial({ color: 0xddccaa }));
     bed.position.set(2.5, 0.2, -2.5);
-    bed.castShadow = true;
-    bed.receiveShadow = true;
+    bed.castShadow = true; bed.receiveShadow = true;
     scene.add(bed);
     
     // Яблоня
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), trunkMat);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
     trunk.position.set(-2.5, 1, 2.5);
-    trunk.castShadow = true;
-    trunk.receiveShadow = true;
+    trunk.castShadow = true; trunk.receiveShadow = true;
     scene.add(trunk);
-    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27 });
-    const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.9), leavesMat);
+    const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.9), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
     leaves.position.set(-2.5, 2.2, 2.5);
-    leaves.castShadow = true;
-    leaves.receiveShadow = true;
+    leaves.castShadow = true; leaves.receiveShadow = true;
     scene.add(leaves);
-    // Яблоки
     for (let i=0; i<5; i++) {
       const apple = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8), new THREE.MeshStandardMaterial({ color: 0xff3333 }));
       apple.position.set(-2.5 + (Math.random()-0.5)*0.8, 2.4 + Math.random()*0.4, 2.5 + (Math.random()-0.5)*0.8);
@@ -295,91 +277,163 @@
     }
     
     // Сундук
-    const chestMat = new THREE.MeshStandardMaterial({ color: 0xaa7744 });
-    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.5), chestMat);
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xaa7744 }));
     chest.position.set(3.5, 0.25, 1.5);
-    chest.castShadow = true;
-    chest.receiveShadow = true;
+    chest.castShadow = true; chest.receiveShadow = true;
     scene.add(chest);
     
-    // --- Создание персонажа игрока ---
-    function createPlayerCharacter() {
+    // --- Создание детализированного персонажа ---
+    function createDetailedCharacter(baseColor, name, isPlayer = false) {
       const group = new THREE.Group();
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffaa33 });
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffccaa });
+      const skin = new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.3 });
+      const cloth = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.5 });
+      const pants = new THREE.MeshStandardMaterial({ color: 0x2244aa, roughness: 0.5 });
+      const shoes = new THREE.MeshStandardMaterial({ color: 0x332211, roughness: 0.6 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x332211, roughness: 0.7 });
+      const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const pupil = new THREE.MeshStandardMaterial({ color: 0x111122 });
       
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 1.2, 8), bodyMat);
-      body.position.y = 0.6;
-      body.castShadow = true;
-      body.receiveShadow = true;
-      group.add(body);
+      // Тело
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), cloth);
+      torso.position.y = 0.6;
+      torso.castShadow = true; torso.receiveShadow = true;
+      group.add(torso);
       
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8), skinMat);
-      head.position.y = 1.4;
-      head.castShadow = true;
+      // Голова
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), skin);
+      head.position.y = 1.35;
+      head.castShadow = true; head.receiveShadow = true;
       group.add(head);
       
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.1), eyeMat);
-      leftEye.position.set(-0.12, 1.5, 0.3);
+      // Глаза
+      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), eyeWhite);
+      leftEye.position.set(-0.13, 1.45, 0.32);
       group.add(leftEye);
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.1), eyeMat);
-      rightEye.position.set(0.12, 1.5, 0.3);
+      const rightEye = leftEye.clone();
+      rightEye.position.set(0.13, 1.45, 0.32);
       group.add(rightEye);
+      const leftPupil = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), pupil);
+      leftPupil.position.set(-0.13, 1.43, 0.38);
+      group.add(leftPupil);
+      const rightPupil = leftPupil.clone();
+      rightPupil.position.set(0.13, 1.43, 0.38);
+      group.add(rightPupil);
       
-      const nameLabel = new CSS2DObject(Object.assign(document.createElement('div'), {
-        textContent: 'Ты (Артур)',
-        style: 'color:white; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:10px; font-size:12px;'
-      }));
-      nameLabel.position.set(0, 2, 0);
-      group.add(nameLabel);
+      // Рот
+      const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 8, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x552222 }));
+      mouth.position.set(0, 1.3, 0.33);
+      mouth.rotation.x = 0.2;
+      group.add(mouth);
+      
+      // Волосы
+      const hairPos = [[0, 1.68, 0.05], [0.18, 1.63, 0.15], [-0.18, 1.63, 0.15], [0.13, 1.65, -0.2], [-0.13, 1.65, -0.2], [0, 1.6, -0.25]];
+      hairPos.forEach(p => {
+        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), hairMat);
+        hair.position.set(p[0], p[1], p[2]);
+        group.add(hair);
+      });
+      
+      // Руки
+      const armGroupL = new THREE.Group();
+      const armGroupR = new THREE.Group();
+      const upperArmGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.6, 6);
+      const forearmGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.5, 6);
+      const handGeo = new THREE.SphereGeometry(0.1, 6, 6);
+      
+      const leftUpper = new THREE.Mesh(upperArmGeo, cloth);
+      leftUpper.position.y = -0.3;
+      armGroupL.add(leftUpper);
+      const leftFore = new THREE.Mesh(forearmGeo, skin);
+      leftFore.position.y = -0.8;
+      armGroupL.add(leftFore);
+      const leftHand = new THREE.Mesh(handGeo, skin);
+      leftHand.position.y = -1.1;
+      armGroupL.add(leftHand);
+      armGroupL.position.set(-0.55, 1.25, 0);
+      group.add(armGroupL);
+      
+      const rightUpper = new THREE.Mesh(upperArmGeo, cloth);
+      rightUpper.position.y = -0.3;
+      armGroupR.add(rightUpper);
+      const rightFore = new THREE.Mesh(forearmGeo, skin);
+      rightFore.position.y = -0.8;
+      armGroupR.add(rightFore);
+      const rightHand = new THREE.Mesh(handGeo, skin);
+      rightHand.position.y = -1.1;
+      armGroupR.add(rightHand);
+      armGroupR.position.set(0.55, 1.25, 0);
+      group.add(armGroupR);
+      
+      // Ноги
+      const legGroupL = new THREE.Group();
+      const legGroupR = new THREE.Group();
+      const thighGeo = new THREE.CylinderGeometry(0.13, 0.15, 0.55, 6);
+      const shinGeo = new THREE.CylinderGeometry(0.1, 0.13, 0.5, 6);
+      const shoeGeo = new THREE.BoxGeometry(0.15, 0.1, 0.25);
+      
+      const leftThigh = new THREE.Mesh(thighGeo, pants);
+      leftThigh.position.y = -0.25;
+      legGroupL.add(leftThigh);
+      const leftShin = new THREE.Mesh(shinGeo, pants);
+      leftShin.position.y = -0.75;
+      legGroupL.add(leftShin);
+      const leftShoe = new THREE.Mesh(shoeGeo, shoes);
+      leftShoe.position.y = -1.0;
+      leftShoe.position.z = 0.06;
+      legGroupL.add(leftShoe);
+      legGroupL.position.set(-0.2, 0.0, 0);
+      group.add(legGroupL);
+      
+      const rightThigh = new THREE.Mesh(thighGeo, pants);
+      rightThigh.position.y = -0.25;
+      legGroupR.add(rightThigh);
+      const rightShin = new THREE.Mesh(shinGeo, pants);
+      rightShin.position.y = -0.75;
+      legGroupR.add(rightShin);
+      const rightShoe = new THREE.Mesh(shoeGeo, shoes);
+      rightShoe.position.y = -1.0;
+      rightShoe.position.z = 0.06;
+      legGroupR.add(rightShoe);
+      legGroupR.position.set(0.2, 0.0, 0);
+      group.add(legGroupR);
+      
+      // Имя
+      const nameDiv = document.createElement('div');
+      nameDiv.textContent = name;
+      nameDiv.style.color = 'white';
+      nameDiv.style.background = 'rgba(0,0,0,0.7)';
+      nameDiv.style.padding = '2px 10px';
+      nameDiv.style.borderRadius = '12px';
+      nameDiv.style.fontSize = '12px';
+      const label = new CSS2DObject(nameDiv);
+      label.position.set(0, 2.1, 0);
+      group.add(label);
+      
+      // Сохраняем ссылки на конечности для анимации
+      group.userData = { armL: armGroupL, armR: armGroupR, legL: legGroupL, legR: legGroupR };
       
       return group;
     }
-    playerCharacter = createPlayerCharacter();
+    
+    // Игрок
+    playerCharacter = createDetailedCharacter(0xffaa33, 'Ты (Артур)', true);
     playerCharacter.position.set(0, 0, 0);
     scene.add(playerCharacter);
     
-    // --- Создание NPC ---
-    function createNPC(data) {
-      const group = new THREE.Group();
-      const mat = new THREE.MeshStandardMaterial({ color: data.color });
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffccaa });
-      
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.1, 8), mat);
-      body.position.y = 0.55;
-      body.castShadow = true;
-      group.add(body);
-      
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8), skinMat);
-      head.position.y = 1.25;
-      head.castShadow = true;
-      group.add(head);
-      
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      leftEye.position.set(-0.1, 1.35, 0.25);
-      group.add(leftEye);
-      const rightEye = leftEye.clone();
-      rightEye.position.set(0.1, 1.35, 0.25);
-      group.add(rightEye);
-      
-      const nameLabel = new CSS2DObject(Object.assign(document.createElement('div'), {
-        textContent: data.name,
-        style: `color:white; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:10px; font-size:12px;`
-      }));
-      nameLabel.position.set(0, 1.8, 0);
-      group.add(nameLabel);
-      
-      group.position.set(data.pos.x, 0, data.pos.z);
-      return group;
-    }
-    
-    const bryak = createNPC(npcData.bryak);
-    const listik = createNPC(npcData.listik);
-    const grom = createNPC(npcData.grom);
-    scene.add(bryak); scene.add(listik); scene.add(grom);
+    // NPC
+    const bryak = createDetailedCharacter(npcData.bryak.color, npcData.bryak.name);
+    bryak.position.set(npcData.bryak.pos.x, 0, npcData.bryak.pos.z);
+    scene.add(bryak);
     npcs.push({ mesh: bryak, data: npcData.bryak, id: 'bryak' });
+    
+    const listik = createDetailedCharacter(npcData.listik.color, npcData.listik.name);
+    listik.position.set(npcData.listik.pos.x, 0, npcData.listik.pos.z);
+    scene.add(listik);
     npcs.push({ mesh: listik, data: npcData.listik, id: 'listik' });
+    
+    const grom = createDetailedCharacter(npcData.grom.color, npcData.grom.name);
+    grom.position.set(npcData.grom.pos.x, 0, npcData.grom.pos.z);
+    scene.add(grom);
     npcs.push({ mesh: grom, data: npcData.grom, id: 'grom' });
     
     // --- Управление игроком ---
@@ -387,7 +441,7 @@
     window.addEventListener('keydown', (e) => { keyState[e.key] = true; });
     window.addEventListener('keyup', (e) => { keyState[e.key] = false; });
     
-    // --- UI обновление ---
+    // --- UI ---
     function updateUI() {
       document.getElementById('wood-count').textContent = resources.wood;
       document.getElementById('iron-count').textContent = resources.iron;
@@ -415,7 +469,6 @@
       document.getElementById('chat-messages').innerHTML = '';
     }
     
-    // Чат
     document.getElementById('send-btn').addEventListener('click', async () => {
       if (!selectedNpc || !modelLoaded) {
         alert('Сначала загрузи ИИ-мозги и выбери персонажа.');
@@ -437,88 +490,116 @@
       div.scrollIntoView({ behavior: 'smooth' });
     }
     
-    // Задачи
     document.querySelectorAll('.task-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (!selectedNpc) { alert('Сначала выбери персонажа (кликни по нему в списке)'); return; }
-        const task = btn.dataset.task;
-        assignTask(selectedNpc, task);
+        if (!selectedNpc) { alert('Сначала выбери персонажа'); return; }
+        assignTask(selectedNpc, btn.dataset.task);
       });
     });
     
     function assignTask(npc, task) {
-      if (task === 'wood') npc.data.currentTask = 'wood';
-      else if (task === 'iron') npc.data.currentTask = 'iron';
-      else if (task === 'cloth') npc.data.currentTask = 'cloth';
-      else if (task === 'rest') npc.data.currentTask = 'rest';
+      npc.data.currentTask = task;
       addChatMessage('Система', `${npc.data.name} получил задачу: ${task}`);
     }
     
-    // --- Игровой цикл (потребности, перемещение) ---
-    setInterval(() => {
+    // --- Игровой цикл (потребности, движение, анимация) ---
+    let lastTime = performance.now();
+    
+    function animateNPCs(deltaTime) {
       npcs.forEach(n => {
-        n.data.hunger = Math.max(0, n.data.hunger - 0.5);
-        n.data.fatigue = Math.max(0, n.data.fatigue - 0.3);
-        n.data.mood = Math.max(0, n.data.mood - 0.2 + (n.data.currentTask ? 0.3 : 0));
+        const d = n.data;
+        d.hunger = Math.max(0, d.hunger - 0.1 * deltaTime);
+        d.fatigue = Math.max(0, d.fatigue - 0.06 * deltaTime);
+        d.mood = Math.max(0, d.mood - 0.04 * deltaTime + (d.currentTask ? 0.1 : 0));
         
-        if (n.data.hunger < 30) {
-          n.mesh.position.lerp(new THREE.Vector3(-2.5, 0, 2.5), 0.02);
-          if (n.mesh.position.distanceTo(new THREE.Vector3(-2.5, 0, 2.5)) < 1) {
-            n.data.hunger = Math.min(100, n.data.hunger + 5);
-          }
-        } else if (n.data.fatigue < 30) {
-          n.mesh.position.lerp(new THREE.Vector3(2.5, 0, -2.5), 0.02);
-        } else if (n.data.currentTask === 'wood') {
-          n.mesh.position.lerp(new THREE.Vector3(-2, 0, 1), 0.02);
-          if (Math.random() < 0.02) resources.wood += 1;
-        } else if (n.data.currentTask === 'iron') {
-          n.mesh.position.lerp(new THREE.Vector3(3, 0, -1), 0.02);
-          if (Math.random() < 0.02) resources.iron += 1;
-        } else if (n.data.currentTask === 'cloth') {
-          n.mesh.position.lerp(new THREE.Vector3(1, 0, 2), 0.02);
-          if (Math.random() < 0.02) resources.cloth += 1;
+        const target = new THREE.Vector3();
+        if (d.hunger < 30) target.set(-2.5, 0, 2.5);
+        else if (d.fatigue < 30) target.set(2.5, 0, -2.5);
+        else if (d.currentTask === 'wood') target.set(-2, 0, 1);
+        else if (d.currentTask === 'iron') target.set(3, 0, -1);
+        else if (d.currentTask === 'cloth') target.set(1, 0, 2);
+        else target.copy(n.mesh.position);
+        
+        const dist = n.mesh.position.distanceTo(target);
+        if (dist > 0.1) {
+          const dir = target.clone().sub(n.mesh.position).normalize();
+          n.mesh.position.add(dir.multiplyScalar(1.5 * deltaTime));
+          n.mesh.lookAt(target.x, n.mesh.position.y, target.z);
+        }
+        
+        // Добыча ресурсов, если рядом с точкой
+        if (d.currentTask === 'wood' && n.mesh.position.distanceTo(new THREE.Vector3(-2,0,1)) < 1.2) {
+          if (Math.random() < 0.01) resources.wood += 1;
+        }
+        if (d.currentTask === 'iron' && n.mesh.position.distanceTo(new THREE.Vector3(3,0,-1)) < 1.2) {
+          if (Math.random() < 0.01) resources.iron += 1;
+        }
+        if (d.currentTask === 'cloth' && n.mesh.position.distanceTo(new THREE.Vector3(1,0,2)) < 1.2) {
+          if (Math.random() < 0.01) resources.cloth += 1;
+        }
+        if (d.hunger < 30 && n.mesh.position.distanceTo(new THREE.Vector3(-2.5,0,2.5)) < 1.2) {
+          d.hunger = Math.min(100, d.hunger + 2);
+        }
+        if (d.fatigue < 30 && n.mesh.position.distanceTo(new THREE.Vector3(2.5,0,-2.5)) < 1.2) {
+          d.fatigue = Math.min(100, d.fatigue + 2);
+        }
+        
+        // Анимация конечностей при движении
+        const speed = n.mesh.position.distanceTo(target) > 0.1 ? 1 : 0;
+        if (n.mesh.userData.armL) {
+          n.mesh.userData.armL.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0)) * 0.4 * speed;
+          n.mesh.userData.armR.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0) + Math.PI) * 0.4 * speed;
+          n.mesh.userData.legL.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0) + Math.PI/2) * 0.3 * speed;
+          n.mesh.userData.legR.rotation.x = Math.sin(Date.now() * 0.01 + n.id.charCodeAt(0) - Math.PI/2) * 0.3 * speed;
         }
       });
+    }
+    
+    function gameLoop() {
+      const now = performance.now();
+      const deltaTime = Math.min(0.05, (now - lastTime) / 1000); // секунды
+      lastTime = now;
       
       // Движение игрока
-      if (keyState['ArrowUp']) playerCharacter.position.z -= 0.08;
-      if (keyState['ArrowDown']) playerCharacter.position.z += 0.08;
-      if (keyState['ArrowLeft']) playerCharacter.position.x -= 0.08;
-      if (keyState['ArrowRight']) playerCharacter.position.x += 0.08;
+      const speed = 3 * deltaTime;
+      if (keyState['ArrowUp']) playerCharacter.position.z -= speed;
+      if (keyState['ArrowDown']) playerCharacter.position.z += speed;
+      if (keyState['ArrowLeft']) playerCharacter.position.x -= speed;
+      if (keyState['ArrowRight']) playerCharacter.position.x += speed;
       
+      animateNPCs(deltaTime);
       updateUI();
-    }, 100);
+      
+      controls.target.copy(playerCharacter.position.clone().add(new THREE.Vector3(0, 1, 0)));
+      controls.update();
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+      requestAnimationFrame(gameLoop);
+    }
     
-    // --- WebLLM интеграция (исправлено) ---
+    // --- WebLLM загрузка (исправлено) ---
     document.getElementById('load-model-btn').addEventListener('click', async () => {
       const status = document.getElementById('model-status');
-      status.textContent = 'Загрузка модели... (может занять минуту)';
+      status.textContent = 'Загрузка модели... (1-2 мин)';
       try {
         const { CreateMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.46/lib/index.js');
-        // Используем стабильную модель, точно доступную в WebLLM
         const modelId = 'Llama-3.2-1B-Instruct-q4f16_1-MLC';
         chatEngine = await CreateMLCEngine({ model: modelId });
         modelLoaded = true;
         status.textContent = `✅ Модель ${modelId} готова!`;
-        
-        for (let npc of npcs) {
-          npcEngines[npc.id] = chatEngine;
-        }
+        for (let npc of npcs) npcEngines[npc.id] = chatEngine;
       } catch (e) {
         console.error(e);
-        status.textContent = '❌ Ошибка: ' + e.message;
-        // Попробуем другую модель, если первая не найдена
+        status.textContent = '❌ ' + e.message;
         try {
-          status.textContent = 'Пробую резервную модель...';
+          status.textContent = 'Пробую gemma-2-2b-it...';
           const { CreateMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.46/lib/index.js');
           chatEngine = await CreateMLCEngine({ model: 'gemma-2-2b-it-q4f16_1-MLC' });
           modelLoaded = true;
-          status.textContent = '✅ Модель gemma-2-2b-it готова!';
-          for (let npc of npcs) {
-            npcEngines[npc.id] = chatEngine;
-          }
-        } catch (fallbackError) {
-          status.textContent = '❌ Обе модели не загрузились. Проверь консоль.';
+          status.textContent = '✅ gemma готова!';
+          for (let npc of npcs) npcEngines[npc.id] = chatEngine;
+        } catch (err2) {
+          status.textContent = '❌ Обе модели не загрузились.';
         }
       }
     });
@@ -538,16 +619,6 @@
       }
     }
     
-    // Анимационный цикл
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.target.copy(playerCharacter.position.clone().add(new THREE.Vector3(0, 1, 0)));
-      controls.update();
-      renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
-    }
-    animate();
-    
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -555,7 +626,10 @@
       labelRenderer.setSize(window.innerWidth, window.innerHeight);
     });
     
-    console.log('🚀 Прототип готов! Нажми "Загрузить ИИ-мозги", чтобы оживить персонажей.');
+    // Старт
+    lastTime = performance.now();
+    gameLoop();
+    console.log('🚀 Игра готова! Нажми "Загрузить ИИ-мозги".');
   </script>
 </body>
 </html>
