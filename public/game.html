@@ -3,28 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Битва за Пирожок — Полноценная игра</title>
+  <title>Битва за Пирожок — Финальная рабочая версия</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
-    #crosshair {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 20px; height: 20px; pointer-events: none; z-index: 10;
-    }
-    #crosshair::before, #crosshair::after {
-      content: ''; position: absolute; background: rgba(255,255,255,0.9);
-    }
-    #crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
-    #crosshair::after { width: 20px; height: 2px; left: 0; top: 9px; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
     #ui {
       position: absolute; top: 20px; left: 20px; color: white;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); padding: 10px 16px;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); padding: 12px 20px;
       border-radius: 12px; pointer-events: none; z-index: 10;
     }
-    .hint {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.6); color: #ccc; padding: 6px 16px; border-radius: 20px;
-      font-size: 12px; pointer-events: none; z-index: 10;
+    #crosshair {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;
+      display: none; z-index: 10;
     }
+    .status { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -32,16 +24,21 @@
     <div>🛡️ Союзников: <span id="ally-count">3</span></div>
     <div>💀 Врагов: <span id="enemy-count">3</span></div>
     <div id="item-indicator">🎒 Пусто</div>
+    <div style="margin-top:8px;">
+      Управление: <span id="lock-status" class="status">НЕ АКТИВНО</span><br>
+      <small>Кликни по экрану, чтобы активировать</small>
+    </div>
   </div>
   <div id="crosshair"></div>
-  <div class="hint">Кликните для захвата мыши | WASD — движение | E — подобрать | Левая кнопка мыши (зажать+отпустить) — бросок</div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // ======================== ОСНОВНЫЕ ПЕРЕМЕННЫЕ ========================
+    console.log('🚀 Инициализация игры...');
+
+    // ======================== СЦЕНА ========================
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 50, 120);
+    scene.fog = new THREE.Fog(0x87CEEB, 20, 80);
 
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.5, 200);
     camera.position.set(0, 6, 10);
@@ -61,7 +58,7 @@
     sun.shadow.mapSize.set(1024, 1024);
     scene.add(sun);
 
-    // ======================== ЗЕМЛЯ И ДЕКОРАЦИИ ========================
+    // ======================== ЗЕМЛЯ ========================
     const groundCanvas = document.createElement('canvas');
     groundCanvas.width = 1024; groundCanvas.height = 1024;
     const gctx = groundCanvas.getContext('2d');
@@ -72,79 +69,49 @@
       gctx.fillRect(Math.random() * 1024, Math.random() * 1024, 4, 4);
     }
     const groundTex = new THREE.CanvasTexture(groundCanvas);
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(100, 128), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.9 }));
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 64), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.9 }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Деревья, кусты, цветы
-    function addTree(x, z, size = 1.0) {
-      const group = new THREE.Group();
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * size, 0.3 * size, 2.5 * size), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
-      trunk.position.y = 1.25 * size;
-      group.add(trunk);
-      const foliage = new THREE.Mesh(new THREE.SphereGeometry(1.2 * size, 8), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
-      foliage.position.y = 2.8 * size;
-      group.add(foliage);
-      group.position.set(x, 0, z);
-      scene.add(group);
-    }
-    function addBush(x, z, size = 0.4) {
-      const bush = new THREE.Mesh(new THREE.SphereGeometry(size, 8), new THREE.MeshStandardMaterial({ color: 0x336633 }));
-      bush.position.set(x, size * 0.4, z);
-      scene.add(bush);
-    }
-    // Генерация мира
-    for (let i = 0; i < 60; i++) {
+    // Деревья и кусты
+    for (let i = 0; i < 40; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const radius = 15 + Math.random() * 80;
+      const radius = 10 + Math.random() * 50;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      if (Math.random() < 0.6) addTree(x, z, 0.5 + Math.random() * 0.8);
-      else if (Math.random() < 0.3) addBush(x, z, 0.3 + Math.random() * 0.5);
-    }
-    // Центральное дерево-пирожок
-    addTree(0, 0, 2.5);
-    // Забор по центру
-    for (let i = -15; i <= 15; i += 1.2) {
-      const post1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.2), new THREE.MeshStandardMaterial({ color: 0xcccccc }));
-      post1.position.set(i, 0.6, -2);
-      post1.castShadow = true; post1.receiveShadow = true; scene.add(post1);
-      const post2 = post1.clone();
-      post2.position.set(i, 0.6, 2);
-      scene.add(post2);
-      if (i % 3 < 1) {
-        const plank = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xcccccc }));
-        plank.position.set(i, 0.6, 0);
-        plank.castShadow = true; plank.receiveShadow = true; scene.add(plank);
-      }
+      const treeGroup = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
+      trunk.position.y = 1;
+      treeGroup.add(trunk);
+      const foliage = new THREE.Mesh(new THREE.SphereGeometry(1, 8), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
+      foliage.position.y = 2.5;
+      treeGroup.add(foliage);
+      treeGroup.position.set(x, 0, z);
+      scene.add(treeGroup);
     }
 
-    // ======================== ПРЕДМЕТЫ ДЛЯ БРОСКОВ ========================
+    // ======================== ПРЕДМЕТЫ ========================
     const throwables = [];
-    function createItemMesh(type) {
+    function addItem(x, z, type) {
       let geo, mat;
       switch (type) {
         case 'stone': geo = new THREE.SphereGeometry(0.22); mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5 }); break;
         case 'apple': geo = new THREE.SphereGeometry(0.25); mat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.4 }); break;
         case 'stick': geo = new THREE.CylinderGeometry(0.1, 0.12, 0.5); mat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b }); break;
-        case 'pumpkin': geo = new THREE.SphereGeometry(0.3); mat = new THREE.MeshStandardMaterial({ color: 0xff8c00, roughness: 0.5 }); break;
         default: geo = new THREE.SphereGeometry(0.2); mat = new THREE.MeshStandardMaterial({ color: 0x6b4c3b }); break;
       }
-      return new THREE.Mesh(geo, mat);
-    }
-    function addThrowable(x, z, type) {
-      const mesh = createItemMesh(type);
+      const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, 0.2, z);
       mesh.castShadow = true; mesh.receiveShadow = true;
       scene.add(mesh);
       throwables.push({ mesh, velocity: new THREE.Vector3(), holder: null, type });
     }
-    const types = ['stone', 'apple', 'stick', 'pumpkin', 'mud'];
-    for (let i = 0; i < 100; i++) {
+    const types = ['stone', 'apple', 'stick', 'mud'];
+    for (let i = 0; i < 80; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const radius = 12 + Math.random() * 80;
-      addThrowable(Math.cos(angle) * radius, Math.sin(angle) * radius, types[Math.floor(Math.random() * types.length)]);
+      const radius = 8 + Math.random() * 45;
+      addItem(Math.cos(angle) * radius, Math.sin(angle) * radius, types[Math.floor(Math.random() * types.length)]);
     }
 
     // ======================== ПЕРСОНАЖИ ========================
@@ -155,113 +122,120 @@
       const group = new THREE.Group();
       const bodyMat = new THREE.MeshStandardMaterial({ color: teamColor, roughness: 0.5 });
       const skinMat = new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.3 });
-      const pantsMat = new THREE.MeshStandardMaterial({ color: 0x2244aa });
-      const shoeMat = new THREE.MeshStandardMaterial({ color: 0x332211 });
 
-      // Тело
       const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8), bodyMat);
       torso.position.y = 0.6; torso.castShadow = true; group.add(torso);
-      // Голова
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16), skinMat);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8), skinMat);
       head.position.y = 1.4; head.castShadow = true; group.add(head);
-      // Глаза
-      const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.1), eyeWhite);
-      leftEye.position.set(-0.13, 1.5, 0.33); group.add(leftEye);
-      const rightEye = leftEye.clone(); rightEye.position.set(0.13, 1.5, 0.33); group.add(rightEye);
-      const pupilMat = new THREE.MeshStandardMaterial({ color: 0x111122 });
-      const leftPupil = new THREE.Mesh(new THREE.SphereGeometry(0.05), pupilMat);
-      leftPupil.position.set(-0.13, 1.48, 0.4); group.add(leftPupil);
-      const rightPupil = leftPupil.clone(); rightPupil.position.set(0.13, 1.48, 0.4); group.add(rightPupil);
-      // Рот
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      eye.position.set(-0.13, 1.5, 0.33); group.add(eye);
+      const eye2 = eye.clone(); eye2.position.set(0.13, 1.5, 0.33); group.add(eye2);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05), new THREE.MeshStandardMaterial({ color: 0x111122 }));
+      pupil.position.set(-0.13, 1.48, 0.4); group.add(pupil);
+      const pupil2 = pupil.clone(); pupil2.position.set(0.13, 1.48, 0.4); group.add(pupil2);
       const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x552222 }));
       mouth.position.set(0, 1.3, 0.35); mouth.rotation.x = 0.2; group.add(mouth);
-      // Шляпа для игрока
+
       if (isPlayer) {
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xffaa33 }));
         hat.position.set(0, 1.75, 0); group.add(hat);
       }
-      // Конечности
+
+      // Руки и ноги
       const armL = new THREE.Group(), armR = new THREE.Group();
-      const upperArmGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.6, 6);
-      const forearmGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.5, 6);
-      const handGeo = new THREE.SphereGeometry(0.09);
-      armL.add(new THREE.Mesh(upperArmGeo, bodyMat).translateY(-0.3));
-      armL.add(new THREE.Mesh(forearmGeo, skinMat).translateY(-0.8));
-      armL.add(new THREE.Mesh(handGeo, skinMat).translateY(-1.1));
-      armL.position.set(-0.55, 1.2, 0); group.add(armL);
-      armR.add(new THREE.Mesh(upperArmGeo, bodyMat).translateY(-0.3));
-      armR.add(new THREE.Mesh(forearmGeo, skinMat).translateY(-0.8));
-      armR.add(new THREE.Mesh(handGeo, skinMat).translateY(-1.1));
-      armR.position.set(0.55, 1.2, 0); group.add(armR);
+      const armGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.8, 6);
+      armL.add(new THREE.Mesh(armGeo, bodyMat).translateY(-0.4));
+      armL.position.set(-0.55, 1.1, 0); group.add(armL);
+      armR.add(new THREE.Mesh(armGeo, bodyMat).translateY(-0.4));
+      armR.position.set(0.55, 1.1, 0); group.add(armR);
+
       const legL = new THREE.Group(), legR = new THREE.Group();
-      const thighGeo = new THREE.CylinderGeometry(0.13, 0.15, 0.55, 6);
-      const shinGeo = new THREE.CylinderGeometry(0.1, 0.13, 0.5, 6);
-      const shoeGeo = new THREE.BoxGeometry(0.15, 0.1, 0.25);
-      legL.add(new THREE.Mesh(thighGeo, pantsMat).translateY(-0.25));
-      legL.add(new THREE.Mesh(shinGeo, pantsMat).translateY(-0.75));
-      legL.add(new THREE.Mesh(shoeGeo, shoeMat).translateY(-1.0).translateZ(0.06));
+      const legGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.7, 6);
+      legL.add(new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x2244aa })).translateY(-0.35));
       legL.position.set(-0.2, 0, 0); group.add(legL);
-      legR.add(new THREE.Mesh(thighGeo, pantsMat).translateY(-0.25));
-      legR.add(new THREE.Mesh(shinGeo, pantsMat).translateY(-0.75));
-      legR.add(new THREE.Mesh(shoeGeo, shoeMat).translateY(-1.0).translateZ(0.06));
+      legR.add(new THREE.Mesh(legGeo, new THREE.MeshStandardMaterial({ color: 0x2244aa })).translateY(-0.35));
       legR.position.set(0.2, 0, 0); group.add(legR);
 
       group.position.set(pos.x, 0, pos.z);
       scene.add(group);
 
-      const userData = {
+      group.userData = {
         name,
         team: teamColor,
         stunned: false,
         heldItem: null,
         lastThrow: 0,
         lastPickup: 0,
-        armL,
-        armR,
-        legL,
-        legR,
+        armL, armR, legL, legR,
         falling: false,
-        speed: 0.07,
+        speed: 0.06,
         isPlayer
       };
-      group.userData = userData;
       return group;
     }
 
-    // Создаём игрока
+    // Создаём игрока и команды
     const player = createCharacter('Артур', 0xffaa33, new THREE.Vector3(-5, 0, -5), true);
     allies.push(player);
 
-    // Союзники
-    allies.push(createCharacter('Бряк', 0x4488ff, new THREE.Vector3(-15, 0, -15)));
-    allies.push(createCharacter('Листик', 0x44aa44, new THREE.Vector3(-12, 0, -20)));
-    allies.push(createCharacter('Гром', 0xaa4444, new THREE.Vector3(-18, 0, -12)));
+    allies.push(createCharacter('Бряк', 0x4488ff, new THREE.Vector3(-12, 0, -12)));
+    allies.push(createCharacter('Листик', 0x44aa44, new THREE.Vector3(-8, 0, -15)));
+    allies.push(createCharacter('Гром', 0xaa4444, new THREE.Vector3(-15, 0, -8)));
 
-    // Враги
-    enemies.push(createCharacter('Зубан', 0xcc6644, new THREE.Vector3(15, 0, 15)));
-    enemies.push(createCharacter('Дылда', 0x6666aa, new THREE.Vector3(12, 0, 20)));
-    enemies.push(createCharacter('Шустря', 0xaa88cc, new THREE.Vector3(18, 0, 12)));
+    enemies.push(createCharacter('Зубан', 0xcc6644, new THREE.Vector3(12, 0, 12)));
+    enemies.push(createCharacter('Дылда', 0x6666aa, new THREE.Vector3(8, 0, 15)));
+    enemies.push(createCharacter('Шустря', 0xaa88cc, new THREE.Vector3(15, 0, 8)));
 
-    // ======================== УПРАВЛЕНИЕ ИГРОКОМ ========================
+    console.log('👥 Персонажи созданы. Игрок: Артур, враги: Зубан, Дылда, Шустря');
+
+    // ======================== УПРАВЛЕНИЕ ========================
     const keys = {};
-    window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; e.preventDefault(); });
-    window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; e.preventDefault(); });
-    let mouseX = 0, mouseY = 0;
-    window.addEventListener('mousemove', (e) => { mouseX = e.movementX; mouseY = e.movementY; });
-    renderer.domElement.addEventListener('click', () => renderer.domElement.requestPointerLock());
-    document.addEventListener('pointerlockchange', () => {
-      document.getElementById('crosshair').style.display = document.pointerLockElement ? 'block' : 'none';
+    window.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
+      console.log('⌨️ Нажата клавиша:', e.key);
+      e.preventDefault();
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+      e.preventDefault();
     });
 
     let yaw = 0, pitch = 0;
+    window.addEventListener('mousemove', (e) => {
+      if (document.pointerLockElement === renderer.domElement) {
+        yaw -= e.movementX * 0.002;
+        pitch -= e.movementY * 0.002;
+        pitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
+      }
+    });
+
+    // Захват мыши
+    renderer.domElement.addEventListener('click', () => {
+      console.log('🖱️ Клик по холсту, запрашиваю Pointer Lock');
+      renderer.domElement.requestPointerLock();
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      const locked = document.pointerLockElement === renderer.domElement;
+      document.getElementById('lock-status').textContent = locked ? 'АКТИВНО' : 'НЕ АКТИВНО';
+      document.getElementById('lock-status').style.color = locked ? 'lime' : 'red';
+      document.getElementById('crosshair').style.display = locked ? 'block' : 'none';
+      console.log(locked ? '✅ Управление активировано' : '❌ Управление деактивировано');
+    });
+
+    // Бросок
     let throwStart = 0, isThrowing = false;
     window.addEventListener('mousedown', (e) => {
-      if (e.button === 0) { isThrowing = true; throwStart = performance.now(); }
+      if (e.button === 0 && document.pointerLockElement) {
+        isThrowing = true;
+        throwStart = performance.now();
+        console.log('🎯 Начало броска');
+      }
     });
     window.addEventListener('mouseup', (e) => {
-      if (e.button === 0 && isThrowing) {
+      if (e.button === 0 && isThrowing && document.pointerLockElement) {
         const power = Math.min((performance.now() - throwStart) / 800, 1.0);
+        console.log('💥 Бросок с силой', power.toFixed(2));
         throwItem(player, power);
         isThrowing = false;
       }
@@ -269,20 +243,17 @@
 
     function pickUpItem(char) {
       if (char.userData.heldItem) return;
-      const now = performance.now() / 1000;
-      if (now - char.userData.lastPickup < 0.5) return;
       let closest = null, minDist = 1.6;
-      for (const t of throwables) {
-        if (t.holder || t.velocity.length() > 0.1) continue;
+      throwables.forEach(t => {
+        if (t.holder) return;
         const d = char.position.distanceTo(t.mesh.position);
         if (d < minDist) { minDist = d; closest = t; }
-      }
+      });
       if (closest) {
         char.userData.heldItem = closest;
         closest.holder = char;
         scene.remove(closest.mesh);
-        char.userData.lastPickup = now;
-        if (char.userData.isPlayer) updateItemIndicator();
+        console.log(`📦 ${char.userData.name} подобрал ${closest.type}`);
       }
     }
 
@@ -293,89 +264,67 @@
       char.userData.heldItem = null;
       item.mesh.position.copy(char.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
       const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(char.quaternion);
-      item.velocity.copy(direction.multiplyScalar(7 + power * 11));
+      item.velocity.copy(direction.multiplyScalar(6 + power * 10));
       item.velocity.y = 4 + power * 6;
       scene.add(item.mesh);
       char.userData.lastThrow = performance.now() / 1000;
-      if (char.userData.isPlayer) updateItemIndicator();
+      console.log(`🚀 ${char.userData.name} метнул ${item.type}`);
     }
 
     function stun(char, duration = 1500) {
       if (char.userData.stunned) return;
       char.userData.stunned = true;
       char.userData.falling = true;
+      console.log(`💫 ${char.userData.name} оглушён`);
       setTimeout(() => {
         char.userData.stunned = false;
         char.userData.falling = false;
+        console.log(`✅ ${char.userData.name} пришёл в себя`);
       }, duration);
     }
 
-    function updateItemIndicator() {
-      document.getElementById('item-indicator').textContent = player.userData.heldItem ? '🎒 ' + player.userData.heldItem.type : '🎒 Пусто';
-    }
-
-    // ======================== ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ ========================
-    function updateAI(character, deltaTime) {
+    // ======================== ИИ ========================
+    function updateAI(character) {
       if (character.userData.stunned) return;
-      // Определяем врагов для этого персонажа
-      const myTeam = character.userData.team;
-      const opponents = (myTeam === 0xffaa33 || myTeam === 0x4488ff || myTeam === 0x44aa44 || myTeam === 0xaa4444) ? enemies : allies;
+      const opponents = (character.userData.team === 0xffaa33 || character.userData.team === 0x4488ff || character.userData.team === 0x44aa44 || character.userData.team === 0xaa4444) ? enemies : allies;
       if (opponents.length === 0) return;
 
-      // Находим ближайшего противника
-      let closestOpponent = null;
-      let minDist = Infinity;
+      let target = null, minDist = Infinity;
       opponents.forEach(opp => {
         const d = character.position.distanceTo(opp.position);
-        if (d < minDist) {
-          minDist = d;
-          closestOpponent = opp;
-        }
+        if (d < minDist) { minDist = d; target = opp; }
       });
-      if (!closestOpponent) return;
+      if (!target) return;
 
-      const distToTarget = minDist;
-      const directionToTarget = closestOpponent.position.clone().sub(character.position).normalize();
+      const dir = target.position.clone().sub(character.position);
+      const dist = dir.length();
 
-      if (distToTarget > 2.5) {
-        // Двигаемся к цели
-        character.position.add(directionToTarget.multiplyScalar(character.userData.speed));
-        character.lookAt(closestOpponent.position.x, character.position.y, closestOpponent.position.z);
-        // Анимация ходьбы
-        if (!character.userData.falling) {
-          character.userData.legL.rotation.x = Math.sin(Date.now() * 0.02) * 0.5;
-          character.userData.legR.rotation.x = Math.sin(Date.now() * 0.02 + Math.PI) * 0.5;
-          character.userData.armL.rotation.x = Math.sin(Date.now() * 0.02) * 0.3;
-          character.userData.armR.rotation.x = Math.sin(Date.now() * 0.02 + Math.PI) * 0.3;
-        }
+      if (dist > 2.5) {
+        dir.normalize();
+        character.position.add(dir.multiplyScalar(character.userData.speed));
+        character.lookAt(target.position.x, character.position.y, target.position.z);
+        // анимация ходьбы
+        character.userData.legL.rotation.x = Math.sin(Date.now() * 0.02) * 0.5;
+        character.userData.legR.rotation.x = Math.sin(Date.now() * 0.02 + Math.PI) * 0.5;
       } else {
-        // В зоне атаки: подбираем предмет, если нет, и бросаем
         if (!character.userData.heldItem) pickUpItem(character);
         if (character.userData.heldItem && performance.now() / 1000 - character.userData.lastThrow > 1.8) {
           throwItem(character, 0.5 + Math.random() * 0.3);
         }
-        // Анимация рук при атаке
-        if (character.userData.heldItem) {
-          character.userData.armR.rotation.x = -1.5; // замах
-        }
       }
 
-      // Если персонаж упал, отключаем анимацию ходьбы
       if (character.userData.falling) {
         character.userData.armL.rotation.z = Math.PI / 4;
         character.userData.armR.rotation.z = -Math.PI / 4;
         character.rotation.z = 0.2;
-        character.userData.legL.rotation.x = 0;
-        character.userData.legR.rotation.x = 0;
       } else {
         character.rotation.z = 0;
       }
     }
 
-    // ======================== ОБНОВЛЕНИЕ ИГРЫ ========================
+    // ======================== ИГРОВОЙ ЦИКЛ ========================
     function update() {
-      // Управление игроком
-      if (!player.userData.stunned && document.pointerLockElement) {
+      if (!player.userData.stunned && document.pointerLockElement === renderer.domElement) {
         const speed = 0.1;
         if (keys['w']) player.position.z -= speed;
         if (keys['s']) player.position.z += speed;
@@ -384,13 +333,7 @@
         if (keys['e']) { pickUpItem(player); keys['e'] = false; }
       }
 
-      // Обновление камеры от первого лица
-      if (document.pointerLockElement) {
-        yaw -= mouseX * 0.002;
-        pitch -= mouseY * 0.002;
-        pitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
-        mouseX = 0; mouseY = 0;
-      }
+      // Камера
       const camDist = 5.5, camHeight = 2.2;
       camera.position.set(
         player.position.x + Math.sin(yaw) * camDist,
@@ -399,27 +342,12 @@
       );
       camera.lookAt(player.position.x, player.position.y + 1.2, player.position.z);
       player.rotation.y = yaw;
-      // Анимация ходьбы игрока
-      if (!player.userData.stunned && (keys['w'] || keys['a'] || keys['s'] || keys['d'])) {
-        player.userData.legL.rotation.x = Math.sin(Date.now() * 0.03) * 0.6;
-        player.userData.legR.rotation.x = Math.sin(Date.now() * 0.03 + Math.PI) * 0.6;
-        player.userData.armL.rotation.x = Math.sin(Date.now() * 0.03) * 0.4;
-        player.userData.armR.rotation.x = Math.sin(Date.now() * 0.03 + Math.PI) * 0.4;
-      } else if (!player.userData.stunned) {
-        player.userData.legL.rotation.x = 0;
-        player.userData.legR.rotation.x = 0;
-        player.userData.armL.rotation.x = 0;
-        player.userData.armR.rotation.x = 0;
-      }
 
-      // ИИ союзников и врагов
-      const now = Date.now();
-      allies.forEach((ally) => {
-        if (ally !== player) updateAI(ally, 0.016);
-      });
-      enemies.forEach((enemy) => updateAI(enemy, 0.016));
+      // ИИ
+      allies.forEach(ally => { if (ally !== player) updateAI(ally); });
+      enemies.forEach(enemy => updateAI(enemy));
 
-      // Физика брошенных предметов
+      // Физика предметов
       for (let i = throwables.length - 1; i >= 0; i--) {
         const t = throwables[i];
         if (t.holder) continue;
@@ -429,9 +357,8 @@
           t.mesh.position.y = 0.15;
           t.velocity.set(0, 0, 0);
         }
-        // Проверка столкновений с персонажами
-        const allCharacters = [player, ...allies, ...enemies];
-        for (const char of allCharacters) {
+        const allChars = [player, ...allies, ...enemies];
+        for (const char of allChars) {
           if (char === t.holder) continue;
           const dist = char.position.distanceTo(t.mesh.position);
           if (dist < 0.9 && t.velocity.length() > 0.5) {
@@ -444,10 +371,10 @@
         }
       }
 
-      // Обновление UI
+      // UI
       document.getElementById('ally-count').textContent = allies.filter(a => !a.userData.stunned).length;
       document.getElementById('enemy-count').textContent = enemies.filter(e => !e.userData.stunned).length;
-      updateItemIndicator();
+      document.getElementById('item-indicator').textContent = player.userData.heldItem ? '🎒 ' + player.userData.heldItem.type : '🎒 Пусто';
     }
 
     function animate() {
@@ -455,6 +382,8 @@
       update();
       renderer.render(scene, camera);
     }
+
+    console.log('🎮 Запуск анимации. Жду захвата мыши...');
     animate();
 
     window.addEventListener('resize', () => {
@@ -462,8 +391,6 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-    console.log('⚔️ Игра готова! Кликни для захвата мыши.');
   </script>
 </body>
 </html>
