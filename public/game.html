@@ -3,68 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Небесный Ковчег · Живой ИИ-мир</title>
+  <title>Битва за Пирожок · Визуальный прототип</title>
   <style>
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-    #team-panel, #resources-panel {
-      position: absolute; top: 20px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-      padding: 12px 18px; border-radius: 16px; color: white; z-index: 10; pointer-events: auto;
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    #ui-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 20px;
+      color: white;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 10;
+      border: 1px solid rgba(255,255,255,0.3);
+      pointer-events: auto;
+    }
+    button {
+      background: #ffaa00;
+      border: none;
+      color: black;
+      padding: 10px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #ffbb33;
+    }
+    #selected-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px);
+      padding: 12px 18px;
+      border-radius: 16px;
+      color: white;
+      z-index: 10;
       border: 1px solid rgba(255,255,255,0.2);
     }
-    #team-panel { left: 20px; max-width: 280px; }
-    #resources-panel { right: 20px; color: #ffd966; font-weight: bold; }
-    .npc-entry { display: flex; align-items: center; gap: 8px; margin: 6px 0; cursor: pointer; padding: 4px; border-radius: 8px; transition: background 0.2s; }
-    .npc-entry:hover { background: rgba(255,255,255,0.15); }
-    .need-bar { display: flex; gap: 4px; font-size: 11px; margin-left: auto; }
-    .need-item { background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; }
-    #chat-panel {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 500px; max-width: 90%;
-      background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); padding: 12px; border-radius: 16px; color: white;
-      display: none; flex-direction: column; gap: 8px; z-index: 10; border: 1px solid rgba(255,255,255,0.3);
+    .thought-bubble {
+      color: #ff0;
+      background: rgba(0,0,0,0.8);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      max-width: 140px;
+      text-align: center;
     }
-    #chat-messages { max-height: 120px; overflow-y: auto; font-size: 13px; }
-    #chat-input-row { display: flex; gap: 8px; }
-    #chat-input { flex: 1; padding: 10px; border-radius: 20px; border: none; background: rgba(255,255,255,0.2); color: white; }
-    button { background: #ffaa00; border: none; color: black; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #ffbb33; }
-    .task-btns { display: flex; gap: 6px; margin-top: 4px; }
-    .task-btn { background: #4a4a8a; color: white; font-size: 12px; padding: 4px 10px; border-radius: 12px; cursor: pointer; }
-    #hint { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #ccc; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 5; pointer-events: none; }
   </style>
 </head>
 <body>
-  <div id="team-panel">
-    <h3 style="margin:0 0 8px;">👥 Команда</h3>
-    <div id="npc-list"></div>
-    <div style="font-size:11px; margin-top:6px; color:#aaffaa;">🧠 ИИ управляет поведением</div>
+  <div id="selected-info">
+    <span id="char-name">Никто не выбран</span>
+    <div style="font-size:12px; color:#aaa;">Кликни по персонажу</div>
   </div>
-  <div id="resources-panel">
-    <div>🪵 Дерево: <span id="wood-count">0</span></div>
-    <div>⛓️ Железо: <span id="iron-count">0</span></div>
-    <div>🧵 Ткань: <span id="cloth-count">0</span></div>
-    <div>🚀 Модули: <span id="modules-built">0</span>/4</div>
+  <div id="ui-panel">
+    <button id="action-walk">🚶 Идти к пирожку</button>
+    <button id="action-throw">🥧 Бросок</button>
+    <button id="action-fall">🤸 Упасть</button>
+    <button id="action-build">🔨 Строить</button>
+    <button id="action-wave">👋 Привет</button>
   </div>
-  <div id="chat-panel">
-    <div style="display:flex; justify-content:space-between;">
-      <span>💬 <span id="chat-target-name"></span></span>
-      <span style="cursor:pointer;" id="close-chat">✖</span>
-    </div>
-    <div id="chat-messages"></div>
-    <div class="task-btns">
-      <span class="task-btn" data-task="wood">🪵 Рубить лес</span>
-      <span class="task-btn" data-task="iron">⛓️ Добыть железо</span>
-      <span class="task-btn" data-task="cloth">🧵 Собрать ткань</span>
-      <span class="task-btn" data-task="rest">😴 Отдыхать</span>
-    </div>
-    <div id="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Твоё сообщение..." />
-      <button id="send-btn">→</button>
-    </div>
-  </div>
-  <div id="hint">🖱️ Кликни по персонажу для разговора | Стрелки/WASD — двигаться</div>
 
   <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+      }
+    }
   </script>
 
   <script type="module">
@@ -72,37 +92,12 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-    const GROQ_API_KEY = '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';
-    const GROQ_MODEL = 'llama-3.3-70b-versatile';
-
-    const WORLD_SIZE = 18;
-    const resources = { wood: 0, iron: 0, cloth: 0, modules: 0 };
-    const npcs = [];
-    let selectedNpc = null;
-    let player;
-    const keyState = {};
-    let timeOfDay = 0; // 0-24 часа
-
-    const npcData = [
-      { id:'bryak', name:'Бряк', role:'Инженер', hunger:70, fatigue:70, mood:70, color:0x4488ff, pos:{x:-4,z:3} },
-      { id:'listik', name:'Листик', role:'Травница', hunger:70, fatigue:70, mood:70, color:0x44aa44, pos:{x:3,z:-4} },
-      { id:'grom', name:'Гром', role:'Охотник', hunger:70, fatigue:70, mood:70, color:0xaa4444, pos:{x:5,z:5} }
-    ];
-
-    const locations = {
-      appleOrchard: new THREE.Vector3(-8, 0, 7),
-      restHouse: new THREE.Vector3(7, 0, -6),
-      sawmill: new THREE.Vector3(-9, 0, -5),
-      cave: new THREE.Vector3(8, 0, 8),
-      meadow: new THREE.Vector3(-4, 0, -9),
-      lake: new THREE.Vector3(5, 0, -2),
-      hangar: new THREE.Vector3(0, 0, 0)
-    };
-
+    // --- Сцена ---
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x1a1a3e, 15, 40);
-    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.5, 60);
-    camera.position.set(10, 8, 12);
+    scene.background = new THREE.Color(0x87CEEB);
+    scene.fog = new THREE.Fog(0x87CEEB, 12, 28);
+    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.5, 50);
+    camera.position.set(8, 6, 11);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
     renderer.shadowMap.enabled = true;
@@ -111,322 +106,367 @@
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(innerWidth, innerHeight);
     labelRenderer.domElement.style.position = 'absolute';
-    labelRenderer.domElement.style.top = '0'; labelRenderer.domElement.style.left = '0';
+    labelRenderer.domElement.style.top = '0';
+    labelRenderer.domElement.style.left = '0';
     labelRenderer.domElement.style.pointerEvents = 'none';
     document.body.appendChild(labelRenderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0,1,0);
+    controls.target.set(0, 1, 0);
     controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI/2.3;
+    controls.maxPolarAngle = Math.PI / 2.3;
     controls.minDistance = 5;
-    controls.maxDistance = 35;
+    controls.maxDistance = 30;
     controls.update();
 
-    const ambient = new THREE.AmbientLight(0x444466);
-    scene.add(ambient);
-    const sun = new THREE.DirectionalLight(0xffeebb, 0.9);
+    scene.add(new THREE.AmbientLight(0x8899bb));
+    const sun = new THREE.DirectionalLight(0xfff5e6, 0.9);
     sun.position.set(20, 25, 10);
-    sun.castShadow = true; sun.receiveShadow = true;
-    sun.shadow.mapSize.set(2048,2048);
+    sun.castShadow = true;
+    sun.receiveShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
 
     // Земля
-    const groundTex = (()=>{
-      const c=document.createElement('canvas'); c.width=512; c.height=512;
-      const ctx=c.getContext('2d'); ctx.fillStyle='#4a6b3a'; ctx.fillRect(0,0,512,512);
-      for(let i=0;i<500;i++){ ctx.fillStyle=Math.random()<0.3?'#3a5a2a':'#5a7a4a'; ctx.fillRect(Math.random()*512,Math.random()*512,3,3); }
-      return new THREE.CanvasTexture(c);
-    })();
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(WORLD_SIZE,64), new THREE.MeshStandardMaterial({map:groundTex}));
-    ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      new THREE.MeshStandardMaterial({ color: 0x5a8f4a, roughness: 0.8 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
 
-    // Строим мир
-    function addTree(x,z){const g=new THREE.Group();const t=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.3,2),new THREE.MeshStandardMaterial({color:0x8b5a2b}));t.position.y=1;g.add(t);const l=new THREE.Mesh(new THREE.SphereGeometry(0.9),new THREE.MeshStandardMaterial({color:0x2d5a27}));l.position.y=2.2;g.add(l);g.position.set(x,0,z);scene.add(g);}
-    function addBush(x,z){const b=new THREE.Mesh(new THREE.SphereGeometry(0.3),new THREE.MeshStandardMaterial({color:0x336633}));b.position.set(x,0.15,z);scene.add(b);}
-    function addBuilding(x,z,color,w=1.5,h=2,d=1.5){
-      const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color}));b.position.set(x,h/2,z);b.castShadow=true;b.receiveShadow=true;scene.add(b);
-      const roof=new THREE.Mesh(new THREE.ConeGeometry(w*0.7,0.5,8),new THREE.MeshStandardMaterial({color:0xaa5533}));roof.position.set(x,h+0.25,z);roof.castShadow=true;scene.add(roof);
+    // --- Объекты мира ---
+    function addTree(x, z) {
+      const g = new THREE.Group();
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
+      t.position.y = 1;
+      g.add(t);
+      const l = new THREE.Mesh(new THREE.SphereGeometry(0.9), new THREE.MeshStandardMaterial({ color: 0x2d5a27 }));
+      l.position.y = 2.2;
+      g.add(l);
+      g.position.set(x, 0, z);
+      scene.add(g);
     }
-    // Озеро
-    const lakeGeo = new THREE.CircleGeometry(2.5, 32);
-    const lakeMat = new THREE.MeshStandardMaterial({ color: 0x3366aa, roughness: 0.2, transparent: true, opacity: 0.8 });
-    const lakeMesh = new THREE.Mesh(lakeGeo, lakeMat);
-    lakeMesh.rotation.x = -Math.PI/2;
-    lakeMesh.position.set(locations.lake.x, 0.05, locations.lake.z);
-    lakeMesh.receiveShadow = true;
-    scene.add(lakeMesh);
+    function addBush(x, z) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.35), new THREE.MeshStandardMaterial({ color: 0x336633 }));
+      b.position.set(x, 0.15, z);
+      scene.add(b);
+    }
+    function addPuddle(x, z) {
+      const p = new THREE.Mesh(new THREE.CircleGeometry(0.5, 16), new THREE.MeshStandardMaterial({ color: 0x8b6b4d, roughness: 0.1 }));
+      p.rotation.x = -Math.PI / 2;
+      p.position.set(x, 0.02, z);
+      scene.add(p);
+    }
+    function addBarrier(x, z, color = 0xaa7744) {
+      const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.4), new THREE.MeshStandardMaterial({ color }));
+      box.position.set(x, 0.4, z);
+      box.castShadow = true;
+      box.receiveShadow = true;
+      scene.add(box);
+    }
 
-    for(let i=0;i<8;i++) addTree(locations.appleOrchard.x-2+Math.random()*4, locations.appleOrchard.z-2+Math.random()*4);
-    addBuilding(locations.appleOrchard.x, locations.appleOrchard.z, 0x88aa44, 1.2,1.8,1.2);
-    addBuilding(locations.restHouse.x, locations.restHouse.z, 0xaa8866, 1.8,2,1.8);
-    addBuilding(locations.sawmill.x, locations.sawmill.z, 0xccaa88, 2,2.2,2);
-    for(let i=0;i<6;i++) addTree(locations.sawmill.x-1.5+Math.random()*3, locations.sawmill.z-1.5+Math.random()*3);
-    const caveEntrance=new THREE.Mesh(new THREE.CylinderGeometry(1.2,0.8,2,8,1,true),new THREE.MeshStandardMaterial({color:0x666666,side:THREE.DoubleSide}));
-    caveEntrance.position.set(locations.cave.x,1,locations.cave.z); caveEntrance.rotation.x=Math.PI/2; scene.add(caveEntrance);
-    for(let i=0;i<10;i++) addBush(locations.meadow.x-2+Math.random()*4, locations.meadow.z-2+Math.random()*4);
-    const hangar=new THREE.Mesh(new THREE.BoxGeometry(4,3,5),new THREE.MeshStandardMaterial({color:0x8b7355}));
-    hangar.position.set(0,1.5,0); hangar.castShadow=true; hangar.receiveShadow=true; scene.add(hangar);
-    // Костры
-    const fireLight = new THREE.PointLight(0xff6600, 0.8, 8);
-    fireLight.position.set(2, 1.5, -3);
-    scene.add(fireLight);
+    // Поляна
+    addTree(0, 0); // дерево пирожка
+    addBush(2, 1.5);
+    addBush(-2, -1.5);
+    addBush(3.5, -3);
+    addBush(-3.5, 3.5);
+    addPuddle(4, -2);
+    addPuddle(-4, 2.5);
+    addPuddle(-5, -3);
+    // Базы команд
+    addBarrier(-5, -5, 0x4488ff); // Храпоглазы
+    addBarrier(-4.5, -5.8, 0x4488ff);
+    addBarrier(5, 5, 0xaa4444); // Зубоскалы
+    addBarrier(5.5, 4.5, 0xaa4444);
 
-    // Создание персонажа (как раньше)
-    function createCharacter(baseColor, name) {
+    // --- Создание персонажа с аксессуарами ---
+    const characters = [];
+
+    function createCharacter(name, teamColor, features = {}) {
       const group = new THREE.Group();
-      const skin = new THREE.MeshStandardMaterial({ color:0xffccaa, roughness:0.3 });
-      const cloth = new THREE.MeshStandardMaterial({ color:baseColor, roughness:0.5 });
-      const pants = new THREE.MeshStandardMaterial({ color:0x2244aa });
-      const shoes = new THREE.MeshStandardMaterial({ color:0x332211 });
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,1.2,8), cloth);
-      torso.position.y=0.6; group.add(torso);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35,16,16), skin);
-      head.position.y=1.35; group.add(head);
-      const eyeW = new THREE.MeshStandardMaterial({color:0xffffff});
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.1),eyeW).translate(-0.13,1.45,0.32));
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.1),eyeW).translate(0.13,1.45,0.32));
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.06),new THREE.MeshStandardMaterial({color:0x111122})).translate(-0.13,1.43,0.38));
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.06),new THREE.MeshStandardMaterial({color:0x111122})).translate(0.13,1.43,0.38));
-      const armL=new THREE.Group(),armR=new THREE.Group();
-      const uaGeo=new THREE.CylinderGeometry(0.1,0.12,0.6,6),faGeo=new THREE.CylinderGeometry(0.08,0.1,0.5,6),hGeo=new THREE.SphereGeometry(0.1);
-      armL.add(new THREE.Mesh(uaGeo,cloth).translateY(-0.3)); armL.add(new THREE.Mesh(faGeo,skin).translateY(-0.8)); armL.add(new THREE.Mesh(hGeo,skin).translateY(-1.1));
-      armL.position.set(-0.55,1.25,0); group.add(armL);
-      armR.add(new THREE.Mesh(uaGeo,cloth).translateY(-0.3)); armR.add(new THREE.Mesh(faGeo,skin).translateY(-0.8)); armR.add(new THREE.Mesh(hGeo,skin).translateY(-1.1));
-      armR.position.set(0.55,1.25,0); group.add(armR);
-      const legL=new THREE.Group(),legR=new THREE.Group();
-      const tGeo=new THREE.CylinderGeometry(0.13,0.15,0.55,6),sGeo=new THREE.CylinderGeometry(0.1,0.13,0.5,6),shGeo=new THREE.BoxGeometry(0.15,0.1,0.25);
-      legL.add(new THREE.Mesh(tGeo,pants).translateY(-0.25)); legL.add(new THREE.Mesh(sGeo,pants).translateY(-0.75)); legL.add(new THREE.Mesh(shGeo,shoes).translateY(-1.0).translateZ(0.06));
-      legL.position.set(-0.2,0,0); group.add(legL);
-      legR.add(new THREE.Mesh(tGeo,pants).translateY(-0.25)); legR.add(new THREE.Mesh(sGeo,pants).translateY(-0.75)); legR.add(new THREE.Mesh(shGeo,shoes).translateY(-1.0).translateZ(0.06));
-      legR.position.set(0.2,0,0); group.add(legR);
-      const label=new CSS2DObject(Object.assign(document.createElement('div'),{
-        textContent:name, style:'color:white;background:rgba(0,0,0,0.7);padding:2px 8px;border-radius:10px;font-size:11px;'
-      })); label.position.set(0,2.1,0); group.add(label);
+      const skin = new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.3 });
+      const cloth = new THREE.MeshStandardMaterial({ color: teamColor, roughness: 0.5 });
+      const pants = new THREE.MeshStandardMaterial({ color: 0x2244aa });
+      const shoes = new THREE.MeshStandardMaterial({ color: 0x332211 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x332211 });
+
+      // Тело
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.38, 1.1, 8), cloth);
+      torso.position.y = 0.55;
+      torso.castShadow = true; torso.receiveShadow = true;
+      group.add(torso);
+      // Голова
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), skin);
+      head.position.y = 1.35;
+      head.castShadow = true;
+      group.add(head);
+      // Глаза
+      const eyeW = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.1), eyeW).translate(-0.13, 1.45, 0.32));
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.1), eyeW).translate(0.13, 1.45, 0.32));
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0x111122 })).translate(-0.13, 1.43, 0.38));
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0x111122 })).translate(0.13, 1.43, 0.38));
+
+      // Аксессуары
+      if (features.hat) {
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 8), new THREE.MeshStandardMaterial({ color: features.hatColor || 0xff0000 }));
+        hat.position.set(0, 1.7, 0);
+        group.add(hat);
+      }
+      if (features.glasses) {
+        const frame = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 8, 16), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+        frame.position.set(-0.13, 1.45, 0.38);
+        group.add(frame);
+        const frame2 = frame.clone();
+        frame2.position.set(0.13, 1.45, 0.38);
+        group.add(frame2);
+      }
+      if (features.crown) {
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.2, 8), new THREE.MeshStandardMaterial({ color: 0xffdd44, roughness: 0.2 }));
+        crown.position.set(0, 1.65, 0);
+        group.add(crown);
+      }
+
+      // Конечности
+      const armL = new THREE.Group(), armR = new THREE.Group();
+      const uaGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.55, 6);
+      const faGeo = new THREE.CylinderGeometry(0.07, 0.09, 0.45, 6);
+      const handGeo = new THREE.SphereGeometry(0.09);
+      const makeArm = (side) => {
+        const arm = new THREE.Group();
+        arm.add(new THREE.Mesh(uaGeo, cloth).translateY(-0.25));
+        arm.add(new THREE.Mesh(faGeo, skin).translateY(-0.7));
+        arm.add(new THREE.Mesh(handGeo, skin).translateY(-1.0));
+        return arm;
+      };
+      armL.add(makeArm('L'));
+      armL.position.set(-0.52, 1.15, 0);
+      group.add(armL);
+      armR.add(makeArm('R'));
+      armR.position.set(0.52, 1.15, 0);
+      group.add(armR);
+
+      const legL = new THREE.Group(), legR = new THREE.Group();
+      const thighGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.5, 6);
+      const shinGeo = new THREE.CylinderGeometry(0.09, 0.12, 0.45, 6);
+      const shoeGeo = new THREE.BoxGeometry(0.14, 0.1, 0.22);
+      const makeLeg = () => {
+        const leg = new THREE.Group();
+        leg.add(new THREE.Mesh(thighGeo, pants).translateY(-0.22));
+        leg.add(new THREE.Mesh(shinGeo, pants).translateY(-0.67));
+        leg.add(new THREE.Mesh(shoeGeo, shoes).translateY(-0.9).translateZ(0.05));
+        return leg;
+      };
+      legL.add(makeLeg());
+      legL.position.set(-0.18, 0, 0);
+      group.add(legL);
+      legR.add(makeLeg());
+      legR.position.set(0.18, 0, 0);
+      group.add(legR);
+
+      // Подпись
+      const labelDiv = document.createElement('div');
+      labelDiv.textContent = name;
+      labelDiv.style.cssText = 'color:white; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:10px; font-size:11px;';
+      const label = new CSS2DObject(labelDiv);
+      label.position.set(0, 2.1, 0);
+      group.add(label);
+
       // Облачко мыслей
       const thoughtDiv = document.createElement('div');
-      thoughtDiv.style.cssText = 'color:#ff0;background:rgba(0,0,0,0.8);padding:4px 8px;border-radius:10px;font-size:10px;max-width:120px;display:none;';
+      thoughtDiv.className = 'thought-bubble';
+      thoughtDiv.style.display = 'none';
       const thoughtLabel = new CSS2DObject(thoughtDiv);
       thoughtLabel.position.set(0, 2.5, 0);
       group.add(thoughtLabel);
-      group.userData={armL,armR,legL,legR,label,thoughtLabel,thoughtDiv};
+
+      group.userData = {
+        name, armL, armR, legL, legR, thoughtDiv, thoughtLabel,
+        walkTarget: null,
+        action: null,
+        throwing: false,
+        fallen: false,
+        building: false
+      };
       return group;
     }
 
-    player = createCharacter(0xffaa33, 'Ты');
-    player.position.set(0,0,0);
-    scene.add(player);
+    // --- Команды ---
+    const captain = createCharacter('Ты (Артур)', 0xffaa33, { hat: true, hatColor: 0xffaa33, glasses: true });
+    captain.position.set(0, 0, -1);
+    scene.add(captain);
+    characters.push(captain);
 
-    npcData.forEach(d=>{
-      const mesh = createCharacter(d.color, d.name);
-      mesh.position.set(d.pos.x,0,d.pos.z);
-      scene.add(mesh);
-      npcs.push({...d, mesh, currentTask:null, lastThinkTime:0, plan:null, memory:[]});
+    const bryak = createCharacter('Бряк', 0x4488ff, { hat: true, hatColor: 0x4488ff });
+    bryak.position.set(-3, 0, -3);
+    scene.add(bryak);
+    characters.push(bryak);
+
+    const listik = createCharacter('Листик', 0x44aa44, { hat: true, hatColor: 0x44aa44, glasses: true });
+    listik.position.set(-2, 0, -4.5);
+    scene.add(listik);
+    characters.push(listik);
+
+    const grom = createCharacter('Гром', 0xaa4444, { hat: true, hatColor: 0xaa4444 });
+    grom.position.set(-4, 0, -2);
+    scene.add(grom);
+    characters.push(grom);
+
+    const zuban = createCharacter('Зубан', 0xcc6644, { crown: true });
+    zuban.position.set(3.5, 0, 3.5);
+    scene.add(zuban);
+    characters.push(zuban);
+
+    const dylda = createCharacter('Дылда', 0x6666aa, { hat: true, hatColor: 0x6666aa });
+    dylda.position.set(4.5, 0, 2.5);
+    scene.add(dylda);
+    characters.push(dylda);
+
+    const shustrya = createCharacter('Шустря', 0xaa88cc, { glasses: true });
+    shustrya.position.set(2.5, 0, 4.5);
+    scene.add(shustrya);
+    characters.push(shustrya);
+
+    const vorchun = createCharacter('Ворчун', 0x888888, { hat: true, hatColor: 0x666666 });
+    vorchun.position.set(5, 0, 4);
+    scene.add(vorchun);
+    characters.push(vorchun);
+
+    // --- Выбор персонажа ---
+    let selectedChar = null;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    renderer.domElement.addEventListener('click', (e) => {
+      mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(e.clientY / renderer.domElement.clientHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(characters, true);
+      if (intersects.length > 0) {
+        const char = characters.find(c => c === intersects[0].object || c.children.includes(intersects[0].object));
+        if (char) {
+          selectedChar = char;
+          document.getElementById('char-name').textContent = `Выбран: ${char.userData.name}`;
+        }
+      }
     });
 
-    // UI обновление
-    function updateUI(){
-      document.getElementById('wood-count').textContent=resources.wood;
-      document.getElementById('iron-count').textContent=resources.iron;
-      document.getElementById('cloth-count').textContent=resources.cloth;
-      document.getElementById('modules-built').textContent=resources.modules;
-      const list=document.getElementById('npc-list');
-      list.innerHTML=npcs.map(n=>`<div class="npc-entry" data-id="${n.id}">
-        <span style="color:#${n.color.toString(16)}">●</span> ${n.name}
-        <span class="need-bar"><span class="need-item">🍗${Math.round(n.hunger)}</span><span class="need-item">⚡${Math.round(n.fatigue)}</span><span class="need-item">😊${Math.round(n.mood)}</span></span>
-      </div>`).join('');
-      document.querySelectorAll('.npc-entry').forEach(el=>{
-        el.addEventListener('click',()=>{
-          const n=npcs.find(x=>x.id===el.dataset.id);
-          if(n) selectNPC(n);
-        });
-      });
-    }
-
-    function selectNPC(npc){
-      selectedNpc = npc;
-      document.getElementById('chat-panel').style.display='flex';
-      document.getElementById('chat-target-name').textContent=npc.name;
-      document.getElementById('chat-messages').innerHTML='';
-    }
-    document.getElementById('close-chat').addEventListener('click',()=>{
-      document.getElementById('chat-panel').style.display='none';
-      selectedNpc=null;
+    // --- Анимации действий ---
+    document.getElementById('action-walk').addEventListener('click', () => {
+      if (!selectedChar) return;
+      selectedChar.userData.walkTarget = new THREE.Vector3(0, 0, 0); // к дереву
+      selectedChar.userData.action = 'walk';
+      showThought(selectedChar, 'Иду к пирожку!');
+    });
+    document.getElementById('action-throw').addEventListener('click', () => {
+      if (!selectedChar) return;
+      selectedChar.userData.action = 'throw';
+      selectedChar.userData.throwing = true;
+      showThought(selectedChar, 'Лови!');
+      setTimeout(() => {
+        if (selectedChar) {
+          selectedChar.userData.throwing = false;
+          selectedChar.userData.action = null;
+        }
+      }, 800);
+    });
+    document.getElementById('action-fall').addEventListener('click', () => {
+      if (!selectedChar) return;
+      selectedChar.userData.fallen = true;
+      showThought(selectedChar, 'Ой!');
+      setTimeout(() => {
+        if (selectedChar) selectedChar.userData.fallen = false;
+      }, 1500);
+    });
+    document.getElementById('action-build').addEventListener('click', () => {
+      if (!selectedChar) return;
+      selectedChar.userData.building = true;
+      showThought(selectedChar, 'Строю...');
+      setTimeout(() => {
+        if (selectedChar) selectedChar.userData.building = false;
+      }, 1500);
+    });
+    document.getElementById('action-wave').addEventListener('click', () => {
+      if (!selectedChar) return;
+      selectedChar.userData.action = 'wave';
+      showThought(selectedChar, 'Привет!');
+      setTimeout(() => {
+        if (selectedChar) selectedChar.userData.action = null;
+      }, 1200);
     });
 
-    // Задачи через кнопки
-    document.querySelectorAll('.task-btn').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        if(!selectedNpc) return;
-        const task=btn.dataset.task;
-        selectedNpc.currentTask=task;
-        addMessage('Система', `${selectedNpc.name} получил задачу: ${task}`);
-        // также можно отправить уведомление через мысли
-        showThought(selectedNpc, `Задача: ${task}`);
-      });
-    });
-
-    // Общение
-    document.getElementById('send-btn').addEventListener('click',async ()=>{
-      if(!selectedNpc) return;
-      const input=document.getElementById('chat-input');
-      const msg=input.value.trim();
-      if(!msg) return;
-      addMessage('Ты',msg);
-      input.value='';
-      const sys=`Ты — ${selectedNpc.name}, ${selectedNpc.role}. Твои потребности: голод ${Math.round(selectedNpc.hunger)}%, усталость ${Math.round(selectedNpc.fatigue)}%, настроение ${Math.round(selectedNpc.mood)}%. Ты в команде строительства летучего корабля. Отвечай живо, коротко.`;
-      try{
-        const reply=await callGroq([{role:'system',content:sys},{role:'user',content:msg}]);
-        addMessage(selectedNpc.name,reply);
-      }catch(e){addMessage('Ошибка','ИИ не ответил.');}
-    });
-
-    async function callGroq(messages){
-      const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',
-        headers:{'Authorization':`Bearer ${GROQ_API_KEY}`,'Content-Type':'application/json'},
-        body:JSON.stringify({model:GROQ_MODEL,messages,max_tokens:100,temperature:0.9})
-      });
-      if(!res.ok) throw new Error(res.status);
-      const data=await res.json();
-      return data.choices[0].message.content.trim();
-    }
-
-    function addMessage(sender,text){
-      const div=document.createElement('div');
-      div.innerHTML=`<b>${sender}:</b> ${text}`;
-      document.getElementById('chat-messages').appendChild(div);
-      div.scrollIntoView({behavior:'smooth'});
-    }
-
-    function showThought(npc, text){
-      const td = npc.mesh.userData.thoughtDiv;
+    function showThought(char, text) {
+      const td = char.userData.thoughtDiv;
       td.textContent = text;
       td.style.display = 'block';
-      setTimeout(()=>{ td.style.display = 'none'; }, 4000);
+      setTimeout(() => { td.style.display = 'none'; }, 3000);
     }
 
-    // Управление
-    window.addEventListener('keydown',e=>{keyState[e.key]=true;});
-    window.addEventListener('keyup',e=>{keyState[e.key]=false;});
-
-    // Сердце игры: ИИ-мозги для NPC
-    async function npcThink(npc){
-      const now = performance.now()/1000;
-      if(now - npc.lastThinkTime < 15) return; // думаем не чаще раза в 15 сек
-      npc.lastThinkTime = now;
-      // Собираем контекст
-      const otherNpcs = npcs.filter(n=>n!==npc).map(n=>`${n.name}(${Math.round(n.hunger)}%🍗,${Math.round(n.fatigue)}%⚡) в позиции (${n.mesh.position.x.toFixed(1)},${n.mesh.position.z.toFixed(1)})`).join('; ');
-      const locDescs = Object.entries(locations).map(([k,v])=>`${k}(${v.x.toFixed(0)},${v.z.toFixed(0)})`).join(', ');
-      const prompt = `Ты — ${npc.name}, ${npc.role}. Твои потребности: голод ${Math.round(npc.hunger)}%, усталость ${Math.round(npc.fatigue)}%, настроение ${Math.round(npc.mood)}%.
-Твоя текущая задача: ${npc.currentTask||'нет'}.
-Другие персонажи: ${otherNpcs||'никого'}.
-Локации: ${locDescs}.
-Ты находишься в (${npc.mesh.position.x.toFixed(1)}, ${npc.mesh.position.z.toFixed(1)}).
-Выбери одно действие: идти к [локация], говорить с [имя], работать над задачей, отдыхать, исследовать. Ответь кратко, например: "иду к яблоневому саду" или "поговорю с Листик".`;
-      try{
-        const decision = await callGroq([{role:'user',content:prompt}]);
-        console.log(`${npc.name} решил: ${decision}`);
-        showThought(npc, decision);
-        // Парсим решение (очень простой парсинг)
-        const d = decision.toLowerCase();
-        if(d.includes('яблон')||d.includes('сад')) npc._goal = locations.appleOrchard;
-        else if(d.includes('дом отдыха')||d.includes('отдых')) npc._goal = locations.restHouse;
-        else if(d.includes('лесопилк')||d.includes('дерево')) npc._goal = locations.sawmill;
-        else if(d.includes('пещер')||d.includes('железо')) npc._goal = locations.cave;
-        else if(d.includes('луг')||d.includes('ткань')) npc._goal = locations.meadow;
-        else if(d.includes('озер')) npc._goal = locations.lake;
-        else if(d.includes('ангар')||d.includes('строит')) npc._goal = locations.hangar;
-        else if(d.includes('говор')||d.includes('поговор')){
-          const targetNpc = npcs.find(n=>d.includes(n.name.toLowerCase()));
-          if(targetNpc) npc._goal = targetNpc.mesh.position.clone();
-        }
-        if(npc._goal) npc.currentTask = null; // сбрасываем задачу, если решил иначе
-      }catch(e){ console.log('Ошибка мышления',e); }
-    }
-
-    // Игровой цикл
-    let lastTime=performance.now();
-    function animate(){
-      const now=performance.now();
-      const dt=Math.min(0.05,(now-lastTime)/1000);
-      lastTime=now;
-
-      // Смена дня/ночи
-      timeOfDay += dt * 0.2; // 1 час = 5 сек
-      if(timeOfDay>=24) timeOfDay-=24;
-      const isNight = timeOfDay>20 || timeOfDay<5;
-      scene.background = isNight ? new THREE.Color(0x111133) : new THREE.Color(0x87CEEB);
-      ambient.intensity = isNight ? 0.3 : 0.6;
-      sun.intensity = isNight ? 0.2 : 0.9;
-      scene.fog = isNight ? new THREE.Fog(0x111133, 10, 35) : new THREE.Fog(0x87CEEB, 15, 40);
-
-      // Игрок
-      const spd=4*dt;
-      if(keyState['ArrowUp']||keyState['w']) player.position.z-=spd;
-      if(keyState['ArrowDown']||keyState['s']) player.position.z+=spd;
-      if(keyState['ArrowLeft']||keyState['a']) player.position.x-=spd;
-      if(keyState['ArrowRight']||keyState['d']) player.position.x+=spd;
-      player.position.x=Math.max(-WORLD_SIZE+1,Math.min(WORLD_SIZE-1,player.position.x));
-      player.position.z=Math.max(-WORLD_SIZE+1,Math.min(WORLD_SIZE-1,player.position.z));
-
-      // NPC
-      npcs.forEach(n=>{
-        n.hunger=Math.max(0,n.hunger-0.06*dt);
-        n.fatigue=Math.max(0,n.fatigue-0.04*dt);
-        n.mood=Math.max(0,n.mood-0.02*dt+(n.currentTask?0.05:0));
-        // Запускаем мышление
-        npcThink(n);
-        // Двигаемся к цели
-        let target = n._goal;
-        if(!target){
-          if(n.hunger<25) target=locations.appleOrchard;
-          else if(n.fatigue<25) target=locations.restHouse;
-          else if(n.currentTask==='wood') target=locations.sawmill;
-          else if(n.currentTask==='iron') target=locations.cave;
-          else if(n.currentTask==='cloth') target=locations.meadow;
-          else {
-            if(!n._wanderTarget || n.mesh.position.distanceTo(n._wanderTarget)<0.2)
-              n._wanderTarget=new THREE.Vector3((Math.random()-0.5)*10,0,(Math.random()-0.5)*10);
-            target=n._wanderTarget;
-          }
-        }
-        if(target){
-          const dir=target.clone().sub(n.mesh.position);
-          const dist=dir.length();
-          if(dist>0.2){
-            dir.normalize();
-            n.mesh.position.add(dir.multiplyScalar(1.0*dt));
-            n.mesh.lookAt(target.x,n.mesh.position.y,target.z);
-          } else {
-            n._goal = null; // достигли
-          }
-          if(n.currentTask==='wood' && n.mesh.position.distanceTo(locations.sawmill)<2 && Math.random()<0.05) resources.wood++;
-          if(n.currentTask==='iron' && n.mesh.position.distanceTo(locations.cave)<2 && Math.random()<0.05) resources.iron++;
-          if(n.currentTask==='cloth' && n.mesh.position.distanceTo(locations.meadow)<2 && Math.random()<0.05) resources.cloth++;
-          if(n.hunger<25 && n.mesh.position.distanceTo(locations.appleOrchard)<2) n.hunger=Math.min(100,n.hunger+4);
-          if(n.fatigue<25 && n.mesh.position.distanceTo(locations.restHouse)<2) n.fatigue=Math.min(100,n.fatigue+4);
-        }
-        const spdAnim=n.mesh.position.distanceTo(target||n.mesh.position)>0.1?1:0;
-        const t=Date.now()*0.01;
-        if(n.mesh.userData.armL){
-          n.mesh.userData.armL.rotation.x=Math.sin(t+n.id.charCodeAt(0))*0.5*spdAnim;
-          n.mesh.userData.armR.rotation.x=Math.sin(t+n.id.charCodeAt(0)+Math.PI)*0.5*spdAnim;
-          n.mesh.userData.legL.rotation.x=Math.sin(t+n.id.charCodeAt(0)+Math.PI/2)*0.4*spdAnim;
-          n.mesh.userData.legR.rotation.x=Math.sin(t+n.id.charCodeAt(0)-Math.PI/2)*0.4*spdAnim;
-        }
-      });
-
-      updateUI();
-      controls.target.copy(player.position.clone().add(new THREE.Vector3(0,1,0)));
-      controls.update();
-      renderer.render(scene,camera);
-      labelRenderer.render(scene,camera);
+    // --- Игровой цикл ---
+    function animate() {
       requestAnimationFrame(animate);
+      characters.forEach(ch => {
+        const ud = ch.userData;
+        // Движение к цели
+        if (ud.walkTarget) {
+          const dir = ud.walkTarget.clone().sub(ch.position);
+          const dist = dir.length();
+          if (dist > 0.2) {
+            dir.normalize();
+            ch.position.add(dir.multiplyScalar(0.05));
+            ch.lookAt(ud.walkTarget.x, ch.position.y, ud.walkTarget.z);
+          } else {
+            ud.walkTarget = null;
+            ud.action = null;
+          }
+        }
+        // Анимация конечностей
+        const speed = ud.walkTarget ? 1 : 0;
+        const t = Date.now() * 0.01;
+        if (ud.armL) {
+          if (ud.fallen) {
+            // падение: раскинутые руки
+            ud.armL.rotation.z = Math.PI / 4;
+            ud.armR.rotation.z = -Math.PI / 4;
+            ch.rotation.z = 0.3;
+          } else if (ud.throwing) {
+            // замах правой руки
+            ud.armR.rotation.x = Math.sin(t * 20) * 0.5 - 1.5;
+            ud.armL.rotation.x = 0;
+          } else if (ud.building) {
+            ud.armR.rotation.x = Math.sin(t * 15) * 0.8;
+            ud.armL.rotation.x = Math.cos(t * 15) * 0.8;
+          } else if (ud.action === 'wave') {
+            ud.armR.rotation.x = Math.sin(t * 15) * 1.2;
+            ud.armL.rotation.x = 0;
+          } else {
+            ud.armL.rotation.x = Math.sin(t + ch.id) * 0.4 * speed;
+            ud.armR.rotation.x = Math.sin(t + ch.id + Math.PI) * 0.4 * speed;
+            ud.legL.rotation.x = Math.sin(t + ch.id + Math.PI / 2) * 0.35 * speed;
+            ud.legR.rotation.x = Math.sin(t + ch.id - Math.PI / 2) * 0.35 * speed;
+            if (!speed) {
+              ud.armL.rotation.x = 0;
+              ud.armR.rotation.x = 0;
+              ud.legL.rotation.x = 0;
+              ud.legR.rotation.x = 0;
+            }
+          }
+        }
+        if (!ud.fallen) ch.rotation.z = 0;
+      });
+      controls.update();
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
     }
     animate();
-    window.addEventListener('resize',()=>{
-      camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
-      renderer.setSize(innerWidth,innerHeight); labelRenderer.setSize(innerWidth,innerHeight);
+
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+      labelRenderer.setSize(innerWidth, innerHeight);
     });
   </script>
 </body>
