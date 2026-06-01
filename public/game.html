@@ -3,67 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Битва за Пирожок · Эмоции и простор</title>
+  <title>Битва за Пирожок · Яркий простор</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: 'Segoe UI', sans-serif;
-    }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
     #ui-panel {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(12px);
-      padding: 12px 20px;
-      border-radius: 20px;
-      color: white;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      z-index: 10;
-      border: 1px solid rgba(255,255,255,0.3);
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(12px); padding: 12px 20px;
+      border-radius: 20px; color: white; display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center; z-index: 10; border: 1px solid rgba(255,255,255,0.3);
     }
-    button {
-      background: #ffaa00;
-      border: none;
-      color: black;
-      padding: 8px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 13px;
-      transition: 0.2s;
-    }
+    button { background: #ffaa00; border: none; color: black; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px; }
     button:hover { background: #ffbb33; }
-    .emotion-btn {
-      background: #4a4a8a;
-      color: white;
-    }
+    .emotion-btn { background: #4a4a8a; color: white; }
     .emotion-btn.active { background: #ffaa00; color: black; }
     #selected-info {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(10px);
-      padding: 12px 18px;
-      border-radius: 16px;
-      color: white;
-      z-index: 10;
-      border: 1px solid rgba(255,255,255,0.2);
+      position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px); padding: 12px 18px; border-radius: 16px; color: white;
+      z-index: 10; border: 1px solid rgba(255,255,255,0.2);
     }
-    .thought-bubble {
-      color: #ff0;
-      background: rgba(0,0,0,0.8);
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      max-width: 150px;
-    }
+    .thought-bubble { color: #ff0; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 12px; font-size: 11px; max-width: 150px; }
   </style>
 </head>
 <body>
@@ -93,13 +51,13 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-    // --- Увеличенная карта ---
-    const WORLD_RADIUS = 40;
+    // --- Яркое летнее утро ---
+    const WORLD_RADIUS = 120;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 15, 60);
-    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.5, 80);
-    camera.position.set(18, 12, 25);
+    scene.background = new THREE.Color(0x87CEEB); // чистое небо
+    // Без тумана!
+    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 1, 200);
+    camera.position.set(25, 18, 30);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(innerWidth, innerHeight);
     renderer.shadowMap.enabled = true;
@@ -115,106 +73,159 @@
     controls.target.set(0, 1, 0);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI/2.3;
-    controls.minDistance = 10;
-    controls.maxDistance = 60;
+    controls.minDistance = 15;
+    controls.maxDistance = 100;
     controls.update();
 
-    scene.add(new THREE.AmbientLight(0x8899bb));
-    const sun = new THREE.DirectionalLight(0xfff5e6, 0.9);
-    sun.position.set(30, 40, 20);
+    // Солнечный свет
+    scene.add(new THREE.AmbientLight(0xaaccff, 0.8));
+    const sun = new THREE.DirectionalLight(0xfff5e6, 1.2);
+    sun.position.set(40, 60, 30);
     sun.castShadow = true; sun.receiveShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
 
-    // Земля
-    const groundTex = (()=>{
-      const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#5a8f4a'; ctx.fillRect(0,0,1024,1024);
-      for(let i=0;i<2000;i++){ ctx.fillStyle = Math.random()<0.3?'#4a7f3a':'#6a9f5a'; ctx.fillRect(Math.random()*1024,Math.random()*1024,3,3); }
+    // Земля с яркой травой и цветами
+    const groundTex = (() => {
+      const c = document.createElement('canvas'); c.width = 2048; c.height = 2048;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#6fbf4c'; ctx.fillRect(0,0,2048,2048);
+      // Травинки и цветы
+      for(let i=0;i<5000;i++) {
+        ctx.fillStyle = ['#7ec850','#5a9e3a','#8ccf5a','#f0e68c','#ffb6c1','#ffd700'][Math.floor(Math.random()*6)];
+        ctx.fillRect(Math.random()*2048, Math.random()*2048, 4, 4);
+      }
       return new THREE.CanvasTexture(c);
     })();
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(WORLD_RADIUS, 64), new THREE.MeshStandardMaterial({map:groundTex}));
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(WORLD_RADIUS, 128), new THREE.MeshStandardMaterial({map:groundTex, roughness:0.9}));
     ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 
-    // --- Генерация объектов по всей карте ---
-    function addTree(x, z) {
+    // --- Функции создания объектов ---
+    function addTree(x, z, size=1.0) {
       const g = new THREE.Group();
-      g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.3,2.5), new THREE.MeshStandardMaterial({color:0x8b5a2b})).translateY(1.25));
-      g.add(new THREE.Mesh(new THREE.SphereGeometry(1.0), new THREE.MeshStandardMaterial({color:0x2d5a27})).translateY(2.5));
+      const h = 2.5*size;
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2*size, 0.3*size, h), new THREE.MeshStandardMaterial({color:0x8b5a2b}));
+      trunk.position.y = h/2; g.add(trunk);
+      const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.0*size, 16), new THREE.MeshStandardMaterial({color:[0x2d5a27,0x3a6b2a,0x4a7a3a][Math.floor(Math.random()*3)]}));
+      leaves.position.y = h + 0.3*size; g.add(leaves);
       g.position.set(x,0,z); scene.add(g);
     }
-    function addBush(x,z) {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshStandardMaterial({color:0x336633}));
-      b.position.set(x,0.2,z); scene.add(b);
+    function addBush(x, z, size=0.5) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(size), new THREE.MeshStandardMaterial({color:0x336633}));
+      b.position.set(x, size*0.4, z); scene.add(b);
     }
-    function addPuddle(x,z) {
-      const p = new THREE.Mesh(new THREE.CircleGeometry(0.6,12), new THREE.MeshStandardMaterial({color:0x8b6b4d, roughness:0.1}));
+    function addPuddle(x, z) {
+      const p = new THREE.Mesh(new THREE.CircleGeometry(0.8, 12), new THREE.MeshStandardMaterial({color:0x8b6b4d, roughness:0.1}));
       p.rotation.x = -Math.PI/2; p.position.set(x,0.02,z); scene.add(p);
     }
-    function addBarrier(x,z,color=0xaa7744) {
-      const b = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.9,0.5), new THREE.MeshStandardMaterial({color}));
-      b.position.set(x,0.45,z); b.castShadow=true; b.receiveShadow=true; scene.add(b);
+    function addBarrier(x, z, color=0xaa7744, width=1.4, height=1.0, depth=0.5) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), new THREE.MeshStandardMaterial({color}));
+      b.position.set(x, height/2, z); b.castShadow=true; b.receiveShadow=true; scene.add(b);
     }
-    // Разбросаем много объектов
-    for(let i=0;i<60;i++) {
+
+    // Много деревьев, кустов по всей карте
+    for(let i=0;i<200;i++) {
       const angle = Math.random()*Math.PI*2;
-      const r = 10 + Math.random()*(WORLD_RADIUS-12);
+      const r = 15 + Math.random()*(WORLD_RADIUS-20);
       const x = Math.cos(angle)*r, z = Math.sin(angle)*r;
-      if(Math.random()<0.5) addTree(x,z);
-      else if(Math.random()<0.3) addBush(x,z);
-      else if(Math.random()<0.2) addPuddle(x,z);
+      if(Math.random()<0.6) addTree(x,z,0.8+Math.random()*0.7);
+      else if(Math.random()<0.3) addBush(x,z,0.3+Math.random()*0.6);
+      else addPuddle(x,z);
     }
-    // Центральное дерево пирожка
-    addTree(0,0);
-    // Базы команд
-    addBarrier(-15, -12, 0x4488ff); addBarrier(-14, -13, 0x4488ff); addBarrier(-16, -11, 0x4488ff);
-    addBarrier(14, 12, 0xaa4444); addBarrier(13, 14, 0xaa4444); addBarrier(15, 11, 0xaa4444);
 
-    // --- Улучшенный персонаж с лицом и эмоциями ---
+    // Центральное дерево пирожка (огромное)
+    addTree(0,0,2.5);
+    // Базы команд (барьеры разных цветов)
+    // Храпоглазы (синие) – слева внизу
+    for(let i=0;i<8;i++) addBarrier(-30 + i*1.5, -25, 0x4488ff);
+    // Зубоскалы (красные) – справа вверху
+    for(let i=0;i<8;i++) addBarrier(25 + i*1.5, 25, 0xaa4444);
+
+    // --- Забор, разделяющий поле (по центру) ---
+    const fenceLength = 40;
+    for(let i=-fenceLength/2; i<=fenceLength/2; i+=1.2) {
+      addBarrier(i, -2, 0xcccccc, 0.15, 1.2, 0.15);
+      addBarrier(i, 2, 0xcccccc, 0.15, 1.2, 0.15);
+      if(i % 3 < 1) addBarrier(i, 0, 0xcccccc, 1.2, 0.8, 0.4);
+    }
+
+    // --- Множество предметов для бросков ---
+    function addThrowable(x, z, color, shape='sphere', size=0.3) {
+      let mesh;
+      if(shape === 'sphere') mesh = new THREE.Mesh(new THREE.SphereGeometry(size), new THREE.MeshStandardMaterial({color, roughness:0.4}));
+      else if(shape === 'box') mesh = new THREE.Mesh(new THREE.BoxGeometry(size,size*0.6,size*0.6), new THREE.MeshStandardMaterial({color, roughness:0.6}));
+      else if(shape === 'cylinder') mesh = new THREE.Mesh(new THREE.CylinderGeometry(size*0.5, size*0.6, size*1.5), new THREE.MeshStandardMaterial({color, roughness:0.7}));
+      mesh.position.set(x, size*0.5, z);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      scene.add(mesh);
+    }
+    // Камни, яблоки, палки, тыквы, арбузы, грязевые шары
+    for(let i=0;i<100;i++) {
+      const angle = Math.random()*Math.PI*2;
+      const r = 5 + Math.random()*80;
+      const x = Math.cos(angle)*r, z = Math.sin(angle)*r;
+      const type = Math.floor(Math.random()*6);
+      if(type===0) addThrowable(x,z,0x888888,'sphere',0.2); // камень
+      else if(type===1) addThrowable(x,z,0xff3333,'sphere',0.25); // яблоко
+      else if(type===2) addThrowable(x,z,0x8b5a2b,'cylinder',0.25); // палка
+      else if(type===3) addThrowable(x,z,0xff8c00,'sphere',0.4); // тыква
+      else if(type===4) addThrowable(x,z,0x2e8b57,'sphere',0.45); // арбуз
+      else addThrowable(x,z,0x8b6b4d,'sphere',0.22); // грязевой ком
+    }
+
+    // --- Уникальные персонажи с разными лицами и аксессуарами ---
     const characters = [];
-    const emotions = ['neutral','happy','sad','angry','surprised'];
-
-    function createCharacter(name, teamColor, features={}) {
+    function createCharacter(name, teamColor, features={}, bodyScale=1.0, skinColor=0xffccaa, emotion='happy') {
       const group = new THREE.Group();
-      const skin = new THREE.MeshStandardMaterial({ color:0xffccaa, roughness:0.3 });
+      const skin = new THREE.MeshStandardMaterial({ color:skinColor, roughness:0.3 });
       const cloth = new THREE.MeshStandardMaterial({ color:teamColor, roughness:0.5 });
-      const pants = new THREE.MeshStandardMaterial({ color:0x2244aa });
+      const pantsColor = features.pantsColor || 0x2244aa;
+      const pants = new THREE.MeshStandardMaterial({ color:pantsColor });
       const shoes = new THREE.MeshStandardMaterial({ color:0x332211 });
 
       // Тело
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,1.2,8), cloth);
-      torso.position.y = 0.6; torso.castShadow=true; torso.receiveShadow=true; group.add(torso);
-      // Голова
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.4,24,24), skin);
-      head.position.y = 1.4; head.castShadow=true; group.add(head);
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35*bodyScale, 0.4*bodyScale, 1.2*bodyScale, 8), cloth);
+      torso.position.y = 0.6*bodyScale; torso.castShadow=true; torso.receiveShadow=true; group.add(torso);
+      // Голова (может быть разной формы)
+      const headGeo = features.headShape === 'elongated' ? new THREE.CylinderGeometry(0.35,0.38,0.7,16) : new THREE.SphereGeometry(0.4*bodyScale, 24, 24);
+      const head = new THREE.Mesh(headGeo, skin);
+      head.position.y = 1.4*bodyScale; head.castShadow=true; group.add(head);
+
       // Глаза
       const eyeW = new THREE.MeshStandardMaterial({color:0xffffff});
       const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.11), eyeW);
       leftEye.position.set(-0.15, 1.53, 0.35); group.add(leftEye);
       const rightEye = leftEye.clone();
       rightEye.position.set(0.15, 1.53, 0.35); group.add(rightEye);
-      const pupilMat = new THREE.MeshStandardMaterial({color:0x111122});
+      const pupilMat = new THREE.MeshStandardMaterial({color:features.eyeColor||0x111122});
       const leftPupil = new THREE.Mesh(new THREE.SphereGeometry(0.06), pupilMat);
       leftPupil.position.set(-0.15, 1.51, 0.42); group.add(leftPupil);
       const rightPupil = leftPupil.clone();
       rightPupil.position.set(0.15, 1.51, 0.42); group.add(rightPupil);
-      // Брови (две палочки)
-      const browGeo = new THREE.BoxGeometry(0.15,0.04,0.04);
-      const browMat = new THREE.MeshStandardMaterial({color:0x332211});
+
+      // Брови
+      const browGeo = new THREE.BoxGeometry(0.18,0.05,0.05);
+      const browMat = new THREE.MeshStandardMaterial({color:features.browColor||0x332211});
       const leftBrow = new THREE.Mesh(browGeo, browMat);
       leftBrow.position.set(-0.15, 1.68, 0.35); group.add(leftBrow);
       const rightBrow = new THREE.Mesh(browGeo, browMat);
       rightBrow.position.set(0.15, 1.68, 0.35); group.add(rightBrow);
-      // Рот (тор)
+
+      // Рот
       const mouthGeo = new THREE.TorusGeometry(0.12, 0.04, 8, 16, Math.PI);
       const mouthMat = new THREE.MeshStandardMaterial({color:0x552222});
       const mouth = new THREE.Mesh(mouthGeo, mouthMat);
       mouth.position.set(0, 1.35, 0.38);
       mouth.rotation.x = 0.2;
-      mouth.rotation.z = 0;
       group.add(mouth);
 
-      // Аксессуары
+      // Волосы или шапка
+      if(features.hair) {
+        features.hair.forEach(pos => {
+          const hair = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({color:features.hairColor||0x332211}));
+          hair.position.set(pos[0], pos[1], pos[2]); group.add(hair);
+        });
+      }
       if(features.hat) {
         const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25,0.3,8), new THREE.MeshStandardMaterial({color:features.hatColor||0xff0000}));
         hat.position.set(0,1.78,0); group.add(hat);
@@ -263,48 +274,110 @@
       labelDiv.textContent = name;
       labelDiv.style.cssText = 'color:white; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:10px; font-size:11px;';
       const label = new CSS2DObject(labelDiv);
-      label.position.set(0,2.2,0); group.add(label);
+      label.position.set(0,2.2*bodyScale,0); group.add(label);
       // Облачко мыслей
       const thoughtDiv = document.createElement('div');
       thoughtDiv.className = 'thought-bubble';
       thoughtDiv.style.display = 'none';
       const thoughtLabel = new CSS2DObject(thoughtDiv);
-      thoughtLabel.position.set(0,2.7,0); group.add(thoughtLabel);
+      thoughtLabel.position.set(0,2.7*bodyScale,0); group.add(thoughtLabel);
 
       group.userData = {
         name, armL, armR, legL, legR, thoughtDiv, thoughtLabel,
         leftBrow, rightBrow, mouth, leftEye, rightEye, leftPupil, rightPupil,
-        emotion: 'neutral',
+        emotion: emotion,
         walkTarget: null, action: null, throwing: false, fallen: false, building: false
       };
+      // Установить начальную эмоцию
+      setEmotion(group, emotion, true);
       return group;
     }
 
-    // Создание команд
-    const captain = createCharacter('Ты (Артур)', 0xffaa33, {hat:true, hatColor:0xffaa33, glasses:true});
-    captain.position.set(0,0,-1);
-    scene.add(captain); characters.push(captain);
+    function setEmotion(char, emotion, skipUpdateUI=false) {
+      const ud = char.userData;
+      ud.emotion = emotion;
+      // Сброс
+      ud.leftBrow.rotation.z = 0; ud.rightBrow.rotation.z = 0;
+      ud.leftBrow.position.y = 1.68; ud.rightBrow.position.y = 1.68;
+      ud.mouth.scale.set(1,1,1); ud.mouth.position.y = 1.35; ud.mouth.rotation.x = 0.2;
+      switch(emotion) {
+        case 'happy':
+          ud.mouth.scale.set(1.4,1,1);
+          ud.mouth.position.y = 1.33; ud.mouth.rotation.x = 0.1;
+          ud.leftBrow.rotation.z = 0.1; ud.rightBrow.rotation.z = -0.1;
+          break;
+        case 'sad':
+          ud.mouth.scale.set(0.7,0.7,1);
+          ud.mouth.position.y = 1.32; ud.mouth.rotation.x = -0.2;
+          ud.leftBrow.rotation.z = -0.15; ud.rightBrow.rotation.z = 0.15;
+          ud.leftBrow.position.y = 1.7; ud.rightBrow.position.y = 1.7;
+          break;
+        case 'angry':
+          ud.mouth.scale.set(0.9,0.7,1);
+          ud.mouth.position.y = 1.34; ud.mouth.rotation.x = -0.1;
+          ud.leftBrow.rotation.z = -0.2; ud.rightBrow.rotation.z = 0.2;
+          ud.leftBrow.position.y = 1.66; ud.rightBrow.position.y = 1.66;
+          break;
+        case 'surprised':
+          ud.mouth.scale.set(0.4,0.4,1);
+          ud.mouth.position.y = 1.37; ud.mouth.rotation.x = 0;
+          ud.leftBrow.position.y = 1.72; ud.rightBrow.position.y = 1.72;
+          break;
+        default: break;
+      }
+      if(!skipUpdateUI && selectedChar === char) {
+        document.getElementById('emotion-display').textContent = emotion;
+        updateEmotionButtons(emotion);
+      }
+    }
 
-    const bryak = createCharacter('Бряк', 0x4488ff, {hat:true, hatColor:0x4488ff});
-    bryak.position.set(-10,0,-8); characters.push(bryak);
-    const listik = createCharacter('Листик', 0x44aa44, {hat:true, hatColor:0x44aa44, glasses:true});
-    listik.position.set(-8,0,-12); characters.push(listik);
-    const grom = createCharacter('Гром', 0xaa4444, {hat:true, hatColor:0xaa4444});
-    grom.position.set(-12,0,-6); characters.push(grom);
+    // Создание разнообразных персонажей
+    const captain = createCharacter('Артур', 0xffaa33, {
+      hair:[[0,1.7,0.1],[0.2,1.65,0.15],[-0.2,1.65,0.15],[0.15,1.68,-0.1],[-0.15,1.68,-0.1]],
+      glasses:true, hat:true, hatColor:0xffaa33
+    }, 1.05, 0xffccaa, 'happy');
+    captain.position.set(-5,0,-5); scene.add(captain); characters.push(captain);
 
-    const zuban = createCharacter('Зубан', 0xcc6644, {crown:true});
-    zuban.position.set(10,0,8); characters.push(zuban);
-    const dylda = createCharacter('Дылда', 0x6666aa, {hat:true, hatColor:0x6666aa});
-    dylda.position.set(12,0,6); characters.push(dylda);
-    const shustrya = createCharacter('Шустря', 0xaa88cc, {glasses:true});
-    shustrya.position.set(8,0,12); characters.push(shustrya);
-    const vorchun = createCharacter('Ворчун', 0x888888, {hat:true, hatColor:0x666666});
-    vorchun.position.set(13,0,10); characters.push(vorchun);
+    const bryak = createCharacter('Бряк', 0x4488ff, {
+      hair:[[0,1.72,0.1],[0.15,1.67,0.18],[-0.15,1.67,0.18]],
+      hat:true, hatColor:0x4488ff
+    }, 1.0, 0xffccbb, 'happy');
+    bryak.position.set(-20,0,-18); scene.add(bryak); characters.push(bryak);
 
-    // Добавим всех на сцену
-    characters.forEach(c => scene.add(c));
+    const listik = createCharacter('Листик', 0x44aa44, {
+      hair:[[0,1.68,0.2],[0.1,1.65,0.25],[-0.1,1.65,0.25]],
+      glasses:true, hat:true, hatColor:0x44aa44
+    }, 0.95, 0xffddcc, 'neutral');
+    listik.position.set(-18,0,-22); scene.add(listik); characters.push(listik);
 
-    // --- Выбор персонажа и эмоции ---
+    const grom = createCharacter('Гром', 0xaa4444, {
+      hair:[[0,1.75,0.05],[0.18,1.7,0.12],[-0.18,1.7,0.12],[0.1,1.73,-0.1],[-0.1,1.73,-0.1]],
+      hat:true, hatColor:0xaa4444
+    }, 1.1, 0xffbbaa, 'angry');
+    grom.position.set(-22,0,-15); scene.add(grom); characters.push(grom);
+
+    const zuban = createCharacter('Зубан', 0xcc6644, {
+      crown:true, hair:[[0,1.6,0.2],[0.2,1.55,0.25],[-0.2,1.55,0.25]]
+    }, 0.9, 0xffccaa, 'neutral');
+    zuban.position.set(20,0,18); scene.add(zuban); characters.push(zuban);
+
+    const dylda = createCharacter('Дылда', 0x6666aa, {
+      hair:[[0,1.8,0.0],[0.22,1.75,0.08],[-0.22,1.75,0.08]],
+      hat:true, hatColor:0x6666aa
+    }, 1.15, 0xddccbb, 'neutral');
+    dylda.position.set(22,0,15); scene.add(dylda); characters.push(dylda);
+
+    const shustrya = createCharacter('Шустря', 0xaa88cc, {
+      glasses:true, hair:[[0,1.7,0.18],[0.12,1.66,0.22],[-0.12,1.66,0.22]]
+    }, 0.9, 0xffccdd, 'happy');
+    shustrya.position.set(18,0,22); scene.add(shustrya); characters.push(shustrya);
+
+    const vorchun = createCharacter('Ворчун', 0x888888, {
+      hat:true, hatColor:0x666666, hair:[[0,1.65,0.15],[0.15,1.6,0.2],[-0.15,1.6,0.2]]
+    }, 1.0, 0xddccaa, 'sad');
+    vorchun.position.set(25,0,20); scene.add(vorchun); characters.push(vorchun);
+
+    // --- UI и выбор ---
     let selectedChar = null;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -324,68 +397,11 @@
       }
     });
 
-    function setEmotion(char, emotion) {
-      char.userData.emotion = emotion;
-      const ud = char.userData;
-      // Сбросим брови и рот
-      ud.leftBrow.rotation.z = 0;
-      ud.rightBrow.rotation.z = 0;
-      ud.leftBrow.position.y = 1.68;
-      ud.rightBrow.position.y = 1.68;
-      ud.mouth.scale.set(1,1,1);
-      ud.mouth.position.y = 1.35;
-      ud.mouth.rotation.x = 0.2;
-      // Меняем в зависимости от эмоции
-      switch(emotion) {
-        case 'happy':
-          // Улыбка шире
-          ud.mouth.scale.set(1.3,1,1);
-          ud.mouth.position.y = 1.33;
-          ud.mouth.rotation.x = 0.1;
-          ud.leftBrow.rotation.z = 0.1;
-          ud.rightBrow.rotation.z = -0.1;
-          break;
-        case 'sad':
-          ud.mouth.scale.set(0.7,0.7,1);
-          ud.mouth.position.y = 1.32;
-          ud.mouth.rotation.x = -0.2;
-          ud.leftBrow.rotation.z = -0.15;
-          ud.rightBrow.rotation.z = 0.15;
-          ud.leftBrow.position.y = 1.7;
-          ud.rightBrow.position.y = 1.7;
-          break;
-        case 'angry':
-          ud.mouth.scale.set(0.9,0.7,1);
-          ud.mouth.position.y = 1.34;
-          ud.mouth.rotation.x = -0.1;
-          ud.leftBrow.rotation.z = -0.2;
-          ud.rightBrow.rotation.z = 0.2;
-          ud.leftBrow.position.y = 1.66;
-          ud.rightBrow.position.y = 1.66;
-          break;
-        case 'surprised':
-          ud.mouth.scale.set(0.4,0.4,1);
-          ud.mouth.position.y = 1.37;
-          ud.mouth.rotation.x = 0;
-          ud.leftBrow.position.y = 1.72;
-          ud.rightBrow.position.y = 1.72;
-          break;
-        default: // neutral
-          break;
-      }
-      if(selectedChar === char) {
-        document.getElementById('emotion-display').textContent = emotion;
-        updateEmotionButtons(emotion);
-      }
-    }
-
     function updateEmotionButtons(current) {
       document.querySelectorAll('.emotion-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.emotion === current);
       });
     }
-
-    // Кнопки эмоций
     document.querySelectorAll('.emotion-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if(!selectedChar) return;
@@ -393,18 +409,15 @@
       });
     });
 
-    // --- Действия ---
     function showThought(char, text) {
       const td = char.userData.thoughtDiv;
-      td.textContent = text;
-      td.style.display = 'block';
+      td.textContent = text; td.style.display = 'block';
       setTimeout(()=>{ td.style.display='none'; }, 3000);
     }
 
     document.getElementById('action-walk').addEventListener('click', ()=>{
       if(!selectedChar) return;
       selectedChar.userData.walkTarget = new THREE.Vector3(0,0,0);
-      selectedChar.userData.action = 'walk';
       showThought(selectedChar, 'К пирожку!');
     });
     document.getElementById('action-throw').addEventListener('click', ()=>{
@@ -426,47 +439,35 @@
       setTimeout(()=>{ if(selectedChar) selectedChar.userData.building=false; }, 1500);
     });
 
-    // --- Анимация ---
+    // Анимация
     function animate() {
       requestAnimationFrame(animate);
       characters.forEach(ch => {
         const ud = ch.userData;
-        // Движение к цели
         if(ud.walkTarget) {
           const dir = ud.walkTarget.clone().sub(ch.position);
-          const dist = dir.length();
-          if(dist > 0.3) {
+          if(dir.length() > 0.5) {
             dir.normalize();
-            ch.position.add(dir.multiplyScalar(0.08));
+            ch.position.add(dir.multiplyScalar(0.12));
             ch.lookAt(ud.walkTarget.x, ch.position.y, ud.walkTarget.z);
-          } else {
-            ud.walkTarget = null;
-            ud.action = null;
-          }
+          } else ud.walkTarget = null;
         }
-        // Анимация конечностей
         const speed = ud.walkTarget ? 1 : 0;
         const t = Date.now()*0.01;
-        if(ud.armL) {
-          if(ud.fallen) {
-            ud.armL.rotation.z = Math.PI/4; ud.armR.rotation.z = -Math.PI/4;
-            ch.rotation.z = 0.3;
-          } else if(ud.throwing) {
-            ud.armR.rotation.x = Math.sin(t*20)*0.5 - 1.6;
-            ud.armL.rotation.x = 0;
-          } else if(ud.building) {
-            ud.armR.rotation.x = Math.sin(t*15)*0.8;
-            ud.armL.rotation.x = Math.cos(t*15)*0.8;
-          } else {
-            ud.armL.rotation.x = Math.sin(t+ch.id)*0.45 * speed;
-            ud.armR.rotation.x = Math.sin(t+ch.id+Math.PI)*0.45 * speed;
-            ud.legL.rotation.x = Math.sin(t+ch.id+Math.PI/2)*0.4 * speed;
-            ud.legR.rotation.x = Math.sin(t+ch.id-Math.PI/2)*0.4 * speed;
-            if(!speed) {
-              ud.armL.rotation.x = 0; ud.armR.rotation.x = 0;
-              ud.legL.rotation.x = 0; ud.legR.rotation.x = 0;
-            }
-          }
+        if(ud.fallen) {
+          ud.armL.rotation.z = Math.PI/4; ud.armR.rotation.z = -Math.PI/4;
+          ch.rotation.z = 0.3;
+        } else if(ud.throwing) {
+          ud.armR.rotation.x = Math.sin(t*20)*0.5 - 1.6;
+        } else if(ud.building) {
+          ud.armR.rotation.x = Math.sin(t*15)*0.9;
+          ud.armL.rotation.x = Math.cos(t*15)*0.9;
+        } else {
+          ud.armL.rotation.x = Math.sin(t+ch.id)*0.5*speed;
+          ud.armR.rotation.x = Math.sin(t+ch.id+Math.PI)*0.5*speed;
+          ud.legL.rotation.x = Math.sin(t+ch.id+Math.PI/2)*0.45*speed;
+          ud.legR.rotation.x = Math.sin(t+ch.id-Math.PI/2)*0.45*speed;
+          if(!speed) { ud.armL.rotation.x=0; ud.armR.rotation.x=0; ud.legL.rotation.x=0; ud.legR.rotation.x=0; }
         }
         if(!ud.fallen) ch.rotation.z = 0;
       });
@@ -475,7 +476,6 @@
       labelRenderer.render(scene, camera);
     }
     animate();
-
     window.addEventListener('resize', ()=>{
       camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
       renderer.setSize(innerWidth,innerHeight); labelRenderer.setSize(innerWidth,innerHeight);
