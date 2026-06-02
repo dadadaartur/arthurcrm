@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
 
 export default function Transfer() {
+  const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
   const [recipientEmail, setRecipientEmail] = useState('')
@@ -9,20 +11,27 @@ export default function Transfer() {
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        window.location.href = '/login'
+        router.push('/login')
         return
       }
       setUser(user)
-      supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
-        .then(({ data }) => { if (data) setBalance(data.balance) })
-    })
+      const { data } = await supabase
+        .from('karma_balance')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (data) setBalance(data.balance)
+    }
+    init()
   }, [])
 
-  async function handleTransfer(e) {
+  const handleTransfer = async (e) => {
     e.preventDefault()
     setError('')
     const transferAmount = parseInt(amount)
@@ -31,72 +40,70 @@ export default function Transfer() {
       return
     }
     if (transferAmount > balance) {
-      setError('Недостаточно кармиков на балансе')
+      setError('Недостаточно кармиков')
       return
     }
-
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers()
-    if (userError) {
-      setError('Ошибка поиска пользователя')
-      return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientEmail, amount: transferAmount, comment })
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setError(result.error || 'Ошибка перевода')
+      } else {
+        setBalance(result.newBalance)
+        setRecipientEmail('')
+        setAmount('')
+        setComment('')
+        setShowModal(true)
+      }
+    } catch (err) {
+      setError('Сетевая ошибка')
     }
-    const recipient = users.find(u => u.email === recipientEmail)
-    if (!recipient) {
-      setError('Получатель не найден')
-      return
-    }
-
-    const { error: transferError } = await supabase.from('transfers').insert({
-      from_user_id: user.id,
-      to_user_id: recipient.id,
-      amount: transferAmount,
-      description: comment || 'Перевод кармиков'
-    })
-
-    if (transferError) {
-      setError(transferError.message)
-      return
-    }
-
-    await supabase.from('karma_balance').upsert({
-      user_id: user.id,
-      balance: balance - transferAmount
-    }, { onConflict: 'user_id' })
-
-    const { data: recipientBalance } = await supabase.from('karma_balance')
-      .select('balance').eq('user_id', recipient.id).single()
-    const newRecipientBalance = (recipientBalance?.balance || 0) + transferAmount
-    await supabase.from('karma_balance').upsert({
-      user_id: recipient.id,
-      balance: newRecipientBalance
-    }, { onConflict: 'user_id' })
-
-    await supabase.from('karma_transactions').insert([
-      { user_id: user.id, amount: -transferAmount, description: `Перевод пользователю ${recipientEmail}` },
-      { user_id: recipient.id, amount: transferAmount, description: `Перевод от ${user.email}` }
-    ])
-
-    setBalance(balance - transferAmount)
-    setRecipientEmail('')
-    setAmount('')
-    setComment('')
-    setShowModal(true)
+    setLoading(false)
   }
 
   return (
     <div className="max-w-md mx-auto px-4 py-10">
       <div className="premium-card">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Перевод кармиков</h2>
-        <div className="text-sm text-gray-500 mb-4">Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков</div>
+        <div className="text-sm text-gray-500 mb-4">
+          Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
+        </div>
         <form onSubmit={handleTransfer} className="space-y-4">
-          <input type="email" placeholder="Email получателя" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} className="input-field" required />
-          <input type="number" placeholder="Сумма" value={amount} onChange={e => setAmount(e.target.value)} className="input-field" min="1" required />
-          <input type="text" placeholder="Комментарий" value={comment} onChange={e => setComment(e.target.value)} className="input-field" />
+          <input
+            type="email"
+            placeholder="Email получателя"
+            value={recipientEmail}
+            onChange={e => setRecipientEmail(e.target.value)}
+            className="input-field"
+            required
+          />
+          <input
+            type="number"
+            placeholder="Сумма"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            className="input-field"
+            min="1"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Комментарий"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            className="input-field"
+          />
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button type="submit" className="btn-gold w-full">Отправить</button>
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
+            {loading ? 'Отправка...' : 'Отправить'}
+          </button>
         </form>
       </div>
-
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
