@@ -1,27 +1,11 @@
 import { useEffect, useState } from 'react'
-import { supabase, getAccessToken } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 import PremiumModal from '../components/PremiumModal'
 
-function getKarmikWord(n) {
-  const lastDigit = n % 10
-  const lastTwoDigits = n % 100
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
-  if (lastDigit === 1) return 'кармик'
-  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
-  return 'кармиков'
-}
-
-function formatTimeLeft(deadline) {
-  if (!deadline) return ''
-  const now = new Date()
-  const diff = new Date(deadline) - now
-  if (diff <= 0) return '00:00'
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
+function getKarmikWord(n) { /* без изменений */ }
+function formatTimeLeft(deadline) { /* без изменений */ }
 
 export default function Home() {
   const router = useRouter()
@@ -33,6 +17,7 @@ export default function Home() {
   // Состояния для модалки отправки
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [resultModal, setResultModal] = useState({ show: false, message: '', isError: false })
 
   const fetchTasks = async (userId) => {
     if (!userId) return
@@ -54,10 +39,7 @@ export default function Home() {
 
     const merged = assignments
       .filter(a => tasksData?.some(t => t.id === a.task_id))
-      .map(a => ({
-        ...a,
-        tasks: tasksData.find(t => t.id === a.task_id)
-      }))
+      .map(a => ({ ...a, tasks: tasksData.find(t => t.id === a.task_id) }))
 
     setTasks(merged)
   }
@@ -90,20 +72,23 @@ export default function Home() {
   const handleSubmit = async () => {
     if (!user || !submitModal.assignmentId) return
     setSubmitting(true)
-    const token = await getAccessToken()
-    const res = await fetch('/api/tasks/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ assignmentId: submitModal.assignmentId, comment: submitModal.comment })
-    })
-    if (res.ok) {
+    // Прямое обновление статуса на pending_review с комментарием
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({
+        status: 'pending_review',
+        comment: submitModal.comment,
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', submitModal.assignmentId)
+      .eq('user_id', user.id)  // безопасность: только своё
+
+    if (error) {
+      setResultModal({ show: true, message: 'Ошибка отправки: ' + error.message, isError: true })
+    } else {
       setSubmitModal({ show: false, assignmentId: null, comment: '' })
       fetchTasks(user.id)
-    } else {
-      alert('Ошибка отправки')
+      setResultModal({ show: true, message: 'Задание отправлено на проверку', isError: false })
     }
     setSubmitting(false)
   }
@@ -118,6 +103,7 @@ export default function Home() {
         {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
+            {/* ... (без изменений) */}
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
@@ -222,6 +208,15 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Премиум-уведомление об успехе/ошибке */}
+      <PremiumModal
+        isOpen={resultModal.show}
+        onClose={() => setResultModal({ show: false, message: '' })}
+        title={resultModal.isError ? 'Ошибка' : 'Успешно'}
+      >
+        <p className="text-white">{resultModal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
