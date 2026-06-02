@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, getAccessToken } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
 function ConfirmModal({ onConfirm, onCancel }) {
@@ -92,62 +92,40 @@ export default function CompanyAdmin() {
 
   const handleCreateTask = async (e) => {
     e.preventDefault()
-    // Создаём задание
-    const { data: task, error: taskError } = await supabase
-      .from('tasks')
-      .insert({
-        company_id: profile.company_id,
-        title: form.title,
-        description: form.description,
-        reward_karma: form.reward_karma,
-        task_type: form.task_type,
-        frequency: form.frequency,
-        target_role: form.target_role,
-        min_energy_level: form.min_energy_level,
-        requires_review: form.requires_review,
-        deadline_hours: form.deadline_hours ? Number(form.deadline_hours) : null,
-        created_by: profile.user_id,
-        is_active: true
-      })
-      .select()
-      .single()
-    if (taskError) {
-      setSuccessModal({ show: true, message: 'Ошибка создания задания: ' + taskError.message })
+    const token = await getAccessToken()
+    if (!token) {
+      setSuccessModal({ show: true, message: 'Не удалось получить токен авторизации' })
       return
     }
 
-    // Назначаем сотрудникам (все, кроме админов)
-    const { data: employeesList } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('company_id', profile.company_id)
-      .not('role_id', 'in', '(1,2)')
-      .not('user_id', 'is', null)
-
-    if (employeesList && employeesList.length > 0) {
-      const assignments = employeesList.map(emp => ({
-        task_id: task.id,
-        user_id: emp.user_id,
-        status: 'assigned',
-        deadline_at: form.deadline_hours ? new Date(Date.now() + form.deadline_hours * 3600000).toISOString() : null
-      }))
-      const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
-      if (assignError) {
-        await supabase.from('tasks').delete().eq('id', task.id)
-        setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
-        return
-      }
-      setSuccessModal({ show: true, message: `Задание создано! Назначено сотрудников: ${employeesList.length}` })
-    } else {
-      setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения' })
-    }
-
-    setForm({
-      title: '', description: '', reward_karma: 10, task_type: 'one_time',
-      frequency: 'once', target_role: 'all', min_energy_level: 0,
-      requires_review: false, deadline_hours: ''
+    const res = await fetch('/api/tasks/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title: form.title,
+        description: form.description,
+        rewardKarma: form.reward_karma,
+        taskType: form.task_type,
+        frequency: form.frequency,
+        targetRole: form.target_role,
+        minEnergyLevel: form.min_energy_level,
+        requiresReview: form.requires_review,
+        deadlineHours: form.deadline_hours ? Number(form.deadline_hours) : null
+      })
     })
-    fetchTasks()
+
+    if (res.ok) {
+      const result = await res.json()
+      setSuccessModal({ show: true, message: `Задание создано! Назначено сотрудников: ${result.assigned}` })
+      setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: false, deadline_hours: '' })
+      fetchTasks()
+    } else {
+      const err = await res.json()
+      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Не удалось создать задание') })
+    }
   }
 
   const handleDeleteClick = (taskId) => {
@@ -159,6 +137,7 @@ export default function CompanyAdmin() {
     setDeleteModal(null)
     if (!taskId) return
 
+    // Удаляем через прямое обращение к Supabase (RLS отключен, админ имеет доступ)
     await supabase.from('task_assignments').delete().eq('task_id', taskId)
     const { error } = await supabase.from('tasks').delete().eq('id', taskId)
     if (error) {
@@ -177,15 +156,9 @@ export default function CompanyAdmin() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
-
       <div className="flex gap-4 mb-8">
         {['tasks', 'employees', 'invites'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`filter-pill ${activeTab === tab ? 'active' : ''}`}
-            style={{ cursor: 'pointer' }}
-          >
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`filter-pill ${activeTab === tab ? 'active' : ''}`}>
             {tab === 'tasks' && 'Задания'}
             {tab === 'employees' && 'Сотрудники'}
             {tab === 'invites' && 'Приглашения'}
@@ -266,9 +239,7 @@ export default function CompanyAdmin() {
                 <p className="text-sm text-gray-400 mt-1">{task.description}</p>
                 <div className="flex justify-between items-center mt-2 text-sm">
                   <span className="text-yellow-400">+{task.reward_karma} кармиков</span>
-                  <button onClick={() => handleDeleteClick(task.id)} className="text-xs underline hover:text-red-400 text-red-400">
-                    Удалить
-                  </button>
+                  <button onClick={() => handleDeleteClick(task.id)} className="text-xs underline hover:text-red-400 text-red-400">Удалить</button>
                 </div>
               </div>
             ))}
@@ -301,15 +272,8 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {deleteModal && (
-        <ConfirmModal onConfirm={confirmDelete} onCancel={cancelDelete} />
-      )}
-
-      <PremiumModal
-        isOpen={successModal.show}
-        onClose={() => setSuccessModal({ show: false, message: '' })}
-        title="Информация"
-      >
+      {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={cancelDelete} />}
+      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
         <p className="text-white">{successModal.message}</p>
       </PremiumModal>
     </div>
