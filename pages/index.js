@@ -30,42 +30,48 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = async (userId) => {
-    console.log('USER ID:', userId)
+    if (!userId) return
+    console.log('🔍 Загружаем задания для userId:', userId)
 
-    // Временно загружаем все назначения (без фильтра по user_id и статусам)
-    const { data, error } = await supabase
+    // 1. Назначения (только для текущего пользователя и нужных статусов)
+    const { data: assignments, error: assignError } = await supabase
       .from('task_assignments')
-      .select('*')
+      .select('id, status, started_at, deadline_at, task_id')
+      .eq('user_id', userId)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(5)
 
-    console.log('ALL ASSIGNMENTS:', data)
-    console.log('ERROR:', error)
-
-    if (error) {
-      console.error('Ошибка загрузки назначений:', error)
+    if (assignError) {
+      console.error('Ошибка получения назначений:', assignError)
       setTasks([])
       return
     }
 
-    if (!data || data.length === 0) {
+    if (!assignments || assignments.length === 0) {
       setTasks([])
       return
     }
 
-    // Попробуем подтянуть задачи
-    const taskIds = [...new Set(data.map(a => a.task_id))]
-    const { data: tasksData } = await supabase
+    // 2. Задачи по id
+    const taskIds = [...new Set(assignments.map(a => a.task_id))]
+    const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
       .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
       .in('id', taskIds)
 
-    console.log('TASKS DATA:', tasksData)
+    if (tasksError) {
+      console.error('Ошибка получения задач:', tasksError)
+      // Даже если задачи не загрузились, покажем карточки с пометкой
+    }
 
-    // Объединяем: если задача не найдена, оставляем task = null
-    const merged = data.map(assignment => ({
+    // 3. Объединяем
+    const merged = assignments.map(assignment => ({
       ...assignment,
       tasks: tasksData?.find(t => t.id === assignment.task_id) || null
     }))
 
+    console.log('✅ Объединённые задания:', merged)
     setTasks(merged)
   }
 
@@ -90,6 +96,67 @@ export default function Home() {
     }
     init()
   }, [])
+
+  const handleStart = async (assignmentId) => {
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: 'in_progress', started_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+    if (!error && user) fetchTasks(user.id)
+  }
+
+  const handleComplete = async (assignmentId) => {
+    if (!user) return
+    // Получаем задание, чтобы узнать requires_review и награду
+    const { data: assignment } = await supabase
+      .from('task_assignments')
+      .select('id, task_id')
+      .eq('id', assignmentId)
+      .single()
+    if (!assignment) return
+
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('requires_review, reward_karma')
+      .eq('id', assignment.task_id)
+      .single()
+
+    const newStatus = task?.requires_review ? 'pending_review' : 'completed'
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: newStatus, completed_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+
+    if (!error && newStatus === 'completed') {
+      const reward = task?.reward_karma || 0
+      if (reward > 0) {
+        await supabase.from('karma_transactions').insert({
+          user_id: user.id,
+          amount: reward,
+          type: 'task_reward',
+          description: 'Начисление за задание'
+        })
+        const { data: balData } = await supabase
+          .from('karma_balance')
+          .select('balance')
+          .eq('user_id', user.id)
+          .single()
+        if (balData) {
+          await supabase
+            .from('karma_balance')
+            .update({ balance: balData.balance + reward })
+            .eq('user_id', user.id)
+        }
+        const { data: newBal } = await supabase
+          .from('karma_balance')
+          .select('balance')
+          .eq('user_id', user.id)
+          .single()
+        if (newBal) setBalance(newBal.balance)
+      }
+    }
+    if (!error && user) fetchTasks(user.id)
+  }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
@@ -120,7 +187,7 @@ export default function Home() {
         </div>
 
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-white mb-4">Задания (отладка)</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
           {tasks.length === 0 ? (
             <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
           ) : (
@@ -138,31 +205,44 @@ export default function Home() {
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-white font-semibold">
-                          {t ? t.title : `Задача ID: ${assignment.task_id} (не загружена)`}
+                          {t ? t.title : `Задача ${assignment.task_id} (нет описания)`}
                         </h4>
                         <span className="text-xs px-2 py-1 rounded-full" style={{
-                          background: assignment.status === 'assigned' ? 'rgba(255,255,255,0.1)' : 'rgba(249,115,22,0.3)',
+                          background:
+                            assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
+                            assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
                           color: '#fff'
                         }}>
-                          {assignment.status}
+                          {assignment.status === 'assigned' && 'Новое'}
+                          {assignment.status === 'in_progress' && 'В работе'}
+                          {assignment.status === 'pending_review' && 'На проверке'}
                         </span>
                       </div>
                       <p className="text-gray-400 text-sm mb-2">
                         {t ? t.description?.slice(0, 100) : 'Описание недоступно'}
                       </p>
                       <div className="flex justify-between items-center text-xs mb-3">
-                        <span className="text-yellow-400">+{t?.reward_karma || '?'} кармиков</span>
+                        <span className="text-yellow-400">+{t?.reward_karma ?? '?'} кармиков</span>
                         {assignment.deadline_at && (
                           <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => alert('Функция временно отключена')}
-                          className="action-btn w-full text-xs py-1.5"
-                        >
-                          Начать (отладка)
-                        </button>
+                        {assignment.status === 'assigned' && (
+                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                            Начать
+                          </button>
+                        )}
+                        {assignment.status === 'in_progress' && (
+                          <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                            {t?.requires_review ? 'Отправить на проверку' : 'Завершить'}
+                          </button>
+                        )}
+                        {assignment.status === 'pending_review' && (
+                          <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                            Ожидает проверки
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
