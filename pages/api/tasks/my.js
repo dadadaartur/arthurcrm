@@ -1,19 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  // Получаем пользователя из Supabase-сессии (куки автоматически передаются)
-  const { data: { user } } = await supabase.auth.getUser()
+  // Получаем токен из заголовка Authorization
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  const token = authHeader.split(' ')[1]
 
-  if (!user) {
-    return res.status(200).json([]) // не авторизован – пустой список
+  // Проверяем токен и получаем пользователя
+  const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+  if (userError || !user) {
+    return res.status(401).json({ error: 'Invalid token' })
   }
 
-  const { data, error } = await supabase
+  // Теперь получаем данные (сервисный ключ уже в supabaseAdmin)
+  const { data, error } = await supabaseAdmin
     .from('task_assignments')
     .select('id, status, started_at, deadline_at, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
     .eq('user_id', user.id)
