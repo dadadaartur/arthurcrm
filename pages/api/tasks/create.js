@@ -1,25 +1,39 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const auth = await requireAuth(req, res, { allowedRoles: [1, 2] }) // только админы
-  if (!auth) return
+  // Проверка токена админа
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  const token = authHeader.split(' ')[1]
+
+  const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const { data: { user: adminUser }, error: tokenError } = await supabaseAdmin.auth.getUser(token)
+  if (tokenError || !adminUser) return res.status(401).json({ error: 'Invalid token' })
+
+  // Проверяем, что админ — действительно администратор
+  const { data: adminProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('company_id, role_id')
+    .eq('user_id', adminUser.id)
+    .single()
+
+  if (!adminProfile || (adminProfile.role_id !== 1 && adminProfile.role_id !== 2)) {
+    return res.status(403).json({ error: 'Forbidden: only admins can create tasks' })
+  }
 
   const { title, description, rewardKarma, taskType, frequency, targetRole, minEnergyLevel, requiresReview, deadlineHours } = req.body
 
-  if (!title || !description) {
-    return res.status(400).json({ error: 'Название и описание обязательны' })
-  }
+  if (!title || !description) return res.status(400).json({ error: 'Title and description required' })
 
-  const serviceClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
-
-  // 1. Создаём задание
-  const { data: task, error: taskError } = await serviceClient
+  // Создаём задание
+  const { data: task, error: taskError } = await supabaseAdmin
     .from('tasks')
     .insert({
-      company_id: auth.profile.company_id,
+      company_id: adminProfile.company_id,
       title,
       description,
       reward_karma: rewardKarma || 0,
@@ -29,7 +43,7 @@ export default async function handler(req, res) {
       min_energy_level: minEnergyLevel || 0,
       requires_review: requiresReview || false,
       deadline_hours: deadlineHours ? Number(deadlineHours) : null,
-      created_by: auth.user.id,
+      created_by: adminUser.id,
       is_active: true
     })
     .select()
@@ -37,43 +51,32 @@ export default async function handler(req, res) {
 
   if (taskError) return res.status(500).json({ error: taskError.message })
 
-  // 2. Получаем сотрудников компании, которым нужно назначить задание
-  // Пока назначаем всем, у кого role_id != 1 и != 2 (не админы)
-  // В будущем можно учесть targetRole (new/experienced), если добавим поле опыта
-  const { data: employees, error: empError } = await serviceClient
+  // Получаем сотрудников компании (все, кроме админов)
+  const { data: employees } = await supabaseAdmin
     .from('profiles')
     .select('user_id')
-    .eq('company_id', auth.profile.company_id)
-    .not('role_id', 'in', '(1,2)') // исключаем суперадмина и админа компании
+    .eq('company_id', adminProfile.company_id)
+    .not('role_id', 'in', '(1,2)')
     .not('user_id', 'is', null)
 
-  if (empError) {
-    // Если сотрудников не нашли, просто возвращаем задание без назначений
-    return res.status(200).json({ task, assigned: 0 })
-  }
-
   if (employees && employees.length > 0) {
-    // Создаём назначения
+    // Вставляем назначения с правильными user_id из profiles
     const assignments = employees.map(emp => ({
       task_id: task.id,
       user_id: emp.user_id,
       status: 'assigned',
-      assigned_by: auth.user.id,
       deadline_at: deadlineHours ? new Date(Date.now() + deadlineHours * 3600000).toISOString() : null
     }))
 
-    const { error: assignError } = await serviceClient
-      .from('task_assignments')
-      .insert(assignments)
-
+    const { error: assignError } = await supabaseAdmin.from('task_assignments').insert(assignments)
     if (assignError) {
-      // Если ошибка, удаляем задание, чтобы не было осиротевшего
-      await serviceClient.from('tasks').delete().eq('id', task.id)
-      return res.status(500).json({ error: 'Ошибка назначения: ' + assignError.message })
+      // Откатываем задание, если не смогли назначить
+      await supabaseAdmin.from('tasks').delete().eq('id', task.id)
+      return res.status(500).json({ error: 'Assignment failed: ' + assignError.message })
     }
 
     return res.status(200).json({ task, assigned: employees.length })
   }
 
-  res.status(200).json({ task, assigned: 0 })
+  return res.status(200).json({ task, assigned: 0 })
 }
