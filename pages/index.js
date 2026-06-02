@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, getAccessToken } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
@@ -29,48 +29,19 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async (userId) => {
-    if (!userId) return
-
-    // 1. Получаем назначения (только для текущего пользователя и активные статусы)
-    const { data: assignments, error: assignError } = await supabase
-      .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id')
-      .eq('user_id', userId)
-      .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .order('created_at', { ascending: false })
-      .limit(5)
-
-    if (assignError) {
-      console.error('Ошибка получения назначений:', assignError)
+  const fetchTasks = async () => {
+    const token = await getAccessToken()
+    if (!token) return
+    const res = await fetch('/api/tasks/my', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setTasks(data)
+    } else {
+      console.error('Ошибка API:', res.status)
       setTasks([])
-      return
     }
-
-    if (!assignments || assignments.length === 0) {
-      setTasks([])
-      return
-    }
-
-    // 2. Загружаем задачи по id
-    const taskIds = [...new Set(assignments.map(a => a.task_id))]
-    const { data: tasksData, error: tasksError } = await supabase
-      .from('tasks')
-      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
-      .in('id', taskIds)
-
-    if (tasksError) {
-      console.error('Ошибка получения задач:', tasksError)
-      // Даже если задачи не загрузились, покажем карточки с пометкой
-    }
-
-    // 3. Объединяем
-    const merged = assignments.map(assignment => ({
-      ...assignment,
-      tasks: tasksData?.find(t => t.id === assignment.task_id) || null
-    }))
-
-    setTasks(merged)
   }
 
   useEffect(() => {
@@ -89,7 +60,7 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks(user.id)
+      await fetchTasks()
       setLoading(false)
     }
     init()
@@ -100,7 +71,7 @@ export default function Home() {
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-    if (!error && user) fetchTasks(user.id)
+    if (!error) fetchTasks()
   }
 
   const handleComplete = async (assignmentId) => {
@@ -152,7 +123,7 @@ export default function Home() {
         if (newBal) setBalance(newBal.balance)
       }
     }
-    if (!error && user) fetchTasks(user.id)
+    if (!error) fetchTasks()
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -191,6 +162,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {tasks.map(assignment => {
                 const t = assignment.tasks
+                if (!t) return null
                 return (
                   <div key={assignment.id} className="premium-card relative overflow-hidden"
                     style={{
@@ -201,9 +173,7 @@ export default function Home() {
                   >
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-white font-semibold">
-                          {t ? t.title : `Задача ${assignment.task_id} (нет описания)`}
-                        </h4>
+                        <h4 className="text-white font-semibold">{t.title}</h4>
                         <span className="text-xs px-2 py-1 rounded-full" style={{
                           background:
                             assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
@@ -215,11 +185,9 @@ export default function Home() {
                           {assignment.status === 'pending_review' && 'На проверке'}
                         </span>
                       </div>
-                      <p className="text-gray-400 text-sm mb-2">
-                        {t ? t.description?.slice(0, 100) : 'Описание недоступно'}
-                      </p>
+                      <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
                       <div className="flex justify-between items-center text-xs mb-3">
-                        <span className="text-yellow-400">+{t?.reward_karma ?? '?'} кармиков</span>
+                        <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
                         {assignment.deadline_at && (
                           <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
                         )}
@@ -232,7 +200,7 @@ export default function Home() {
                         )}
                         {assignment.status === 'in_progress' && (
                           <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                            {t?.requires_review ? 'Отправить на проверку' : 'Завершить'}
+                            {t.requires_review ? 'Отправить на проверку' : 'Завершить'}
                           </button>
                         )}
                         {assignment.status === 'pending_review' && (
