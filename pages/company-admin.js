@@ -92,35 +92,65 @@ export default function CompanyAdmin() {
 
   const handleCreateTask = async (e) => {
     e.preventDefault()
-    const res = await fetch('/api/tasks/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
+    // Создаём задание
+    const { data: task, error: taskError } = await supabase
+      .from('tasks')
+      .insert({
+        company_id: profile.company_id,
         title: form.title,
         description: form.description,
-        rewardKarma: form.reward_karma,
-        taskType: form.task_type,
+        reward_karma: form.reward_karma,
+        task_type: form.task_type,
         frequency: form.frequency,
-        targetRole: form.target_role,
-        minEnergyLevel: form.min_energy_level,
-        requiresReview: form.requires_review,
-        deadlineHours: form.deadline_hours ? Number(form.deadline_hours) : null
+        target_role: form.target_role,
+        min_energy_level: form.min_energy_level,
+        requires_review: form.requires_review,
+        deadline_hours: form.deadline_hours ? Number(form.deadline_hours) : null,
+        created_by: profile.user_id,
+        is_active: true
       })
-    })
-    if (res.ok) {
-      const result = await res.json()
-      alert(`Задание создано! Назначено сотрудников: ${result.assigned}`)
-      setForm({
-        title: '', description: '', reward_karma: 10, task_type: 'one_time',
-        frequency: 'once', target_role: 'all', min_energy_level: 0,
-        requires_review: false, deadline_hours: ''
-      })
-      fetchTasks()
-    } else {
-      const err = await res.json()
-      alert('Ошибка: ' + (err.error || 'Неизвестная ошибка'))
+      .select()
+      .single()
+    if (taskError) {
+      alert('Ошибка создания задания: ' + taskError.message)
+      return
     }
+
+    // Назначаем сотрудникам
+    const { data: employeesList } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('company_id', profile.company_id)
+      .not('role_id', 'in', '(1,2)')
+      .not('user_id', 'is', null)
+
+    if (employeesList && employeesList.length > 0) {
+      const assignments = employeesList.map(emp => ({
+        task_id: task.id,
+        user_id: emp.user_id,
+        status: 'assigned',
+        assigned_by: profile.user_id,
+        deadline_at: form.deadline_hours ? new Date(Date.now() + form.deadline_hours * 3600000).toISOString() : null
+      }))
+      const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
+      if (assignError) {
+        // Если не удалось назначить, удаляем задание
+        await supabase.from('tasks').delete().eq('id', task.id)
+        alert('Ошибка назначения: ' + assignError.message)
+        return
+      }
+      alert(`Задание создано и назначено ${employeesList.length} сотрудникам`)
+    } else {
+      alert('Задание создано, но в компании нет сотрудников для назначения')
+    }
+
+    // Очищаем форму
+    setForm({
+      title: '', description: '', reward_karma: 10, task_type: 'one_time',
+      frequency: 'once', target_role: 'all', min_energy_level: 0,
+      requires_review: false, deadline_hours: ''
+    })
+    fetchTasks()
   }
 
   const handleDeleteTask = (taskId) => {
@@ -132,30 +162,27 @@ export default function CompanyAdmin() {
     setDeleteModal(null)
     if (!taskId) return
 
-    const res = await fetch('/api/tasks/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ taskId })
-    })
-    if (res.ok) {
-      fetchTasks()
-    } else {
-      const err = await res.json()
-      alert('Ошибка удаления: ' + (err.error || 'Неизвестная ошибка'))
-    }
+    // Удаляем назначения и задание
+    await supabase.from('task_assignments').delete().eq('task_id', taskId)
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    if (error) alert('Ошибка удаления: ' + error.message)
+    else fetchTasks()
   }
 
   const cancelDelete = () => setDeleteModal(null)
 
   const handleSendInvite = async (email) => {
-    await fetch('/api/send-invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
+    const token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)
+    const { error } = await supabase.from('invitations').insert({
+      email,
+      token,
+      status: 'pending',
+      company_id: profile.company_id,
+      role_id: 3,
+      created_by: profile.user_id
     })
-    fetchInvites()
+    if (error) alert('Ошибка: ' + error.message)
+    else fetchInvites()
   }
 
   if (!profile) {
