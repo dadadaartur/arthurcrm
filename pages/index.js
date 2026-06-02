@@ -32,7 +32,7 @@ export default function Home() {
   const fetchTasks = async (userId) => {
     if (!userId) return
 
-    // 1. Получаем назначения для текущего пользователя
+    // 1. Назначения для текущего пользователя
     const { data: assignments, error: assignError } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id')
@@ -40,6 +40,8 @@ export default function Home() {
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .order('created_at', { ascending: false })
       .limit(5)
+
+    console.log('assignments:', assignments)
 
     if (assignError) {
       console.error('Ошибка получения назначений:', assignError)
@@ -52,7 +54,7 @@ export default function Home() {
       return
     }
 
-    // 2. Получаем задачи по id
+    // 2. Задачи по id
     const taskIds = [...new Set(assignments.map(a => a.task_id))]
     const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
@@ -63,7 +65,9 @@ export default function Home() {
       console.error('Ошибка получения задач:', tasksError)
     }
 
-    // 3. Объединяем — БОЛЬШЕ НЕ СКРЫВАЕМ КАРТОЧКИ, если задача не найдена
+    console.log('tasksData:', tasksData)
+
+    // 3. Объединяем — больше не скрываем карточки
     const merged = assignments.map(assignment => ({
       ...assignment,
       tasks: tasksData?.find(t => t.id === assignment.task_id) || null
@@ -190,7 +194,6 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {tasks.map(assignment => {
                 const t = assignment.tasks
-                // Вот эта строка БОЛЬШЕ НЕ УБИВАЕТ карточку
                 return (
                   <div key={assignment.id} className="premium-card relative overflow-hidden"
                     style={{
