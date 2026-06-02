@@ -29,12 +29,12 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async () => {
-    if (!user) return
+  const fetchTasks = async (userId) => {
+    if (!userId) return
     const { data, error } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .order('created_at', { ascending: false })
       .limit(5)
@@ -57,25 +57,23 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks()
+      // Передаём user.id напрямую, чтобы избежать проблем с состоянием
+      await fetchTasks(user.id)
       setLoading(false)
     }
     init()
   }, [])
-
-  useEffect(() => {
-    if (user) fetchTasks()
-  }, [user])
 
   const handleStart = async (assignmentId) => {
     const { error } = await supabase
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-    if (!error) fetchTasks()
+    if (!error && user) fetchTasks(user.id)
   }
 
   const handleComplete = async (assignmentId) => {
+    if (!user) return
     const { data: assignment } = await supabase
       .from('task_assignments')
       .select('id, tasks( requires_review, reward_karma )')
@@ -118,7 +116,7 @@ export default function Home() {
           if (newBal) setBalance(newBal.balance)
         }
       }
-      fetchTasks()
+      fetchTasks(user.id)
     }
   }
 
