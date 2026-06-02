@@ -13,6 +13,7 @@ function getKarmikWord(n) {
 }
 
 function formatTimeLeft(deadline) {
+  if (!deadline) return ''
   const now = new Date()
   const diff = new Date(deadline) - now
   if (diff <= 0) return '00:00'
@@ -28,37 +29,21 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async (userId) => {
-    const { data: assignments, error } = await supabase
-      .from('task_assignments')
-      .select('*, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
-      .eq('user_id', userId)
-      .neq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(3)
-    if (error) console.error('Ошибка загрузки заданий:', error)
-    else setTasks(assignments || [])
+  const fetchTasks = async () => {
+    const res = await fetch('/api/tasks/my')
+    if (res.ok) {
+      const data = await res.json()
+      setTasks(data)
+    }
   }
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, role_id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (profileError || !profile) {
-        router.push('/login')
-        return
-      }
-
       setUser(user)
 
       const { data: balanceData } = await supabase
@@ -68,28 +53,40 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks(user.id)
+      await fetchTasks()
       setLoading(false)
     }
-    checkAccess()
-  }, [router])
+    init()
+  }, [])
 
   const handleStart = async (assignmentId) => {
-    await fetch('/api/tasks/start', {
+    const res = await fetch('/api/tasks/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignmentId })
     })
-    if (user) fetchTasks(user.id)
+    if (res.ok) fetchTasks()
+    else alert('Ошибка при старте задания')
   }
 
-  const handleComplete = async (assignmentId, comment = '') => {
-    await fetch('/api/tasks/complete', {
+  const handleComplete = async (assignmentId) => {
+    const res = await fetch('/api/tasks/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignmentId, comment })
+      body: JSON.stringify({ assignmentId })
     })
-    if (user) fetchTasks(user.id)
+    if (res.ok) {
+      fetchTasks()
+      // обновить баланс (можно перезапросить)
+      const { data: balanceData } = await supabase
+        .from('karma_balance')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (balanceData) setBalance(balanceData.balance)
+    } else {
+      alert('Ошибка при завершении')
+    }
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -123,78 +120,66 @@ export default function Home() {
             <div className="mt-8 w-full max-w-[500px]">
               <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
               <div className="space-y-4">
-                {tasks.map(assignment => (
-                  <div
-                    key={assignment.id}
-                    className="premium-card relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                      borderColor: 'rgba(139, 92, 246, 0.3)',
-                      boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
-                    }}
-                  >
-                    <div className="relative z-10">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-white font-semibold">{assignment.tasks.title}</h4>
-                        <span className="text-xs px-2 py-1 rounded-full" style={{
-                          background:
-                            assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
-                            assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
-                          color: '#fff'
-                        }}>
-                          {assignment.status === 'assigned' && 'Новое'}
-                          {assignment.status === 'in_progress' && 'В работе'}
-                          {assignment.status === 'pending_review' && 'На проверке'}
-                        </span>
-                      </div>
-                      <p className="text-gray-400 text-sm mb-2">{assignment.tasks.description?.slice(0, 100)}</p>
-                      <div className="flex justify-between items-center text-xs mb-3">
-                        <span className="text-yellow-400">+{assignment.tasks.reward_karma} кармиков</span>
-                        {assignment.deadline_at && (
-                          <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {assignment.status === 'assigned' && (
-                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                            Начать
-                          </button>
-                        )}
-                        {assignment.status === 'in_progress' && (
-                          <>
-                            {assignment.tasks.requires_review ? (
-                              <button
-                                onClick={() => router.push(`/task/${assignment.id}`)}
-                                className="action-btn w-full text-xs py-1.5"
-                              >
-                                Завершить и отправить на проверку
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleComplete(assignment.id)}
-                                className="action-btn w-full text-xs py-1.5"
-                              >
-                                Завершить
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {assignment.status === 'pending_review' && (
-                          <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
-                            Ожидает проверки
-                          </div>
-                        )}
-                        <button
-                          onClick={() => router.push(`/task/${assignment.id}`)}
-                          className="action-btn text-xs py-1.5"
-                          style={{ minWidth: '40px' }}
-                        >
-                          &gt;
-                        </button>
+                {tasks.map(assignment => {
+                  const t = assignment.tasks
+                  return (
+                    <div key={assignment.id} className="premium-card relative overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
+                        borderColor: 'rgba(139, 92, 246, 0.3)',
+                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
+                      }}
+                    >
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-white font-semibold">{t.title}</h4>
+                          <span className="text-xs px-2 py-1 rounded-full" style={{
+                            background:
+                              assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
+                              assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
+                            color: '#fff'
+                          }}>
+                            {assignment.status === 'assigned' && 'Новое'}
+                            {assignment.status === 'in_progress' && 'В работе'}
+                            {assignment.status === 'pending_review' && 'На проверке'}
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
+                        <div className="flex justify-between items-center text-xs mb-3">
+                          <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
+                          {assignment.deadline_at && (
+                            <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          {assignment.status === 'assigned' && (
+                            <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                              Начать
+                            </button>
+                          )}
+                          {assignment.status === 'in_progress' && (
+                            <>
+                              {t.requires_review ? (
+                                <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">
+                                  Завершить и отправить на проверку
+                                </button>
+                              ) : (
+                                <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                                  Завершить
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {assignment.status === 'pending_review' && (
+                            <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                              Ожидает проверки
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
