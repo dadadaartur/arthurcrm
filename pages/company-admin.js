@@ -116,7 +116,7 @@ export default function CompanyAdmin() {
       return
     }
 
-    // Назначаем сотрудникам
+    // Назначаем сотрудникам (без поля assigned_by)
     const { data: employeesList } = await supabase
       .from('profiles')
       .select('user_id')
@@ -129,7 +129,6 @@ export default function CompanyAdmin() {
         task_id: task.id,
         user_id: emp.user_id,
         status: 'assigned',
-        assigned_by: profile.user_id,
         deadline_at: form.deadline_hours ? new Date(Date.now() + form.deadline_hours * 3600000).toISOString() : null
       }))
       const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
@@ -162,11 +161,27 @@ export default function CompanyAdmin() {
     setDeleteModal(null)
     if (!taskId) return
 
-    // Удаляем назначения и задание
-    await supabase.from('task_assignments').delete().eq('task_id', taskId)
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
-    if (error) alert('Ошибка удаления: ' + error.message)
-    else fetchTasks()
+    // Удаляем назначения (теперь с политиками) и задание
+    const { error: deleteAssignError } = await supabase
+      .from('task_assignments')
+      .delete()
+      .eq('task_id', taskId)
+
+    if (deleteAssignError) {
+      alert('Ошибка удаления назначений: ' + deleteAssignError.message)
+      return
+    }
+
+    const { error: deleteTaskError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+
+    if (deleteTaskError) {
+      alert('Ошибка удаления задания: ' + deleteTaskError.message)
+    } else {
+      fetchTasks()
+    }
   }
 
   const cancelDelete = () => setDeleteModal(null)
