@@ -116,7 +116,7 @@ export default function CompanyAdmin() {
       return
     }
 
-    // Получаем сотрудников компании (не админов) и вставляем назначения
+    // Получаем сотрудников (не админов) – user_id у них теперь настоящий auth.uid
     const { data: employeesList } = await supabase
       .from('profiles')
       .select('user_id')
@@ -127,7 +127,7 @@ export default function CompanyAdmin() {
     if (employeesList && employeesList.length > 0) {
       const assignments = employeesList.map(emp => ({
         task_id: task.id,
-        user_id: emp.user_id,   // здесь user_id из profiles, и он должен совпадать с auth.uid
+        user_id: emp.user_id,
         status: 'assigned',
         deadline_at: form.deadline_hours ? new Date(Date.now() + form.deadline_hours * 3600000).toISOString() : null
       }))
@@ -150,9 +150,7 @@ export default function CompanyAdmin() {
     fetchTasks()
   }
 
-  const handleDeleteClick = (taskId) => {
-    setDeleteModal(taskId)
-  }
+  const handleDeleteClick = (taskId) => setDeleteModal(taskId)
 
   const confirmDelete = async () => {
     const taskId = deleteModal
