@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { supabase } from '../lib/supabaseClient'
 
 function ConfirmModal({ onConfirm, onCancel }) {
   return (
@@ -13,7 +8,7 @@ function ConfirmModal({ onConfirm, onCancel }) {
       <div className="modal-content" style={{ cursor: 'default' }} onClick={e => e.stopPropagation()}>
         <h3 className="text-lg font-bold mb-4" style={{ color: '#d4af37' }}>Подтверждение</h3>
         <p className="mb-6" style={{ color: 'rgba(255,255,255,0.8)' }}>
-          Вы уверены, что хотите удалить задание?
+          Вы уверены, что хотите удалить задание и все его назначения?
         </p>
         <div className="flex justify-center gap-4">
           <button onClick={onCancel} className="btn-outline">Отмена</button>
@@ -59,11 +54,15 @@ export default function CompanyAdmin() {
     if (!user) return
     const { data } = await supabase
       .from('profiles')
-      .select('*, roles(name)')
+      .select('*, roles(name, is_system)')
       .eq('user_id', user.id)
       .single()
-    if (data && (data.role_id === 1 || data.role_id === 2)) setProfile(data)
-    else router.push('/')
+    // Проверяем, что админ компании или суперадмин
+    if (data && (data.roles?.is_system === true || data.role_id === 2)) {
+      setProfile(data)
+    } else {
+      router.push('/')
+    }
   }
 
   const fetchTasks = async () => {
@@ -111,12 +110,21 @@ export default function CompanyAdmin() {
       })
     })
     if (res.ok) {
-      setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: false, deadline_hours: '' })
+      const result = await res.json()
+      alert(`Задание создано! Назначено сотрудников: ${result.assigned}`)
+      setForm({
+        title: '', description: '', reward_karma: 10, task_type: 'one_time',
+        frequency: 'once', target_role: 'all', min_energy_level: 0,
+        requires_review: false, deadline_hours: ''
+      })
       fetchTasks()
+    } else {
+      const err = await res.json()
+      alert('Ошибка: ' + (err.error || 'Неизвестная ошибка'))
     }
   }
 
-  const handleDeleteTask = (taskId) => {
+  const handleDeleteTask = async (taskId) => {
     setDeleteModal(taskId)
   }
 
@@ -125,12 +133,16 @@ export default function CompanyAdmin() {
     setDeleteModal(null)
     if (!taskId) return
 
-    // Сначала удаляем назначения
-    await supabase.from('task_assignments').delete().eq('task_id', taskId)
-    // Затем удаляем само задание
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
-    if (error) console.error('Ошибка удаления:', error)
-    else fetchTasks()
+    const res = await fetch('/api/tasks/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId })
+    })
+    if (res.ok) {
+      fetchTasks()
+    } else {
+      alert('Ошибка удаления')
+    }
   }
 
   const cancelDelete = () => setDeleteModal(null)
@@ -191,6 +203,7 @@ export default function CompanyAdmin() {
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
                 style={{ height: '80px', resize: 'vertical' }}
+                required
               />
               <div className="flex gap-4">
                 <div className="flex-1">
