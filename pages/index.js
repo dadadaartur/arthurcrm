@@ -77,7 +77,6 @@ export default function Home() {
     })
     if (res.ok) {
       fetchTasks()
-      // обновить баланс (можно перезапросить)
       const { data: balanceData } = await supabase
         .from('karma_balance')
         .select('balance')
@@ -116,9 +115,12 @@ export default function Home() {
             </div>
           </div>
 
-          {tasks.length > 0 && (
-            <div className="mt-8 w-full max-w-[500px]">
-              <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
+          {/* Блок заданий */}
+          <div className="mt-8 w-full max-w-[500px]">
+            <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
+            {tasks.length === 0 ? (
+              <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
+            ) : (
               <div className="space-y-4">
                 {tasks.map(assignment => {
                   const t = assignment.tasks
@@ -181,8 +183,8 @@ export default function Home() {
                   )
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
