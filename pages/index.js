@@ -30,6 +30,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = async (userId) => {
+    console.log('🔍 fetchTasks called with userId:', userId)
     if (!userId) return
     const { data, error } = await supabase
       .from('task_assignments')
@@ -38,12 +39,14 @@ export default function Home() {
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .order('created_at', { ascending: false })
       .limit(5)
+    console.log('📦 Supabase response:', data, error)
     if (!error) setTasks(data || [])
   }
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('👤 Current user from Supabase:', user)
       if (!user) {
         router.push('/login')
         return
@@ -57,7 +60,7 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      // Передаём user.id напрямую, чтобы избежать проблем с состоянием
+      // Передаём user.id напрямую — никакого ожидания состояния
       await fetchTasks(user.id)
       setLoading(false)
     }
