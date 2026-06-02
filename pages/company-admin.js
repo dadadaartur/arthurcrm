@@ -18,9 +18,6 @@ function ConfirmModal({ onConfirm, onCancel }) {
   )
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 export default function CompanyAdmin() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
@@ -224,34 +221,18 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/rpc/process_review`, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          assignment_id: Number(assignmentId),
-          action: action
-        })
-      })
+    const res = await fetch('/api/tasks/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId, action })
+    })
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.message || 'Ошибка сервера')
-      }
-
-      const result = await res.text() // функция возвращает просто текст
-      const message = result === 'OK'
-        ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
-        : result
-
+    if (res.ok) {
       fetchPendingReviews()
-      setSuccessModal({ show: true, message })
-    } catch (error) {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
+      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
+    } else {
+      const err = await res.json()
+      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
     }
   }
 
