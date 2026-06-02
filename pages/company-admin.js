@@ -254,23 +254,33 @@ export default function CompanyAdmin() {
 
     if (action === 'approve' && assignment.tasks?.reward_karma > 0) {
       const reward = assignment.tasks.reward_karma
-      await supabase.from('karma_transactions').insert({
+      const { error: transactionError } = await supabase.from('karma_transactions').insert({
         user_id: assignment.user_id,
         amount: reward,
         type: 'task_reward',
         description: 'Выполнено задание: ' + assignment.tasks.title
       })
+      if (transactionError) {
+        console.error('Transaction insert error:', transactionError)
+        setSuccessModal({ show: true, message: 'Ошибка начисления: ' + transactionError.message })
+        return
+      }
 
-      const { data: balanceRow } = await supabase
+      const { data: balanceRow, error: balanceFetchError } = await supabase
         .from('karma_balance')
         .select('balance')
         .eq('user_id', assignment.user_id)
         .single()
 
-      const newBalance = (balanceRow?.balance || 0) + reward
-      await supabase
-        .from('karma_balance')
-        .upsert({ user_id: assignment.user_id, balance: newBalance }, { onConflict: 'user_id' })
+      if (balanceFetchError) {
+        await supabase.from('karma_balance').insert({ user_id: assignment.user_id, balance: reward })
+      } else {
+        const newBalance = (balanceRow?.balance || 0) + reward
+        await supabase
+          .from('karma_balance')
+          .update({ balance: newBalance })
+          .eq('user_id', assignment.user_id)
+      }
     }
 
     fetchPendingReviews()
