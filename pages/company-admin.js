@@ -27,8 +27,6 @@ export default function CompanyAdmin() {
   const [invites, setInvites] = useState([])
   const [deleteModal, setDeleteModal] = useState(null)
   const [successModal, setSuccessModal] = useState({ show: false, message: '' })
-
-  // Состояния для вкладки "Проверка"
   const [pendingReviews, setPendingReviews] = useState([])
 
   const [form, setForm] = useState({
@@ -39,7 +37,7 @@ export default function CompanyAdmin() {
     frequency: 'once',
     target_role: 'all',
     min_energy_level: 0,
-    requires_review: true,   // по умолчанию включено
+    requires_review: true,
     deadline_hours: ''
   })
 
@@ -95,7 +93,6 @@ export default function CompanyAdmin() {
   }
 
   const fetchPendingReviews = async () => {
-    // Получаем все назначения со статусом pending_review, относящиеся к заданиям нашей компании
     const { data, error } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
@@ -104,7 +101,6 @@ export default function CompanyAdmin() {
       .order('started_at', { ascending: false })
 
     if (!error && data) {
-      // Добавим email сотрудника из profiles
       const enriched = await Promise.all(data.map(async (item) => {
         const { data: profileData } = await supabase
           .from('profiles')
@@ -190,7 +186,6 @@ export default function CompanyAdmin() {
     else fetchTasks()
   }
 
-  // Обработчики для проверки заданий
   const handleReview = async (assignmentId, action) => {
     const token = await getAccessToken()
     const res = await fetch('/api/tasks/review', {
@@ -310,6 +305,31 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
+          {employees.length === 0 ? (
+            <p className="text-gray-400">Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-800">
+                  <span>{emp.display_name || emp.email}</span>
+                  <span className="text-sm text-gray-400">ID: {emp.user_id?.slice(0,8)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'invites' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Приглашения</h3>
+          <p className="text-gray-400">Функция приглашений временно недоступна</p>
+        </div>
+      )}
+
       {activeTab === 'review' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
@@ -336,10 +356,6 @@ export default function CompanyAdmin() {
           )}
         </div>
       )}
-
-      {/* Сотрудники и приглашения без изменений */}
-      {activeTab === 'employees' && ( /* ... */ )}
-      {activeTab === 'invites' && ( /* ... */ )}
 
       {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
