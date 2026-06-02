@@ -38,7 +38,7 @@ export default function Layout({ children }) {
       if (user) {
         supabase
           .from('profiles')
-          .select('display_name, roles(name, is_system), company_id')
+          .select('display_name, role_id, roles(name, is_system), company_id')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => setProfile(data))
@@ -53,7 +53,7 @@ export default function Layout({ children }) {
       if (currentUser) {
         supabase
           .from('profiles')
-          .select('display_name, roles(name, is_system), company_id')
+          .select('display_name, role_id, roles(name, is_system), company_id')
           .eq('user_id', currentUser.id)
           .maybeSingle()
           .then(({ data }) => setProfile(data))
@@ -70,16 +70,14 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Пользователь без компании и без системной роли → гость
+  // Гость: пользователь без компании и без системной роли
   const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
-  // Суперадмин или администратор компании
-  const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin =
-    profile?.roles?.name === 'РОП' ||
-    profile?.roles?.name === 'СМ' ||
-    profile?.roles?.name === 'Администратор'
 
-  // Гостевой режим (только фон и контент)
+  // Суперадмин (is_system = true) или админ компании (role_id = 2)
+  const isSuperAdmin = profile?.roles?.is_system === true
+  const isCompanyAdmin = profile?.role_id === 2 // только role_id=2
+
+  // Гостевой режим (без меню)
   if (isGuest) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -102,7 +100,7 @@ export default function Layout({ children }) {
     )
   }
 
-  // Полный интерфейс для авторизованных (сотрудники, администраторы, суперадмин)
+  // Полный интерфейс для авторизованных
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
@@ -116,7 +114,9 @@ export default function Layout({ children }) {
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <Link href="/supd" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</Link>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {isCompanyAdmin && <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>}
+            {(isSuperAdmin || isCompanyAdmin) && (
+              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2 text-xs font-medium">
