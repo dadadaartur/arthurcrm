@@ -30,11 +30,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = async () => {
-    const res = await fetch('/api/tasks/my', { credentials: 'include' })
-    if (res.ok) {
-      const data = await res.json()
-      setTasks(data)
-    }
+    const { data, error } = await supabase
+      .from('task_assignments')
+      .select('id, status, started_at, deadline_at, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
+      .eq('user_id', user?.id)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+    if (!error) setTasks(data || [])
   }
 
   useEffect(() => {
@@ -60,33 +63,61 @@ export default function Home() {
   }, [])
 
   const handleStart = async (assignmentId) => {
-    const res = await fetch('/api/tasks/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ assignmentId })
-    })
-    if (res.ok) fetchTasks()
-    else alert('Ошибка при старте задания')
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: 'in_progress', started_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+    if (!error) fetchTasks()
   }
 
   const handleComplete = async (assignmentId) => {
-    const res = await fetch('/api/tasks/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ assignmentId })
-    })
-    if (res.ok) {
+    const { data: assignment } = await supabase
+      .from('task_assignments')
+      .select('id, tasks( requires_review, reward_karma )')
+      .eq('id', assignmentId)
+      .single()
+    if (!assignment) return
+
+    const newStatus = assignment.tasks?.requires_review ? 'pending_review' : 'completed'
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: newStatus, completed_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+
+    if (!error) {
+      if (newStatus === 'completed') {
+        // Начисление кармиков
+        const reward = assignment.tasks?.reward_karma || 0
+        if (reward > 0) {
+          // Через RLS мы можем вставить транзакцию
+          await supabase.from('karma_transactions').insert({
+            user_id: user.id,
+            amount: reward,
+            type: 'task_reward',
+            description: `Начисление за задание`
+          })
+          // Обновим баланс
+          const { data: balData } = await supabase
+            .from('karma_balance')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single()
+          if (balData) {
+            await supabase
+              .from('karma_balance')
+              .update({ balance: balData.balance + reward })
+              .eq('user_id', user.id)
+          }
+          // Перезапросим баланс
+          const { data: newBal } = await supabase
+            .from('karma_balance')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single()
+          if (newBal) setBalance(newBal.balance)
+        }
+      }
       fetchTasks()
-      const { data: balanceData } = await supabase
-        .from('karma_balance')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single()
-      if (balanceData) setBalance(balanceData.balance)
-    } else {
-      alert('Ошибка при завершении')
     }
   }
 
@@ -97,6 +128,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
+        {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -116,83 +148,69 @@ export default function Home() {
               <button onClick={() => router.push('/my-purchases')} className="wide-btn">Мои покупки</button>
             </div>
           </div>
-
-          {tasks.length > 0 ? (
-            <div className="mt-8 w-full max-w-[500px]">
-              <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
-              <div className="space-y-4">
-                {tasks.map(assignment => {
-                  const t = assignment.tasks
-                  return (
-                    <div key={assignment.id} className="premium-card relative overflow-hidden"
-                      style={{
-                        background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                        borderColor: 'rgba(139, 92, 246, 0.3)',
-                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
-                      }}
-                    >
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-white font-semibold">{t.title}</h4>
-                          <span className="text-xs px-2 py-1 rounded-full" style={{
-                            background:
-                              assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
-                              assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
-                            color: '#fff'
-                          }}>
-                            {assignment.status === 'assigned' && 'Новое'}
-                            {assignment.status === 'in_progress' && 'В работе'}
-                            {assignment.status === 'pending_review' && 'На проверке'}
-                          </span>
-                        </div>
-                        <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
-                        <div className="flex justify-between items-center text-xs mb-3">
-                          <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
-                          {assignment.deadline_at && (
-                            <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          {assignment.status === 'assigned' && (
-                            <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                              Начать
-                            </button>
-                          )}
-                          {assignment.status === 'in_progress' && (
-                            <>
-                              {t.requires_review ? (
-                                <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">
-                                  Завершить и отправить на проверку
-                                </button>
-                              ) : (
-                                <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                                  Завершить
-                                </button>
-                              )}
-                            </>
-                          )}
-                          {assignment.status === 'pending_review' && (
-                            <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
-                              Ожидает проверки
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-400 text-sm mt-8">Нет активных заданий. Администратор скоро их назначит.</p>
-          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
-          <div className="dash-card"><h3>Задания</h3><p className="text-sm text-gray-400">Выполняй миссии и расти над собой</p></div>
-          <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
-          <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
-          <div className="dash-card"><h3>Битва экспертов</h3><p className="text-sm text-gray-400">Всероссийский чемпионат профессионалов</p></div>
+        {/* Правая колонка: блок заданий */}
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
+          {tasks.length === 0 ? (
+            <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {tasks.map(assignment => {
+                const t = assignment.tasks
+                return (
+                  <div key={assignment.id} className="premium-card relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
+                      borderColor: 'rgba(139, 92, 246, 0.3)',
+                      boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
+                    }}
+                  >
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-white font-semibold">{t.title}</h4>
+                        <span className="text-xs px-2 py-1 rounded-full" style={{
+                          background:
+                            assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
+                            assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
+                          color: '#fff'
+                        }}>
+                          {assignment.status === 'assigned' && 'Новое'}
+                          {assignment.status === 'in_progress' && 'В работе'}
+                          {assignment.status === 'pending_review' && 'На проверке'}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
+                      <div className="flex justify-between items-center text-xs mb-3">
+                        <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
+                        {assignment.deadline_at && (
+                          <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {assignment.status === 'assigned' && (
+                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                            Начать
+                          </button>
+                        )}
+                        {assignment.status === 'in_progress' && (
+                          <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                            {t.requires_review ? 'Отправить на проверку' : 'Завершить'}
+                          </button>
+                        )}
+                        {assignment.status === 'pending_review' && (
+                          <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                            Ожидает проверки
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
