@@ -170,10 +170,6 @@ export default function CompanyAdmin() {
 
   const cancelDelete = () => setDeleteModal(null)
 
-  const handleSendInvite = async (email) => {
-    // Заглушка
-  }
-
   if (!profile) {
     return <div className="flex items-center justify-center min-h-screen"><div className="spinner" /></div>
   }
