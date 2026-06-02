@@ -31,18 +31,10 @@ export default function Home() {
 
   const fetchTasks = async () => {
     if (!user) return
-    // Получаем профиль, чтобы узнать user_id из таблицы profiles
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('user_id', user.id)  // предполагаем, что user.id == profiles.user_id, но на всякий случай проверяем
-      .single()
-    const userId = profile?.user_id || user.id  // если профиль не найден, используем auth.uid
-
     const { data, error } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .order('created_at', { ascending: false })
       .limit(5)
