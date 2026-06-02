@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Битва за Пирожок — Клавиатурное управление (исправленная)</title>
+  <title>Битва за Пирожок — Рабочая версия</title>
   <style>
     body { margin: 0; overflow: hidden; background: #000; font-family: Arial; }
     #ui {
@@ -39,7 +39,7 @@
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true; // мягкие тени
+    renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0x99bbff, 0.7));
@@ -94,14 +94,14 @@
       throwables.push({ mesh, vel: new THREE.Vector3(), holder: null, type });
     }
 
-    // Начальный спаун предметов
+    // Создаём начальные предметы
     for (let i = 0; i < 40; i++) {
       const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * 25;
       const types = ['stone','apple','stick','mud'];
       addItem(Math.cos(a) * r, Math.sin(a) * r, types[Math.floor(Math.random() * types.length)]);
     }
 
-    // Восполнение предметов со временем
+    // Восполнение предметов (каждые 5 секунд)
     setInterval(() => {
       const freeItems = throwables.filter(t => !t.holder && t.vel.length() === 0);
       if (freeItems.length < 15) {
@@ -114,7 +114,6 @@
     // ==================== ПЕРСОНАЖИ ====================
     function createChar(name, color, pos, isPlayer = false) {
       const g = new THREE.Group();
-      // Тело
       const body = new THREE.Mesh(
         new THREE.CylinderGeometry(0.35, 0.4, 1.2, 8),
         new THREE.MeshStandardMaterial({ color })
@@ -124,7 +123,6 @@
       body.receiveShadow = true;
       g.add(body);
 
-      // Голова
       const head = new THREE.Mesh(
         new THREE.SphereGeometry(0.35, 8),
         new THREE.MeshStandardMaterial({ color: 0xffccaa })
@@ -133,7 +131,7 @@
       head.castShadow = true;
       g.add(head);
 
-      // Глаза (белые)
+      // Глаза
       const eyeWhite = new THREE.Mesh(
         new THREE.SphereGeometry(0.1),
         new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -164,7 +162,6 @@
       mouth.rotation.x = 0.2;
       g.add(mouth);
 
-      // Шляпа игроку
       if (isPlayer) {
         const hat = new THREE.Mesh(
           new THREE.ConeGeometry(0.25, 0.3, 8),
@@ -178,12 +175,10 @@
       // Руки
       const armGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.8, 6);
       const armMat = new THREE.MeshStandardMaterial({ color });
-      
       const armL = new THREE.Group();
       armL.add(new THREE.Mesh(armGeo, armMat).translateY(-0.4));
       armL.position.set(-0.55, 1.1, 0);
       g.add(armL);
-      
       const armR = new THREE.Group();
       armR.add(new THREE.Mesh(armGeo, armMat).translateY(-0.4));
       armR.position.set(0.55, 1.1, 0);
@@ -192,12 +187,10 @@
       // Ноги
       const legGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.7, 6);
       const legMat = new THREE.MeshStandardMaterial({ color: 0x2244aa });
-      
       const legL = new THREE.Group();
       legL.add(new THREE.Mesh(legGeo, legMat).translateY(-0.35));
       legL.position.set(-0.2, 0, 0);
       g.add(legL);
-      
       const legR = new THREE.Group();
       legR.add(new THREE.Mesh(legGeo, legMat).translateY(-0.35));
       legR.position.set(0.2, 0, 0);
@@ -228,17 +221,16 @@
       createChar('Шустря', 0xaa88cc, new THREE.Vector3(-8, 0, -10))
     ];
 
-    // ==================== УПРАВЛЕНИЕ ====================
+    // ==================== УПРАВЛЕНИЕ (РАБОТАЕТ НА ЛЮБОЙ РАСКЛАДКЕ) ====================
     const keys = {};
     window.addEventListener('keydown', e => {
-      keys[e.key.toLowerCase()] = true;
-      // Предотвращаем скролл страницы при нажатии пробела и стрелок
-      if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) || e.key === ' ') {
+      keys[e.code] = true;
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
         e.preventDefault();
       }
     });
     window.addEventListener('keyup', e => {
-      keys[e.key.toLowerCase()] = false;
+      keys[e.code] = false;
     });
 
     function pickUp(char) {
@@ -264,26 +256,25 @@
       if (!char.userData.held) return;
       if (Date.now() - char.userData.lastThrow < 1000) return;
       char.userData.lastThrow = Date.now();
-      
+
       const item = char.userData.held;
       item.holder = null;
       char.userData.held = null;
 
-      // Появляется перед персонажем
       item.mesh.position.copy(char.position);
       item.mesh.position.y += 1.2;
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(char.quaternion);
       item.vel.copy(forward.multiplyScalar(7 + power * 5));
       item.vel.y = 4 + power * 4;
-      
+
       scene.add(item.mesh);
     }
 
     function stun(char) {
       if (char.userData.stunned) return;
       char.userData.stunned = true;
-      // Визуальный эффект: меняем цвет и подпрыгиваем
-      char.children[0].material.color.set(0xff0000); // тело краснеет
+      // Визуальный эффект
+      char.children[0].material.color.set(0xff0000);
       const origY = char.position.y;
       char.position.y += 0.5;
       setTimeout(() => {
@@ -300,13 +291,11 @@
       if (enemy.userData.stunned) return;
       const distToPlayer = enemy.position.distanceTo(player.position);
       const dirToPlayer = new THREE.Vector3().subVectors(player.position, enemy.position).normalize();
-      
+
       if (distToPlayer > 3) {
-        // Приближение
         enemy.position.add(dirToPlayer.multiplyScalar(enemy.userData.speed));
         enemy.lookAt(player.position.x, enemy.position.y, player.position.z);
       } else {
-        // Вблизи: пытаемся подобрать и бросить
         if (!enemy.userData.held) pickUp(enemy);
         if (enemy.userData.held && Date.now() - enemy.userData.lastThrow > 1500) {
           throwItem(enemy, 0.6);
@@ -314,22 +303,22 @@
       }
     }
 
-    // ==================== ОСНОВНОЙ ЦИКЛ ====================
+    // ==================== ГЛАВНЫЙ ЦИКЛ ====================
     function update() {
       if (!player.userData.stunned) {
         const speed = 0.1;
         const moveVec = new THREE.Vector3();
-        if (keys['w'] || keys['arrowup']) moveVec.z -= 1;
-        if (keys['s'] || keys['arrowdown']) moveVec.z += 1;
-        if (keys['a'] || keys['arrowleft']) moveVec.x -= 1;
-        if (keys['d'] || keys['arrowright']) moveVec.x += 1;
+        if (keys['KeyW'] || keys['ArrowUp']) moveVec.z -= 1;
+        if (keys['KeyS'] || keys['ArrowDown']) moveVec.z += 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) moveVec.x -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) moveVec.x += 1;
         if (moveVec.length() > 0) {
           moveVec.normalize().multiplyScalar(speed);
           player.position.add(moveVec);
           player.lookAt(player.position.clone().add(moveVec));
         }
-        if (keys['e']) { pickUp(player); keys['e'] = false; }
-        if (keys[' ']) { throwItem(player, 0.7); keys[' '] = false; }
+        if (keys['KeyE']) { pickUp(player); keys['KeyE'] = false; }
+        if (keys['Space']) { throwItem(player, 0.7); keys['Space'] = false; }
       }
 
       // Камера
@@ -340,22 +329,19 @@
       // ИИ
       enemies.forEach(e => updateEnemy(e));
 
-      // Физика летящих предметов
+      // Физика предметов
       for (let i = throwables.length - 1; i >= 0; i--) {
         const t = throwables[i];
         if (t.holder) continue;
-        
-        // Движение
+
         t.mesh.position.add(t.vel.clone().multiplyScalar(0.16));
         t.vel.y -= 0.3;
-        
-        // Столкновение с землёй
+
         if (t.mesh.position.y < 0.15) {
           t.mesh.position.y = 0.15;
           t.vel.set(0, 0, 0);
         }
 
-        // Попадание в персонажей
         const allChars = [player, ...enemies];
         for (const c of allChars) {
           if (c === t.holder || c.userData.stunned) continue;
@@ -373,11 +359,10 @@
       const stunnedCount = enemies.filter(e => e.userData.stunned).length;
       document.getElementById('enemy-count').textContent = enemies.length;
       document.getElementById('stunned-count').textContent = stunnedCount;
-      document.getElementById('item-hold').textContent = player.userData.held 
-        ? '🎒 ' + player.userData.held.type 
+      document.getElementById('item-hold').textContent = player.userData.held
+        ? '🎒 ' + player.userData.held.type
         : '🎒 Пусто';
 
-      // Проверка победы: все враги оглушены одновременно
       if (enemies.length > 0 && enemies.every(e => e.userData.stunned)) {
         document.getElementById('victory').style.display = 'block';
       } else {
