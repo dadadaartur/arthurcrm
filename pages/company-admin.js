@@ -57,7 +57,6 @@ export default function CompanyAdmin() {
       .select('*, roles(name, is_system)')
       .eq('user_id', user.id)
       .single()
-    // Проверяем, что админ компании или суперадмин
     if (data && (data.roles?.is_system === true || data.role_id === 2)) {
       setProfile(data)
     } else {
@@ -124,7 +123,7 @@ export default function CompanyAdmin() {
     }
   }
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = (taskId) => {
     setDeleteModal(taskId)
   }
 
@@ -136,12 +135,14 @@ export default function CompanyAdmin() {
     const res = await fetch('/api/tasks/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ taskId })
     })
     if (res.ok) {
       fetchTasks()
     } else {
-      alert('Ошибка удаления')
+      const err = await res.json()
+      alert('Ошибка удаления: ' + (err.error || 'Неизвестная ошибка'))
     }
   }
 
