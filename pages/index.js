@@ -29,20 +29,50 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async () => {
-    try {
-      const res = await fetch('/api/tasks/my')
-      if (res.ok) {
-        const data = await res.json()
-        setTasks(data)
-      } else {
-        console.error('API error:', res.status)
-        setTasks([])
-      }
-    } catch (err) {
-      console.error('Fetch failed:', err)
-      setTasks([])
+  const fetchTasks = async (userId) => {
+    console.log('🔍 fetchTasks, userId:', userId)
+    if (!userId) return
+
+    // 1. Получаем назначения
+    const { data: assignments, error: assignError } = await supabase
+      .from('task_assignments')
+      .select('id, status, started_at, deadline_at, task_id')
+      .eq('user_id', userId)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (assignError) {
+      console.error('Ошибка получения назначений:', assignError)
+      return
     }
+    console.log('📋 assignments:', assignments)
+
+    if (!assignments || assignments.length === 0) {
+      setTasks([])
+      return
+    }
+
+    // 2. Получаем задачи по id
+    const taskIds = assignments.map(a => a.task_id)
+    const { data: tasksData, error: tasksError } = await supabase
+      .from('tasks')
+      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
+      .in('id', taskIds)
+
+    if (tasksError) {
+      console.error('Ошибка получения задач:', tasksError)
+      return
+    }
+    console.log('📦 tasksData:', tasksData)
+
+    // 3. Объединяем
+    const merged = assignments.map(a => ({
+      ...a,
+      tasks: tasksData?.find(t => t.id === a.task_id) || null
+    }))
+
+    setTasks(merged)
   }
 
   useEffect(() => {
@@ -53,6 +83,7 @@ export default function Home() {
         return
       }
       setUser(user)
+      console.log('👤 user:', user)
 
       const { data: balanceData } = await supabase
         .from('karma_balance')
@@ -61,7 +92,7 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks()
+      await fetchTasks(user.id)
       setLoading(false)
     }
     init()
@@ -72,7 +103,7 @@ export default function Home() {
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-    if (!error) fetchTasks()
+    if (!error && user) fetchTasks(user.id)
   }
 
   const handleComplete = async (assignmentId) => {
@@ -124,7 +155,7 @@ export default function Home() {
         if (newBal) setBalance(newBal.balance)
       }
     }
-    if (!error) fetchTasks()
+    if (!error && user) fetchTasks(user.id)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
