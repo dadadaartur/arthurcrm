@@ -95,10 +95,12 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div className="flex flex-col items-start px-6 py-8">
+    <div className="flex flex-col px-6 py-8 max-w-7xl mx-auto w-full">
+      {/* Верхняя часть: баланс и дашборд-карточки */}
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        <div className="flex flex-col items-start">
-          <div className="balance-card">
+        {/* Левая колонка: баланс + кнопки */}
+        <div className="flex flex-col items-start lg:w-[380px]">
+          <div className="balance-card w-full">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
@@ -116,84 +118,86 @@ export default function Home() {
               <button onClick={() => router.push('/my-purchases')} className="wide-btn">Мои покупки</button>
             </div>
           </div>
-
-          <div className="mt-8 w-full max-w-[500px]">
-            <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
-            {tasks.length === 0 ? (
-              <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map(assignment => {
-                  const t = assignment.tasks
-                  return (
-                    <div key={assignment.id} className="premium-card relative overflow-hidden"
-                      style={{
-                        background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                        borderColor: 'rgba(139, 92, 246, 0.3)',
-                        boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
-                      }}
-                    >
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-white font-semibold">{t.title}</h4>
-                          <span className="text-xs px-2 py-1 rounded-full" style={{
-                            background:
-                              assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
-                              assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
-                            color: '#fff'
-                          }}>
-                            {assignment.status === 'assigned' && 'Новое'}
-                            {assignment.status === 'in_progress' && 'В работе'}
-                            {assignment.status === 'pending_review' && 'На проверке'}
-                          </span>
-                        </div>
-                        <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
-                        <div className="flex justify-between items-center text-xs mb-3">
-                          <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
-                          {assignment.deadline_at && (
-                            <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          {assignment.status === 'assigned' && (
-                            <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                              Начать
-                            </button>
-                          )}
-                          {assignment.status === 'in_progress' && (
-                            <>
-                              {t.requires_review ? (
-                                <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">
-                                  Завершить и отправить на проверку
-                                </button>
-                              ) : (
-                                <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                                  Завершить
-                                </button>
-                              )}
-                            </>
-                          )}
-                          {assignment.status === 'pending_review' && (
-                            <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
-                              Ожидает проверки
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
+        {/* Правая колонка: дашборд-карточки */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           <div className="dash-card"><h3>Задания</h3><p className="text-sm text-gray-400">Выполняй миссии и расти над собой</p></div>
           <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
           <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
           <div className="dash-card"><h3>Битва экспертов</h3><p className="text-sm text-gray-400">Всероссийский чемпионат профессионалов</p></div>
         </div>
+      </div>
+
+      {/* Отдельный блок заданий на всю ширину */}
+      <div className="mt-10 w-full">
+        <h3 className="text-lg font-semibold text-white mb-4">Мои задания</h3>
+        {tasks.length === 0 ? (
+          <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
+        ) : (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+            {tasks.map(assignment => {
+              const t = assignment.tasks
+              return (
+                <div key={assignment.id} className="premium-card relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
+                    borderColor: 'rgba(139, 92, 246, 0.3)',
+                    boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
+                  }}
+                >
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-white font-semibold">{t.title}</h4>
+                      <span className="text-xs px-2 py-1 rounded-full" style={{
+                        background:
+                          assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
+                          assignment.status === 'in_progress' ? 'rgba(249,115,22,0.3)' : 'rgba(255,255,255,0.1)',
+                        color: '#fff'
+                      }}>
+                        {assignment.status === 'assigned' && 'Новое'}
+                        {assignment.status === 'in_progress' && 'В работе'}
+                        {assignment.status === 'pending_review' && 'На проверке'}
+                      </span>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
+                    <div className="flex justify-between items-center text-xs mb-3">
+                      <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
+                      {assignment.deadline_at && (
+                        <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {assignment.status === 'assigned' && (
+                        <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                          Начать
+                        </button>
+                      )}
+                      {assignment.status === 'in_progress' && (
+                        <>
+                          {t.requires_review ? (
+                            <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">
+                              Завершить и отправить на проверку
+                            </button>
+                          ) : (
+                            <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                              Завершить
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {assignment.status === 'pending_review' && (
+                        <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                          Ожидает проверки
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
