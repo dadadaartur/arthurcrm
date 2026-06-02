@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase, getAccessToken } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
 function ConfirmModal({ onConfirm, onCancel }) {
@@ -221,32 +221,22 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    const token = await getAccessToken()
-    if (!token) {
-      setSuccessModal({ show: true, message: 'Ошибка авторизации' })
+    const { data, error } = await supabase.rpc('process_review', {
+      assignment_id: Number(assignmentId),
+      action: action
+    })
+
+    if (error) {
+      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
       return
     }
 
-    const res = await fetch('/api/tasks/approve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ assignmentId, action })
-    })
+    const message = data === 'OK' 
+      ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
+      : data
 
-    if (res.ok) {
-      const json = await res.json()
-      const message = json.result === 'OK'
-        ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
-        : json.result
-      fetchPendingReviews()
-      setSuccessModal({ show: true, message })
-    } else {
-      const err = await res.json()
-      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
-    }
+    fetchPendingReviews()
+    setSuccessModal({ show: true, message })
   }
 
   if (!profile) {
