@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, getAccessToken } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
+import PremiumModal from '../components/PremiumModal'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -29,38 +30,28 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Состояния для модалки отправки
+  const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
+  const [submitting, setSubmitting] = useState(false)
+
   const fetchTasks = async (userId) => {
     if (!userId) return
-
-    const { data: assignments, error: assignError } = await supabase
+    const { data: assignments, error } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id')
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(5)
 
-    if (assignError) {
-      console.error('Ошибка получения назначений:', assignError)
-      setTasks([])
-      return
-    }
-
-    if (!assignments || assignments.length === 0) {
-      setTasks([])
-      return
-    }
+    if (error) { setTasks([]); return }
+    if (!assignments?.length) { setTasks([]); return }
 
     const taskIds = [...new Set(assignments.map(a => a.task_id))]
-    const { data: tasksData, error: tasksError } = await supabase
+    const { data: tasksData } = await supabase
       .from('tasks')
-      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
+      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review, is_auto')
       .in('id', taskIds)
 
-    if (tasksError) {
-      console.error('Ошибка получения задач:', tasksError)
-    }
-
-    // Берём только те назначения, у которых задача реально существует
     const merged = assignments
       .filter(a => tasksData?.some(t => t.id === a.task_id))
       .map(a => ({
@@ -74,19 +65,10 @@ export default function Home() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
+      if (!user) { router.push('/login'); return }
       setUser(user)
-
-      const { data: balanceData } = await supabase
-        .from('karma_balance')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single()
-      if (balanceData) setBalance(balanceData.balance)
-
+      const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
+      if (bal) setBalance(bal.balance)
       await fetchTasks(user.id)
       setLoading(false)
     }
@@ -101,15 +83,29 @@ export default function Home() {
     if (!error && user) fetchTasks(user.id)
   }
 
-  const handleComplete = async (assignmentId) => {
-    if (!user) return
-    // Всегда отправляем на проверку
-    const { error } = await supabase
-      .from('task_assignments')
-      .update({ status: 'pending_review', completed_at: new Date().toISOString() })
-      .eq('id', assignmentId)
+  const openSubmitModal = (assignmentId) => {
+    setSubmitModal({ show: true, assignmentId, comment: '' })
+  }
 
-    if (!error && user) fetchTasks(user.id)
+  const handleSubmit = async () => {
+    if (!user || !submitModal.assignmentId) return
+    setSubmitting(true)
+    const token = await getAccessToken()
+    const res = await fetch('/api/tasks/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ assignmentId: submitModal.assignmentId, comment: submitModal.comment })
+    })
+    if (res.ok) {
+      setSubmitModal({ show: false, assignmentId: null, comment: '' })
+      fetchTasks(user.id)
+    } else {
+      alert('Ошибка отправки')
+    }
+    setSubmitting(false)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -119,6 +115,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
+        {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -140,10 +137,11 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Правая колонка: задания */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
           {tasks.length === 0 ? (
-            <p className="text-gray-400 text-sm">Нет активных заданий. Администратор скоро их назначит.</p>
+            <p className="text-gray-400 text-sm">Нет активных заданий</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {tasks.map(assignment => {
@@ -184,7 +182,7 @@ export default function Home() {
                           </button>
                         )}
                         {assignment.status === 'in_progress' && (
-                          <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                          <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
                             Отправить на проверку
                           </button>
                         )}
@@ -202,6 +200,28 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Модальное окно для комментария */}
+      {submitModal.show && (
+        <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold mb-4 text-gold">Отправить на проверку</h3>
+            <textarea
+              className="input-field"
+              placeholder="Введите комментарий (номер заказа, результат)"
+              value={submitModal.comment}
+              onChange={e => setSubmitModal({ ...submitModal, comment: e.target.value })}
+              rows={3}
+            />
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
+              <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
+                {submitting ? 'Отправка...' : 'Отправить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
