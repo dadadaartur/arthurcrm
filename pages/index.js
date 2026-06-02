@@ -30,7 +30,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = async () => {
-    const res = await fetch('/api/tasks/my')
+    const res = await fetch('/api/tasks/my', { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       setTasks(data)
@@ -63,6 +63,7 @@ export default function Home() {
     const res = await fetch('/api/tasks/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ assignmentId })
     })
     if (res.ok) fetchTasks()
@@ -73,6 +74,7 @@ export default function Home() {
     const res = await fetch('/api/tasks/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ assignmentId })
     })
     if (res.ok) {
@@ -115,7 +117,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Блок заданий */}
           <div className="mt-8 w-full max-w-[500px]">
             <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
             {tasks.length === 0 ? (
