@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, getAccessToken } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
@@ -30,15 +30,15 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   const fetchTasks = async () => {
-    const token = await getAccessToken()
-    if (!token) return
-    const res = await fetch('/api/tasks/my', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setTasks(data)
-    }
+    if (!user) return
+    const { data, error } = await supabase
+      .from('task_assignments')
+      .select('id, status, started_at, deadline_at, tasks( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
+      .eq('user_id', user.id)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+    if (!error) setTasks(data || [])
   }
 
   useEffect(() => {
@@ -63,36 +63,63 @@ export default function Home() {
     init()
   }, [])
 
+  useEffect(() => {
+    if (user) fetchTasks()
+  }, [user])
+
   const handleStart = async (assignmentId) => {
-    const token = await getAccessToken()
-    await fetch('/api/tasks/start', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ assignmentId })
-    })
-    fetchTasks()
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: 'in_progress', started_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+    if (!error) fetchTasks()
   }
 
   const handleComplete = async (assignmentId) => {
-    const token = await getAccessToken()
-    await fetch('/api/tasks/complete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ assignmentId })
-    })
-    fetchTasks()
-    const { data: balanceData } = await supabase
-      .from('karma_balance')
-      .select('balance')
-      .eq('user_id', user.id)
+    const { data: assignment } = await supabase
+      .from('task_assignments')
+      .select('id, tasks( requires_review, reward_karma )')
+      .eq('id', assignmentId)
       .single()
-    if (balanceData) setBalance(balanceData.balance)
+    if (!assignment) return
+
+    const newStatus = assignment.tasks?.requires_review ? 'pending_review' : 'completed'
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: newStatus, completed_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+
+    if (!error) {
+      if (newStatus === 'completed') {
+        const reward = assignment.tasks?.reward_karma || 0
+        if (reward > 0) {
+          await supabase.from('karma_transactions').insert({
+            user_id: user.id,
+            amount: reward,
+            type: 'task_reward',
+            description: 'Начисление за задание'
+          })
+          const { data: balData } = await supabase
+            .from('karma_balance')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single()
+          if (balData) {
+            await supabase
+              .from('karma_balance')
+              .update({ balance: balData.balance + reward })
+              .eq('user_id', user.id)
+          }
+          const { data: newBal } = await supabase
+            .from('karma_balance')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single()
+          if (newBal) setBalance(newBal.balance)
+        }
+      }
+      fetchTasks()
+    }
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -102,7 +129,6 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -124,7 +150,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: блок заданий */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
           {tasks.length === 0 ? (
