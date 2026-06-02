@@ -32,13 +32,12 @@ export default function Home() {
   const fetchTasks = async (userId) => {
     if (!userId) return
 
-    // 1. Назначения для текущего пользователя
+    // 1. Назначения для текущего пользователя (без сортировки, так как колонки created_at нет)
     const { data: assignments, error: assignError } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id')
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .order('created_at', { ascending: false })
       .limit(5)
 
     console.log('assignments:', assignments)
@@ -67,7 +66,7 @@ export default function Home() {
 
     console.log('tasksData:', tasksData)
 
-    // 3. Объединяем — больше не скрываем карточки
+    // 3. Объединяем
     const merged = assignments.map(assignment => ({
       ...assignment,
       tasks: tasksData?.find(t => t.id === assignment.task_id) || null
