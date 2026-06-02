@@ -29,6 +29,10 @@ export default function CompanyAdmin() {
   const [successModal, setSuccessModal] = useState({ show: false, message: '' })
   const [pendingReviews, setPendingReviews] = useState([])
 
+  // История
+  const [history, setHistory] = useState([])
+  const [historyFilter, setHistoryFilter] = useState({ status: '', employee: '', dateFrom: '', dateTo: '' })
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -38,7 +42,10 @@ export default function CompanyAdmin() {
     target_role: 'all',
     min_energy_level: 0,
     requires_review: true,
-    deadline_hours: ''
+    deadline_hours: '',
+    is_auto: false,
+    crm_action_type: '',
+    crm_target_count: 0
   })
 
   useEffect(() => { fetchProfile() }, [])
@@ -48,6 +55,7 @@ export default function CompanyAdmin() {
       if (activeTab === 'employees') fetchEmployees()
       if (activeTab === 'invites') fetchInvites()
       if (activeTab === 'review') fetchPendingReviews()
+      if (activeTab === 'history') fetchHistory()
     }
   }, [profile, activeTab])
 
@@ -80,7 +88,6 @@ export default function CompanyAdmin() {
       .from('profiles')
       .select('*')
       .eq('company_id', profile.company_id)
-      .neq('role_id', 1)
     setEmployees(data || [])
   }
 
@@ -95,10 +102,9 @@ export default function CompanyAdmin() {
   const fetchPendingReviews = async () => {
     const { data, error } = await supabase
       .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
+      .select('id, status, comment, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
       .eq('status', 'pending_review')
       .eq('tasks.company_id', profile.company_id)
-      .order('started_at', { ascending: false })
 
     if (!error && data) {
       const enriched = await Promise.all(data.map(async (item) => {
@@ -110,9 +116,38 @@ export default function CompanyAdmin() {
         return { ...item, employee_email: profileData?.email || '', employee_name: profileData?.display_name || '' }
       }))
       setPendingReviews(enriched)
-    } else {
-      setPendingReviews([])
-    }
+    } else setPendingReviews([])
+  }
+
+  const fetchHistory = async () => {
+    let query = supabase
+      .from('task_assignments')
+      .select('id, status, comment, started_at, completed_at, reviewed_at, task_id, user_id, tasks( id, title, reward_karma )')
+      .eq('tasks.company_id', profile.company_id)
+      .not('status', 'in', ['assigned', 'in_progress', 'pending_review']) // завершённые или отклонённые
+
+    if (historyFilter.status) query = query.eq('status', historyFilter.status)
+    if (historyFilter.dateFrom) query = query.gte('completed_at', historyFilter.dateFrom)
+    if (historyFilter.dateTo) query = query.lte('completed_at', historyFilter.dateTo)
+
+    const { data, error } = await query.order('completed_at', { ascending: false }).limit(50)
+
+    if (!error && data) {
+      const enriched = await Promise.all(data.map(async (item) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email, display_name')
+          .eq('user_id', item.user_id)
+          .single()
+        return { ...item, employee_email: profileData?.email || '', employee_name: profileData?.display_name || '' }
+      }))
+      // Фильтр по сотруднику на клиенте
+      let filtered = enriched
+      if (historyFilter.employee) {
+        filtered = filtered.filter(h => h.employee_email === historyFilter.employee || h.employee_name === historyFilter.employee)
+      }
+      setHistory(filtered)
+    } else setHistory([])
   }
 
   const handleCreateTask = async (e) => {
@@ -136,7 +171,10 @@ export default function CompanyAdmin() {
         requires_review: form.requires_review,
         deadline_hours: form.deadline_hours ? Number(form.deadline_hours) : null,
         created_by: profile.user_id,
-        is_active: true
+        is_active: true,
+        is_auto: form.is_auto,
+        crm_action_type: form.crm_action_type,
+        crm_target_count: form.crm_target_count
       })
       .select()
       .single()
@@ -165,17 +203,16 @@ export default function CompanyAdmin() {
         setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
         return
       }
-      setSuccessModal({ show: true, message: `Задание создано и назначено ${employeesList.length} сотрудникам. Проверка обязательна.` })
+      setSuccessModal({ show: true, message: `Задание создано и назначено ${employeesList.length} сотрудникам.` })
     } else {
       setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения' })
     }
 
-    setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: true, deadline_hours: '' })
+    setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: true, deadline_hours: '', is_auto: false, crm_action_type: '', crm_target_count: 0 })
     fetchTasks()
   }
 
   const handleDeleteClick = (taskId) => setDeleteModal(taskId)
-
   const confirmDelete = async () => {
     const taskId = deleteModal
     setDeleteModal(null)
@@ -214,16 +251,18 @@ export default function CompanyAdmin() {
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
 
       <div className="flex gap-4 mb-8">
-        {['tasks', 'employees', 'invites', 'review'].map(tab => (
+        {['tasks', 'employees', 'invites', 'review', 'history'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`filter-pill ${activeTab === tab ? 'active' : ''}`}>
             {tab === 'tasks' && 'Задания'}
             {tab === 'employees' && 'Сотрудники'}
             {tab === 'invites' && 'Приглашения'}
             {tab === 'review' && 'Проверка'}
+            {tab === 'history' && 'История'}
           </button>
         ))}
       </div>
 
+      {/* Вкладки tasks, employees, invites остаются без глобальных изменений, но добавлю историю и проверку */}
       {activeTab === 'tasks' && (
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="dash-card lg:w-1/2">
@@ -271,11 +310,21 @@ export default function CompanyAdmin() {
                   <input type="number" className="input-field" value={form.min_energy_level} onChange={e => setForm({ ...form, min_energy_level: parseInt(e.target.value) || 0 })} />
                 </div>
               </div>
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-4 items-center flex-wrap">
                 <label className="flex items-center gap-2 text-gray-400">
                   <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} />
                   Требуется проверка руководителем
                 </label>
+                <label className="flex items-center gap-2 text-gray-400">
+                  <input type="checkbox" checked={form.is_auto} onChange={e => setForm({ ...form, is_auto: e.target.checked })} />
+                  Автоматическая проверка (CRM)
+                </label>
+                {form.is_auto && (
+                  <>
+                    <input type="text" placeholder="Тип действия (call)" className="input-field w-32" value={form.crm_action_type} onChange={e => setForm({ ...form, crm_action_type: e.target.value })} />
+                    <input type="number" placeholder="Кол-во" className="input-field w-20" value={form.crm_target_count} onChange={e => setForm({ ...form, crm_target_count: parseInt(e.target.value) || 0 })} />
+                  </>
+                )}
                 <div className="flex-1">
                   <input type="number" placeholder="Дедлайн (часов)" className="input-field" value={form.deadline_hours} onChange={e => setForm({ ...form, deadline_hours: e.target.value })} />
                 </div>
@@ -305,6 +354,71 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {activeTab === 'review' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
+          {pendingReviews.length === 0 ? (
+            <p className="text-gray-400">Нет заданий, ожидающих проверки</p>
+          ) : (
+            <div className="space-y-6">
+              {pendingReviews.map(item => (
+                <div key={item.id} className="premium-card flex flex-col">
+                  <div className="flex justify-between">
+                    <div>
+                      <h4 className="text-white font-semibold">{item.tasks.title}</h4>
+                      <p className="text-sm text-gray-400">Сотрудник: {item.employee_name || item.employee_email}</p>
+                      <p className="text-sm text-yellow-400">Награда: +{item.tasks.reward_karma} кармиков</p>
+                      {item.comment && (
+                        <p className="text-sm text-gray-300 mt-1">Комментарий: {item.comment}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
+                      <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">История заданий</h3>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <select className="input-field w-auto" value={historyFilter.status} onChange={e => setHistoryFilter({ ...historyFilter, status: e.target.value })}>
+              <option value="">Все статусы</option>
+              <option value="completed">Выполнено</option>
+              <option value="rejected">Отклонено</option>
+            </select>
+            <input type="text" placeholder="Сотрудник (email)" className="input-field w-auto" value={historyFilter.employee} onChange={e => setHistoryFilter({ ...historyFilter, employee: e.target.value })} />
+            <input type="date" className="input-field w-auto" value={historyFilter.dateFrom} onChange={e => setHistoryFilter({ ...historyFilter, dateFrom: e.target.value })} />
+            <input type="date" className="input-field w-auto" value={historyFilter.dateTo} onChange={e => setHistoryFilter({ ...historyFilter, dateTo: e.target.value })} />
+            <button onClick={fetchHistory} className="btn-gold text-xs px-4">Применить</button>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-gray-400">Нет записей</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map(h => (
+                <div key={h.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+                  <div>
+                    <span className="text-white">{h.tasks.title}</span>
+                    <span className="text-gray-400 ml-2">({h.status})</span>
+                    <span className="text-gray-500 ml-2">{h.employee_email}</span>
+                    {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
+                  </div>
+                  <span className="text-sm text-yellow-400">+{h.tasks.reward_karma}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* employees, invites tabs (без изменений) */}
       {activeTab === 'employees' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
@@ -327,33 +441,6 @@ export default function CompanyAdmin() {
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Приглашения</h3>
           <p className="text-gray-400">Функция приглашений временно недоступна</p>
-        </div>
-      )}
-
-      {activeTab === 'review' && (
-        <div className="dash-card">
-          <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
-          {pendingReviews.length === 0 ? (
-            <p className="text-gray-400">Нет заданий, ожидающих проверки</p>
-          ) : (
-            <div className="space-y-4">
-              {pendingReviews.map(item => (
-                <div key={item.id} className="premium-card flex flex-col">
-                  <div className="flex justify-between">
-                    <div>
-                      <h4 className="text-white font-semibold">{item.tasks.title}</h4>
-                      <p className="text-sm text-gray-400">Сотрудник: {item.employee_name || item.employee_email}</p>
-                      <p className="text-sm text-yellow-400">Награда: +{item.tasks.reward_karma} кармиков</p>
-                    </div>
-                    <div className="flex gap-2 items-start">
-                      <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
-                      <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
