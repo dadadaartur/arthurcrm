@@ -32,15 +32,12 @@ export default function Home() {
   const fetchTasks = async (userId) => {
     if (!userId) return
 
-    // 1. Назначения для текущего пользователя (без сортировки, так как колонки created_at нет)
     const { data: assignments, error: assignError } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id')
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(5)
-
-    console.log('assignments:', assignments)
 
     if (assignError) {
       console.error('Ошибка получения назначений:', assignError)
@@ -53,7 +50,6 @@ export default function Home() {
       return
     }
 
-    // 2. Задачи по id
     const taskIds = [...new Set(assignments.map(a => a.task_id))]
     const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
@@ -64,13 +60,13 @@ export default function Home() {
       console.error('Ошибка получения задач:', tasksError)
     }
 
-    console.log('tasksData:', tasksData)
-
-    // 3. Объединяем
-    const merged = assignments.map(assignment => ({
-      ...assignment,
-      tasks: tasksData?.find(t => t.id === assignment.task_id) || null
-    }))
+    // Берём только те назначения, у которых задача реально существует
+    const merged = assignments
+      .filter(a => tasksData?.some(t => t.id === a.task_id))
+      .map(a => ({
+        ...a,
+        tasks: tasksData.find(t => t.id === a.task_id)
+      }))
 
     setTasks(merged)
   }
@@ -107,53 +103,12 @@ export default function Home() {
 
   const handleComplete = async (assignmentId) => {
     if (!user) return
-    const { data: assignment } = await supabase
-      .from('task_assignments')
-      .select('id, task_id')
-      .eq('id', assignmentId)
-      .single()
-    if (!assignment) return
-
-    const { data: task } = await supabase
-      .from('tasks')
-      .select('requires_review, reward_karma')
-      .eq('id', assignment.task_id)
-      .single()
-
-    const newStatus = task?.requires_review ? 'pending_review' : 'completed'
+    // Всегда отправляем на проверку
     const { error } = await supabase
       .from('task_assignments')
-      .update({ status: newStatus, completed_at: new Date().toISOString() })
+      .update({ status: 'pending_review', completed_at: new Date().toISOString() })
       .eq('id', assignmentId)
 
-    if (!error && newStatus === 'completed') {
-      const reward = task?.reward_karma || 0
-      if (reward > 0) {
-        await supabase.from('karma_transactions').insert({
-          user_id: user.id,
-          amount: reward,
-          type: 'task_reward',
-          description: 'Начисление за задание'
-        })
-        const { data: balData } = await supabase
-          .from('karma_balance')
-          .select('balance')
-          .eq('user_id', user.id)
-          .single()
-        if (balData) {
-          await supabase
-            .from('karma_balance')
-            .update({ balance: balData.balance + reward })
-            .eq('user_id', user.id)
-        }
-        const { data: newBal } = await supabase
-          .from('karma_balance')
-          .select('balance')
-          .eq('user_id', user.id)
-          .single()
-        if (newBal) setBalance(newBal.balance)
-      }
-    }
     if (!error && user) fetchTasks(user.id)
   }
 
@@ -203,9 +158,7 @@ export default function Home() {
                   >
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-white font-semibold">
-                          {t ? t.title : `Задача ${assignment.task_id} (описание загружается)`}
-                        </h4>
+                        <h4 className="text-white font-semibold">{t.title}</h4>
                         <span className="text-xs px-2 py-1 rounded-full" style={{
                           background:
                             assignment.status === 'pending_review' ? 'rgba(192,132,252,0.3)' :
@@ -217,11 +170,9 @@ export default function Home() {
                           {assignment.status === 'pending_review' && 'На проверке'}
                         </span>
                       </div>
-                      <p className="text-gray-400 text-sm mb-2">
-                        {t ? t.description?.slice(0, 100) : ''}
-                      </p>
+                      <p className="text-gray-400 text-sm mb-2">{t.description?.slice(0, 100)}</p>
                       <div className="flex justify-between items-center text-xs mb-3">
-                        <span className="text-yellow-400">+{t?.reward_karma ?? '?'} кармиков</span>
+                        <span className="text-yellow-400">+{t.reward_karma} кармиков</span>
                         {assignment.deadline_at && (
                           <span className="text-gray-500 font-mono">{formatTimeLeft(assignment.deadline_at)}</span>
                         )}
@@ -234,7 +185,7 @@ export default function Home() {
                         )}
                         {assignment.status === 'in_progress' && (
                           <button onClick={() => handleComplete(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                            {t?.requires_review ? 'Отправить на проверку' : 'Завершить'}
+                            Отправить на проверку
                           </button>
                         )}
                         {assignment.status === 'pending_review' && (
