@@ -30,7 +30,6 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Состояния для модалки отправки
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
   const [resultModal, setResultModal] = useState({ show: false, message: '', isError: false })
