@@ -29,52 +29,25 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async (userId) => {
-    console.log('🔍 fetchTasks called with userId:', userId)
-    if (!userId) return
-    // Шаг 1: получаем ID заданий и статусы
-    const { data: assignments, error: assignError } = await supabase
-      .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id')
-      .eq('user_id', userId)
-      .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .order('created_at', { ascending: false })
-      .limit(5)
-
-    if (assignError) {
-      console.error('Ошибка получения назначений:', assignError)
-      return
-    }
-    if (!assignments || assignments.length === 0) {
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch('/api/tasks/my')
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(data)
+      } else {
+        console.error('API error:', res.status)
+        setTasks([])
+      }
+    } catch (err) {
+      console.error('Fetch failed:', err)
       setTasks([])
-      return
     }
-
-    // Шаг 2: получаем сами задания по ID
-    const taskIds = assignments.map(a => a.task_id)
-    const { data: tasksData, error: tasksError } = await supabase
-      .from('tasks')
-      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
-      .in('id', taskIds)
-
-    if (tasksError) {
-      console.error('Ошибка получения заданий:', tasksError)
-      return
-    }
-
-    // Объединяем
-    const merged = assignments.map(assign => ({
-      ...assign,
-      tasks: tasksData?.find(t => t.id === assign.task_id) || null
-    }))
-
-    setTasks(merged)
   }
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      console.log('👤 Current user:', user)
       if (!user) {
         router.push('/login')
         return
@@ -88,7 +61,7 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks(user.id)
+      await fetchTasks()
       setLoading(false)
     }
     init()
@@ -99,7 +72,7 @@ export default function Home() {
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-    if (!error && user) fetchTasks(user.id)
+    if (!error) fetchTasks()
   }
 
   const handleComplete = async (assignmentId) => {
@@ -151,7 +124,7 @@ export default function Home() {
         if (newBal) setBalance(newBal.balance)
       }
     }
-    if (!error && user) fetchTasks(user.id)
+    if (!error) fetchTasks()
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
