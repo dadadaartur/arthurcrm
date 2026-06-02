@@ -221,70 +221,22 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    const { data: assignment, error: fetchError } = await supabase
-      .from('task_assignments')
-      .select('id, user_id, task_id, status, tasks( id, title, company_id, reward_karma )')
-      .eq('id', assignmentId)
-      .single()
+    const { data, error } = await supabase.rpc('approve_assignment', {
+      assignment_id: assignmentId,
+      action: action
+    })
 
-    if (fetchError || !assignment) {
-      setSuccessModal({ show: true, message: 'Назначение не найдено' })
+    if (error) {
+      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
       return
     }
 
-    if (assignment.status !== 'pending_review') {
-      setSuccessModal({ show: true, message: 'Задание не на проверке' })
-      return
-    }
-
-    const newStatus = action === 'approve' ? 'completed' : 'in_progress'
-    const { error: updateError } = await supabase
-      .from('task_assignments')
-      .update({
-        status: newStatus,
-        reviewed_by: profile.user_id,
-        reviewed_at: new Date().toISOString()
-      })
-      .eq('id', assignmentId)
-
-    if (updateError) {
-      setSuccessModal({ show: true, message: 'Ошибка обновления: ' + updateError.message })
-      return
-    }
-
-    if (action === 'approve' && assignment.tasks?.reward_karma > 0) {
-      const reward = assignment.tasks.reward_karma
-      const { error: transactionError } = await supabase.from('karma_transactions').insert({
-        user_id: assignment.user_id,
-        amount: reward,
-        type: 'task_reward',
-        description: 'Выполнено задание: ' + assignment.tasks.title
-      })
-      if (transactionError) {
-        console.error('Transaction insert error:', transactionError)
-        setSuccessModal({ show: true, message: 'Ошибка начисления: ' + transactionError.message })
-        return
-      }
-
-      const { data: balanceRow, error: balanceFetchError } = await supabase
-        .from('karma_balance')
-        .select('balance')
-        .eq('user_id', assignment.user_id)
-        .single()
-
-      if (balanceFetchError) {
-        await supabase.from('karma_balance').insert({ user_id: assignment.user_id, balance: reward })
-      } else {
-        const newBalance = (balanceRow?.balance || 0) + reward
-        await supabase
-          .from('karma_balance')
-          .update({ balance: newBalance })
-          .eq('user_id', assignment.user_id)
-      }
-    }
+    const message = data === 'OK' 
+      ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
+      : data
 
     fetchPendingReviews()
-    setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
+    setSuccessModal({ show: true, message })
   }
 
   if (!profile) {
