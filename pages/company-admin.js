@@ -221,9 +221,9 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Принудительно преобразуем ID в число, чтобы избежать ошибок с типами
     const numericId = Number(assignmentId);
-    const { data, error } = await supabase.rpc('approve_assignment', {
+    // Вызываем НОВУЮ функцию с уникальным именем
+    const { data, error } = await supabase.rpc('approve_assignment_v2', {
       assignment_id: numericId,
       action: action
     })
