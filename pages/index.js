@@ -29,20 +29,48 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchTasks = async () => {
-    try {
-      const res = await fetch('/api/tasks/my')
-      if (res.ok) {
-        const data = await res.json()
-        setTasks(data)
-      } else {
-        console.error('Ошибка API:', res.status)
-        setTasks([])
-      }
-    } catch (err) {
-      console.error('Сетевая ошибка:', err)
+  const fetchTasks = async (userId) => {
+    if (!userId) return
+
+    // 1. Получаем назначения (только для текущего пользователя и активные статусы)
+    const { data: assignments, error: assignError } = await supabase
+      .from('task_assignments')
+      .select('id, status, started_at, deadline_at, task_id')
+      .eq('user_id', userId)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (assignError) {
+      console.error('Ошибка получения назначений:', assignError)
       setTasks([])
+      return
     }
+
+    if (!assignments || assignments.length === 0) {
+      setTasks([])
+      return
+    }
+
+    // 2. Загружаем задачи по id
+    const taskIds = [...new Set(assignments.map(a => a.task_id))]
+    const { data: tasksData, error: tasksError } = await supabase
+      .from('tasks')
+      .select('id, title, description, reward_karma, task_type, deadline_hours, requires_review')
+      .in('id', taskIds)
+
+    if (tasksError) {
+      console.error('Ошибка получения задач:', tasksError)
+      // Даже если задачи не загрузились, покажем карточки с пометкой
+    }
+
+    // 3. Объединяем
+    const merged = assignments.map(assignment => ({
+      ...assignment,
+      tasks: tasksData?.find(t => t.id === assignment.task_id) || null
+    }))
+
+    setTasks(merged)
   }
 
   useEffect(() => {
@@ -61,7 +89,7 @@ export default function Home() {
         .single()
       if (balanceData) setBalance(balanceData.balance)
 
-      await fetchTasks()
+      await fetchTasks(user.id)
       setLoading(false)
     }
     init()
@@ -72,7 +100,7 @@ export default function Home() {
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-    if (!error) fetchTasks()
+    if (!error && user) fetchTasks(user.id)
   }
 
   const handleComplete = async (assignmentId) => {
@@ -124,7 +152,7 @@ export default function Home() {
         if (newBal) setBalance(newBal.balance)
       }
     }
-    if (!error) fetchTasks()
+    if (!error && user) fetchTasks(user.id)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
