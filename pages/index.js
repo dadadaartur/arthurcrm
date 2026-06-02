@@ -4,8 +4,24 @@ import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 import PremiumModal from '../components/PremiumModal'
 
-function getKarmikWord(n) { /* без изменений */ }
-function formatTimeLeft(deadline) { /* без изменений */ }
+function getKarmikWord(n) {
+  const lastDigit = n % 10
+  const lastTwoDigits = n % 100
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
+  if (lastDigit === 1) return 'кармик'
+  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
+  return 'кармиков'
+}
+
+function formatTimeLeft(deadline) {
+  if (!deadline) return ''
+  const now = new Date()
+  const diff = new Date(deadline) - now
+  if (diff <= 0) return '00:00'
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
 
 export default function Home() {
   const router = useRouter()
@@ -72,7 +88,6 @@ export default function Home() {
   const handleSubmit = async () => {
     if (!user || !submitModal.assignmentId) return
     setSubmitting(true)
-    // Прямое обновление статуса на pending_review с комментарием
     const { error } = await supabase
       .from('task_assignments')
       .update({
@@ -81,7 +96,7 @@ export default function Home() {
         completed_at: new Date().toISOString()
       })
       .eq('id', submitModal.assignmentId)
-      .eq('user_id', user.id)  // безопасность: только своё
+      .eq('user_id', user.id)
 
     if (error) {
       setResultModal({ show: true, message: 'Ошибка отправки: ' + error.message, isError: true })
@@ -100,10 +115,8 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
-            {/* ... (без изменений) */}
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="black-hole" />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
@@ -123,7 +136,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: задания */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
           {tasks.length === 0 ? (
@@ -187,7 +199,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Модальное окно для комментария */}
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -209,7 +220,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Премиум-уведомление об успехе/ошибке */}
       <PremiumModal
         isOpen={resultModal.show}
         onClose={() => setResultModal({ show: false, message: '' })}
