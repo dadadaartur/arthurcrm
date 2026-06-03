@@ -1,177 +1,156 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabaseClient'
+import Spinner from '../components/Spinner'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-export default function TaskDetail() {
+export default function TasksPage() {
   const router = useRouter()
-  const { id } = router.query
-  const [assignment, setAssignment] = useState(null)
-  const [comment, setComment] = useState('')
-  const [timeLeft, setTimeLeft] = useState(null)
-  const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
+  const [activeTasks, setActiveTasks] = useState([])
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('active') // 'active' | 'history'
 
   useEffect(() => {
-    if (!id) return
-    fetchAssignment()
-  }, [id])
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+      await loadTasks(user.id)
+      setLoading(false)
+    }
+    init()
+  }, [])
 
-  const fetchAssignment = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
+  const loadTasks = async (userId) => {
+    // Активные задания
+    const { data: active } = await supabase
       .from('task_assignments')
-      .select('id, status, started_at, completed_at, deadline_at, comment, review_comment, reward_karma, tasks ( id, title, description, reward_karma, task_type, deadline_hours, requires_review )')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single()
+      .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, icon )')
+      .eq('user_id', userId)
+      .in('status', ['assigned', 'in_progress', 'pending_review'])
+      .order('created_at', { ascending: false })
+      .limit(20)
 
-    if (error) {
-      setError('Задание не найдено')
-      return
-    }
-    setAssignment(data)
-    if (data.deadline_at) updateTimer(data.deadline_at)
+    // История (завершённые и отклонённые)
+    const { data: completed } = await supabase
+      .from('task_assignments')
+      .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma, icon )')
+      .eq('user_id', userId)
+      .in('status', ['completed', 'rejected'])
+      .order('completed_at', { ascending: false })
+      .limit(30)
+
+    setActiveTasks(active || [])
+    setHistory(completed || [])
   }
 
-  const updateTimer = (deadline) => {
-    const calc = () => {
-      const diff = new Date(deadline) - new Date()
-      if (diff <= 0) {
-        setTimeLeft('00:00')
-        return
-      }
-      const h = Math.floor(diff / 3600000)
-      const m = Math.floor((diff % 3600000) / 60000)
-      setTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
-    }
-    calc()
-    const interval = setInterval(() => {
-      calc()
-      if (new Date(deadline) - new Date() <= 0) clearInterval(interval)
-    }, 60000)
-    return () => clearInterval(interval)
+  const handleStart = async (assignmentId) => {
+    await supabase.from('task_assignments').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', assignmentId)
+    if (user) loadTasks(user.id)
   }
 
-  const handleStart = async () => {
-    const res = await fetch('/api/tasks/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignmentId: id })
-    })
-    if (res.ok) fetchAssignment()
+  const handleSubmit = async (assignmentId) => {
+    await supabase.from('task_assignments').update({ status: 'pending_review', completed_at: new Date().toISOString() }).eq('id', assignmentId)
+    if (user) loadTasks(user.id)
   }
 
-  const handleComplete = async () => {
-    const res = await fetch('/api/tasks/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignmentId: id, comment })
-    })
-    if (res.ok) {
-      setComment('')
-      fetchAssignment()
-    }
-  }
+  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
-        {error}
-      </div>
-    )
-  }
-
-  if (!assignment) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="spinner" />
-      </div>
-    )
-  }
+  const inProgress = activeTasks.filter(t => t.status === 'in_progress').length
+  const completed = history.filter(t => t.status === 'completed').length
+  const earned = history.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.tasks?.reward_karma || 0), 0)
 
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center">
-      <div className="dash-card max-w-lg w-full">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-xl font-bold" style={{ color: '#fff' }}>{assignment.tasks.title}</h2>
-          <span className="task-status-badge" style={{
-            background: assignment.status === 'pending_review' ? 'rgba(192,132,252,0.4)' :
-                        assignment.status === 'in_progress' ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.2)',
-            padding: '4px 12px',
-            borderRadius: '50px',
-            fontSize: '0.75rem',
-            color: '#fff',
-            textTransform: 'uppercase'
-          }}>
-            {assignment.status === 'assigned' && 'Новое'}
-            {assignment.status === 'in_progress' && 'В работе'}
-            {assignment.status === 'pending_review' && 'На проверке'}
-            {assignment.status === 'completed' && 'Выполнено'}
-          </span>
-        </div>
-
-        <p style={{ color: 'rgba(255,255,255,0.8)' }}>{assignment.tasks.description}</p>
-
-        <div className="flex justify-between items-center mt-4" style={{ color: 'rgba(249,115,22,0.9)' }}>
-          <span className="font-bold">+{assignment.tasks.reward_karma} кармиков</span>
-          {timeLeft && (
-            <span className="task-timer" style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', fontSize: '1.1rem' }}>
-              {timeLeft}
-            </span>
-          )}
-        </div>
-
-        {assignment.tasks.deadline_hours && (
-          <div className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Срок выполнения: {assignment.tasks.deadline_hours} ч.
-          </div>
-        )}
-
-        {assignment.review_comment && (
-          <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(249,115,22,0.3)' }}>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Комментарий проверяющего:</p>
-            <p style={{ color: '#fff' }}>{assignment.review_comment}</p>
-          </div>
-        )}
-
-        <div className="mt-6">
-          {assignment.status === 'assigned' && (
-            <button onClick={handleStart} className="action-btn w-full">Начать выполнение</button>
-          )}
-          {assignment.status === 'in_progress' && (
-            <div className="flex flex-col gap-3">
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Ссылка на результат или комментарий"
-                className="input-field"
-                style={{ resize: 'vertical', height: '80px' }}
-              />
-              <button onClick={handleComplete} className="action-btn w-full">Отправить на проверку</button>
-            </div>
-          )}
-          {assignment.status === 'pending_review' && (
-            <div className="text-center py-2" style={{ color: 'rgba(192,132,252,0.9)' }}>
-              Задание отправлено на проверку руководителю
-            </div>
-          )}
-          {assignment.status === 'completed' && (
-            <div className="text-center py-2" style={{ color: 'rgba(249,115,22,0.9)' }}>
-              Задание выполнено! Кармики начислены.
-            </div>
-          )}
-        </div>
-
-        <button onClick={() => router.push('/')} className="action-btn w-full mt-4" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
-          Назад
-        </button>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold text-white">Мои задания</h1>
+        <button onClick={() => router.push('/')} className="action-btn text-xs">← На главную</button>
       </div>
+
+      {/* Статистика */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="dash-card text-center">
+          <p className="text-gray-400 text-sm">В работе</p>
+          <p className="text-2xl font-bold text-white">{inProgress}</p>
+        </div>
+        <div className="dash-card text-center">
+          <p className="text-gray-400 text-sm">Выполнено</p>
+          <p className="text-2xl font-bold text-green-400">{completed}</p>
+        </div>
+        <div className="dash-card text-center">
+          <p className="text-gray-400 text-sm">Заработано</p>
+          <p className="text-2xl font-bold text-yellow-400">+{earned}</p>
+        </div>
+      </div>
+
+      {/* Вкладки */}
+      <div className="flex gap-4 mb-6">
+        <button onClick={() => setActiveTab('active')} className={`filter-pill ${activeTab === 'active' ? 'active' : ''}`}>Активные ({activeTasks.length})</button>
+        <button onClick={() => setActiveTab('history')} className={`filter-pill ${activeTab === 'history' ? 'active' : ''}`}>История ({history.length})</button>
+      </div>
+
+      {activeTab === 'active' && (
+        activeTasks.length === 0 ? (
+          <p className="text-gray-400">Нет активных заданий</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeTasks.map(assignment => {
+              const t = assignment.tasks
+              return (
+                <div key={assignment.id} className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)' }}>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{t.icon || '📋'}</span>
+                    <div className="flex-1">
+                      <h3 className="text-white font-semibold">{t.title}</h3>
+                      <p className="text-sm text-gray-400 mt-1">{t.description}</p>
+                      <div className="flex justify-between items-center mt-3">
+                        <span className="text-yellow-400 text-sm">+{t.reward_karma} кармиков</span>
+                        <span className={`px-2 py-0.5 rounded text-xs ${
+                          assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
+                          assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-gray-700 text-gray-300'
+                        }`}>
+                          {assignment.status === 'assigned' ? 'Новое' : assignment.status === 'in_progress' ? 'В работе' : 'На проверке'}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        {assignment.status === 'assigned' && (
+                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">Начать</button>
+                        )}
+                        {assignment.status === 'in_progress' && (
+                          <button onClick={() => handleSubmit(assignment.id)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      )}
+
+      {activeTab === 'history' && (
+        history.length === 0 ? (
+          <p className="text-gray-400">Нет завершённых заданий</p>
+        ) : (
+          <div className="space-y-2">
+            {history.map(h => (
+              <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{h.tasks.icon || '📋'}</span>
+                  <div>
+                    <span className="text-white">{h.tasks.title}</span>
+                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
+                  </div>
+                </div>
+                <span className="text-yellow-400 text-sm">+{h.tasks.reward_karma}</span>
+              </div>
+            ))}
+          </div>
+        )
+      )}
     </div>
   )
 }
