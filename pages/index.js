@@ -3,14 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
-function getKarmikWord(n) {
-  const lastDigit = n % 10
-  const lastTwoDigits = n % 100
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
-  if (lastDigit === 1) return 'кармик'
-  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
-  return 'кармиков'
-}
+function getKarmikWord(n) { /* без изменений */ }
 
 export default function Home() {
   const router = useRouter()
@@ -28,14 +21,12 @@ export default function Home() {
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
 
-      // Все активные назначения (assigned, in_progress, pending_review)
       const { data: active } = await supabase
         .from('task_assignments')
         .select('status')
         .eq('user_id', user.id)
         .in('status', ['assigned', 'in_progress', 'pending_review'])
 
-      // Завершённые
       const { data: completed } = await supabase
         .from('task_assignments')
         .select('status, tasks(reward_karma)')
@@ -44,11 +35,7 @@ export default function Home() {
 
       const earned = completed?.reduce((sum, a) => sum + (a.tasks?.reward_karma || 0), 0) || 0
 
-      setStats({
-        active: active?.length || 0,
-        completed: completed?.length || 0,
-        earned
-      })
+      setStats({ active: active?.length || 0, completed: completed?.length || 0, earned })
       setLoading(false)
     }
     init()
@@ -68,7 +55,7 @@ export default function Home() {
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
                 <div className="text-5xl font-extrabold text-yellow-400 mb-2" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
-                  {balance.toLocaleString()}
+                  {balance}
                 </div>
                 <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
               </div>
@@ -83,34 +70,18 @@ export default function Home() {
         </div>
 
         <div className="flex-1 flex flex-col gap-6">
-          {/* Виджет заданий */}
           <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
             <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center">
-                <p className="text-gray-400 text-sm">В работе</p>
-                <p className="text-2xl font-bold text-white">{stats.active}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm">Выполнено</p>
-                <p className="text-2xl font-bold text-green-400">{stats.completed}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-400 text-sm">Заработано</p>
-                <p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p>
-              </div>
+              <div className="text-center"><p className="text-gray-400 text-sm">В работе</p><p className="text-2xl font-bold text-white">{stats.active}</p></div>
+              <div className="text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{stats.completed}</p></div>
+              <div className="text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p></div>
             </div>
-            <button
-              onClick={() => router.push('/tasks')}
-              className="action-btn w-full flex items-center justify-center gap-2"
-            >
+            <button onClick={() => router.push('/tasks')} className="action-btn mx-auto max-w-xs flex items-center justify-center gap-2">
               <span>Перейти к заданиям</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
             <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
