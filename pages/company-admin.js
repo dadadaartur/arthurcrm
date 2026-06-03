@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
@@ -45,8 +45,6 @@ export default function CompanyAdmin() {
     crm_action_type: '',
     crm_target_count: 0
   })
-
-  const processingRef = useRef({})
 
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
@@ -223,25 +221,23 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Блокировка на уровне ref – гарантия одного вызова
-    if (processingRef.current[assignmentId]) return
-    processingRef.current[assignmentId] = true
-
-    const res = await fetch('/api/tasks/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignmentId, action })
+    // Вызываем хранимую функцию, которая делает всё атомарно
+    const { data, error } = await supabase.rpc('finalize_task_review', {
+      assignment_id: Number(assignmentId),
+      action: action
     })
 
-    processingRef.current[assignmentId] = false
-
-    if (res.ok) {
-      fetchPendingReviews()
-      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
-    } else {
-      const err = await res.json()
-      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
+    if (error) {
+      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
+      return
     }
+
+    const message = data === 'OK' 
+      ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
+      : data
+
+    fetchPendingReviews()
+    setSuccessModal({ show: true, message })
   }
 
   if (!profile) {
@@ -374,20 +370,8 @@ export default function CompanyAdmin() {
                       )}
                     </div>
                     <div className="flex gap-2 items-start">
-                      <button
-                        onClick={() => handleReview(item.id, 'approve')}
-                        disabled={processingRef.current[item.id]}
-                        className="btn-gold text-xs px-3 py-1.5"
-                      >
-                        {processingRef.current[item.id] ? '...' : 'Одобрить'}
-                      </button>
-                      <button
-                        onClick={() => handleReview(item.id, 'reject')}
-                        disabled={processingRef.current[item.id]}
-                        className="btn-outline text-xs px-3 py-1.5"
-                      >
-                        {processingRef.current[item.id] ? '...' : 'Отклонить'}
-                      </button>
+                      <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
+                      <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
                     </div>
                   </div>
                 </div>
