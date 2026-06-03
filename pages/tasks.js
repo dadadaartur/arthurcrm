@@ -25,19 +25,19 @@ export default function TasksPage() {
   const loadTasks = async (userId) => {
     const { data: active } = await supabase
       .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, icon )')
+      .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(50)
 
     const { data: completed } = await supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma, icon )')
+      .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
       .eq('user_id', userId)
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
-      .limit(30)
+      .limit(50)
 
     setActiveTasks(active || [])
     setHistory(completed || [])
@@ -67,18 +67,9 @@ export default function TasksPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">В работе</p>
-          <p className="text-2xl font-bold text-white">{inProgress}</p>
-        </div>
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">Выполнено</p>
-          <p className="text-2xl font-bold text-green-400">{completedCount}</p>
-        </div>
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">Заработано</p>
-          <p className="text-2xl font-bold text-yellow-400">+{earned}</p>
-        </div>
+        <div className="dash-card text-center"><p className="text-gray-400 text-sm">В работе</p><p className="text-2xl font-bold text-white">{inProgress}</p></div>
+        <div className="dash-card text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{completedCount}</p></div>
+        <div className="dash-card text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{earned}</p></div>
       </div>
 
       <div className="flex gap-4 mb-6">
@@ -96,7 +87,7 @@ export default function TasksPage() {
               return (
                 <div key={assignment.id} className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)' }}>
                   <div className="flex items-start gap-3">
-                    {t.icon && <span className="text-2xl">{t.icon}</span>}
+                    {t.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
                     <div className="flex-1">
                       <h3 className="text-white font-semibold">{t.title}</h3>
                       <p className="text-sm text-gray-400 mt-1">{t.description}</p>
@@ -114,7 +105,7 @@ export default function TasksPage() {
                           <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">Начать</button>
                         )}
                         {assignment.status === 'in_progress' && (
-                          <button onClick={() => handleSubmit(assignment.id)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
+                          <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
                         )}
                       </div>
                     </div>
@@ -130,16 +121,13 @@ export default function TasksPage() {
         history.length === 0 ? (
           <p className="text-gray-400">Нет завершённых заданий</p>
         ) : (
-          <div className="space-y-2">
+          <div className="max-h-96 overflow-y-auto space-y-2">
             {history.map(h => (
               <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
-                <div className="flex items-center gap-3">
-                  {h.tasks.icon && <span className="text-xl">{h.tasks.icon}</span>}
-                  <div>
-                    <span className="text-white">{h.tasks.title}</span>
-                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
-                  </div>
+                <div>
+                  <span className="text-white">{h.tasks.title}</span>
+                  <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
+                  <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
                 </div>
                 <span className="text-yellow-400 text-sm">+ {h.tasks.reward_karma} кармиков</span>
               </div>
