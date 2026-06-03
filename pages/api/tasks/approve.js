@@ -4,8 +4,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { assignmentId, action } = req.body
-  const numericId = parseInt(assignmentId, 10)
+  console.log('Получен assignmentId:', assignmentId, 'тип:', typeof assignmentId)
 
+  const numericId = parseInt(assignmentId, 10)
   if (!numericId || !['approve', 'reject'].includes(action)) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
@@ -22,7 +23,12 @@ export default async function handler(req, res) {
     .single()
 
   if (fetchError || !assignment) {
-    return res.status(404).json({ error: 'Назначение не найдено' })
+    // Возвращаем assignmentId, чтобы увидеть его на клиенте
+    return res.status(404).json({ 
+      error: 'Назначение не найдено',
+      receivedId: assignmentId,
+      numericId: numericId
+    })
   }
 
   if (assignment.status !== 'pending_review') {
