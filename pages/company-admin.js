@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
@@ -46,8 +46,7 @@ export default function CompanyAdmin() {
     crm_target_count: 0
   })
 
-  // Состояние для блокировки кнопок проверки
-  const [submitting, setSubmitting] = useState({})
+  const processingRef = useRef({})
 
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
@@ -224,8 +223,9 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Блокируем кнопку для этого конкретного задания
-    setSubmitting(prev => ({ ...prev, [assignmentId]: true }))
+    // Блокировка на уровне ref – гарантия одного вызова
+    if (processingRef.current[assignmentId]) return
+    processingRef.current[assignmentId] = true
 
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
@@ -233,8 +233,7 @@ export default function CompanyAdmin() {
       body: JSON.stringify({ assignmentId, action })
     })
 
-    // Разблокируем кнопку
-    setSubmitting(prev => ({ ...prev, [assignmentId]: false }))
+    processingRef.current[assignmentId] = false
 
     if (res.ok) {
       fetchPendingReviews()
@@ -377,17 +376,17 @@ export default function CompanyAdmin() {
                     <div className="flex gap-2 items-start">
                       <button
                         onClick={() => handleReview(item.id, 'approve')}
-                        disabled={submitting[item.id]}
+                        disabled={processingRef.current[item.id]}
                         className="btn-gold text-xs px-3 py-1.5"
                       >
-                        {submitting[item.id] ? '...' : 'Одобрить'}
+                        {processingRef.current[item.id] ? '...' : 'Одобрить'}
                       </button>
                       <button
                         onClick={() => handleReview(item.id, 'reject')}
-                        disabled={submitting[item.id]}
+                        disabled={processingRef.current[item.id]}
                         className="btn-outline text-xs px-3 py-1.5"
                       >
-                        {submitting[item.id] ? '...' : 'Отклонить'}
+                        {processingRef.current[item.id] ? '...' : 'Отклонить'}
                       </button>
                     </div>
                   </div>
