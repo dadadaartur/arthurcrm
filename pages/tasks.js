@@ -11,7 +11,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active')
 
-  // Первый эффект: только получаем пользователя
+  // Первый эффект: получаем пользователя
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -25,7 +25,7 @@ export default function TasksPage() {
     init()
   }, [])
 
-  // Второй эффект: загружаем задания только когда user готов
+  // Второй эффект: загружаем задания, когда user готов
   useEffect(() => {
     if (user) {
       console.log('Текущий user.id:', user.id)
@@ -34,16 +34,17 @@ export default function TasksPage() {
   }, [user])
 
   const loadTasks = async (userId) => {
-    if (!userId) return // защита от пустого userId
+    if (!userId) return
 
+    // Активные задания — без сортировки по created_at (такой колонки нет)
     const { data: active } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .order('created_at', { ascending: false })
       .limit(50)
 
+    // История — сортировка по completed_at (эта колонка существует)
     const { data: completed } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
