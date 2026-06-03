@@ -28,7 +28,7 @@ export default function Home() {
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
 
-      // Все активные назначения (любой статус, кроме завершённых)
+      // Все активные назначения (assigned, in_progress, pending_review)
       const { data: active } = await supabase
         .from('task_assignments')
         .select('status')
@@ -61,7 +61,6 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start px-6 py-8">
       <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Левая колонка: баланс + кнопки */}
         <div className="flex flex-col items-start">
           <div className="balance-card">
             <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -83,11 +82,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Правая колонка: виджет заданий + карточки */}
         <div className="flex-1 flex flex-col gap-6">
           {/* Виджет заданий */}
           <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
-            <h3 className="text-lg font-semibold text-white mb-4">📋 Мои задания</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="text-center">
                 <p className="text-gray-400 text-sm">В работе</p>
@@ -104,7 +102,7 @@ export default function Home() {
             </div>
             <button
               onClick={() => router.push('/tasks')}
-              className="btn-gold w-full mt-2 flex items-center justify-center gap-2"
+              className="action-btn w-full flex items-center justify-center gap-2"
             >
               <span>Перейти к заданиям</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -113,7 +111,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Дополнительные карточки */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
             <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
