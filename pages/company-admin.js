@@ -221,9 +221,9 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Принудительно преобразуем ID в число, чтобы избежать ошибок с типами
-    const numericId = Number(assignmentId);
-    const { data, error } = await supabase.rpc('complete_task_review', {
+    // Принудительно число, чтобы избежать проблем с типами
+    const numericId = Number(assignmentId)
+    const { data, error } = await supabase.rpc('final_review_approval', {
       assignment_id: numericId,
       action: action
     })
@@ -233,7 +233,7 @@ export default function CompanyAdmin() {
       return
     }
 
-    const message = data === 'OK' 
+    const message = data === 'OK'
       ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
       : data
 
