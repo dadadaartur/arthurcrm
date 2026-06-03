@@ -221,24 +221,23 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Принудительно число, чтобы избежать проблем с типами
-    const numericId = Number(assignmentId)
-    const { data, error } = await supabase.rpc('final_review_approval', {
-      assignment_id: numericId,
-      action: action
+    const res = await fetch('/api/tasks/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assignmentId,
+        action,
+        adminEmail: profile?.email
+      })
     })
 
-    if (error) {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
-      return
+    if (res.ok) {
+      fetchPendingReviews()
+      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
+    } else {
+      const err = await res.json()
+      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
     }
-
-    const message = data === 'OK'
-      ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
-      : data
-
-    fetchPendingReviews()
-    setSuccessModal({ show: true, message })
   }
 
   if (!profile) {
