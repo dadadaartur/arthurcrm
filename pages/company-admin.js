@@ -8,7 +8,7 @@ function ConfirmModal({ onConfirm, onCancel }) {
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <h3 className="text-lg font-bold mb-4 text-gold">Подтверждение</h3>
-        <p className="mb-6 text-white">Вы уверены, что хотите удалить задание и все его назначения?</p>
+        <p className="mb-6 text-white">Вы уверены, что хотите удалить задание? Назначения сохранятся в истории.</p>
         <div className="flex justify-center gap-4">
           <button onClick={onCancel} className="btn-outline">Отмена</button>
           <button onClick={onConfirm} className="btn-gold">Удалить</button>
@@ -43,7 +43,8 @@ export default function CompanyAdmin() {
     deadline_hours: '',
     is_auto: false,
     crm_action_type: '',
-    crm_target_count: 0
+    crm_target_count: 0,
+    icon: ''
   })
 
   useEffect(() => { fetchProfile() }, [])
@@ -77,6 +78,7 @@ export default function CompanyAdmin() {
       .from('tasks')
       .select('*')
       .eq('company_id', profile.company_id)
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
     setTasks(data || [])
   }
@@ -100,7 +102,7 @@ export default function CompanyAdmin() {
   const fetchPendingReviews = async () => {
     const { data, error } = await supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
+      .select('id, status, comment, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma, icon )')
       .eq('status', 'pending_review')
       .eq('tasks.company_id', profile.company_id)
 
@@ -120,9 +122,9 @@ export default function CompanyAdmin() {
   const fetchHistory = async () => {
     let query = supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, reviewed_at, task_id, user_id, tasks( id, title, reward_karma )')
+      .select('id, status, comment, started_at, completed_at, reviewed_at, task_id, user_id, tasks( id, title, reward_karma, icon )')
       .eq('tasks.company_id', profile.company_id)
-      .not('status', 'in', ['assigned', 'in_progress', 'pending_review'])
+      .in('status', ['completed', 'rejected'])
 
     if (historyFilter.status) query = query.eq('status', historyFilter.status)
     if (historyFilter.dateFrom) query = query.gte('completed_at', historyFilter.dateFrom)
@@ -171,7 +173,8 @@ export default function CompanyAdmin() {
         is_active: true,
         is_auto: form.is_auto,
         crm_action_type: form.crm_action_type,
-        crm_target_count: form.crm_target_count
+        crm_target_count: form.crm_target_count,
+        icon: form.icon || null
       })
       .select()
       .single()
@@ -205,7 +208,7 @@ export default function CompanyAdmin() {
       setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения' })
     }
 
-    setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: true, deadline_hours: '', is_auto: false, crm_action_type: '', crm_target_count: 0 })
+    setForm({ title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all', min_energy_level: 0, requires_review: true, deadline_hours: '', is_auto: false, crm_action_type: '', crm_target_count: 0, icon: '' })
     fetchTasks()
   }
 
@@ -214,14 +217,15 @@ export default function CompanyAdmin() {
     const taskId = deleteModal
     setDeleteModal(null)
     if (!taskId) return
-    await supabase.from('task_assignments').delete().eq('task_id', taskId)
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    const { error } = await supabase
+      .from('tasks')
+      .update({ is_active: false })
+      .eq('id', taskId)
     if (error) setSuccessModal({ show: true, message: 'Ошибка удаления: ' + error.message })
     else fetchTasks()
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Вызываем ТОЛЬКО API, никаких дополнительных действий
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -262,7 +266,16 @@ export default function CompanyAdmin() {
           <div className="dash-card lg:w-1/2">
             <h3 className="text-lg font-bold mb-4">Создать задание</h3>
             <form onSubmit={handleCreateTask} className="flex flex-col gap-4">
-              <input type="text" placeholder="Название задания" className="input-field" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <label className="text-sm text-gray-400">Название</label>
+                  <input type="text" className="input-field" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400">Иконка (символ)</label>
+                  <input type="text" className="input-field w-20 text-center" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} maxLength={2} />
+                </div>
+              </div>
               <textarea placeholder="Описание и условия" className="input-field" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ height: '80px', resize: 'vertical' }} required />
               <div className="flex gap-4">
                 <div className="flex-1">
@@ -328,18 +341,18 @@ export default function CompanyAdmin() {
           </div>
 
           <div className="lg:w-1/2 flex flex-col gap-4">
-            <h3 className="text-lg font-bold">Все задания ({tasks.length})</h3>
+            <h3 className="text-lg font-bold">Активные задания ({tasks.length})</h3>
             {tasks.map(task => (
               <div key={task.id} className="dash-card">
                 <div className="flex justify-between">
-                  <h4 className="text-white">{task.title}</h4>
+                  <h4 className="text-white">{task.icon && <span className="mr-2">{task.icon}</span>}{task.title}</h4>
                   <span className="text-sm text-gray-400">
                     {task.task_type === 'one_time' ? 'Разовое' : task.task_type === 'recurring' ? 'Регулярное' : 'Авто'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-400 mt-1">{task.description}</p>
                 <div className="flex justify-between items-center mt-2 text-sm">
-                  <span className="text-yellow-400">+{task.reward_karma} кармиков</span>
+                  <span className="text-yellow-400">+ {task.reward_karma} кармиков</span>
                   <button onClick={() => handleDeleteClick(task.id)} className="text-xs underline hover:text-red-400 text-red-400">Удалить</button>
                 </div>
               </div>
@@ -359,9 +372,9 @@ export default function CompanyAdmin() {
                 <div key={item.id} className="premium-card flex flex-col">
                   <div className="flex justify-between">
                     <div>
-                      <h4 className="text-white font-semibold">{item.tasks.title}</h4>
+                      <h4 className="text-white font-semibold">{item.tasks.icon && <span className="mr-2">{item.tasks.icon}</span>}{item.tasks.title}</h4>
                       <p className="text-sm text-gray-400">Сотрудник: {item.employee_name || item.employee_email}</p>
-                      <p className="text-sm text-yellow-400">Награда: +{item.tasks.reward_karma} кармиков</p>
+                      <p className="text-sm text-yellow-400">Награда: + {item.tasks.reward_karma} кармиков</p>
                       {item.comment && (
                         <p className="text-sm text-gray-300 mt-1">Комментарий: {item.comment}</p>
                       )}
@@ -399,12 +412,12 @@ export default function CompanyAdmin() {
               {history.map(h => (
                 <div key={h.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
                   <div>
-                    <span className="text-white">{h.tasks.title}</span>
-                    <span className="text-gray-400 ml-2">({h.status})</span>
+                    <span className="text-white">{h.tasks.icon && <span className="mr-2">{h.tasks.icon}</span>}{h.tasks.title}</span>
+                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
                     <span className="text-gray-500 ml-2">{h.employee_email}</span>
                     {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
                   </div>
-                  <span className="text-sm text-yellow-400">+{h.tasks.reward_karma}</span>
+                  <span className="text-sm text-yellow-400">+ {h.tasks.reward_karma} кармиков</span>
                 </div>
               ))}
             </div>
