@@ -26,8 +26,9 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: 'Назначение не найдено' })
   }
 
+  // Проверяем, что задание ещё не обработано
   if (assignment.status !== 'pending_review') {
-    return res.status(400).json({ error: 'Задание не на проверке' })
+    return res.status(400).json({ error: 'Задание уже обработано' })
   }
 
   const newStatus = action === 'approve' ? 'completed' : 'in_progress'
@@ -45,11 +46,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка обновления: ' + updateError.message })
   }
 
-  // Начисляем кармики при одобрении (ровно один раз)
+  // Начисляем кармики при одобрении (только один раз)
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
 
-    // Вставляем одну транзакцию
+    // Вставляем транзакцию
     const { error: transactionError } = await supabaseAdmin
       .from('karma_transactions')
       .insert({
