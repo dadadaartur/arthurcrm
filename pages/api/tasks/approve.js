@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { assignmentId, action, adminEmail } = req.body
-  if (!assignmentId || !['approve', 'reject'].includes(action) || !adminEmail) {
+  const { assignmentId, action, adminUserId } = req.body
+  if (!assignmentId || !['approve', 'reject'].includes(action) || !adminUserId) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
 
@@ -14,11 +14,11 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  // Проверяем, что adminEmail принадлежит администратору (роль 1 или 2)
+  // Проверяем, что adminUserId принадлежит администратору (роль 1 или 2)
   const { data: adminProfile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('role_id')
-    .eq('email', adminEmail)
+    .eq('user_id', adminUserId)
     .single()
 
   if (profileError || !adminProfile || (adminProfile.role_id !== 1 && adminProfile.role_id !== 2)) {
