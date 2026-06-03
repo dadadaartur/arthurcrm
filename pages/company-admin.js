@@ -221,25 +221,19 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Вызываем серверный API
+    // Просто вызываем серверный API, который делает всё сам
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignmentId, action })
     })
 
-    const result = await res.json()
-
     if (res.ok) {
       fetchPendingReviews()
       setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
     } else {
-      // Показываем детали ошибки, включая receivedId
-      let errorMsg = result.error || 'Неизвестная ошибка'
-      if (result.receivedId !== undefined) {
-        errorMsg += ` (receivedId: ${result.receivedId}, numericId: ${result.numericId})`
-      }
-      setSuccessModal({ show: true, message: 'Ошибка: ' + errorMsg })
+      const err = await res.json()
+      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
     }
   }
 
