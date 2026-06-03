@@ -266,8 +266,8 @@ export default function CompanyAdmin() {
         })
 
       if (transactionError) {
-        console.error('Transaction insert error:', transactionError)
-        setSuccessModal({ show: true, message: 'Ошибка начисления транзакции' })
+        // Вот здесь мы теперь показываем точный текст ошибки
+        setSuccessModal({ show: true, message: transactionError.message })
         return
       }
 
@@ -283,8 +283,7 @@ export default function CompanyAdmin() {
         .upsert({ user_id: assignment.user_id, balance: newBalance }, { onConflict: 'user_id' })
 
       if (balanceError) {
-        console.error('Balance update error:', balanceError)
-        setSuccessModal({ show: true, message: 'Ошибка обновления баланса' })
+        setSuccessModal({ show: true, message: 'Ошибка обновления баланса: ' + balanceError.message })
         return
       }
     }
