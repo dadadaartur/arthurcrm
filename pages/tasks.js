@@ -38,6 +38,8 @@ export default function TasksPage() {
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(50)
 
+    console.log('Активные назначения:', active)
+
     const { data: completed } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
@@ -57,7 +59,7 @@ export default function TasksPage() {
       .eq('id', assignmentId)
 
     if (!error) {
-      alert('Задание принято в работу') // временно, пока не наладим SuccessNotification
+      alert('Задание принято в работу')
       if (user) loadTasks(user.id)
     }
   }
@@ -134,7 +136,7 @@ export default function TasksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredTasks.map(assignment => {
               const t = assignment.tasks
-              if (!t) return null
+              // Если задача не загружена, показываем карточку с пояснением
               return (
                 <div key={assignment.id} className="premium-card relative overflow-hidden"
                   style={{
@@ -145,9 +147,11 @@ export default function TasksPage() {
                 >
                   <div className="relative z-10">
                     <div className="flex items-start gap-3 mb-2">
-                      {t.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
+                      {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
                       <div className="flex-1">
-                        <h3 className="text-white font-semibold">{t.title}</h3>
+                        <h3 className="text-white font-semibold">
+                          {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
+                        </h3>
                         <span className={`px-2 py-0.5 rounded text-xs ${
                           assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
                           assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-gray-700 text-gray-300'
@@ -156,9 +160,11 @@ export default function TasksPage() {
                         </span>
                       </div>
                     </div>
-                    <p className="text-gray-400 text-sm mb-2">{t.description}</p>
+                    <p className="text-gray-400 text-sm mb-2">
+                      {t ? t.description : 'Описание недоступно'}
+                    </p>
                     <div className="flex justify-between items-center text-xs mb-3">
-                      <span className="text-yellow-400">+ {t.reward_karma} кармиков</span>
+                      <span className="text-yellow-400">+ {t?.reward_karma ?? '?'} кармиков</span>
                       {assignment.deadline_at && (
                         <span className="text-gray-500 font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
                       )}
