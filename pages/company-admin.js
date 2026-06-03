@@ -221,7 +221,7 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Просто вызываем серверный API, который делает всё сам
+    // Только вызов API – никаких прямых вставок
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
