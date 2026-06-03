@@ -7,14 +7,17 @@ import PremiumModal from '../components/PremiumModal'
 export default function TasksPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [activeTasks, setActiveTasks] = useState([])
+  const [activeTasks, setActiveTasks] = useState([])   // все активные (для фильтрации)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('active')
+  const [activeTab, setActiveTab] = useState('new')   // 'new' | 'in_progress' | 'pending_review' | 'history'
 
   // Состояния для модалки отправки
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
+
+  // Премиум-уведомление о старте задания
+  const [startNotification, setStartNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -55,8 +58,17 @@ export default function TasksPage() {
   }
 
   const handleStart = async (assignmentId) => {
-    await supabase.from('task_assignments').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', assignmentId)
-    if (user) loadTasks(user.id)
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({ status: 'in_progress', started_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+
+    if (!error) {
+      // Показываем красивое уведомление
+      setStartNotification({ show: true, message: 'Задание принято в работу' })
+      setTimeout(() => setStartNotification({ show: false, message: '' }), 2000)
+      if (user) loadTasks(user.id)
+    }
   }
 
   const openSubmitModal = (assignmentId) => {
@@ -85,10 +97,28 @@ export default function TasksPage() {
     setSubmitting(false)
   }
 
+  // Фильтрация заданий по выбранной вкладке
+  const filteredTasks = activeTasks.filter(assignment => {
+    if (activeTab === 'new') return assignment.status === 'assigned'
+    if (activeTab === 'in_progress') return assignment.status === 'in_progress'
+    if (activeTab === 'pending_review') return assignment.status === 'pending_review'
+    return false
+  })
+
+  // Сортировка внутри вкладок: "В работе" – сначала последние начатые
+  if (activeTab === 'in_progress') {
+    filteredTasks.sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+  }
+  // "На проверке" – сначала последние отправленные
+  if (activeTab === 'pending_review') {
+    filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
+  }
+
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Шапка с карточкой сотрудника (заготовка) */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1" title="На главную">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -96,19 +126,45 @@ export default function TasksPage() {
           </svg>
         </button>
         <h1 className="text-2xl font-bold text-white">Мои задания</h1>
+        <div className="ml-auto text-sm text-gray-400">
+          {user?.email}
+        </div>
       </div>
 
+      {/* Вкладки */}
       <div className="flex gap-4 mb-6">
-        <button onClick={() => setActiveTab('active')} className={`filter-pill ${activeTab === 'active' ? 'active' : ''}`}>Активные ({activeTasks.length})</button>
-        <button onClick={() => setActiveTab('history')} className={`filter-pill ${activeTab === 'history' ? 'active' : ''}`}>История ({history.length})</button>
+        {[
+          { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
+          { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress').length },
+          { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
+          { key: 'history', label: 'История', count: history.length }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`filter-pill ${activeTab === tab.key ? 'active' : ''}`}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
       </div>
 
-      {activeTab === 'active' && (
-        activeTasks.length === 0 ? (
-          <p className="text-gray-400">Нет активных заданий</p>
+      {/* Премиум-уведомление о старте */}
+      {startNotification.show && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-fadeIn">
+          <div className="premium-card bg-green-900/90 border-green-500 text-white px-6 py-3 rounded-2xl shadow-lg">
+            {startNotification.message}
+          </div>
+        </div>
+      )}
+
+      {/* Контент вкладок */}
+      {activeTab !== 'history' && (
+        filteredTasks.length === 0 ? (
+          <p className="text-gray-400">Нет заданий</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeTasks.map(assignment => {
+            {filteredTasks.map(assignment => {
               const t = assignment.tasks
               if (!t) return null
               return (
