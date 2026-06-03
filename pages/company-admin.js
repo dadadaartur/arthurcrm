@@ -221,23 +221,20 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Вызываем хранимую функцию, которая делает всё атомарно
-    const { data, error } = await supabase.rpc('finalize_task_review', {
-      assignment_id: Number(assignmentId),
-      action: action
+    // Вызываем ТОЛЬКО API, никаких дополнительных действий
+    const res = await fetch('/api/tasks/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignmentId, action })
     })
 
-    if (error) {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
-      return
+    if (res.ok) {
+      fetchPendingReviews()
+      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
+    } else {
+      const err = await res.json()
+      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
     }
-
-    const message = data === 'OK' 
-      ? (action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
-      : data
-
-    fetchPendingReviews()
-    setSuccessModal({ show: true, message })
   }
 
   if (!profile) {
