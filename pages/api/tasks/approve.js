@@ -4,9 +4,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { assignmentId, action } = req.body
-  console.log('Получен assignmentId:', assignmentId, 'тип:', typeof assignmentId)
-
   const numericId = parseInt(assignmentId, 10)
+
   if (!numericId || !['approve', 'reject'].includes(action)) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
@@ -16,59 +15,18 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  const { data: assignment, error: fetchError } = await supabaseAdmin
-    .from('task_assignments')
-    .select('id, user_id, task_id, status, tasks( id, title, reward_karma )')
-    .eq('id', numericId)
-    .single()
+  // Вызываем нашу новую функцию, которая обходит RLS
+  const { data, error } = await supabaseAdmin.rpc('finalize_task_review', {
+    assignment_id: numericId,
+    action: action
+  })
 
-  if (fetchError || !assignment) {
-    // Возвращаем assignmentId, чтобы увидеть его на клиенте
-    return res.status(404).json({ 
-      error: 'Назначение не найдено',
-      receivedId: assignmentId,
-      numericId: numericId
-    })
+  if (error) {
+    return res.status(500).json({ error: error.message })
   }
 
-  if (assignment.status !== 'pending_review') {
-    return res.status(400).json({ error: 'Задание не на проверке' })
-  }
-
-  const newStatus = action === 'approve' ? 'completed' : 'in_progress'
-
-  const { error: updateError } = await supabaseAdmin
-    .from('task_assignments')
-    .update({
-      status: newStatus,
-      reviewed_at: new Date().toISOString()
-    })
-    .eq('id', numericId)
-
-  if (updateError) {
-    return res.status(500).json({ error: 'Ошибка обновления: ' + updateError.message })
-  }
-
-  if (action === 'approve' && assignment.tasks.reward_karma > 0) {
-    const reward = assignment.tasks.reward_karma
-
-    await supabaseAdmin.from('karma_transactions').insert({
-      user_id: assignment.user_id,
-      amount: reward,
-      type: 'task_reward',
-      description: 'Выполнено задание: ' + assignment.tasks.title
-    })
-
-    const { data: balanceRow } = await supabaseAdmin
-      .from('karma_balance')
-      .select('balance')
-      .eq('user_id', assignment.user_id)
-      .single()
-
-    const newBalance = (balanceRow?.balance || 0) + reward
-    await supabaseAdmin
-      .from('karma_balance')
-      .upsert({ user_id: assignment.user_id, balance: newBalance }, { onConflict: 'user_id' })
+  if (data !== 'OK') {
+    return res.status(400).json({ error: data })   // например "Задание не на проверке"
   }
 
   res.status(200).json({ result: 'OK' })
