@@ -1,43 +1,28 @@
 import { createClient } from '@supabase/supabase-js'
 
-function parseSupabaseToken(cookieHeader) {
-  if (!cookieHeader) return null
-  const cookies = cookieHeader.split(';').map(c => c.trim())
-  const authCookie = cookies.find(c => c.startsWith('sb-') && c.endsWith('-auth-token'))
-  if (!authCookie) return null
-  const value = authCookie.split('=')[1]
-  if (!value) return null
-  try {
-    const parsed = JSON.parse(decodeURIComponent(value))
-    return parsed.access_token || null
-  } catch {
-    return null
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // 1. Извлекаем access_token из куки
-  const token = parseSupabaseToken(req.headers.cookie || '')
-  if (!token) {
+  // Извлекаем токен из заголовка Authorization
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Не авторизован (токен не найден)' })
   }
+  const token = authHeader.split(' ')[1]
 
-  // 2. Проверяем токен с помощью анонимного клиента (без сервисного ключа)
-  const supabaseClient = createClient(
+  // Проверяем токен с помощью сервисного ключа
+  const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   )
-
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
   if (authError || !user) {
     return res.status(401).json({ error: 'Не авторизован (недействительный токен)' })
   }
 
-  // 3. Проверяем, что пользователь — администратор
-  const { data: profile, error: profileError } = await supabaseClient
+  // Проверяем, что пользователь — администратор
+  const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('company_id, role_id')
     .eq('user_id', user.id)
@@ -52,12 +37,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
 
-  // 4. Сервисный клиент для выполнения привилегированных операций
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-
+  // Получаем назначение и задание
   const { data: assignment, error: fetchError } = await supabaseAdmin
     .from('task_assignments')
     .select('id, user_id, task_id, status, tasks( id, title, company_id, reward_karma )')
@@ -78,6 +58,7 @@ export default async function handler(req, res) {
 
   const newStatus = action === 'approve' ? 'completed' : 'in_progress'
 
+  // Обновляем статус назначения
   const { error: updateError } = await supabaseAdmin
     .from('task_assignments')
     .update({
@@ -91,6 +72,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка обновления: ' + updateError.message })
   }
 
+  // Начисляем кармики при одобрении
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
 
