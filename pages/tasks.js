@@ -11,24 +11,18 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active')
 
-  // Первый эффект: получаем пользователя
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
+      if (!user) { router.push('/login'); return }
       setUser(user)
       setLoading(false)
     }
     init()
   }, [])
 
-  // Второй эффект: загружаем задания, когда user готов
   useEffect(() => {
     if (user) {
-      console.log('Текущий user.id:', user.id)
       loadTasks(user.id)
     }
   }, [user])
@@ -36,7 +30,6 @@ export default function TasksPage() {
   const loadTasks = async (userId) => {
     if (!userId) return
 
-    // Активные задания — без сортировки по created_at (такой колонки нет)
     const { data: active } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
@@ -44,7 +37,6 @@ export default function TasksPage() {
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(50)
 
-    // История — сортировка по completed_at (эта колонка существует)
     const { data: completed } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
@@ -52,9 +44,6 @@ export default function TasksPage() {
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
       .limit(50)
-
-    console.log('Активные задания:', active)
-    console.log('История:', completed)
 
     setActiveTasks(active || [])
     setHistory(completed || [])
@@ -95,6 +84,7 @@ export default function TasksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeTasks.map(assignment => {
               const t = assignment.tasks
+              if (!t) return null // если задача не найдена, пропускаем
               return (
                 <div key={assignment.id} className="premium-card relative overflow-hidden"
                   style={{
@@ -153,18 +143,22 @@ export default function TasksPage() {
           <p className="text-gray-400">Нет завершённых заданий</p>
         ) : (
           <div className="max-h-96 overflow-y-auto space-y-2">
-            {history.map(h => (
-              <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
-                <div>
-                  <span className="text-white">{h.tasks.title}</span>
-                  <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                    {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
+            {history.map(h => {
+              const t = h.tasks
+              if (!t) return null
+              return (
+                <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
+                  <div>
+                    <span className="text-white">{t.title}</span>
+                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                      {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
+                  </div>
+                  <span className="text-yellow-400 text-sm">+ {t.reward_karma} кармиков</span>
                 </div>
-                <span className="text-yellow-400 text-sm">+ {h.tasks.reward_karma} кармиков</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )
       )}
