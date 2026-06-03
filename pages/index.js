@@ -84,9 +84,9 @@ export default function Home() {
               <div className="text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{stats.completed}</p></div>
               <div className="text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p></div>
             </div>
-            <div className="text-center mt-2">
-              <button onClick={() => router.push('/tasks')} className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                Перейти к заданиям →
+            <div className="flex justify-center">
+              <button onClick={() => router.push('/tasks')} className="action-btn text-sm px-6 py-2">
+                Перейти к заданиям
               </button>
             </div>
           </div>
