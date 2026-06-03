@@ -46,6 +46,9 @@ export default function CompanyAdmin() {
     crm_target_count: 0
   })
 
+  // Состояние для блокировки кнопок проверки
+  const [submitting, setSubmitting] = useState({})
+
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
     if (profile) {
@@ -221,12 +224,17 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Только вызов API – никаких прямых вставок
+    // Блокируем кнопку для этого конкретного задания
+    setSubmitting(prev => ({ ...prev, [assignmentId]: true }))
+
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignmentId, action })
     })
+
+    // Разблокируем кнопку
+    setSubmitting(prev => ({ ...prev, [assignmentId]: false }))
 
     if (res.ok) {
       fetchPendingReviews()
@@ -367,8 +375,20 @@ export default function CompanyAdmin() {
                       )}
                     </div>
                     <div className="flex gap-2 items-start">
-                      <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
-                      <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
+                      <button
+                        onClick={() => handleReview(item.id, 'approve')}
+                        disabled={submitting[item.id]}
+                        className="btn-gold text-xs px-3 py-1.5"
+                      >
+                        {submitting[item.id] ? '...' : 'Одобрить'}
+                      </button>
+                      <button
+                        onClick={() => handleReview(item.id, 'reject')}
+                        disabled={submitting[item.id]}
+                        className="btn-outline text-xs px-3 py-1.5"
+                      >
+                        {submitting[item.id] ? '...' : 'Отклонить'}
+                      </button>
                     </div>
                   </div>
                 </div>
