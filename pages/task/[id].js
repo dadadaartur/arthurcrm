@@ -1,156 +1,150 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import { supabase } from '../../lib/supabaseClient'
+import Spinner from '../../components/Spinner'
+import PremiumModal from '../../components/PremiumModal'
 
-export default function TasksPage() {
+export default function TaskDetail() {
   const router = useRouter()
+  const { id } = router.query
   const [user, setUser] = useState(null)
-  const [activeTasks, setActiveTasks] = useState([])
-  const [history, setHistory] = useState([])
+  const [assignment, setAssignment] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('active') // 'active' | 'history'
+  const [submitModal, setSubmitModal] = useState({ show: false, comment: '' })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUser(user)
-      await loadTasks(user.id)
+
+      if (id) {
+        const { data } = await supabase
+          .from('task_assignments')
+          .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, icon, requires_review, deadline_hours )')
+          .eq('id', id)
+          .single()
+        setAssignment(data)
+      }
       setLoading(false)
     }
     init()
-  }, [])
+  }, [id])
 
-  const loadTasks = async (userId) => {
-    // Активные задания
-    const { data: active } = await supabase
+  const handleStart = async () => {
+    if (!assignment) return
+    const { error } = await supabase
       .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, icon )')
-      .eq('user_id', userId)
-      .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .order('created_at', { ascending: false })
-      .limit(20)
+      .update({ status: 'in_progress', started_at: new Date().toISOString() })
+      .eq('id', assignment.id)
+    if (!error) setAssignment({ ...assignment, status: 'in_progress' })
+  }
 
-    // История (завершённые и отклонённые)
-    const { data: completed } = await supabase
+  const handleSubmit = async () => {
+    if (!assignment || !user) return
+    setSubmitting(true)
+    const { error } = await supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma, icon )')
-      .eq('user_id', userId)
-      .in('status', ['completed', 'rejected'])
-      .order('completed_at', { ascending: false })
-      .limit(30)
+      .update({ status: 'pending_review', comment: submitModal.comment, completed_at: new Date().toISOString() })
+      .eq('id', assignment.id)
+      .eq('user_id', user.id)
 
-    setActiveTasks(active || [])
-    setHistory(completed || [])
+    if (!error) {
+      setSubmitModal({ show: false, comment: '' })
+      setAssignment({ ...assignment, status: 'pending_review' })
+    } else {
+      alert('Ошибка отправки')
+    }
+    setSubmitting(false)
   }
 
-  const handleStart = async (assignmentId) => {
-    await supabase.from('task_assignments').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', assignmentId)
-    if (user) loadTasks(user.id)
-  }
+  if (loading || !assignment) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
-  const handleSubmit = async (assignmentId) => {
-    await supabase.from('task_assignments').update({ status: 'pending_review', completed_at: new Date().toISOString() }).eq('id', assignmentId)
-    if (user) loadTasks(user.id)
-  }
-
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
-
-  const inProgress = activeTasks.filter(t => t.status === 'in_progress').length
-  const completed = history.filter(t => t.status === 'completed').length
-  const earned = history.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.tasks?.reward_karma || 0), 0)
+  const t = assignment.tasks
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-white">Мои задания</h1>
-        <button onClick={() => router.push('/')} className="action-btn text-xs">← На главную</button>
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <button onClick={() => router.push('/tasks')} className="text-gray-400 hover:text-white mb-6 text-sm">← Назад к заданиям</button>
 
-      {/* Статистика */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">В работе</p>
-          <p className="text-2xl font-bold text-white">{inProgress}</p>
+      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139, 92, 246, 0.3)' }}>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">{t.icon || '📋'}</span>
+          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
         </div>
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">Выполнено</p>
-          <p className="text-2xl font-bold text-green-400">{completed}</p>
-        </div>
-        <div className="dash-card text-center">
-          <p className="text-gray-400 text-sm">Заработано</p>
-          <p className="text-2xl font-bold text-yellow-400">+{earned}</p>
-        </div>
-      </div>
 
-      {/* Вкладки */}
-      <div className="flex gap-4 mb-6">
-        <button onClick={() => setActiveTab('active')} className={`filter-pill ${activeTab === 'active' ? 'active' : ''}`}>Активные ({activeTasks.length})</button>
-        <button onClick={() => setActiveTab('history')} className={`filter-pill ${activeTab === 'history' ? 'active' : ''}`}>История ({history.length})</button>
-      </div>
+        <p className="text-gray-400 mb-4">{t.description}</p>
 
-      {activeTab === 'active' && (
-        activeTasks.length === 0 ? (
-          <p className="text-gray-400">Нет активных заданий</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeTasks.map(assignment => {
-              const t = assignment.tasks
-              return (
-                <div key={assignment.id} className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)' }}>
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">{t.icon || '📋'}</span>
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold">{t.title}</h3>
-                      <p className="text-sm text-gray-400 mt-1">{t.description}</p>
-                      <div className="flex justify-between items-center mt-3">
-                        <span className="text-yellow-400 text-sm">+{t.reward_karma} кармиков</span>
-                        <span className={`px-2 py-0.5 rounded text-xs ${
-                          assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
-                          assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-gray-700 text-gray-300'
-                        }`}>
-                          {assignment.status === 'assigned' ? 'Новое' : assignment.status === 'in_progress' ? 'В работе' : 'На проверке'}
-                        </span>
-                      </div>
-                      <div className="mt-3">
-                        {assignment.status === 'assigned' && (
-                          <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">Начать</button>
-                        )}
-                        {assignment.status === 'in_progress' && (
-                          <button onClick={() => handleSubmit(assignment.id)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+        <div className="flex flex-wrap gap-4 text-sm mb-6">
+          <div className="flex items-center gap-1">
+            <span className="text-gray-400">Награда:</span>
+            <span className="text-yellow-400 font-semibold">+{t.reward_karma} кармиков</span>
           </div>
-        )
-      )}
+          {assignment.deadline_at && (
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400">Дедлайн:</span>
+              <span className="text-gray-200">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+            </div>
+          )}
+        </div>
 
-      {activeTab === 'history' && (
-        history.length === 0 ? (
-          <p className="text-gray-400">Нет завершённых заданий</p>
-        ) : (
-          <div className="space-y-2">
-            {history.map(h => (
-              <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{h.tasks.icon || '📋'}</span>
-                  <div>
-                    <span className="text-white">{h.tasks.title}</span>
-                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
-                  </div>
-                </div>
-                <span className="text-yellow-400 text-sm">+{h.tasks.reward_karma}</span>
-              </div>
-            ))}
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-sm text-gray-400">Статус:</span>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+            assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
+            assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' :
+            'bg-gray-700 text-gray-300'
+          }`}>
+            {assignment.status === 'assigned' && 'Новое'}
+            {assignment.status === 'in_progress' && 'В работе'}
+            {assignment.status === 'pending_review' && 'На проверке'}
+            {assignment.status === 'completed' && 'Выполнено'}
+            {assignment.status === 'rejected' && 'Отклонено'}
+          </span>
+        </div>
+
+        {assignment.status === 'assigned' && (
+          <button onClick={handleStart} className="btn-gold w-full">Начать задание</button>
+        )}
+
+        {assignment.status === 'in_progress' && (
+          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold w-full">
+            Отправить на проверку
+          </button>
+        )}
+
+        {assignment.status === 'pending_review' && (
+          <div className="text-center text-purple-300 py-2">Ожидает проверки руководителем</div>
+        )}
+
+        {(assignment.status === 'completed' || assignment.status === 'rejected') && (
+          <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+            {assignment.status === 'completed' ? '✅ Задание выполнено' : '❌ Задание отклонено'}
+            {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
           </div>
-        )
-      )}
+        )}
+      </div>
+
+      {/* Модальное окно для комментария */}
+      <PremiumModal
+        isOpen={submitModal.show}
+        onClose={() => setSubmitModal({ show: false, comment: '' })}
+        title="Отправить на проверку"
+      >
+        <textarea
+          className="input-field"
+          placeholder="Введите комментарий (номер заказа, результат)"
+          value={submitModal.comment}
+          onChange={e => setSubmitModal({ ...submitModal, comment: e.target.value })}
+          rows={3}
+        />
+        <div className="flex justify-end gap-3 mt-4">
+          <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
+          <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
+            {submitting ? 'Отправка...' : 'Отправить'}
+          </button>
+        </div>
+      </PremiumModal>
     </div>
   )
 }
