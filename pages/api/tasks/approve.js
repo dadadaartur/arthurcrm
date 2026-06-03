@@ -1,26 +1,39 @@
 import { createClient } from '@supabase/supabase-js'
 
+function parseSupabaseToken(cookieHeader) {
+  if (!cookieHeader) return null
+  const cookies = cookieHeader.split(';').map(c => c.trim())
+  const authCookie = cookies.find(c => c.startsWith('sb-') && c.endsWith('-auth-token'))
+  if (!authCookie) return null
+  const value = authCookie.split('=')[1]
+  if (!value) return null
+  try {
+    const parsed = JSON.parse(decodeURIComponent(value))
+    return parsed.access_token || null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // 1. Создаём временный клиент с куками из запроса – так Supabase увидит сессию
+  // 1. Извлекаем access_token из куки
+  const token = parseSupabaseToken(req.headers.cookie || '')
+  if (!token) {
+    return res.status(401).json({ error: 'Не авторизован (токен не найден)' })
+  }
+
+  // 2. Проверяем токен с помощью анонимного клиента (без сервисного ключа)
   const supabaseClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      global: {
-        headers: {
-          cookie: req.headers.cookie || ''
-        }
-      }
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
 
-  // 2. Получаем пользователя (без токенов – всё через куки)
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
 
   if (authError || !user) {
-    return res.status(401).json({ error: 'Не авторизован' })
+    return res.status(401).json({ error: 'Не авторизован (недействительный токен)' })
   }
 
   // 3. Проверяем, что пользователь — администратор
