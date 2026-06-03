@@ -3,27 +3,16 @@ import { createClient } from '@supabase/supabase-js'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { assignmentId, action, adminUserId } = req.body
-  if (!assignmentId || !['approve', 'reject'].includes(action) || !adminUserId) {
+  const { assignmentId, action } = req.body
+  if (!assignmentId || !['approve', 'reject'].includes(action)) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
 
-  // Сервисный клиент для проверки администратора и выполнения операций
+  // Сервисный клиент для выполнения привилегированных операций
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
-
-  // Проверяем, что adminUserId принадлежит администратору (роль 1 или 2)
-  const { data: adminProfile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('role_id')
-    .eq('user_id', adminUserId)
-    .single()
-
-  if (profileError || !adminProfile || (adminProfile.role_id !== 1 && adminProfile.role_id !== 2)) {
-    return res.status(403).json({ error: 'Доступ запрещён' })
-  }
 
   // Получаем назначение и задание
   const { data: assignment, error: fetchError } = await supabaseAdmin
@@ -42,7 +31,7 @@ export default async function handler(req, res) {
 
   const newStatus = action === 'approve' ? 'completed' : 'in_progress'
 
-  // Обновляем статус
+  // Обновляем статус назначения
   const { error: updateError } = await supabaseAdmin
     .from('task_assignments')
     .update({
@@ -59,6 +48,7 @@ export default async function handler(req, res) {
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
 
+    // Транзакция
     await supabaseAdmin.from('karma_transactions').insert({
       user_id: assignment.user_id,
       amount: reward,
@@ -66,6 +56,7 @@ export default async function handler(req, res) {
       description: 'Выполнено задание: ' + assignment.tasks.title
     })
 
+    // Баланс
     const { data: balanceRow } = await supabaseAdmin
       .from('karma_balance')
       .select('balance')
