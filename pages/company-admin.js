@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, getAccessToken } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
 function ConfirmModal({ onConfirm, onCancel }) {
@@ -221,9 +221,19 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
+    // Получаем токен и передаём в заголовке Authorization
+    const token = await getAccessToken()
+    if (!token) {
+      setSuccessModal({ show: true, message: 'Ошибка авторизации' })
+      return
+    }
+
     const res = await fetch('/api/tasks/approve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ assignmentId, action })
     })
 
