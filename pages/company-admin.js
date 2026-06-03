@@ -3,9 +3,22 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
-function ConfirmModal({ onConfirm, onCancel }) { /* без изменений */ }
+function ConfirmModal({ onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-bold mb-4 text-gold">Подтверждение</h3>
+        <p className="mb-6 text-white">Вы уверены, что хотите удалить задание? Назначения сохранятся в истории.</p>
+        <div className="flex justify-center gap-4">
+          <button onClick={onCancel} className="btn-outline">Отмена</button>
+          <button onClick={onConfirm} className="btn-gold">Удалить</button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-const BUCKET_NAME = 'task-images' // замени на своё имя бакета
+const BUCKET_NAME = 'task-images'
 
 export default function CompanyAdmin() {
   const router = useRouter()
@@ -144,10 +157,7 @@ export default function CompanyAdmin() {
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
     const { error } = await supabase.storage.from(BUCKET_NAME).upload(`public/${fileName}`, file)
-    if (error) {
-      console.error('Upload error:', error)
-      return null
-    }
+    if (error) return null
     const { data: publicUrl } = supabase.storage.from(BUCKET_NAME).getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
   }
@@ -160,9 +170,7 @@ export default function CompanyAdmin() {
     }
 
     let imageUrl = null
-    if (form.image_file) {
-      imageUrl = await uploadImage(form.image_file)
-    }
+    if (form.image_file) imageUrl = await uploadImage(form.image_file)
 
     const deadlineAt = form.deadline_datetime ? new Date(form.deadline_datetime).toISOString() : null
 
@@ -435,7 +443,35 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* вкладки employees и invites без изменений (без эмодзи) */}
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
+          {employees.length === 0 ? (
+            <p className="text-gray-400">Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-800">
+                  <span>{emp.display_name || emp.email}</span>
+                  <span className="text-sm text-gray-400">ID: {emp.user_id?.slice(0,8)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'invites' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Приглашения</h3>
+          <p className="text-gray-400">Функция приглашений временно недоступна</p>
+        </div>
+      )}
+
+      {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
+      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
+        <p className="text-white">{successModal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
