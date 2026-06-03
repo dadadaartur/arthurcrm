@@ -11,18 +11,31 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active')
 
+  // Первый эффект: только получаем пользователя
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      if (!user) {
+        router.push('/login')
+        return
+      }
       setUser(user)
-      await loadTasks(user.id)
       setLoading(false)
     }
     init()
   }, [])
 
+  // Второй эффект: загружаем задания только когда user готов
+  useEffect(() => {
+    if (user) {
+      console.log('Текущий user.id:', user.id)
+      loadTasks(user.id)
+    }
+  }, [user])
+
   const loadTasks = async (userId) => {
+    if (!userId) return // защита от пустого userId
+
     const { data: active } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
@@ -38,6 +51,9 @@ export default function TasksPage() {
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
       .limit(50)
+
+    console.log('Активные задания:', active)
+    console.log('История:', completed)
 
     setActiveTasks(active || [])
     setHistory(completed || [])
