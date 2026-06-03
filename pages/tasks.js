@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
+import PremiumModal from '../components/PremiumModal'
 
 export default function TasksPage() {
   const router = useRouter()
@@ -10,6 +11,10 @@ export default function TasksPage() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active')
+
+  // Состояния для модалки отправки
+  const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -54,9 +59,30 @@ export default function TasksPage() {
     if (user) loadTasks(user.id)
   }
 
-  const handleSubmit = async (assignmentId) => {
-    await supabase.from('task_assignments').update({ status: 'pending_review', completed_at: new Date().toISOString() }).eq('id', assignmentId)
-    if (user) loadTasks(user.id)
+  const openSubmitModal = (assignmentId) => {
+    setSubmitModal({ show: true, assignmentId, comment: '' })
+  }
+
+  const handleSubmit = async () => {
+    if (!user || !submitModal.assignmentId) return
+    setSubmitting(true)
+    const { error } = await supabase
+      .from('task_assignments')
+      .update({
+        status: 'pending_review',
+        comment: submitModal.comment,
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', submitModal.assignmentId)
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setSubmitModal({ show: false, assignmentId: null, comment: '' })
+      loadTasks(user.id)
+    } else {
+      alert('Ошибка отправки')
+    }
+    setSubmitting(false)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -84,7 +110,7 @@ export default function TasksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeTasks.map(assignment => {
               const t = assignment.tasks
-              if (!t) return null // если задача не найдена, пропускаем
+              if (!t) return null
               return (
                 <div key={assignment.id} className="premium-card relative overflow-hidden"
                   style={{
@@ -120,7 +146,7 @@ export default function TasksPage() {
                         </button>
                       )}
                       {assignment.status === 'in_progress' && (
-                        <button onClick={() => router.push(`/task/${assignment.id}`)} className="action-btn w-full text-xs py-1.5">
+                        <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
                           Отправить на проверку
                         </button>
                       )}
@@ -161,6 +187,28 @@ export default function TasksPage() {
             })}
           </div>
         )
+      )}
+
+      {/* Модальное окно для комментария */}
+      {submitModal.show && (
+        <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold mb-4 text-gold">Отправить на проверку</h3>
+            <textarea
+              className="input-field"
+              placeholder="Введите комментарий (номер заказа, результат)"
+              value={submitModal.comment}
+              onChange={e => setSubmitModal({ ...submitModal, comment: e.target.value })}
+              rows={3}
+            />
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
+              <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
+                {submitting ? 'Отправка...' : 'Отправить'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
