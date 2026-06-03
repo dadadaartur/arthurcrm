@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  // Вызываем нашу новую функцию, которая обходит RLS
+  // Вызываем хранимую функцию, которая сама всё делает (начисление, статус)
   const { data, error } = await supabaseAdmin.rpc('finalize_task_review', {
     assignment_id: numericId,
     action: action
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   if (data !== 'OK') {
-    return res.status(400).json({ error: data })   // например "Задание не на проверке"
+    return res.status(400).json({ error: data })
   }
 
   res.status(200).json({ result: 'OK' })
