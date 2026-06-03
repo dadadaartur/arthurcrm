@@ -227,7 +227,7 @@ export default function CompanyAdmin() {
       body: JSON.stringify({
         assignmentId,
         action,
-        adminEmail: profile?.email
+        adminUserId: profile?.user_id
       })
     })
 
