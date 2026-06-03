@@ -3,20 +3,18 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
 import PremiumModal from '../components/PremiumModal'
+import SuccessNotification from '../components/SuccessNotification'
 
 export default function TasksPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [activeTasks, setActiveTasks] = useState([])   // все активные (для фильтрации)
+  const [activeTasks, setActiveTasks] = useState([])
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('new')   // 'new' | 'in_progress' | 'pending_review' | 'history'
+  const [activeTab, setActiveTab] = useState('new')
 
-  // Состояния для модалки отправки
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
-
-  // Премиум-уведомление о старте задания
   const [startNotification, setStartNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
@@ -30,14 +28,11 @@ export default function TasksPage() {
   }, [])
 
   useEffect(() => {
-    if (user) {
-      loadTasks(user.id)
-    }
+    if (user) loadTasks(user.id)
   }, [user])
 
   const loadTasks = async (userId) => {
     if (!userId) return
-
     const { data: active } = await supabase
       .from('task_assignments')
       .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
@@ -64,16 +59,12 @@ export default function TasksPage() {
       .eq('id', assignmentId)
 
     if (!error) {
-      // Показываем красивое уведомление
       setStartNotification({ show: true, message: 'Задание принято в работу' })
-      setTimeout(() => setStartNotification({ show: false, message: '' }), 2000)
       if (user) loadTasks(user.id)
     }
   }
 
-  const openSubmitModal = (assignmentId) => {
-    setSubmitModal({ show: true, assignmentId, comment: '' })
-  }
+  const openSubmitModal = (assignmentId) => setSubmitModal({ show: true, assignmentId, comment: '' })
 
   const handleSubmit = async () => {
     if (!user || !submitModal.assignmentId) return
@@ -97,7 +88,6 @@ export default function TasksPage() {
     setSubmitting(false)
   }
 
-  // Фильтрация заданий по выбранной вкладке
   const filteredTasks = activeTasks.filter(assignment => {
     if (activeTab === 'new') return assignment.status === 'assigned'
     if (activeTab === 'in_progress') return assignment.status === 'in_progress'
@@ -105,11 +95,9 @@ export default function TasksPage() {
     return false
   })
 
-  // Сортировка внутри вкладок: "В работе" – сначала последние начатые
   if (activeTab === 'in_progress') {
     filteredTasks.sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
   }
-  // "На проверке" – сначала последние отправленные
   if (activeTab === 'pending_review') {
     filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
   }
@@ -118,7 +106,12 @@ export default function TasksPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      {/* Шапка с карточкой сотрудника (заготовка) */}
+      <SuccessNotification
+        show={startNotification.show}
+        message={startNotification.message}
+        onClose={() => setStartNotification({ show: false, message: '' })}
+      />
+
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1" title="На главную">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -126,12 +119,9 @@ export default function TasksPage() {
           </svg>
         </button>
         <h1 className="text-2xl font-bold text-white">Мои задания</h1>
-        <div className="ml-auto text-sm text-gray-400">
-          {user?.email}
-        </div>
+        <div className="ml-auto text-sm text-gray-400">{user?.email}</div>
       </div>
 
-      {/* Вкладки */}
       <div className="flex gap-4 mb-6">
         {[
           { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
@@ -139,26 +129,12 @@ export default function TasksPage() {
           { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
           { key: 'history', label: 'История', count: history.length }
         ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`filter-pill ${activeTab === tab.key ? 'active' : ''}`}
-          >
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`filter-pill ${activeTab === tab.key ? 'active' : ''}`}>
             {tab.label} ({tab.count})
           </button>
         ))}
       </div>
 
-      {/* Премиум-уведомление о старте */}
-      {startNotification.show && (
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-fadeIn">
-          <div className="premium-card bg-green-900/90 border-green-500 text-white px-6 py-3 rounded-2xl shadow-lg">
-            {startNotification.message}
-          </div>
-        </div>
-      )}
-
-      {/* Контент вкладок */}
       {activeTab !== 'history' && (
         filteredTasks.length === 0 ? (
           <p className="text-gray-400">Нет заданий</p>
@@ -245,7 +221,6 @@ export default function TasksPage() {
         )
       )}
 
-      {/* Модальное окно для комментария */}
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
