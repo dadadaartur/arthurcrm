@@ -3,7 +3,14 @@ import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
 
-function getKarmikWord(n) { /* без изменений */ }
+function getKarmikWord(n) {
+  const lastDigit = n % 10
+  const lastTwoDigits = n % 100
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
+  if (lastDigit === 1) return 'кармик'
+  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
+  return 'кармиков'
+}
 
 export default function Home() {
   const router = useRouter()
@@ -55,7 +62,7 @@ export default function Home() {
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
                 <div className="text-5xl font-extrabold text-yellow-400 mb-2" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
-                  {balance}
+                  {balance.toString()}
                 </div>
                 <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
               </div>
@@ -72,15 +79,16 @@ export default function Home() {
         <div className="flex-1 flex flex-col gap-6">
           <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
             <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center"><p className="text-gray-400 text-sm">В работе</p><p className="text-2xl font-bold text-white">{stats.active}</p></div>
               <div className="text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{stats.completed}</p></div>
               <div className="text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p></div>
             </div>
-            <button onClick={() => router.push('/tasks')} className="action-btn mx-auto max-w-xs flex items-center justify-center gap-2">
-              <span>Перейти к заданиям</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
+            <div className="text-center mt-2">
+              <button onClick={() => router.push('/tasks')} className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                Перейти к заданиям →
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
