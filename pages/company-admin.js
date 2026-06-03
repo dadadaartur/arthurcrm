@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase, getAccessToken } from '../lib/supabaseClient'
+import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
 function ConfirmModal({ onConfirm, onCancel }) {
@@ -221,29 +221,81 @@ export default function CompanyAdmin() {
   }
 
   const handleReview = async (assignmentId, action) => {
-    // Получаем токен и передаём в заголовке Authorization
-    const token = await getAccessToken()
-    if (!token) {
-      setSuccessModal({ show: true, message: 'Ошибка авторизации' })
+    // Получаем назначение с заданием
+    const { data: assignment, error: fetchError } = await supabase
+      .from('task_assignments')
+      .select('id, user_id, task_id, status, tasks( id, title, reward_karma )')
+      .eq('id', assignmentId)
+      .single()
+
+    if (fetchError || !assignment) {
+      setSuccessModal({ show: true, message: 'Назначение не найдено' })
       return
     }
 
-    const res = await fetch('/api/tasks/approve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ assignmentId, action })
-    })
-
-    if (res.ok) {
-      fetchPendingReviews()
-      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
-    } else {
-      const err = await res.json()
-      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
+    if (assignment.status !== 'pending_review') {
+      setSuccessModal({ show: true, message: 'Задание не на проверке' })
+      return
     }
+
+    const newStatus = action === 'approve' ? 'completed' : 'in_progress'
+
+    // Обновляем статус
+    const { error: updateError } = await supabase
+      .from('task_assignments')
+      .update({
+        status: newStatus,
+        reviewed_by: profile.user_id,
+        reviewed_at: new Date().toISOString()
+      })
+      .eq('id', assignmentId)
+
+    if (updateError) {
+      setSuccessModal({ show: true, message: 'Ошибка обновления: ' + updateError.message })
+      return
+    }
+
+    // Начисляем кармики при одобрении
+    if (action === 'approve' && assignment.tasks.reward_karma > 0) {
+      const reward = assignment.tasks.reward_karma
+
+      // Транзакция
+      const { error: transactionError } = await supabase
+        .from('karma_transactions')
+        .insert({
+          user_id: assignment.user_id,
+          amount: reward,
+          type: 'task_reward',
+          description: 'Выполнено задание: ' + assignment.tasks.title
+        })
+
+      if (transactionError) {
+        console.error('Transaction insert error:', transactionError)
+        setSuccessModal({ show: true, message: 'Ошибка начисления транзакции' })
+        return
+      }
+
+      // Обновление баланса
+      const { data: balanceRow } = await supabase
+        .from('karma_balance')
+        .select('balance')
+        .eq('user_id', assignment.user_id)
+        .single()
+
+      const newBalance = (balanceRow?.balance || 0) + reward
+      const { error: balanceError } = await supabase
+        .from('karma_balance')
+        .upsert({ user_id: assignment.user_id, balance: newBalance }, { onConflict: 'user_id' })
+
+      if (balanceError) {
+        console.error('Balance update error:', balanceError)
+        setSuccessModal({ show: true, message: 'Ошибка обновления баланса' })
+        return
+      }
+    }
+
+    fetchPendingReviews()
+    setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
   }
 
   if (!profile) {
