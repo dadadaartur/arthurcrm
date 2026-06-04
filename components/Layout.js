@@ -28,40 +28,35 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children, profile, loadingProfile }) {
-  const [user, setUser] = useState(null)
+export default function Layout({ children, profile, user }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (user) {
-        // Токен для CRM
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.access_token && session?.refresh_token) {
-            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
-          }
-        })
-
-        // Название компании (не критично для отображения панели)
-        if (profile?.company_id) {
-          supabase.from('companies').select('name').eq('id', profile.company_id).single()
-            .then(({ data: comp }) => {
-              if (comp) setCompanyName(comp.name)
-            })
+    if (user) {
+      // Токен для CRM
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token && session?.refresh_token) {
+          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
         }
+      })
+
+      // Название компании
+      if (profile?.company_id) {
+        supabase.from('companies').select('name').eq('id', profile.company_id).single()
+          .then(({ data: comp }) => {
+            if (comp) setCompanyName(comp.name)
+          })
       }
-    })
-  }, [profile])
+    }
+  }, [user, profile])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
 
-  // Пока профиль загружается, показываем только контент (или спиннер)
-  if (loadingProfile || !user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
@@ -70,7 +65,6 @@ export default function Layout({ children, profile, loadingProfile }) {
     )
   }
 
-  // Профиль загружен – роли уже известны
   const isSuperAdmin = profile?.role_id === 1
   const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
 
