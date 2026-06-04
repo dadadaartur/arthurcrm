@@ -28,9 +28,7 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children, user: initialUser, profile: initialProfile }) {
-  const [user] = useState(initialUser)
-  const [profile] = useState(initialProfile)
+export default function Layout({ children, user, profile }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
