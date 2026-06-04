@@ -33,14 +33,12 @@ export default function Layout({ children, user, profile }) {
   const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
-    // Токен для CRM (только на клиенте)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token && session?.refresh_token) {
         setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
       }
     })
 
-    // Название компании (если не загрузилось на сервере)
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
         .then(({ data: comp }) => {
