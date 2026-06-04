@@ -1,22 +1,43 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import NotificationsModal from './NotificationsModal'
 
-function StarsBackground() { /* без изменений */ }
+function StarsBackground() {
+  useEffect(() => {
+    const container = document.getElementById('real-stars')
+    if (!container || container.children.length > 0) return
+
+    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div')
+      const size = Math.random() * 4 + 1.5
+      star.style.width = size + 'px'
+      star.style.height = size + 'px'
+      star.style.borderRadius = '50%'
+      star.style.background = colors[Math.floor(Math.random() * colors.length)]
+      star.style.position = 'absolute'
+      star.style.left = Math.random() * 100 + '%'
+      star.style.top = Math.random() * 100 + '%'
+      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
+      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
+      star.style.animationDelay = Math.random() * 5 + 's'
+      star.style.opacity = '0'
+      container.appendChild(star)
+    }
+  }, [])
+  return <div id="real-stars" className="stars-bg" />
+}
 
 export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [showNotifications, setShowNotifications] = useState(false)
+  const [crmToken, setCrmToken] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // ... загрузка профиля и компании (как раньше)
         supabase
           .from('profiles')
           .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
@@ -31,20 +52,85 @@ export default function Layout({ children }) {
             } else setCompanyName('')
           })
 
-        // Получаем количество непрочитанных уведомлений
-        supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false)
-          .then(({ count }) => setUnreadCount(count || 0))
+        // Получаем токен для CRM
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) setCrmToken(session.access_token)
+        })
+      } else {
+        setProfile(null)
+        setCompanyName('')
+        setCrmToken('')
       }
     })
 
-    // ... onAuthStateChange такой же
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+      if (currentUser) {
+        supabase
+          .from('profiles')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
+          .eq('user_id', currentUser.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            setProfile(data)
+            if (data?.company_id) {
+              supabase.from('companies').select('name').eq('id', data.company_id).single().then(({ data: comp }) => {
+                if (comp) setCompanyName(comp.name)
+              })
+            } else setCompanyName('')
+          })
+
+        if (session?.access_token) setCrmToken(session.access_token)
+        else setCrmToken('')
+      } else {
+        setProfile(null)
+        setCompanyName('')
+        setCrmToken('')
+      }
+    })
+
+    return () => authListener?.subscription.unsubscribe()
   }, [])
 
-  // ... handleLogout, getInitials, isGuest, isSuperAdmin, isCompanyAdmin – как в предыдущей версии
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
+  const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
+  const isSuperAdmin = profile?.roles?.is_system === true
+  const isCompanyAdmin = profile?.role_id === 2 ||
+    (profile?.role_id === 4 && (profile.can_create_tasks || profile.can_review_tasks || profile.can_manage_employees || profile.can_delete_employees))
+
+  const getInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
+    }
+    if (profile?.display_name) return profile.display_name.substring(0, 2).toUpperCase()
+    return user?.email?.substring(0, 2).toUpperCase() || '?'
+  }
+
+  if (isGuest) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <main className="flex-grow relative z-10">{children}</main>
+        <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
+          © {new Date().getFullYear()} Кармический банк
+        </footer>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <main className="flex-grow relative z-10">{children}</main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -55,36 +141,25 @@ export default function Layout({ children }) {
             Кармический банк
           </Link>
           <nav className="flex gap-2 text-xs font-medium">
-            {/* ... ссылки ... */}
+            <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
+            <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
+            <a
+              href={`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?token=${encodeURIComponent(crmToken)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-btn !py-1.5 !px-4 !text-xs"
+            >
+              Кармическая CRM
+            </a>
+            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {(isSuperAdmin || isCompanyAdmin) && (
+              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+            )}
           </nav>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-
-          {/* Иконка уведомлений – Земля */}
-          <button
-            onClick={() => {
-              setShowNotifications(true)
-              // Сбросим счётчик (можно оставить для красоты)
-              setUnreadCount(0)
-            }}
-            className="relative text-gray-400 hover:text-white transition-colors p-1"
-            title="Уведомления"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <ellipse cx="12" cy="12" rx="4" ry="10" />
-              <path d="M2 12h20" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Профиль */}
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -93,7 +168,7 @@ export default function Layout({ children }) {
                 {getInitials()}
               </div>
             )}
-            <span>{profile?.display_name || user?.email}</span>
+            <span>{profile?.display_name || user.email}</span>
           </Link>
           <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
         </div>
@@ -104,13 +179,6 @@ export default function Layout({ children }) {
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>
-
-      {/* Модальное окно уведомлений */}
-      <NotificationsModal
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        userId={user?.id}
-      />
     </div>
   )
 }
