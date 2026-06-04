@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
@@ -54,30 +54,34 @@ export default function CompanyAdmin() {
     image_file: null
   })
 
-  // Сотрудники и должности
-  const [positions, setPositions] = useState([])
-  const [showAddEmployee, setShowAddEmployee] = useState(false)
-  const [newEmployee, setNewEmployee] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
-  const [newPositionTitle, setNewPositionTitle] = useState('')
-  const [editingPosition, setEditingPosition] = useState(null)
-  const [editPositionTitle, setEditPositionTitle] = useState('')
-  const [deletePositionId, setDeletePositionId] = useState(null)
+  // Цели
+  const [goals, setGoals] = useState([])
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [newGoal, setNewGoal] = useState({
+    user_id: '',
+    goal_type: 'calls',
+    target_value: 10,
+    period: 'day',
+    reward_rubles: 0,
+    reward_karma: 0,
+    deadline: ''
+  })
 
-  // Настройки компании
+  // Должности и настройки компании (если нужны, добавьте вкладки)
+  const [positions, setPositions] = useState([])
   const [companyName, setCompanyName] = useState('')
   const [companyDescription, setCompanyDescription] = useState('')
   const [companyLogoFile, setCompanyLogoFile] = useState(null)
-  const [companyLogoSaving, setCompanyLogoSaving] = useState(false)
-  const fileInputRef = useRef(null)
 
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
     if (profile) {
       if (activeTab === 'tasks') fetchTasks()
-      if (activeTab === 'employees') { fetchEmployees(); fetchPositions() }
+      if (activeTab === 'employees') fetchEmployees()
       if (activeTab === 'review') fetchPendingReviews()
       if (activeTab === 'history') { setHistoryPage(0); fetchHistory() }
-      if (activeTab === 'settings') fetchCompanySettings()
+      if (activeTab === 'goals') fetchGoals()
+      // если нужны вкладки positions/settings, добавьте соответствующие функции
     }
   }, [profile, activeTab])
 
@@ -131,11 +135,7 @@ export default function CompanyAdmin() {
 
     if (!error && data) {
       const enriched = await Promise.all(data.map(async (item) => {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('email, display_name')
-          .eq('user_id', item.user_id)
-          .single()
+        const { data: profileData } = await supabase.from('profiles').select('email, display_name').eq('user_id', item.user_id).single()
         return { ...item, employee_email: profileData?.email || '', employee_name: profileData?.display_name || '' }
       }))
       setPendingReviews(enriched)
@@ -167,26 +167,23 @@ export default function CompanyAdmin() {
     } else setHistory([])
   }
 
-  const fetchPositions = async () => {
-    const { data } = await supabase.from('positions').select('*').eq('company_id', profile.company_id).order('title')
-    setPositions(data || [])
+  const fetchGoals = async () => {
+    const { data } = await supabase
+      .from('goals')
+      .select('*, profiles(email, display_name)')
+      .eq('company_id', profile.company_id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    setGoals(data || [])
   }
 
-  const fetchCompanySettings = async () => {
-    const { data } = await supabase.from('companies').select('*').eq('id', profile.company_id).single()
-    if (data) {
-      setCompanyName(data.name || '')
-      setCompanyDescription(data.description || '')
-    }
-  }
-
-  const uploadImage = async (file, bucket = BUCKET_NAME) => {
+  const uploadImage = async (file) => {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error } = await supabase.storage.from(bucket).upload(`public/${fileName}`, file)
+    const { error } = await supabase.storage.from(BUCKET_NAME).upload(`public/${fileName}`, file)
     if (error) return null
-    const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(`public/${fileName}`)
+    const { data: publicUrl } = supabase.storage.from(BUCKET_NAME).getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
   }
 
@@ -286,104 +283,46 @@ export default function CompanyAdmin() {
     }
   }
 
-  // Управление должностями
-  const handleAddPosition = async () => {
-    if (!newPositionTitle.trim()) return
-    const { error } = await supabase.from('positions').insert({
+  // Управление целями
+  const handleCreateGoal = async () => {
+    if (!newGoal.user_id || !newGoal.target_value) return
+
+    const deadline = newGoal.deadline ? new Date(newGoal.deadline).toISOString() : null
+    const title = newGoal.goal_type === 'calls' ? 'Звонки' :
+                  newGoal.goal_type === 'emails' ? 'Письма' :
+                  newGoal.goal_type === 'deals' ? 'Изменения статусов сделок' : 'Комментарии в сделке'
+
+    const { error } = await supabase.from('goals').insert({
       company_id: profile.company_id,
-      title: newPositionTitle.trim()
-    })
-    if (!error) {
-      await logAction('position_created', 'position', null, { title: newPositionTitle })
-      setNewPositionTitle('')
-      fetchPositions()
-    }
-  }
-
-  const handleEditPosition = async (id) => {
-    if (!editPositionTitle.trim()) return
-    const { error } = await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
-    if (!error) {
-      await logAction('position_updated', 'position', id, { new_title: editPositionTitle })
-      setEditingPosition(null)
-      setEditPositionTitle('')
-      fetchPositions()
-    }
-  }
-
-  const handleDeletePosition = async (id) => {
-    await supabase.from('positions').delete().eq('id', id)
-    await logAction('position_deleted', 'position', id)
-    setDeletePositionId(null)
-    fetchPositions()
-  }
-
-  // Добавление сотрудника
-  const handleAddEmployee = async () => {
-    if (!newEmployee.email) return
-    // Проверка на существование
-    const { data: existing } = await supabase.from('profiles').select('id').eq('email', newEmployee.email).maybeSingle()
-    if (existing) {
-      setSuccessModal({ show: true, message: 'Сотрудник с таким email уже существует' })
-      return
-    }
-
-    const { error } = await supabase.from('profiles').insert({
-      email: newEmployee.email,
-      first_name: newEmployee.first_name,
-      last_name: newEmployee.last_name,
-      position_id: newEmployee.position_id || null,
-      role_id: newEmployee.role_id,
-      company_id: profile.company_id,
-      display_name: `${newEmployee.first_name} ${newEmployee.last_name}`.trim() || newEmployee.email
+      user_id: newGoal.user_id,
+      goal_type: newGoal.goal_type,
+      title,
+      target_value: newGoal.target_value,
+      period: newGoal.period,
+      reward_rubles: newGoal.reward_rubles || 0,
+      reward_karma: newGoal.reward_karma || 0,
+      deadline,
+      created_by: profile.user_id
     })
 
     if (!error) {
-      await logAction('employee_added', 'profile', null, { email: newEmployee.email })
-      setShowAddEmployee(false)
-      setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
-      fetchEmployees()
-      setSuccessModal({ show: true, message: 'Сотрудник добавлен' })
+      await logAction('goal_created', 'goal', null, { ...newGoal })
+      setShowGoalModal(false)
+      setNewGoal({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', reward_rubles: 0, reward_karma: 0, deadline: '' })
+      fetchGoals()
+      setSuccessModal({ show: true, message: 'Цель создана' })
     } else {
       setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
     }
   }
 
-  const handleDeleteEmployee = async (employeeId, comment) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ deleted_at: new Date().toISOString(), delete_comment: comment })
-      .eq('id', employeeId)
+  const handleDeleteGoal = async (goalId) => {
+    const { error } = await supabase.from('goals').update({ is_active: false }).eq('id', goalId)
     if (!error) {
-      await logAction('employee_deleted', 'profile', employeeId, { comment })
-      fetchEmployees()
-      setSuccessModal({ show: true, message: 'Сотрудник удалён' })
+      await logAction('goal_deleted', 'goal', goalId)
+      fetchGoals()
+      setSuccessModal({ show: true, message: 'Цель удалена' })
     }
-  }
-
-  // Сохранение настроек компании
-  const handleSaveCompanySettings = async (e) => {
-    e.preventDefault()
-    setCompanyLogoSaving(true)
-    let logoUrl = null
-    if (companyLogoFile) {
-      logoUrl = await uploadImage(companyLogoFile, 'avatars')
-    }
-
-    const updates = {
-      name: companyName,
-      description: companyDescription,
-    }
-    if (logoUrl) updates.logo_url = logoUrl
-
-    const { error } = await supabase.from('companies').update(updates).eq('id', profile.company_id)
-    if (!error) {
-      setSuccessModal({ show: true, message: 'Настройки сохранены' })
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    } else {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
-    }
-    setCompanyLogoSaving(false)
   }
 
   if (!profile) return <div className="flex items-center justify-center min-h-screen"><div className="spinner" /></div>
@@ -393,22 +332,18 @@ export default function CompanyAdmin() {
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
 
       <div className="flex flex-wrap gap-2 mb-8">
-        {['tasks', 'employees', 'review', 'history', 'settings'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`filter-pill ${activeTab === tab ? 'active' : ''}`}
-          >
+        {['tasks', 'employees', 'review', 'history', 'goals'].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`filter-pill ${activeTab === tab ? 'active' : ''}`}>
             {tab === 'tasks' && 'Задания'}
             {tab === 'employees' && 'Сотрудники'}
             {tab === 'review' && 'Проверка'}
             {tab === 'history' && 'История'}
-            {tab === 'settings' && 'Настройки'}
+            {tab === 'goals' && 'Цели'}
           </button>
         ))}
       </div>
 
-      {/* --- Вкладка Задания --- */}
+      {/* Вкладка Задания */}
       {activeTab === 'tasks' && (
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="dash-card lg:w-1/2">
@@ -517,7 +452,30 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* --- Вкладка Проверка --- */}
+      {/* Вкладка Сотрудники */}
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
+          {employees.length === 0 ? (
+            <p className="text-gray-400">Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+                  <div>
+                    <span className="text-white">{emp.display_name || emp.email}</span>
+                    <span className="ml-3 text-xs text-gray-400">
+                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Вкладка Проверка */}
       {activeTab === 'review' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
@@ -544,7 +502,7 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* --- Вкладка История --- */}
+      {/* Вкладка История */}
       {activeTab === 'history' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">История заданий</h3>
@@ -584,74 +542,33 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* --- Вкладка Сотрудники --- */}
-      {activeTab === 'employees' && (
+      {/* Вкладка Цели */}
+      {activeTab === 'goals' && (
         <div className="dash-card">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Сотрудники и должности</h3>
-            <button onClick={() => setShowAddEmployee(true)} className="action-btn text-xs px-4 py-2">Добавить сотрудника</button>
+            <h3 className="text-lg font-bold">Цели компании</h3>
+            <button onClick={() => setShowGoalModal(true)} className="action-btn text-xs px-4 py-2">Добавить цель</button>
           </div>
-
-          {/* Блок должностей */}
-          <div className="mb-8">
-            <h4 className="text-md font-semibold text-white mb-2">Должности</h4>
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                className="input-field flex-1"
-                placeholder="Название должности"
-                value={newPositionTitle}
-                onChange={e => setNewPositionTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
-              />
-              <button onClick={handleAddPosition} className="action-btn text-xs px-4">Добавить</button>
-            </div>
-            {positions.length === 0 ? (
-              <p className="text-gray-400 text-sm">Нет должностей</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {positions.map(pos => (
-                  <div key={pos.id} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-1">
-                    {editingPosition === pos.id ? (
-                      <>
-                        <input
-                          type="text"
-                          className="input-field w-32 py-0.5"
-                          value={editPositionTitle}
-                          onChange={e => setEditPositionTitle(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleEditPosition(pos.id)}
-                        />
-                        <button onClick={() => handleEditPosition(pos.id)} className="text-xs text-green-400">✓</button>
-                        <button onClick={() => setEditingPosition(null)} className="text-xs text-red-400">✕</button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-white text-sm">{pos.title}</span>
-                        <button onClick={() => { setEditingPosition(pos.id); setEditPositionTitle(pos.title); }} className="text-xs text-blue-400 ml-2">✎</button>
-                        <button onClick={() => setDeletePositionId(pos.id)} className="text-xs text-red-400 ml-1">✕</button>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Список сотрудников */}
-          <h4 className="text-md font-semibold text-white mb-2">Сотрудники</h4>
-          {employees.length === 0 ? (
-            <p className="text-gray-400 text-sm">Нет сотрудников</p>
+          {goals.length === 0 ? (
+            <p className="text-gray-400">Нет активных целей</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {employees.map(emp => (
-                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+            <div className="space-y-4">
+              {goals.map(goal => (
+                <div key={goal.id} className="premium-card flex justify-between items-center">
                   <div>
-                    <span className="text-white">{emp.display_name || emp.email}</span>
-                    <span className="ml-3 text-xs text-gray-400">
-                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
-                    </span>
+                    <h4 className="text-white font-semibold">{goal.title}</h4>
+                    <p className="text-sm text-gray-400">
+                      Сотрудник: {goal.profiles?.display_name || goal.profiles?.email || '—'} |
+                      Тип: {goal.goal_type === 'calls' ? 'Звонки' : goal.goal_type === 'emails' ? 'Письма' : goal.goal_type === 'deals' ? 'Сделки' : 'Комментарии'} |
+                      Период: {goal.period}
+                    </p>
+                    <p className="text-sm text-yellow-400 mt-1">
+                      Прогресс: {goal.current_value} / {goal.target_value}
+                      {goal.reward_karma > 0 && ` | +${goal.reward_karma} кармиков`}
+                      {goal.reward_rubles > 0 && ` | +${goal.reward_rubles} ₽`}
+                    </p>
                   </div>
-                  <button onClick={() => handleDeleteEmployee(emp.id, 'Удаление')} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                  <button onClick={() => handleDeleteGoal(goal.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
                 </div>
               ))}
             </div>
@@ -659,67 +576,67 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* --- Вкладка Настройки компании --- */}
-      {activeTab === 'settings' && (
-        <div className="dash-card">
-          <h3 className="text-lg font-bold mb-4">Настройки компании</h3>
-          <form onSubmit={handleSaveCompanySettings} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400">Название компании</label>
-              <input type="text" className="input-field" value={companyName} onChange={e => setCompanyName(e.target.value)} required />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400">Описание</label>
-              <textarea className="input-field" rows={3} value={companyDescription} onChange={e => setCompanyDescription(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400">Логотип</label>
-              <input type="file" accept="image/*" onChange={e => setCompanyLogoFile(e.target.files[0])} ref={fileInputRef} className="mt-2 text-sm text-gray-400" />
-            </div>
-            <button type="submit" disabled={companyLogoSaving} className="btn-gold">
-              {companyLogoSaving ? 'Сохранение...' : 'Сохранить'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Модалки */}
-      {showAddEmployee && (
-        <div className="modal-overlay" onClick={() => setShowAddEmployee(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold mb-4 text-gold">Добавить сотрудника</h3>
+      {/* Модальное окно создания цели */}
+      {showGoalModal && (
+        <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <h3 className="text-lg font-bold mb-4 text-gold">Новая цель</h3>
             <div className="space-y-4">
-              <input type="email" className="input-field" placeholder="Email" value={newEmployee.email} onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })} />
-              <input type="text" className="input-field" placeholder="Имя" value={newEmployee.first_name} onChange={e => setNewEmployee({ ...newEmployee, first_name: e.target.value })} />
-              <input type="text" className="input-field" placeholder="Фамилия" value={newEmployee.last_name} onChange={e => setNewEmployee({ ...newEmployee, last_name: e.target.value })} />
-              <select className="input-field" value={newEmployee.position_id} onChange={e => setNewEmployee({ ...newEmployee, position_id: e.target.value })}>
-                <option value="">Без должности</option>
-                {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-              </select>
-              <select className="input-field" value={newEmployee.role_id} onChange={e => setNewEmployee({ ...newEmployee, role_id: parseInt(e.target.value) })}>
-                <option value={6}>Сотрудник</option>
-                <option value={4}>Модератор</option>
-                <option value={2}>Администратор</option>
-              </select>
+              <div>
+                <label className="text-sm text-gray-400">Сотрудник</label>
+                <select className="input-field" value={newGoal.user_id} onChange={e => setNewGoal({ ...newGoal, user_id: e.target.value })}>
+                  <option value="">Выберите сотрудника</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.user_id}>{emp.display_name || emp.email}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Тип цели</label>
+                <select className="input-field" value={newGoal.goal_type} onChange={e => setNewGoal({ ...newGoal, goal_type: e.target.value })}>
+                  <option value="calls">Звонки</option>
+                  <option value="emails">Письма</option>
+                  <option value="deals">Изменения статусов сделок</option>
+                  <option value="comments">Кол-во комментариев в сделке</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Количество</label>
+                <input type="number" className="input-field" value={newGoal.target_value} onChange={e => setNewGoal({ ...newGoal, target_value: parseInt(e.target.value) || 0 })} min="1" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Период</label>
+                <select className="input-field" value={newGoal.period} onChange={e => setNewGoal({ ...newGoal, period: e.target.value })}>
+                  <option value="day">День</option>
+                  <option value="week">Неделя</option>
+                  <option value="month">Месяц</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400">Рубли</label>
+                  <input type="number" className="input-field" value={newGoal.reward_rubles} onChange={e => setNewGoal({ ...newGoal, reward_rubles: parseInt(e.target.value) || 0 })} min="0" />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400">Кармики</label>
+                  <input type="number" className="input-field" value={newGoal.reward_karma} onChange={e => setNewGoal({ ...newGoal, reward_karma: parseInt(e.target.value) || 0 })} min="0" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Дедлайн (дата)</label>
+                <input type="date" className="input-field" value={newGoal.deadline} onChange={e => setNewGoal({ ...newGoal, deadline: e.target.value })} />
+              </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowAddEmployee(false)} className="btn-outline">Отмена</button>
-              <button onClick={handleAddEmployee} className="btn-gold">Добавить</button>
+              <button onClick={() => setShowGoalModal(false)} className="btn-outline">Отмена</button>
+              <button onClick={handleCreateGoal} className="btn-gold">Создать</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Модальные окна для удаления заданий */}
       {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
-      {deletePositionId && (
-        <ConfirmModal onConfirm={() => handleDeletePosition(deletePositionId)} onCancel={() => setDeletePositionId(null)}>
-          <h3 className="text-lg font-bold mb-4 text-gold">Удалить должность?</h3>
-          <div className="flex justify-center gap-4">
-            <button onClick={() => setDeletePositionId(null)} className="btn-outline">Отмена</button>
-            <button onClick={() => handleDeletePosition(deletePositionId)} className="btn-gold">Удалить</button>
-          </div>
-        </ConfirmModal>
-      )}
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
         <p className="text-white">{successModal.message}</p>
       </PremiumModal>
