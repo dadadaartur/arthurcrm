@@ -31,6 +31,7 @@ function StarsBackground() {
 export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [companyName, setCompanyName] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -38,12 +39,16 @@ export default function Layout({ children }) {
       if (user) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, companies(name)')
           .eq('user_id', user.id)
           .maybeSingle()
-          .then(({ data }) => setProfile(data))
+          .then(({ data }) => {
+            setProfile(data)
+            if (data?.companies?.name) setCompanyName(data.companies.name)
+          })
       } else {
         setProfile(null)
+        setCompanyName('')
       }
     })
 
@@ -53,12 +58,16 @@ export default function Layout({ children }) {
       if (currentUser) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, companies(name)')
           .eq('user_id', currentUser.id)
           .maybeSingle()
-          .then(({ data }) => setProfile(data))
+          .then(({ data }) => {
+            setProfile(data)
+            if (data?.companies?.name) setCompanyName(data.companies.name)
+          })
       } else {
         setProfile(null)
+        setCompanyName('')
       }
     })
 
@@ -70,14 +79,21 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Гость: пользователь без компании и без системной роли
   const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
-
-  // Суперадмин (is_system = true) или админ компании (role_id = 2)
   const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin = profile?.role_id === 2 // только role_id=2
+  const isCompanyAdmin = profile?.role_id === 2
 
-  // Гостевой режим (без меню)
+  // Отображение инициалов, если нет аватара
+  const getInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
+    }
+    if (profile?.display_name) {
+      return profile.display_name.substring(0, 2).toUpperCase()
+    }
+    return user?.email?.substring(0, 2).toUpperCase() || '?'
+  }
+
   if (isGuest) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -90,7 +106,6 @@ export default function Layout({ children }) {
     )
   }
 
-  // Неавторизованный
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -100,7 +115,6 @@ export default function Layout({ children }) {
     )
   }
 
-  // Полный интерфейс для авторизованных
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
@@ -119,8 +133,23 @@ export default function Layout({ children }) {
             )}
           </nav>
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium">
-          <span className="text-white font-semibold">{profile?.display_name || user.email}</span>
+
+        <div className="flex items-center gap-4 text-xs font-medium">
+          {/* Название компании */}
+          {companyName && (
+            <span className="text-gray-400 text-xs">{companyName}</span>
+          )}
+          {/* Имя сотрудника с аватаром */}
+          <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold">
+                {getInitials()}
+              </div>
+            )}
+            <span>{profile?.display_name || user.email}</span>
+          </Link>
           <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
         </div>
       </header>
