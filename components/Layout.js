@@ -32,7 +32,7 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
-  const [crmToken, setCrmToken] = useState('')
+  const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -52,14 +52,22 @@ export default function Layout({ children }) {
             } else setCompanyName('')
           })
 
-        // Получаем токен для CRM
+        // Получаем токены для CRM
         supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.access_token) setCrmToken(session.access_token)
+          if (session?.access_token && session?.refresh_token) {
+            const params = new URLSearchParams({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            })
+            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?${params.toString()}`)
+          } else {
+            setCrmUrl('#')
+          }
         })
       } else {
         setProfile(null)
         setCompanyName('')
-        setCrmToken('')
+        setCrmUrl('#')
       }
     })
 
@@ -81,12 +89,19 @@ export default function Layout({ children }) {
             } else setCompanyName('')
           })
 
-        if (session?.access_token) setCrmToken(session.access_token)
-        else setCrmToken('')
+        if (session?.access_token && session?.refresh_token) {
+          const params = new URLSearchParams({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          })
+          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?${params.toString()}`)
+        } else {
+          setCrmUrl('#')
+        }
       } else {
         setProfile(null)
         setCompanyName('')
-        setCrmToken('')
+        setCrmUrl('#')
       }
     })
 
@@ -144,7 +159,7 @@ export default function Layout({ children }) {
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <a
-              href={`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?token=${encodeURIComponent(crmToken)}`}
+              href={crmUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="action-btn !py-1.5 !px-4 !text-xs"
