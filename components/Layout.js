@@ -44,6 +44,7 @@ export default function Layout({ children }) {
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
+            console.log('Профиль загружен:', data)
             setProfile(data)
             if (data?.company_id) {
               supabase.from('companies').select('name').eq('id', data.company_id).single()
@@ -72,7 +73,9 @@ export default function Layout({ children }) {
   }
 
   const isSuperAdmin = profile?.role_id === 1
-  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin  // <-- исправлено
+  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
+
+  console.log('Роль:', profile?.role_id, 'isSuperAdmin:', isSuperAdmin, 'isCompanyAdmin:', isCompanyAdmin)
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
