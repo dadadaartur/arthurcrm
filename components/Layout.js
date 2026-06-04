@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useProfile } from '../context/ProfileContext'
 
 function StarsBackground() {
   useEffect(() => {
@@ -28,30 +29,64 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children, user, profile }) {
+export default function Layout({ children }) {
+  const { user, profile, loading } = useProfile()
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.access_token && session?.refresh_token) {
-        setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
-      }
-    })
-
+    if (user) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token && session?.refresh_token) {
+          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
+        }
+      })
+    }
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
         .then(({ data: comp }) => {
           if (comp) setCompanyName(comp.name)
         })
     }
-  }, [])
+  }, [user, profile])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
 
+  // Пока профиль грузится, показываем шапку со скелетоном
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <header className="flex justify-between items-center px-6 py-2 relative z-10">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+              Кармический банк
+            </Link>
+            <nav className="flex gap-2 text-xs font-medium">
+              <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
+              <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
+              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
+              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"></div>
+          </div>
+        </header>
+        <main className="flex-grow relative z-10">{children}</main>
+        <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
+          © {new Date().getFullYear()} Кармический банк
+        </footer>
+      </div>
+    )
+  }
+
+  // Пользователь не авторизован
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
