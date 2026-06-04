@@ -32,7 +32,7 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
-  const [crmUrl, setCrmUrl] = useState('#')
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -45,23 +45,16 @@ export default function Layout({ children }) {
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
+            setLoadingProfile(false)
             if (data?.company_id) {
               supabase.from('companies').select('name').eq('id', data.company_id).single()
                 .then(({ data: comp }) => {
                   if (comp) setCompanyName(comp.name)
                 })
-            } else setCompanyName('')
+            }
           })
-
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session?.access_token && session?.refresh_token) {
-            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
-          }
-        })
       } else {
-        setProfile(null)
-        setCompanyName('')
-        setCrmUrl('#')
+        setLoadingProfile(false)
       }
     })
   }, [])
@@ -69,6 +62,16 @@ export default function Layout({ children }) {
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
+  }
+
+  // Пока профиль не загружен, показываем только контент без шапки (или спиннер)
+  if (!user || loadingProfile) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+        <StarsBackground />
+        <main className="flex-grow relative z-10">{children}</main>
+      </div>
+    )
   }
 
   const isSuperAdmin = profile?.role_id === 1
@@ -82,15 +85,6 @@ export default function Layout({ children }) {
     return user?.email?.substring(0, 2).toUpperCase() || '?'
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <main className="flex-grow relative z-10">{children}</main>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
@@ -102,7 +96,7 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</a>
+            <span className="action-btn !py-1.5 !px-4 !text-xs">CRM</span>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
             {isCompanyAdmin && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
