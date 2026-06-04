@@ -67,12 +67,6 @@ export default function CompanyAdmin() {
     deadline: ''
   })
 
-  // Должности и настройки компании (если нужны, добавьте вкладки)
-  const [positions, setPositions] = useState([])
-  const [companyName, setCompanyName] = useState('')
-  const [companyDescription, setCompanyDescription] = useState('')
-  const [companyLogoFile, setCompanyLogoFile] = useState(null)
-
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
     if (profile) {
@@ -81,7 +75,6 @@ export default function CompanyAdmin() {
       if (activeTab === 'review') fetchPendingReviews()
       if (activeTab === 'history') { setHistoryPage(0); fetchHistory() }
       if (activeTab === 'goals') fetchGoals()
-      // если нужны вкладки positions/settings, добавьте соответствующие функции
     }
   }, [profile, activeTab])
 
@@ -283,20 +276,17 @@ export default function CompanyAdmin() {
     }
   }
 
-  // Управление целями
+  // Создание цели
   const handleCreateGoal = async () => {
     if (!newGoal.user_id || !newGoal.target_value) return
 
     const deadline = newGoal.deadline ? new Date(newGoal.deadline).toISOString() : null
-    const title = newGoal.goal_type === 'calls' ? 'Звонки' :
-                  newGoal.goal_type === 'emails' ? 'Письма' :
-                  newGoal.goal_type === 'deals' ? 'Изменения статусов сделок' : 'Комментарии в сделке'
-
+    const titleMap = { calls: 'Звонки', emails: 'Письма', deals: 'Изменения статусов сделок', comments: 'Комментарии в сделке' }
     const { error } = await supabase.from('goals').insert({
       company_id: profile.company_id,
       user_id: newGoal.user_id,
       goal_type: newGoal.goal_type,
-      title,
+      title: titleMap[newGoal.goal_type] || newGoal.goal_type,
       target_value: newGoal.target_value,
       period: newGoal.period,
       reward_rubles: newGoal.reward_rubles || 0,
@@ -343,7 +333,6 @@ export default function CompanyAdmin() {
         ))}
       </div>
 
-      {/* Вкладка Задания */}
       {activeTab === 'tasks' && (
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="dash-card lg:w-1/2">
@@ -452,30 +441,6 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Вкладка Сотрудники */}
-      {activeTab === 'employees' && (
-        <div className="dash-card">
-          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
-          {employees.length === 0 ? (
-            <p className="text-gray-400">Нет сотрудников</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {employees.map(emp => (
-                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
-                  <div>
-                    <span className="text-white">{emp.display_name || emp.email}</span>
-                    <span className="ml-3 text-xs text-gray-400">
-                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Вкладка Проверка */}
       {activeTab === 'review' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
@@ -502,7 +467,6 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Вкладка История */}
       {activeTab === 'history' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">История заданий</h3>
@@ -542,7 +506,31 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Вкладка Цели */}
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
+          {employees.length === 0 ? (
+            <p className="text-gray-400">Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+                  <div>
+                    <span className="text-white">{emp.display_name || emp.email}</span>
+                    <span className="ml-3 text-xs text-gray-400">
+                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleDeleteEmployee(emp.id, 'Удаление')} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'goals' && (
         <div className="dash-card">
           <div className="flex justify-between items-center mb-4">
@@ -576,7 +564,6 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Модальное окно создания цели */}
       {showGoalModal && (
         <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
@@ -635,7 +622,6 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Модальные окна для удаления заданий */}
       {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
         <p className="text-white">{successModal.message}</p>
