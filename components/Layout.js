@@ -132,7 +132,10 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <Link href="/supd" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</Link>
+            {/* ВОТ ЗДЕСЬ ЗАМЕНА: вместо /supd — внешняя ссылка на новую CRM */}
+            <a href="https://crm-spring.vercel.app" target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
+              Кармическая CRM
+            </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
             {(isSuperAdmin || isCompanyAdmin) && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
