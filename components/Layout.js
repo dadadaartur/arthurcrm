@@ -28,9 +28,8 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children }) {
+export default function Layout({ children, profile, loadingProfile }) {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
@@ -38,39 +37,31 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Загружаем профиль в фоне – он нужен только для имени и аватара
-        supabase
-          .from('profiles')
-          .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            console.log('Профиль загружен:', data)
-            setProfile(data)
-            if (data?.company_id) {
-              supabase.from('companies').select('name').eq('id', data.company_id).single()
-                .then(({ data: comp }) => {
-                  if (comp) setCompanyName(comp.name)
-                })
-            }
-          })
-
         // Токен для CRM
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.access_token && session?.refresh_token) {
             setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
           }
         })
+
+        // Название компании (не критично для отображения панели)
+        if (profile?.company_id) {
+          supabase.from('companies').select('name').eq('id', profile.company_id).single()
+            .then(({ data: comp }) => {
+              if (comp) setCompanyName(comp.name)
+            })
+        }
       }
     })
-  }, [])
+  }, [profile])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
 
-  if (!user) {
+  // Пока профиль загружается, показываем только контент (или спиннер)
+  if (loadingProfile || !user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
@@ -79,8 +70,9 @@ export default function Layout({ children }) {
     )
   }
 
-  // Показываем кнопки всегда – страницы сами проверят права
-  const showAdminButtons = true
+  // Профиль загружен – роли уже известны
+  const isSuperAdmin = profile?.role_id === 1
+  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -104,11 +96,9 @@ export default function Layout({ children }) {
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
               CRM Лето
             </a>
-            {showAdminButtons && (
-              <>
-                <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>
-                <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
-              </>
+            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {isCompanyAdmin && (
+              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
             )}
           </nav>
         </div>
