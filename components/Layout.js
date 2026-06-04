@@ -33,20 +33,23 @@ export default function Layout({ children }) {
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
-  const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
+        // Загружаем профиль в фоне (ошибки не блокируют интерфейс)
         supabase
           .from('profiles')
           .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
-          .then(({ data }) => {
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('Ошибка загрузки профиля:', error)
+              return
+            }
             setProfile(data)
-            setLoadingProfile(false)
             if (data?.company_id) {
               supabase.from('companies').select('name').eq('id', data.company_id).single()
                 .then(({ data: comp }) => {
@@ -55,13 +58,12 @@ export default function Layout({ children }) {
             }
           })
 
+        // Токен для CRM
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.access_token && session?.refresh_token) {
             setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
           }
         })
-      } else {
-        setLoadingProfile(false)
       }
     })
   }, [])
@@ -71,7 +73,8 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  if (!user || loadingProfile) {
+  // Шапка показывается всегда, если user авторизован
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
@@ -80,6 +83,7 @@ export default function Layout({ children }) {
     )
   }
 
+  // Определяем роли (появятся, когда профиль загрузится)
   const isSuperAdmin = profile?.role_id === 1
   const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
 
