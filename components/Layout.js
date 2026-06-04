@@ -38,7 +38,7 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Загружаем профиль
+        // Профиль загружаем в фоне
         supabase
           .from('profiles')
           .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
@@ -69,7 +69,6 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Показываем шапку всегда, если пользователь авторизован
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -79,6 +78,7 @@ export default function Layout({ children }) {
     )
   }
 
+  // Роли определяем после загрузки профиля
   const isSuperAdmin = profile?.role_id === 1
   const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
 
