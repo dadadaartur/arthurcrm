@@ -32,6 +32,7 @@ export default function Layout({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
+  const [crmUrl, setCrmUrl] = useState('#')
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
@@ -53,6 +54,12 @@ export default function Layout({ children }) {
                 })
             }
           })
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token && session?.refresh_token) {
+            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
+          }
+        })
       } else {
         setLoadingProfile(false)
       }
@@ -64,7 +71,6 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Пока профиль не загружен, показываем только контент без шапки (или спиннер)
   if (!user || loadingProfile) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -96,7 +102,9 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <span className="action-btn !py-1.5 !px-4 !text-xs">CRM</span>
+            <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
+              CRM Лето
+            </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
             {isCompanyAdmin && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
