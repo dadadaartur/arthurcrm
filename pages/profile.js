@@ -33,12 +33,7 @@ export default function Profile() {
       if (!user) { router.push('/login'); return }
       setUser(user)
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('user_id', user.id).single()
       if (profileData) {
         setProfile(profileData)
         setForm({
@@ -59,7 +54,6 @@ export default function Profile() {
         setDepartments(deps || [])
         setPositions(pos || [])
       }
-
       setLoading(false)
     }
     init()
@@ -67,18 +61,12 @@ export default function Profile() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
-    if (file) {
-      setForm({ ...form, avatar_file: file, preview_url: URL.createObjectURL(file) })
-    }
+    if (file) setForm({ ...form, avatar_file: file, preview_url: URL.createObjectURL(file) })
   }
 
   const handleRemoveAvatar = async () => {
     if (!profile) return
-    const { error } = await supabase
-      .from('profiles')
-      .update({ avatar_url: null })
-      .eq('user_id', user.id)
-
+    const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', user.id)
     if (!error) {
       setProfile({ ...profile, avatar_url: null })
       setForm({ ...form, avatar_file: null, preview_url: '' })
@@ -119,10 +107,8 @@ export default function Profile() {
     }
 
     const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id)
-
-    if (error) {
-      setMessage({ type: 'error', text: 'Ошибка сохранения: ' + error.message })
-    } else {
+    if (error) setMessage({ type: 'error', text: 'Ошибка сохранения: ' + error.message })
+    else {
       setMessage({ type: 'success', text: 'Профиль обновлён' })
       setProfile({ ...profile, ...updates })
     }
@@ -148,20 +134,17 @@ export default function Profile() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Аватар */}
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-800">
             {form.preview_url ? (
               <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-semibold">
-                {initials}
-              </div>
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-semibold">{initials}</div>
             )}
           </div>
           <div className="flex flex-col gap-2">
             <input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" id="avatar-upload" />
-            <label htmlFor="avatar-upload" className="action-btn text-xs px-4 py-2 cursor-pointer">
+            <label htmlFor="avatar-upload" className="action-btn text-xs px-4 py-2 cursor-pointer text-center">
               Загрузить фото
             </label>
             {profile?.avatar_url && (
@@ -172,59 +155,29 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ФИО */}
+        {/* Остальные поля без изменений */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-gray-400">Имя</label>
-            <input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Фамилия</label>
-            <input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
-          </div>
+          <div><label className="text-sm text-gray-400">Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+          <div><label className="text-sm text-gray-400">Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
         </div>
-
-        {/* Телефон */}
-        <div>
-          <label className="text-sm text-gray-400">Телефон</label>
-          <input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-        </div>
-
-        {/* Дата трудоустройства */}
-        <div>
-          <label className="text-sm text-gray-400">Дата трудоустройства</label>
-          <input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} />
-        </div>
-
-        {/* Отдел */}
-        <div>
-          <label className="text-sm text-gray-400">Отдел</label>
+        <div><label className="text-sm text-gray-400">Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+        <div><label className="text-sm text-gray-400">Дата трудоустройства</label><input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
+        <div><label className="text-sm text-gray-400">Отдел</label>
           <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
             <option value="">Не выбран</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </div>
-
-        {/* Должность (заблокирована, если не админ) */}
         <div>
           <label className="text-sm text-gray-400">Должность</label>
-          <select
-            className="input-field"
-            value={form.position_id}
-            onChange={e => setForm({ ...form, position_id: e.target.value })}
-            disabled={profile?.role_id !== 1 && profile?.role_id !== 2}
-          >
+          <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
             <option value="">Не выбрана</option>
             {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
-          {profile?.role_id !== 1 && profile?.role_id !== 2 && (
-            <p className="text-xs text-gray-500 mt-1">Должность может изменить только администратор</p>
-          )}
+          {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1">Должность может изменить только администратор</p>}
         </div>
 
-        <button type="submit" disabled={saving} className="btn-gold w-full">
-          {saving ? 'Сохранение...' : 'Сохранить'}
-        </button>
+        <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
       </form>
     </div>
   )
