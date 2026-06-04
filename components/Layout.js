@@ -38,17 +38,14 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Загружаем профиль в фоне (ошибки не блокируют интерфейс)
+        // Загружаем профиль в фоне
         supabase
           .from('profiles')
           .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data, error }) => {
-            if (error) {
-              console.error('Ошибка загрузки профиля:', error)
-              return
-            }
+            console.log('Профиль загружен:', data, 'Ошибка:', error)
             setProfile(data)
             if (data?.company_id) {
               supabase.from('companies').select('name').eq('id', data.company_id).single()
@@ -73,7 +70,7 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Шапка показывается всегда, если user авторизован
+  // Шапка всегда видна, если пользователь авторизован
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
@@ -83,9 +80,11 @@ export default function Layout({ children }) {
     )
   }
 
-  // Определяем роли (появятся, когда профиль загрузится)
+  // Роли определяются после загрузки профиля
   const isSuperAdmin = profile?.role_id === 1
   const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
+
+  console.log('Роль:', profile?.role_id, 'isSuperAdmin:', isSuperAdmin, 'isCompanyAdmin:', isCompanyAdmin)
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
