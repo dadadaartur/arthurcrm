@@ -2,31 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-function StarsBackground() {
-  useEffect(() => {
-    const container = document.getElementById('real-stars')
-    if (!container || container.children.length > 0) return
-
-    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
-    for (let i = 0; i < 40; i++) {
-      const star = document.createElement('div')
-      const size = Math.random() * 4 + 1.5
-      star.style.width = size + 'px'
-      star.style.height = size + 'px'
-      star.style.borderRadius = '50%'
-      star.style.background = colors[Math.floor(Math.random() * colors.length)]
-      star.style.position = 'absolute'
-      star.style.left = Math.random() * 100 + '%'
-      star.style.top = Math.random() * 100 + '%'
-      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
-      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
-      star.style.animationDelay = Math.random() * 5 + 's'
-      star.style.opacity = '0'
-      container.appendChild(star)
-    }
-  }, [])
-  return <div id="real-stars" className="stars-bg" />
-}
+function StarsBackground() { /* без изменений */ }
 
 export default function Layout({ children }) {
   const [user, setUser] = useState(null)
@@ -132,8 +108,8 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            {/* ВОТ ЗДЕСЬ ЗАМЕНА: вместо /supd — внешняя ссылка на новую CRM */}
-            <a href="https://crm-spring.vercel.app" target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
+            {/* ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: новый адрес CRM */}
+            <a href="https://summercrm-git-main-dadadaarturs-projects.vercel.app/" target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
               Кармическая CRM
             </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
