@@ -28,28 +28,43 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children, profile, user }) {
+export default function Layout({ children, profile: initialProfile, user: initialUser }) {
+  const [user, setUser] = useState(initialUser)
+  const [profile, setProfile] = useState(initialProfile)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
-    if (user) {
-      // Токен для CRM
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.access_token && session?.refresh_token) {
-          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
+    if (!user) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUser(user)
+        if (user) {
+          supabase
+            .from('profiles')
+            .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
+            .eq('user_id', user.id)
+            .maybeSingle()
+            .then(({ data }) => setProfile(data))
         }
       })
-
-      // Название компании
-      if (profile?.company_id) {
-        supabase.from('companies').select('name').eq('id', profile.company_id).single()
-          .then(({ data: comp }) => {
-            if (comp) setCompanyName(comp.name)
-          })
-      }
     }
-  }, [user, profile])
+
+    // Токен для CRM
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token && session?.refresh_token) {
+        setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (profile?.company_id) {
+      supabase.from('companies').select('name').eq('id', profile.company_id).single()
+        .then(({ data: comp }) => {
+          if (comp) setCompanyName(comp.name)
+        })
+    }
+  }, [profile])
 
   async function handleLogout() {
     await supabase.auth.signOut()
