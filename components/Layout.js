@@ -33,7 +33,6 @@ export default function Layout({ children }) {
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
-  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -41,7 +40,7 @@ export default function Layout({ children }) {
       if (user) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
+          .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
@@ -59,18 +58,10 @@ export default function Layout({ children }) {
             setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
           }
         })
-
-        supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false)
-          .then(({ count }) => setUnreadCount(count || 0))
       } else {
         setProfile(null)
         setCompanyName('')
         setCrmUrl('#')
-        setUnreadCount(0)
       }
     })
   }, [])
@@ -80,8 +71,7 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
-  const isSuperAdmin = profile?.roles?.is_system === true
+  const isSuperAdmin = profile?.role_id === 1
   const isCompanyAdmin = profile?.role_id === 2
 
   const getInitials = () => {
@@ -90,15 +80,6 @@ export default function Layout({ children }) {
     }
     if (profile?.display_name) return profile.display_name.substring(0, 2).toUpperCase()
     return user?.email?.substring(0, 2).toUpperCase() || '?'
-  }
-
-  if (isGuest) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <main className="flex-grow relative z-10">{children}</main>
-      </div>
-    )
   }
 
   if (!user) {
@@ -131,28 +112,6 @@ export default function Layout({ children }) {
 
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-
-          {/* Иконка уведомлений (Земля) */}
-          <button
-            onClick={() => {
-              // Здесь будет открытие модального окна уведомлений (пока заглушка)
-              alert('Уведомления пока не настроены')
-            }}
-            className="relative text-gray-400 hover:text-white transition-colors p-1"
-            title="Уведомления"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <ellipse cx="12" cy="12" rx="4" ry="10" />
-              <path d="M2 12h20" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
