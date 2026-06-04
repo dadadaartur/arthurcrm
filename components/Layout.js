@@ -37,14 +37,27 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
+        // Загружаем профиль без companies(name)
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, companies(name)')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
-            if (data?.companies?.name) setCompanyName(data.companies.name)
+            // Если есть company_id, загружаем название компании отдельно
+            if (data?.company_id) {
+              supabase
+                .from('companies')
+                .select('name')
+                .eq('id', data.company_id)
+                .single()
+                .then(({ data: comp }) => {
+                  if (comp) setCompanyName(comp.name)
+                })
+            } else {
+              setCompanyName('')
+            }
           })
       } else {
         setProfile(null)
@@ -58,12 +71,23 @@ export default function Layout({ children }) {
       if (currentUser) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, companies(name)')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
           .eq('user_id', currentUser.id)
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
-            if (data?.companies?.name) setCompanyName(data.companies.name)
+            if (data?.company_id) {
+              supabase
+                .from('companies')
+                .select('name')
+                .eq('id', data.company_id)
+                .single()
+                .then(({ data: comp }) => {
+                  if (comp) setCompanyName(comp.name)
+                })
+            } else {
+              setCompanyName('')
+            }
           })
       } else {
         setProfile(null)
@@ -83,7 +107,6 @@ export default function Layout({ children }) {
   const isSuperAdmin = profile?.roles?.is_system === true
   const isCompanyAdmin = profile?.role_id === 2
 
-  // Отображение инициалов, если нет аватара
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
@@ -135,11 +158,10 @@ export default function Layout({ children }) {
         </div>
 
         <div className="flex items-center gap-4 text-xs font-medium">
-          {/* Название компании */}
+          {/* Название компании слева от имени */}
           {companyName && (
             <span className="text-gray-400 text-xs">{companyName}</span>
           )}
-          {/* Имя сотрудника с аватаром */}
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
