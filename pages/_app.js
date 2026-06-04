@@ -21,7 +21,10 @@ App.getInitialProps = async (appContext) => {
     pageProps = await appContext.Component.getInitialProps(appContext.ctx)
   }
 
-  const supabaseServer = createServerSupabaseClient()
+  // Получаем куки из запроса
+  const cookie = appContext.ctx.req?.headers?.cookie || ''
+  const supabaseServer = createServerSupabaseClient(cookie)
+
   const { data: { user } } = await supabaseServer.auth.getUser()
 
   let profile = null
