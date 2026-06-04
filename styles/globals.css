@@ -64,7 +64,7 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* АБСОЛЮТНО ЧЁРНЫЙ ЦЕНТР */
+  background: #000;
   box-shadow: 
     0 0 20px rgba(249,115,22,0.3),
     0 0 40px rgba(249,115,22,0.15);
@@ -73,7 +73,6 @@ html, body {
   pointer-events: none;
 }
 
-/* Убираем псевдоэлементы – источник внутреннего света и линии */
 .black-hole::before,
 .black-hole::after {
   display: none;
@@ -194,15 +193,6 @@ html, body {
 .filter-pill { border: 1px solid rgba(249,115,22,0.3); background: transparent; color: #9aa9c1; padding: 6px 16px; border-radius: 50px; font-size: 13px; cursor: pointer; }
 .filter-pill.active { background: linear-gradient(135deg, #f97316, #c084fc); color: white; }
 
-/* Убираем стрелки в input[type=number] */
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type=number] {
-  -moz-appearance: textfield;
-}
 /* Убираем стрелки в input[type=number] */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
