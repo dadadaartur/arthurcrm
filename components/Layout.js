@@ -37,27 +37,18 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Загружаем профиль без companies(name)
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
-            // Если есть company_id, загружаем название компании отдельно
             if (data?.company_id) {
-              supabase
-                .from('companies')
-                .select('name')
-                .eq('id', data.company_id)
-                .single()
-                .then(({ data: comp }) => {
-                  if (comp) setCompanyName(comp.name)
-                })
-            } else {
-              setCompanyName('')
-            }
+              supabase.from('companies').select('name').eq('id', data.company_id).single().then(({ data: comp }) => {
+                if (comp) setCompanyName(comp.name)
+              })
+            } else setCompanyName('')
           })
       } else {
         setProfile(null)
@@ -71,23 +62,16 @@ export default function Layout({ children }) {
       if (currentUser) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
           .eq('user_id', currentUser.id)
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
             if (data?.company_id) {
-              supabase
-                .from('companies')
-                .select('name')
-                .eq('id', data.company_id)
-                .single()
-                .then(({ data: comp }) => {
-                  if (comp) setCompanyName(comp.name)
-                })
-            } else {
-              setCompanyName('')
-            }
+              supabase.from('companies').select('name').eq('id', data.company_id).single().then(({ data: comp }) => {
+                if (comp) setCompanyName(comp.name)
+              })
+            } else setCompanyName('')
           })
       } else {
         setProfile(null)
@@ -105,15 +89,14 @@ export default function Layout({ children }) {
 
   const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
   const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin = profile?.role_id === 2
+  const isCompanyAdmin = profile?.role_id === 2 ||
+    (profile?.role_id === 4 && (profile.can_create_tasks || profile.can_review_tasks || profile.can_manage_employees || profile.can_delete_employees))
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
     }
-    if (profile?.display_name) {
-      return profile.display_name.substring(0, 2).toUpperCase()
-    }
+    if (profile?.display_name) return profile.display_name.substring(0, 2).toUpperCase()
     return user?.email?.substring(0, 2).toUpperCase() || '?'
   }
 
@@ -158,10 +141,7 @@ export default function Layout({ children }) {
         </div>
 
         <div className="flex items-center gap-4 text-xs font-medium">
-          {/* Название компании слева от имени */}
-          {companyName && (
-            <span className="text-gray-400 text-xs">{companyName}</span>
-          )}
+          {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
