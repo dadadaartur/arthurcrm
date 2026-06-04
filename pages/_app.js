@@ -1,13 +1,13 @@
 import '../styles/globals.css'
 import Layout from '../components/Layout'
 import Background from '../components/Background'
-import { createServerSupabaseClient } from '../lib/supabaseClient'
+import { createServerClient } from '../lib/supabaseClient'
 
-export default function App({ Component, pageProps, initialProfile, initialUser }) {
+export default function App({ Component, pageProps, initialUser, initialProfile }) {
   return (
     <>
       <Background />
-      <Layout profile={initialProfile} user={initialUser}>
+      <Layout user={initialUser} profile={initialProfile}>
         <Component {...pageProps} />
       </Layout>
     </>
@@ -15,16 +15,13 @@ export default function App({ Component, pageProps, initialProfile, initialUser 
 }
 
 App.getInitialProps = async (appContext) => {
-  // Вызываем getInitialProps для вложенной страницы (если есть)
+  // getInitialProps для страницы, если есть
   let pageProps = {}
   if (appContext.Component.getInitialProps) {
     pageProps = await appContext.Component.getInitialProps(appContext.ctx)
   }
 
-  // Получаем куки из запроса
-  const cookie = appContext.ctx.req?.headers?.cookie || ''
-  const supabaseServer = createServerSupabaseClient(cookie)
-
+  const supabaseServer = createServerClient()
   const { data: { user } } = await supabaseServer.auth.getUser()
 
   let profile = null
@@ -39,7 +36,7 @@ App.getInitialProps = async (appContext) => {
 
   return {
     pageProps,
-    initialProfile: profile,
     initialUser: user,
+    initialProfile: profile,
   }
 }
