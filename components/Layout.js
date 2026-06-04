@@ -38,13 +38,14 @@ export default function Layout({ children }) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
-        // Профиль загружаем в фоне
+        // Загружаем профиль в фоне – он нужен только для имени и аватара
         supabase
           .from('profiles')
           .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
+            console.log('Профиль загружен:', data)
             setProfile(data)
             if (data?.company_id) {
               supabase.from('companies').select('name').eq('id', data.company_id).single()
@@ -78,9 +79,8 @@ export default function Layout({ children }) {
     )
   }
 
-  // Роли определяем после загрузки профиля
-  const isSuperAdmin = profile?.role_id === 1
-  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
+  // Показываем кнопки всегда – страницы сами проверят права
+  const showAdminButtons = true
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -104,9 +104,11 @@ export default function Layout({ children }) {
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
               CRM Лето
             </a>
-            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {isCompanyAdmin && (
-              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+            {showAdminButtons && (
+              <>
+                <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>
+                <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+              </>
             )}
           </nav>
         </div>
