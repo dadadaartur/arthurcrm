@@ -1,37 +1,42 @@
 import '../styles/globals.css'
 import Layout from '../components/Layout'
 import Background from '../components/Background'
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { createServerSupabaseClient } from '../lib/supabaseClient'
 
-export default function App({ Component, pageProps }) {
-  const [profile, setProfile] = useState(null)
-  const [loadingProfile, setLoadingProfile] = useState(true)
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            setProfile(data)
-            setLoadingProfile(false)
-          })
-      } else {
-        setLoadingProfile(false)
-      }
-    })
-  }, [])
-
+export default function App({ Component, pageProps, initialProfile, initialUser }) {
   return (
     <>
       <Background />
-      <Layout profile={profile} loadingProfile={loadingProfile}>
+      <Layout profile={initialProfile} user={initialUser}>
         <Component {...pageProps} />
       </Layout>
     </>
   )
+}
+
+App.getInitialProps = async (appContext) => {
+  // Вызываем getInitialProps для вложенной страницы (если есть)
+  let pageProps = {}
+  if (appContext.Component.getInitialProps) {
+    pageProps = await appContext.Component.getInitialProps(appContext.ctx)
+  }
+
+  const supabaseServer = createServerSupabaseClient()
+  const { data: { user } } = await supabaseServer.auth.getUser()
+
+  let profile = null
+  if (user) {
+    const { data } = await supabaseServer
+      .from('profiles')
+      .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    profile = data
+  }
+
+  return {
+    pageProps,
+    initialProfile: profile,
+    initialUser: user,
+  }
 }
