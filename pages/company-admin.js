@@ -54,6 +54,18 @@ export default function CompanyAdmin() {
     image_file: null
   })
 
+  // Управление сотрудниками и должностями
+  const [positions, setPositions] = useState([])
+  const [newPositionTitle, setNewPositionTitle] = useState('')
+  const [editingPosition, setEditingPosition] = useState(null)
+  const [editPositionTitle, setEditPositionTitle] = useState('')
+  const [deletePositionId, setDeletePositionId] = useState(null)
+  const [showAddEmployee, setShowAddEmployee] = useState(false)
+  const [newEmployee, setNewEmployee] = useState({
+    email: '', first_name: '', last_name: '', position_id: '', role_id: 6
+  })
+  const [deleteEmployeeData, setDeleteEmployeeData] = useState(null)
+
   // Цели
   const [goals, setGoals] = useState([])
   const [showGoalModal, setShowGoalModal] = useState(false)
@@ -62,9 +74,9 @@ export default function CompanyAdmin() {
     goal_type: 'calls',
     target_value: 10,
     period: 'day',
-    deadline_mode: 'auto',   // 'auto' или 'manual'
-    manual_deadline: '',     // дата для ручного выбора
-    reward_mode: 'none',     // 'none' | 'rubles' | 'karma' | 'combo'
+    deadline_mode: 'auto',
+    manual_deadline: '',
+    reward_mode: 'none',
     reward_rubles: 0,
     reward_karma: 0
   })
@@ -73,7 +85,7 @@ export default function CompanyAdmin() {
   useEffect(() => {
     if (profile) {
       if (activeTab === 'tasks') fetchTasks()
-      if (activeTab === 'employees') fetchEmployees()
+      if (activeTab === 'employees') { fetchEmployees(); fetchPositions() }
       if (activeTab === 'review') fetchPendingReviews()
       if (activeTab === 'history') { setHistoryPage(0); fetchHistory() }
       if (activeTab === 'goals') fetchGoals()
@@ -119,6 +131,11 @@ export default function CompanyAdmin() {
       .eq('company_id', profile.company_id)
       .is('deleted_at', null)
     setEmployees(data || [])
+  }
+
+  const fetchPositions = async () => {
+    const { data } = await supabase.from('positions').select('*').eq('company_id', profile.company_id).order('title')
+    setPositions(data || [])
   }
 
   const fetchPendingReviews = async () => {
@@ -278,7 +295,77 @@ export default function CompanyAdmin() {
     }
   }
 
-  // ===== ЦЕЛИ =====
+  // --- Управление сотрудниками и должностями ---
+  const handleAddPosition = async () => {
+    if (!newPositionTitle.trim()) return
+    const { error } = await supabase.from('positions').insert({ company_id: profile.company_id, title: newPositionTitle.trim() })
+    if (!error) {
+      await logAction('position_created', 'position', null, { title: newPositionTitle })
+      setNewPositionTitle('')
+      fetchPositions()
+    }
+  }
+
+  const handleEditPosition = async (id) => {
+    if (!editPositionTitle.trim()) return
+    const { error } = await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
+    if (!error) {
+      await logAction('position_updated', 'position', id, { new_title: editPositionTitle })
+      setEditingPosition(null)
+      setEditPositionTitle('')
+      fetchPositions()
+    }
+  }
+
+  const handleDeletePosition = async (id) => {
+    await supabase.from('positions').delete().eq('id', id)
+    await logAction('position_deleted', 'position', id)
+    setDeletePositionId(null)
+    fetchPositions()
+  }
+
+  const handleAddEmployee = async () => {
+    if (!newEmployee.email) return
+    const { data: existing } = await supabase.from('profiles').select('id').eq('email', newEmployee.email).maybeSingle()
+    if (existing) {
+      setSuccessModal({ show: true, message: 'Сотрудник с таким email уже существует' })
+      return
+    }
+
+    const { error } = await supabase.from('profiles').insert({
+      email: newEmployee.email,
+      first_name: newEmployee.first_name,
+      last_name: newEmployee.last_name,
+      position_id: newEmployee.position_id || null,
+      role_id: newEmployee.role_id,
+      company_id: profile.company_id,
+      display_name: `${newEmployee.first_name} ${newEmployee.last_name}`.trim() || newEmployee.email
+    })
+
+    if (!error) {
+      await logAction('employee_added', 'profile', null, { email: newEmployee.email })
+      setShowAddEmployee(false)
+      setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
+      fetchEmployees()
+      setSuccessModal({ show: true, message: 'Сотрудник добавлен' })
+    } else {
+      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
+    }
+  }
+
+  const handleDeleteEmployee = async (employeeId, comment) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ deleted_at: new Date().toISOString(), delete_comment: comment })
+      .eq('id', employeeId)
+    if (!error) {
+      await logAction('employee_deleted', 'profile', employeeId, { comment })
+      fetchEmployees()
+      setSuccessModal({ show: true, message: 'Сотрудник удалён' })
+    }
+  }
+
+  // --- Цели ---
   const handleCreateGoal = async () => {
     if (!newGoal.user_id || !newGoal.target_value) return
 
@@ -658,7 +745,7 @@ export default function CompanyAdmin() {
                 <select className="input-field" value={newGoal.user_id} onChange={e => setNewGoal({ ...newGoal, user_id: e.target.value })}>
                   <option value="">Выберите сотрудника</option>
                   {employees.map(emp => (
-                    <option key={emp.id} value={emp.user_id}>{emp.display_name || emp.email}</option>
+                    <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
                   ))}
                 </select>
               </div>
@@ -732,7 +819,7 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* Модалки удаления заданий и должностей (без изменений) */}
+      {/* Модальные окна для удаления заданий и должностей */}
       {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
       {deletePositionId && (
         <ConfirmModal onConfirm={() => handleDeletePosition(deletePositionId)} onCancel={() => setDeletePositionId(null)}>
