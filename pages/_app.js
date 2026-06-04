@@ -9,28 +9,29 @@ export async function getServerSideProps(context) {
 
   let profile = null
   if (user) {
-    profile = await supabaseServer
+    const { data } = await supabaseServer
       .from('profiles')
       .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
       .eq('user_id', user.id)
       .maybeSingle()
+    profile = data
   }
 
   return {
     props: {
-      initialUser: user,
-      initialProfile: profile,
+      user,      // без префикса initial
+      profile,   // без префикса initial
     },
   }
 }
 
 export default function App({ Component, pageProps }) {
-  const { initialUser, initialProfile, ...restPageProps } = pageProps
+  const { user, profile, ...restPageProps } = pageProps
 
   return (
     <>
       <Background />
-      <Layout user={initialUser} profile={initialProfile}>
+      <Layout user={user} profile={profile}>
         <Component {...restPageProps} />
       </Layout>
     </>
