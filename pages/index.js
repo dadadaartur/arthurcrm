@@ -18,8 +18,6 @@ export default function Home() {
   const [balance, setBalance] = useState(0)
   const [stats, setStats] = useState({ active: 0, completed: 0, earned: 0 })
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState(null)
-  const [company, setCompany] = useState(null)
 
   useEffect(() => {
     const init = async () => {
@@ -47,18 +45,6 @@ export default function Home() {
       const earned = completed?.reduce((sum, a) => sum + (a.tasks?.reward_karma || 0), 0) || 0
 
       setStats({ active: active?.length || 0, completed: completed?.length || 0, earned })
-
-      // Профиль и компания
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*, companies(name)')
-        .eq('user_id', user.id)
-        .single()
-      if (prof) {
-        setProfile(prof)
-        if (prof.companies) setCompany(prof.companies)
-      }
-
       setLoading(false)
     }
     init()
@@ -70,23 +56,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-start px-6 py-8">
-      {/* Шапка: компания слева, сотрудник справа */}
-      <div className="w-full flex justify-between items-center mb-8">
-        <div className="text-sm text-gray-400">
-          {company ? company.name : 'Компания не указана'}
-        </div>
-        <button
-          onClick={() => router.push('/profile')}
-          className="flex items-center gap-2 text-white hover:text-gold transition-colors"
-        >
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm">?</div>
-          )}
-          <span>{profile?.display_name || profile?.email}</span>
-        </button>
-      </div>
+      {/* Шапка уже в Layout, не дублируем */}
 
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         <div className="flex flex-col items-start">
