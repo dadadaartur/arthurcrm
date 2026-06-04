@@ -6,7 +6,7 @@ export default function CRM() {
   const [tasks, setTasks] = useState([])
   const [calls, setCalls] = useState(0)
 
-  // Загружаем пользователя и активные задания
+  // Загружаем пользователя и активные задания CRM
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -39,12 +39,10 @@ export default function CRM() {
       if (t && t.crm_action_type === 'call' && newCalls >= t.crm_target_count) {
         // Отправляем задание на проверку (или сразу завершаем, если автоматическое)
         if (t.is_auto) {
-          // Здесь можно вызвать API для автоматического завершения
           await supabase
             .from('task_assignments')
             .update({ status: 'completed', completed_at: new Date().toISOString() })
             .eq('id', assignment.id)
-          // Начислить кармики можно через серверный API, но для прототипа просто обновим список
         }
       }
     }
@@ -57,8 +55,7 @@ export default function CRM() {
     if (assignments) setTasks(assignments)
   }
 
-  // Далее идёт оригинальная вёрстка твоей CRM (облака, листики, планета)
-  // Я вставил только дополнительные блоки для отображения прогресса заданий
+  // Далее идёт оригинальная вёрстка CRM с весенним оформлением
   useEffect(() => {
     const leafContainer = document.getElementById('leafContainer')
     const windButton = document.getElementById('windButton')
@@ -133,14 +130,38 @@ export default function CRM() {
 
   return (
     <div className="crm-wrapper">
-      {/* Глобальные стили */}
+      {/* Глобальные стили ТОЛЬКО для CRM – переопределяем фон и цвета */}
       <style jsx global>{`
-        /* Твои оригинальные стили (облака, кнопки, планета) */
-        #real-stars { display: none !important; }
-        body { background: #E8F4FD !important; font-family: 'Inter', 'Segoe UI', sans-serif; color: #1F2E23; margin: 0; padding: 0; overflow: hidden; }
-        .cloud-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        .cloud { position: absolute; background: white; border-radius: 50%; box-shadow: 0 0 30px rgba(255,255,255,0.6); animation: floatCloud linear infinite; }
-        .cloud::before, .cloud::after { content: ''; position: absolute; background: white; border-radius: 50%; }
+        body {
+          background: #E8F4FD !important;
+          color: #1F2E23 !important;
+        }
+        #real-stars {
+          display: none !important;
+        }
+        .cloud-bg {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .cloud {
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 0 30px rgba(255,255,255,0.6);
+          animation: floatCloud linear infinite;
+        }
+        .cloud::before,
+        .cloud::after {
+          content: '';
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+        }
         .cloud1 { width: 120px; height: 60px; top: 80px; left: 10%; animation-duration: 35s; }
         .cloud1::before { width: 60px; height: 60px; top: -30px; left: 20px; }
         .cloud1::after { width: 80px; height: 50px; top: -20px; left: 50px; }
@@ -150,7 +171,10 @@ export default function CRM() {
         .cloud3 { width: 100px; height: 50px; top: 350px; left: 40%; animation-duration: 30s; }
         .cloud3::before { width: 50px; height: 50px; top: -25px; left: 15px; }
         .cloud3::after { width: 70px; height: 40px; top: -15px; left: 45px; }
-        @keyframes floatCloud { 0% { transform: translateX(0); } 100% { transform: translateX(calc(100vw + 200px)); } }
+        @keyframes floatCloud {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(100vw + 200px)); }
+        }
 
         :root {
           --bg-primary: #F8FCF9;
@@ -168,46 +192,204 @@ export default function CRM() {
           --radius-lg: 24px;
           --radius-md: 16px;
         }
-        .crm-wrapper { display: flex; height: 100vh; overflow: hidden; position: relative; z-index: 2; }
-        .leaf-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
-        .leaf { position: absolute; top: -60px; animation: fall linear forwards; opacity: 0.7; }
-        @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
-        .sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border-light); padding: 32px 24px; display: flex; flex-direction: column; z-index: 4; position: relative; }
+        .crm-wrapper {
+          display: flex;
+          height: 100vh;
+          overflow: hidden;
+          position: relative;
+          z-index: 2;
+        }
+        .leaf-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 3;
+        }
+        .leaf {
+          position: absolute;
+          top: -60px;
+          animation: fall linear forwards;
+          opacity: 0.7;
+        }
+        @keyframes fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+        .sidebar {
+          width: 280px;
+          background: var(--bg-sidebar);
+          border-right: 1px solid var(--border-light);
+          padding: 32px 24px;
+          display: flex;
+          flex-direction: column;
+          z-index: 4;
+          position: relative;
+        }
         .user-panel { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
         .avatar-svg { width: 52px; height: 52px; }
-        .username { font-weight: 700; font-size: 18px; }
+        .username { font-weight: 700; font-size: 18px; color: var(--text-primary); }
         .user-role { font-size: 12px; color: var(--text-secondary); }
         .balance { display: flex; flex-direction: column; gap: 12px; }
-        .balance-item { background: white; border-radius: var(--radius-md); padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm); }
+        .balance-item {
+          background: white;
+          border-radius: var(--radius-md);
+          padding: 14px 16px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          box-shadow: var(--shadow-sm);
+        }
         .balance-icon svg { width: 32px; height: 32px; }
         .balance-info { display: flex; flex-direction: column; }
         .balance-value { font-size: 20px; font-weight: 700; }
         .karma-color { color: #4CAF6A; } .energy-color { color: #F4B860; } .rubles-color { color: #F28B82; }
         .balance-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
-        .main-content { flex: 1; display: flex; gap: 24px; padding: 32px 36px; overflow-y: auto; z-index: 4; position: relative; }
-        .left-col { flex: 2; display: flex; flex-direction: column; gap: 24px; }
-        .right-col { flex: 1; display: flex; flex-direction: column; gap: 24px; }
-        .panel { background: var(--bg-panel); border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); }
-        .panel h3 { font-weight: 600; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .funnel-stage { display: flex; align-items: center; margin-bottom: 16px; }
-        .stage-name { width: 130px; font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
-        .stage-bar { flex: 1; height: 16px; background: #F0F7F2; border-radius: 8px; overflow: hidden; margin: 0 12px; }
-        .stage-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #A3E0B0, #4CAF6A); }
-        .stage-count { font-weight: 600; font-size: 14px; }
-        .activity-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-light); gap: 12px; }
-        .activity-text { flex: 1; font-size: 14px; }
+        .main-content {
+          flex: 1;
+          display: flex;
+          gap: 24px;
+          padding: 32px 36px;
+          overflow-y: auto;
+          z-index: 4;
+          position: relative;
+        }
+        .left-col {
+          flex: 2;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .right-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .panel {
+          background: var(--bg-panel);
+          border-radius: var(--radius-lg);
+          padding: 24px;
+          border: 1px solid var(--border-light);
+          box-shadow: var(--shadow-sm);
+        }
+        .panel h3 {
+          font-weight: 600;
+          font-size: 18px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: var(--text-primary);
+        }
+        .funnel-stage {
+          display: flex;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .stage-name {
+          width: 130px;
+          font-size: 14px;
+          color: var(--text-secondary);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .stage-bar {
+          flex: 1;
+          height: 16px;
+          background: #F0F7F2;
+          border-radius: 8px;
+          overflow: hidden;
+          margin: 0 12px;
+        }
+        .stage-fill {
+          height: 100%;
+          border-radius: 8px;
+          background: linear-gradient(90deg, #A3E0B0, #4CAF6A);
+        }
+        .stage-count { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .activity-item {
+          display: flex;
+          align-items: center;
+          padding: 10px 0;
+          border-bottom: 1px solid var(--border-light);
+          gap: 12px;
+        }
+        .activity-text { flex: 1; font-size: 14px; color: var(--text-primary); }
         .activity-highlight { font-weight: 600; }
         .activity-time { font-size: 12px; color: var(--text-secondary); }
-        .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
-        .action-btn { background: white; border: 1px solid var(--border-light); color: var(--text-primary); padding: 12px 20px; border-radius: 14px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; box-shadow: var(--shadow-sm); transition: 0.2s; }
+        .actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 24px;
+        }
+        .action-btn {
+          background: white;
+          border: 1px solid var(--border-light);
+          color: var(--text-primary);
+          padding: 12px 20px;
+          border-radius: 14px;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: 500;
+          box-shadow: var(--shadow-sm);
+          transition: 0.2s;
+        }
         .action-btn:hover { border-color: var(--accent-mint); background: #F8FCF9; }
         .action-btn.primary { background: var(--accent-green); border-color: var(--accent-green); color: white; }
         .action-btn.primary:hover { background: #43A05E; }
-        .wind-btn { position: fixed; bottom: 28px; right: 28px; width: 52px; height: 52px; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); border: 1px solid var(--border-light); border-radius: 30px; box-shadow: var(--shadow-md); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 100; transition: 0.2s; color: var(--accent-green); }
-        .wind-btn:hover { background: white; box-shadow: 0 8px 24px rgba(0,0,0,0.08); transform: translateY(-1px); }
+        .wind-btn {
+          position: fixed;
+          bottom: 28px;
+          right: 28px;
+          width: 52px;
+          height: 52px;
+          background: rgba(255,255,255,0.7);
+          backdrop-filter: blur(8px);
+          border: 1px solid var(--border-light);
+          border-radius: 30px;
+          box-shadow: var(--shadow-md);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100;
+          transition: 0.2s;
+          color: var(--accent-green);
+        }
+        .wind-btn:hover {
+          background: white;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+          transform: translateY(-1px);
+        }
         .wind-btn svg { width: 28px; height: 28px; pointer-events: none; }
-        .planet-label { position: fixed; top: 16px; right: 16px; background: linear-gradient(135deg, #F28B82, #F4B860, #7AC78F, #4CAF6A, #A3E0B0); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; font-size: 20px; text-shadow: 0 0 10px rgba(255,255,255,0.5); z-index: 1000; animation: planetGlow 3s infinite alternate; }
-        @keyframes planetGlow { 0% { filter: drop-shadow(0 0 6px rgba(74,207,108,0.6)); } 100% { filter: drop-shadow(0 0 12px rgba(244,184,96,0.8)); } }
+        .planet-label {
+          position: fixed;
+          top: 16px;
+          right: 16px;
+          background: linear-gradient(135deg, #F28B82, #F4B860, #7AC78F, #4CAF6A, #A3E0B0);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          font-weight: 800;
+          font-size: 20px;
+          text-shadow: 0 0 10px rgba(255,255,255,0.5);
+          z-index: 1000;
+          animation: planetGlow 3s infinite alternate;
+        }
+        @keyframes planetGlow {
+          0% { filter: drop-shadow(0 0 6px rgba(74,207,108,0.6)); }
+          100% { filter: drop-shadow(0 0 12px rgba(244,184,96,0.8)); }
+        }
       `}</style>
 
       {/* Фон с облаками */}
@@ -302,25 +484,25 @@ export default function CRM() {
             </button>
           </div>
 
-          {/* Новый блок: прогресс по заданиям */}
+          {/* Блок прогресса по заданиям */}
           <div className="panel">
-            <h3>📋 Задания CRM</h3>
-            {tasks.length === 0 && <p className="text-sm text-gray-500">Нет активных заданий</p>}
+            <h3>Задания CRM</h3>
+            {tasks.length === 0 && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Нет активных заданий</p>}
             {tasks.map(assignment => {
               const t = assignment.tasks
               return (
-                <div key={assignment.id} className="flex justify-between items-center py-2">
+                <div key={assignment.id} className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
                   <div>
-                    <span className="font-medium">{t.title}</span>
-                    <div className="text-xs text-gray-400">Звонков: {calls} из {t.crm_target_count}</div>
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{t.title}</span>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Звонков: {calls} из {t.crm_target_count}</div>
                   </div>
-                  <span className="text-sm text-green-600">+{t.reward_karma}</span>
+                  <span className="text-sm" style={{ color: '#4CAF6A' }}>+{t.reward_karma}</span>
                 </div>
               )
             })}
           </div>
 
-          {/* Остальные панели (воронка, активность) — без изменений */}
+          {/* Воронка продаж */}
           <div className="panel">
             <h3>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M2 4H22L15 12V18L9 20V12L2 4Z" stroke="#4CAF6A" strokeWidth="2" strokeLinejoin="round"/></svg>
@@ -350,15 +532,15 @@ export default function CRM() {
             </h3>
             <div style={{display:'flex', flexDirection:'column', gap:12}}>
               <div>
-                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span>📞 Звонки</span><span>{calls}/50</span></div>
+                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span style={{color: 'var(--text-primary)'}}>Звонки</span><span style={{color: 'var(--text-primary)'}}>{calls}/50</span></div>
                 <div style={{height:8, background:'#F0F7F2', borderRadius:4, marginTop:4}}><div style={{width: `${Math.min(100, (calls/50)*100)}%`, height:'100%', background:'linear-gradient(90deg, #F4B860, #F28B82)', borderRadius:4}}></div></div>
               </div>
               <div>
-                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span>✉️ Письма</span><span>2/3</span></div>
+                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span style={{color: 'var(--text-primary)'}}>Письма</span><span style={{color: 'var(--text-primary)'}}>2/3</span></div>
                 <div style={{height:8, background:'#F0F7F2', borderRadius:4, marginTop:4}}><div style={{width:'66%', height:'100%', background:'linear-gradient(90deg, #F4B860, #F28B82)', borderRadius:4}}></div></div>
               </div>
               <div>
-                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span>🤝 Встречи</span><span>1/2</span></div>
+                <div style={{display:'flex', justifyContent:'space-between', fontSize:14}}><span style={{color: 'var(--text-primary)'}}>Встречи</span><span style={{color: 'var(--text-primary)'}}>1/2</span></div>
                 <div style={{height:8, background:'#F0F7F2', borderRadius:4, marginTop:4}}><div style={{width:'50%', height:'100%', background:'linear-gradient(90deg, #F4B860, #F28B82)', borderRadius:4}}></div></div>
               </div>
             </div>
