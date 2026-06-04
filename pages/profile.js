@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import Spinner from '../components/Spinner'
@@ -11,11 +11,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
-  // Справочники
   const [departments, setDepartments] = useState([])
   const [positions, setPositions] = useState([])
 
-  // Форма
   const [form, setForm] = useState({
     first_name: '',
     last_name: '',
@@ -23,8 +21,11 @@ export default function Profile() {
     hire_date: '',
     department_id: '',
     position_id: '',
-    avatar_file: null
+    avatar_file: null,
+    preview_url: '' // для предпросмотра
   })
+
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     const init = async () => {
@@ -32,7 +33,6 @@ export default function Profile() {
       if (!user) { router.push('/login'); return }
       setUser(user)
 
-      // Загружаем профиль
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -48,11 +48,11 @@ export default function Profile() {
           hire_date: profileData.hire_date || '',
           department_id: profileData.department_id || '',
           position_id: profileData.position_id || '',
-          avatar_file: null
+          avatar_file: null,
+          preview_url: profileData.avatar_url || ''
         })
       }
 
-      // Загружаем справочники
       if (profileData?.company_id) {
         const { data: deps } = await supabase.from('departments').select('*').eq('company_id', profileData.company_id)
         const { data: pos } = await supabase.from('positions').select('*').eq('company_id', profileData.company_id)
@@ -64,6 +64,32 @@ export default function Profile() {
     }
     init()
   }, [])
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setForm({
+        ...form,
+        avatar_file: file,
+        preview_url: URL.createObjectURL(file)
+      })
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    if (!profile) return
+    // Обнуляем avatar_url в базе и очищаем предпросмотр
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: null })
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setProfile({ ...profile, avatar_url: null })
+      setForm({ ...form, avatar_file: null, preview_url: '' })
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const uploadAvatar = async (file) => {
     if (!file) return profile?.avatar_url || null
@@ -108,13 +134,18 @@ export default function Profile() {
       setMessage({ type: 'error', text: 'Ошибка сохранения: ' + error.message })
     } else {
       setMessage({ type: 'success', text: 'Профиль обновлён' })
-      // Обновляем локальное состояние
       setProfile({ ...profile, ...updates })
     }
     setSaving(false)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+
+  const initials = profile?.first_name && profile?.last_name
+    ? (profile.first_name[0] + profile.last_name[0]).toUpperCase()
+    : profile?.display_name
+      ? profile.display_name.substring(0, 2).toUpperCase()
+      : user?.email?.substring(0, 2).toUpperCase() || '?'
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
@@ -129,16 +160,32 @@ export default function Profile() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Аватар */}
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-800">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Аватар" className="w-full h-full object-cover" />
+          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-800">
+            {form.preview_url ? (
+              <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl">?</div>
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-semibold">
+                {initials}
+              </div>
             )}
           </div>
-          <div>
-            <label className="text-sm text-gray-400">Аватар</label>
-            <input type="file" accept="image/*" onChange={e => setForm({ ...form, avatar_file: e.target.files[0] })} className="mt-1 text-sm text-gray-400" />
+          <div className="flex flex-col gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="hidden"
+              id="avatar-upload"
+            />
+            <label htmlFor="avatar-upload" className="action-btn text-xs px-4 py-2 cursor-pointer">
+              Загрузить фото
+            </label>
+            {profile?.avatar_url && (
+              <button type="button" onClick={handleRemoveAvatar} className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                Удалить фото
+              </button>
+            )}
           </div>
         </div>
 
