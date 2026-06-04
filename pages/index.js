@@ -25,11 +25,9 @@ export default function Home() {
       if (!user) { router.push('/login'); return }
       setUser(user)
 
-      // Баланс
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
 
-      // Статистика заданий
       const { data: active } = await supabase
         .from('task_assignments')
         .select('status')
@@ -56,8 +54,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-start px-6 py-8">
-      {/* Шапка уже в Layout, не дублируем */}
-
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         <div className="flex flex-col items-start">
           <div className="balance-card">
@@ -66,7 +62,7 @@ export default function Home() {
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
                 <div className="text-5xl font-extrabold text-yellow-400 mb-2" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
-                  {balance.toString()}
+                  {balance}
                 </div>
                 <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
               </div>
