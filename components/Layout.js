@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import NotificationsModal from './NotificationsModal'
 
 function StarsBackground() {
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function Layout({ children }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
   const [unreadCount, setUnreadCount] = useState(0)
-  const [showNotifications, setShowNotifications] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -43,36 +41,25 @@ export default function Layout({ children }) {
       if (user) {
         supabase
           .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
+          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
             setProfile(data)
             if (data?.company_id) {
-              // Отдельный запрос к companies
               supabase.from('companies').select('name').eq('id', data.company_id).single()
                 .then(({ data: comp }) => {
                   if (comp) setCompanyName(comp.name)
                 })
-            } else {
-              setCompanyName('')
-            }
+            } else setCompanyName('')
           })
 
-        // Токены для CRM
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.access_token && session?.refresh_token) {
-            const params = new URLSearchParams({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            })
-            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?${params.toString()}`)
-          } else {
-            setCrmUrl('#')
+            setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
           }
         })
 
-        // Счётчик непрочитанных уведомлений
         supabase
           .from('notifications')
           .select('id', { count: 'exact', head: true })
@@ -86,53 +73,6 @@ export default function Layout({ children }) {
         setUnreadCount(0)
       }
     })
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user || null
-      setUser(currentUser)
-      if (currentUser) {
-        supabase
-          .from('profiles')
-          .select('display_name, role_id, roles(name, is_system), company_id, avatar_url, first_name, last_name, can_create_tasks, can_review_tasks, can_manage_employees, can_delete_employees')
-          .eq('user_id', currentUser.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            setProfile(data)
-            if (data?.company_id) {
-              supabase.from('companies').select('name').eq('id', data.company_id).single()
-                .then(({ data: comp }) => {
-                  if (comp) setCompanyName(comp.name)
-                })
-            } else {
-              setCompanyName('')
-            }
-          })
-
-        if (session?.access_token && session?.refresh_token) {
-          const params = new URLSearchParams({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-          })
-          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?${params.toString()}`)
-        } else {
-          setCrmUrl('#')
-        }
-
-        supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', currentUser.id)
-          .eq('is_read', false)
-          .then(({ count }) => setUnreadCount(count || 0))
-      } else {
-        setProfile(null)
-        setCompanyName('')
-        setCrmUrl('#')
-        setUnreadCount(0)
-      }
-    })
-
-    return () => authListener?.subscription.unsubscribe()
   }, [])
 
   async function handleLogout() {
@@ -142,8 +82,7 @@ export default function Layout({ children }) {
 
   const isGuest = user && !profile?.company_id && !profile?.roles?.is_system
   const isSuperAdmin = profile?.roles?.is_system === true
-  const isCompanyAdmin = profile?.role_id === 2 ||
-    (profile?.role_id === 4 && (profile.can_create_tasks || profile.can_review_tasks || profile.can_manage_employees || profile.can_delete_employees))
+  const isCompanyAdmin = profile?.role_id === 2
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -158,9 +97,6 @@ export default function Layout({ children }) {
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
         <main className="flex-grow relative z-10">{children}</main>
-        <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
-          © {new Date().getFullYear()} Кармический банк
-        </footer>
       </div>
     )
   }
@@ -185,14 +121,7 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <a
-              href={crmUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="action-btn !py-1.5 !px-4 !text-xs"
-            >
-              Кармическая CRM
-            </a>
+            <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
             {(isSuperAdmin || isCompanyAdmin) && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
@@ -206,8 +135,8 @@ export default function Layout({ children }) {
           {/* Иконка уведомлений (Земля) */}
           <button
             onClick={() => {
-              setShowNotifications(true)
-              setUnreadCount(0)
+              // Здесь будет открытие модального окна уведомлений (пока заглушка)
+              alert('Уведомления пока не настроены')
             }}
             className="relative text-gray-400 hover:text-white transition-colors p-1"
             title="Уведомления"
@@ -243,13 +172,6 @@ export default function Layout({ children }) {
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>
-
-      {/* Модальное окно уведомлений */}
-      <NotificationsModal
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        userId={user?.id}
-      />
     </div>
   )
 }
