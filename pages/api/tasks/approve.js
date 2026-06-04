@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
   const newStatus = action === 'approve' ? 'completed' : 'in_progress'
 
-  // Обновляем статус (только если он ещё pending_review)
+  // Обновляем статус
   const { error: updateError } = await supabaseAdmin
     .from('task_assignments')
     .update({
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка обновления: ' + updateError.message })
   }
 
-  // Начисляем кармики при одобрении (только вставка транзакции, триггер обновит баланс)
+  // Начисляем кармики при одобрении
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
 
@@ -62,7 +62,23 @@ export default async function handler(req, res) {
     if (transactionError) {
       return res.status(500).json({ error: 'Ошибка транзакции: ' + transactionError.message })
     }
+
+    // Уведомление сотруднику о начислении (НОВОЕ)
+    await supabaseAdmin.from('notifications').insert({
+      user_id: assignment.user_id,
+      message: `Вам начислено ${reward} кармиков за выполнение задания "${assignment.tasks.title}"`,
+      link: '/tasks'
+    })
   }
+
+  // Логирование в аудит (если есть)
+  await supabaseAdmin.from('audit_logs').insert({
+    user_id: assignment.user_id,
+    action: action === 'approve' ? 'task_approved' : 'task_rejected',
+    entity_type: 'task',
+    entity_id: assignmentId.toString(),
+    details: { reward: assignment.tasks.reward_karma, comment: assignment.comment }
+  })
 
   res.status(200).json({ result: 'OK' })
 }
