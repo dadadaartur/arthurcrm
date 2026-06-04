@@ -62,9 +62,11 @@ export default function CompanyAdmin() {
     goal_type: 'calls',
     target_value: 10,
     period: 'day',
+    deadline_mode: 'auto',   // 'auto' или 'manual'
+    manual_deadline: '',     // дата для ручного выбора
+    reward_mode: 'none',     // 'none' | 'rubles' | 'karma' | 'combo'
     reward_rubles: 0,
-    reward_karma: 0,
-    deadline: ''
+    reward_karma: 0
   })
 
   useEffect(() => { fetchProfile() }, [])
@@ -276,21 +278,47 @@ export default function CompanyAdmin() {
     }
   }
 
-  // Создание цели
+  // ===== ЦЕЛИ =====
   const handleCreateGoal = async () => {
     if (!newGoal.user_id || !newGoal.target_value) return
 
-    const deadline = newGoal.deadline ? new Date(newGoal.deadline).toISOString() : null
-    const titleMap = { calls: 'Звонки', emails: 'Письма', deals: 'Изменения статусов сделок', comments: 'Комментарии в сделке' }
+    let title = ''
+    switch (newGoal.goal_type) {
+      case 'calls': title = 'Звонки'; break
+      case 'emails': title = 'Письма'; break
+      case 'deals': title = 'Изменения статусов сделок'; break
+      case 'comments': title = 'Комментарии в сделке'; break
+      case 'chats': title = 'Чаты'; break
+    }
+
+    let deadline = null
+    if (newGoal.deadline_mode === 'auto') {
+      const now = new Date()
+      if (newGoal.period === 'day') {
+        deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
+      } else if (newGoal.period === 'week') {
+        const nextWeek = new Date(now)
+        nextWeek.setDate(now.getDate() + (7 - now.getDay()))
+        deadline = nextWeek.toISOString()
+      } else if (newGoal.period === 'month') {
+        deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+      }
+    } else {
+      deadline = newGoal.manual_deadline ? new Date(newGoal.manual_deadline).toISOString() : null
+    }
+
+    const rewardRubles = newGoal.reward_mode === 'rubles' || newGoal.reward_mode === 'combo' ? newGoal.reward_rubles : 0
+    const rewardKarma = newGoal.reward_mode === 'karma' || newGoal.reward_mode === 'combo' ? newGoal.reward_karma : 0
+
     const { error } = await supabase.from('goals').insert({
       company_id: profile.company_id,
       user_id: newGoal.user_id,
       goal_type: newGoal.goal_type,
-      title: titleMap[newGoal.goal_type] || newGoal.goal_type,
+      title,
       target_value: newGoal.target_value,
       period: newGoal.period,
-      reward_rubles: newGoal.reward_rubles || 0,
-      reward_karma: newGoal.reward_karma || 0,
+      reward_rubles: rewardRubles,
+      reward_karma: rewardKarma,
       deadline,
       created_by: profile.user_id
     })
@@ -298,7 +326,7 @@ export default function CompanyAdmin() {
     if (!error) {
       await logAction('goal_created', 'goal', null, { ...newGoal })
       setShowGoalModal(false)
-      setNewGoal({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', reward_rubles: 0, reward_karma: 0, deadline: '' })
+      setNewGoal({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', deadline_mode: 'auto', manual_deadline: '', reward_mode: 'none', reward_rubles: 0, reward_karma: 0 })
       fetchGoals()
       setSuccessModal({ show: true, message: 'Цель создана' })
     } else {
@@ -333,6 +361,7 @@ export default function CompanyAdmin() {
         ))}
       </div>
 
+      {/* ===== ВКЛАДКА ЗАДАНИЯ ===== */}
       {activeTab === 'tasks' && (
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="dash-card lg:w-1/2">
@@ -441,6 +470,82 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {/* ===== ВКЛАДКА СОТРУДНИКИ ===== */}
+      {activeTab === 'employees' && (
+        <div className="dash-card">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold">Сотрудники и должности</h3>
+            <button onClick={() => setShowAddEmployee(true)} className="action-btn text-xs px-4 py-2">Добавить сотрудника</button>
+          </div>
+
+          {/* Блок должностей */}
+          <div className="mb-8">
+            <h4 className="text-md font-semibold text-white mb-2">Должности</h4>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                className="input-field flex-1"
+                placeholder="Название должности"
+                value={newPositionTitle}
+                onChange={e => setNewPositionTitle(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
+              />
+              <button onClick={handleAddPosition} className="action-btn text-xs px-4">Добавить</button>
+            </div>
+            {positions.length === 0 ? (
+              <p className="text-gray-400 text-sm">Нет должностей</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {positions.map(pos => (
+                  <div key={pos.id} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-1">
+                    {editingPosition === pos.id ? (
+                      <>
+                        <input
+                          type="text"
+                          className="input-field w-32 py-0.5"
+                          value={editPositionTitle}
+                          onChange={e => setEditPositionTitle(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleEditPosition(pos.id)}
+                        />
+                        <button onClick={() => handleEditPosition(pos.id)} className="text-xs text-green-400">✓</button>
+                        <button onClick={() => setEditingPosition(null)} className="text-xs text-red-400">✕</button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-white text-sm">{pos.title}</span>
+                        <button onClick={() => { setEditingPosition(pos.id); setEditPositionTitle(pos.title); }} className="text-xs text-blue-400 ml-2">✎</button>
+                        <button onClick={() => setDeletePositionId(pos.id)} className="text-xs text-red-400 ml-1">✕</button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Список сотрудников */}
+          <h4 className="text-md font-semibold text-white mb-2">Сотрудники</h4>
+          {employees.length === 0 ? (
+            <p className="text-gray-400 text-sm">Нет сотрудников</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {employees.map(emp => (
+                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+                  <div>
+                    <span className="text-white">{emp.display_name || emp.email}</span>
+                    <span className="ml-3 text-xs text-gray-400">
+                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
+                    </span>
+                  </div>
+                  <button onClick={() => handleDeleteEmployee(emp.id, 'Удаление')} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== ВКЛАДКА ПРОВЕРКА ===== */}
       {activeTab === 'review' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">Задания на проверке</h3>
@@ -467,6 +572,7 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {/* ===== ВКЛАДКА ИСТОРИЯ ===== */}
       {activeTab === 'history' && (
         <div className="dash-card">
           <h3 className="text-lg font-bold mb-4">История заданий</h3>
@@ -506,31 +612,7 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {activeTab === 'employees' && (
-        <div className="dash-card">
-          <h3 className="text-lg font-bold mb-4">Сотрудники</h3>
-          {employees.length === 0 ? (
-            <p className="text-gray-400">Нет сотрудников</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {employees.map(emp => (
-                <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
-                  <div>
-                    <span className="text-white">{emp.display_name || emp.email}</span>
-                    <span className="ml-3 text-xs text-gray-400">
-                      {emp.positions?.title || 'Без должности'} — {emp.role_id === 2 ? 'Администратор' : emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleDeleteEmployee(emp.id, 'Удаление')} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* ===== ВКЛАДКА ЦЕЛИ ===== */}
       {activeTab === 'goals' && (
         <div className="dash-card">
           <div className="flex justify-between items-center mb-4">
@@ -547,7 +629,7 @@ export default function CompanyAdmin() {
                     <h4 className="text-white font-semibold">{goal.title}</h4>
                     <p className="text-sm text-gray-400">
                       Сотрудник: {goal.profiles?.display_name || goal.profiles?.email || '—'} |
-                      Тип: {goal.goal_type === 'calls' ? 'Звонки' : goal.goal_type === 'emails' ? 'Письма' : goal.goal_type === 'deals' ? 'Сделки' : 'Комментарии'} |
+                      Тип: {goal.goal_type === 'calls' ? 'Звонки' : goal.goal_type === 'emails' ? 'Письма' : goal.goal_type === 'deals' ? 'Сделки' : goal.goal_type === 'comments' ? 'Комментарии' : 'Чаты'} |
                       Период: {goal.period}
                     </p>
                     <p className="text-sm text-yellow-400 mt-1">
@@ -564,11 +646,13 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {/* Модальное окно создания цели */}
       {showGoalModal && (
         <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
             <h3 className="text-lg font-bold mb-4 text-gold">Новая цель</h3>
             <div className="space-y-4">
+              {/* Сотрудник */}
               <div>
                 <label className="text-sm text-gray-400">Сотрудник</label>
                 <select className="input-field" value={newGoal.user_id} onChange={e => setNewGoal({ ...newGoal, user_id: e.target.value })}>
@@ -578,6 +662,7 @@ export default function CompanyAdmin() {
                   ))}
                 </select>
               </div>
+              {/* Тип цели */}
               <div>
                 <label className="text-sm text-gray-400">Тип цели</label>
                 <select className="input-field" value={newGoal.goal_type} onChange={e => setNewGoal({ ...newGoal, goal_type: e.target.value })}>
@@ -585,12 +670,15 @@ export default function CompanyAdmin() {
                   <option value="emails">Письма</option>
                   <option value="deals">Изменения статусов сделок</option>
                   <option value="comments">Кол-во комментариев в сделке</option>
+                  <option value="chats">Чаты</option>
                 </select>
               </div>
+              {/* Количество */}
               <div>
                 <label className="text-sm text-gray-400">Количество</label>
                 <input type="number" className="input-field" value={newGoal.target_value} onChange={e => setNewGoal({ ...newGoal, target_value: parseInt(e.target.value) || 0 })} min="1" />
               </div>
+              {/* Период */}
               <div>
                 <label className="text-sm text-gray-400">Период</label>
                 <select className="input-field" value={newGoal.period} onChange={e => setNewGoal({ ...newGoal, period: e.target.value })}>
@@ -599,20 +687,42 @@ export default function CompanyAdmin() {
                   <option value="month">Месяц</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Режим дедлайна */}
+              <div>
+                <label className="text-sm text-gray-400">Дедлайн</label>
+                <select className="input-field" value={newGoal.deadline_mode} onChange={e => setNewGoal({ ...newGoal, deadline_mode: e.target.value })}>
+                  <option value="auto">Автоматически (по периоду)</option>
+                  <option value="manual">Вручную</option>
+                </select>
+              </div>
+              {newGoal.deadline_mode === 'manual' && (
+                <div>
+                  <label className="text-sm text-gray-400">Дата</label>
+                  <input type="date" className="input-field" value={newGoal.manual_deadline} onChange={e => setNewGoal({ ...newGoal, manual_deadline: e.target.value })} />
+                </div>
+              )}
+              {/* Режим награды */}
+              <div>
+                <label className="text-sm text-gray-400">Награда</label>
+                <select className="input-field" value={newGoal.reward_mode} onChange={e => setNewGoal({ ...newGoal, reward_mode: e.target.value })}>
+                  <option value="none">Без награды</option>
+                  <option value="rubles">Только рубли</option>
+                  <option value="karma">Только кармики</option>
+                  <option value="combo">Комбо (рубли + кармики)</option>
+                </select>
+              </div>
+              {(newGoal.reward_mode === 'rubles' || newGoal.reward_mode === 'combo') && (
                 <div>
                   <label className="text-sm text-gray-400">Рубли</label>
                   <input type="number" className="input-field" value={newGoal.reward_rubles} onChange={e => setNewGoal({ ...newGoal, reward_rubles: parseInt(e.target.value) || 0 })} min="0" />
                 </div>
+              )}
+              {(newGoal.reward_mode === 'karma' || newGoal.reward_mode === 'combo') && (
                 <div>
                   <label className="text-sm text-gray-400">Кармики</label>
                   <input type="number" className="input-field" value={newGoal.reward_karma} onChange={e => setNewGoal({ ...newGoal, reward_karma: parseInt(e.target.value) || 0 })} min="0" />
                 </div>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400">Дедлайн (дата)</label>
-                <input type="date" className="input-field" value={newGoal.deadline} onChange={e => setNewGoal({ ...newGoal, deadline: e.target.value })} />
-              </div>
+              )}
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setShowGoalModal(false)} className="btn-outline">Отмена</button>
@@ -622,7 +732,17 @@ export default function CompanyAdmin() {
         </div>
       )}
 
+      {/* Модалки удаления заданий и должностей (без изменений) */}
       {deleteModal && <ConfirmModal onConfirm={confirmDelete} onCancel={() => setDeleteModal(null)} />}
+      {deletePositionId && (
+        <ConfirmModal onConfirm={() => handleDeletePosition(deletePositionId)} onCancel={() => setDeletePositionId(null)}>
+          <h3 className="text-lg font-bold mb-4 text-gold">Удалить должность?</h3>
+          <div className="flex justify-center gap-4">
+            <button onClick={() => setDeletePositionId(null)} className="btn-outline">Отмена</button>
+            <button onClick={() => handleDeletePosition(deletePositionId)} className="btn-gold">Удалить</button>
+          </div>
+        </ConfirmModal>
+      )}
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
         <p className="text-white">{successModal.message}</p>
       </PremiumModal>
