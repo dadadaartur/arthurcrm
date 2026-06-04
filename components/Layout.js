@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import NotificationsModal from './NotificationsModal'
 
 function StarsBackground() {
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function Layout({ children }) {
   const [profile, setProfile] = useState(null)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotifications, setShowNotifications] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -46,13 +49,17 @@ export default function Layout({ children }) {
           .then(({ data }) => {
             setProfile(data)
             if (data?.company_id) {
-              supabase.from('companies').select('name').eq('id', data.company_id).single().then(({ data: comp }) => {
-                if (comp) setCompanyName(comp.name)
-              })
-            } else setCompanyName('')
+              // Отдельный запрос к companies
+              supabase.from('companies').select('name').eq('id', data.company_id).single()
+                .then(({ data: comp }) => {
+                  if (comp) setCompanyName(comp.name)
+                })
+            } else {
+              setCompanyName('')
+            }
           })
 
-        // Получаем токены для CRM
+        // Токены для CRM
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.access_token && session?.refresh_token) {
             const params = new URLSearchParams({
@@ -64,10 +71,19 @@ export default function Layout({ children }) {
             setCrmUrl('#')
           }
         })
+
+        // Счётчик непрочитанных уведомлений
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+          .then(({ count }) => setUnreadCount(count || 0))
       } else {
         setProfile(null)
         setCompanyName('')
         setCrmUrl('#')
+        setUnreadCount(0)
       }
     })
 
@@ -83,10 +99,13 @@ export default function Layout({ children }) {
           .then(({ data }) => {
             setProfile(data)
             if (data?.company_id) {
-              supabase.from('companies').select('name').eq('id', data.company_id).single().then(({ data: comp }) => {
-                if (comp) setCompanyName(comp.name)
-              })
-            } else setCompanyName('')
+              supabase.from('companies').select('name').eq('id', data.company_id).single()
+                .then(({ data: comp }) => {
+                  if (comp) setCompanyName(comp.name)
+                })
+            } else {
+              setCompanyName('')
+            }
           })
 
         if (session?.access_token && session?.refresh_token) {
@@ -98,10 +117,18 @@ export default function Layout({ children }) {
         } else {
           setCrmUrl('#')
         }
+
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id)
+          .eq('is_read', false)
+          .then(({ count }) => setUnreadCount(count || 0))
       } else {
         setProfile(null)
         setCompanyName('')
         setCrmUrl('#')
+        setUnreadCount(0)
       }
     })
 
@@ -175,6 +202,28 @@ export default function Layout({ children }) {
 
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+
+          {/* Иконка уведомлений (Земля) */}
+          <button
+            onClick={() => {
+              setShowNotifications(true)
+              setUnreadCount(0)
+            }}
+            className="relative text-gray-400 hover:text-white transition-colors p-1"
+            title="Уведомления"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <ellipse cx="12" cy="12" rx="4" ry="10" />
+              <path d="M2 12h20" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -194,6 +243,13 @@ export default function Layout({ children }) {
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>
+
+      {/* Модальное окно уведомлений */}
+      <NotificationsModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        userId={user?.id}
+      />
     </div>
   )
 }
