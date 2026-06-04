@@ -72,7 +72,7 @@ export default function Layout({ children }) {
   }
 
   const isSuperAdmin = profile?.role_id === 1
-  const isCompanyAdmin = profile?.role_id === 2
+  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin  // <-- исправлено
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -104,7 +104,7 @@ export default function Layout({ children }) {
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">Кармическая CRM</a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {(isSuperAdmin || isCompanyAdmin) && (
+            {isCompanyAdmin && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
             )}
           </nav>
