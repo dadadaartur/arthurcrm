@@ -28,43 +28,28 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-export default function Layout({ children, profile: initialProfile, user: initialUser }) {
-  const [user, setUser] = useState(initialUser)
-  const [profile, setProfile] = useState(initialProfile)
+export default function Layout({ children, user: initialUser, profile: initialProfile }) {
+  const [user] = useState(initialUser)
+  const [profile] = useState(initialProfile)
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
   useEffect(() => {
-    if (!user) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        setUser(user)
-        if (user) {
-          supabase
-            .from('profiles')
-            .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
-            .eq('user_id', user.id)
-            .maybeSingle()
-            .then(({ data }) => setProfile(data))
-        }
-      })
-    }
-
-    // Токен для CRM
+    // Токен для CRM (только на клиенте)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token && session?.refresh_token) {
         setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`)
       }
     })
-  }, [])
 
-  useEffect(() => {
-    if (profile?.company_id) {
+    // Название компании (если не загрузилось на сервере)
+    if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
         .then(({ data: comp }) => {
           if (comp) setCompanyName(comp.name)
         })
     }
-  }, [profile])
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
