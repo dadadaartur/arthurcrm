@@ -70,7 +70,8 @@ export default function CreateCompany() {
       return
     }
 
-    router.push('/company-admin')
+    // Принудительная перезагрузка, чтобы контекст профиля обновился
+    window.location.href = '/company-admin'
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
