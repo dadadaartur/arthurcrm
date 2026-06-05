@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 
 const ProfileContext = createContext({
   user: null,
@@ -14,28 +15,30 @@ export function ProfileProvider({ children }) {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/profile')
-        if (!res.ok) {
-          if (res.status === 401) {
-            // Пользователь не авторизован – это нормально для неавторизованных страниц
-            setUser(null)
-            setProfile(null)
+        const { data: { user } } = await supabase.auth.getUser()
+        console.log('[DEBUG] ProfileContext - user:', user)
+        setUser(user)
+
+        if (user) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          console.log('[DEBUG] ProfileContext - profile:', data, 'error:', error)
+          if (error) {
+            console.error('Ошибка загрузки профиля:', error)
           }
-          setLoading(false)
-          return
+          setProfile(data)
         }
-        const profileData = await res.json()
-        // Получаем пользователя из Supabase (можно и из отдельного эндпоинта, но для простоты оставим стандартный метод)
-        const { supabase } = await import('../lib/supabaseClient')
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        setUser(currentUser)
-        setProfile(profileData)
       } catch (err) {
-        console.error('Profile loading error:', err)
+        console.error('Критическая ошибка в ProfileProvider:', err)
       } finally {
         setLoading(false)
       }
     }
+
     load()
   }, [])
 
