@@ -14,6 +14,7 @@ export function ProfileProvider({ children }) {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
+      console.log('[DEBUG] ProfileContext - user from getUser:', user)
       setUser(user)
       if (user) {
         supabase
@@ -22,6 +23,7 @@ export function ProfileProvider({ children }) {
           .eq('user_id', user.id)
           .maybeSingle()
           .then(({ data }) => {
+            console.log('[DEBUG] ProfileContext - profile from Supabase:', data)
             setProfile(data)
             setLoading(false)
           })
