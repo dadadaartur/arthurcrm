@@ -34,10 +34,6 @@ export default function Layout({ children }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
 
-  console.log('[DEBUG] Layout - user:', user)
-  console.log('[DEBUG] Layout - profile:', profile)
-  console.log('[DEBUG] Layout - loading:', loading)
-
   useEffect(() => {
     if (user) {
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -89,8 +85,6 @@ export default function Layout({ children }) {
   const roleId = Number(profile?.role_id)
   const isSuperAdmin = roleId === 1
   const isCompanyAdmin = roleId === 2 || isSuperAdmin
-
-  console.log('[DEBUG] Layout - roleId:', roleId, 'isSuperAdmin:', isSuperAdmin, 'isCompanyAdmin:', isCompanyAdmin)
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
