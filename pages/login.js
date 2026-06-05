@@ -11,15 +11,12 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [initialCheck, setInitialCheck] = useState(!!token) // true, если есть токен и нужно проверить
-
+  const [initialCheck, setInitialCheck] = useState(!!token)
   const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
 
   useEffect(() => {
-    if (token) {
-      fetchInvite(token)
-    }
+    if (token) fetchInvite(token)
   }, [token])
 
   async function fetchInvite(t) {
@@ -54,7 +51,7 @@ export default function Login() {
     })
 
     if (!signInError) {
-      router.push('/')
+      window.location.href = '/'
       return
     }
 
@@ -74,7 +71,7 @@ export default function Login() {
         return
       }
 
-      router.push('/welcome')
+      window.location.href = '/welcome'
       return
     }
 
@@ -158,14 +155,14 @@ export default function Login() {
         return
       }
 
-      router.push('/')
+      // Полная перезагрузка, чтобы контекст загрузился с обновлённым профилем
+      window.location.href = '/'
     } catch (err) {
       setError('Непредвиденная ошибка')
       setLoading(false)
     }
   }
 
-  // Если идёт проверка токена – показываем загрузку
   if (initialCheck) {
     return (
       <div className="min-h-screen flex items-center justify-center">
