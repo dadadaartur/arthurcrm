@@ -16,29 +16,23 @@ export function ProfileProvider({ children }) {
     async function load() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        console.log('[DEBUG] ProfileContext - user:', user)
         setUser(user)
 
         if (user) {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('profiles')
             .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
             .eq('user_id', user.id)
             .maybeSingle()
 
-          console.log('[DEBUG] ProfileContext - profile:', data, 'error:', error)
-          if (error) {
-            console.error('Ошибка загрузки профиля:', error)
-          }
           setProfile(data)
         }
       } catch (err) {
-        console.error('Критическая ошибка в ProfileProvider:', err)
+        console.error('Profile loading error:', err)
       } finally {
         setLoading(false)
       }
     }
-
     load()
   }, [])
 
