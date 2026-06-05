@@ -55,8 +55,8 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Пока профиль грузится – показываем скелетон
-  if (loading) {
+  // Скелетон на время загрузки профиля
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
         <StarsBackground />
@@ -81,23 +81,8 @@ export default function Layout({ children }) {
     )
   }
 
-  // Не авторизован
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <main className="flex-grow relative z-10">{children}</main>
-      </div>
-    )
-  }
-
-  // === ДИАГНОСТИКА ===
-  console.log('DIAGNOSTIC: profile.role_id =', profile?.role_id)
-  console.log('DIAGNOSTIC: profile.email =', user?.email)
-
-  // Временно показываем кнопки всем авторизованным
-  const showAdmin = true
-  const showCompanyAdmin = true
+  const isSuperAdmin = profile?.role_id === 1
+  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -121,8 +106,8 @@ export default function Layout({ children }) {
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
               CRM Лето
             </a>
-            {showAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {showCompanyAdmin && (
+            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {isCompanyAdmin && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
             )}
           </nav>
