@@ -81,8 +81,10 @@ export default function Layout({ children }) {
     )
   }
 
-  const isSuperAdmin = profile?.role_id === 1
-  const isCompanyAdmin = profile?.role_id === 2 || isSuperAdmin
+  // Приводим role_id к числу для надёжности
+  const roleId = Number(profile?.role_id)
+  const isSuperAdmin = roleId === 1
+  const isCompanyAdmin = roleId === 2 || isSuperAdmin
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
