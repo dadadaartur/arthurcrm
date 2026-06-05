@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
@@ -66,21 +67,6 @@ export default function CompanyAdmin() {
   })
   const [deleteEmployeeData, setDeleteEmployeeData] = useState(null)
 
-  // Цели
-  const [goals, setGoals] = useState([])
-  const [showGoalModal, setShowGoalModal] = useState(false)
-  const [newGoal, setNewGoal] = useState({
-    user_id: '',
-    goal_type: 'calls',
-    target_value: 10,
-    period: 'day',
-    deadline_mode: 'auto',
-    manual_deadline: '',
-    reward_mode: 'none',
-    reward_rubles: 0,
-    reward_karma: 0
-  })
-
   useEffect(() => { fetchProfile() }, [])
   useEffect(() => {
     if (profile) {
@@ -88,7 +74,6 @@ export default function CompanyAdmin() {
       if (activeTab === 'employees') { fetchEmployees(); fetchPositions() }
       if (activeTab === 'review') fetchPendingReviews()
       if (activeTab === 'history') { setHistoryPage(0); fetchHistory() }
-      if (activeTab === 'goals') fetchGoals()
     }
   }, [profile, activeTab])
 
@@ -177,16 +162,6 @@ export default function CompanyAdmin() {
       if (historyFilter.employee) filtered = filtered.filter(h => h.employee_email === historyFilter.employee || h.employee_name === historyFilter.employee)
       setHistory(filtered)
     } else setHistory([])
-  }
-
-  const fetchGoals = async () => {
-    const { data } = await supabase
-      .from('goals')
-      .select('*, profiles(email, display_name)')
-      .eq('company_id', profile.company_id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-    setGoals(data || [])
   }
 
   const uploadImage = async (file) => {
@@ -362,71 +337,6 @@ export default function CompanyAdmin() {
       await logAction('employee_deleted', 'profile', employeeId, { comment })
       fetchEmployees()
       setSuccessModal({ show: true, message: 'Сотрудник удалён' })
-    }
-  }
-
-  // --- Цели ---
-  const handleCreateGoal = async () => {
-    if (!newGoal.user_id || !newGoal.target_value) return
-
-    let title = ''
-    switch (newGoal.goal_type) {
-      case 'calls': title = 'Звонки'; break
-      case 'emails': title = 'Письма'; break
-      case 'deals': title = 'Изменения статусов сделок'; break
-      case 'comments': title = 'Комментарии в сделке'; break
-      case 'chats': title = 'Чаты'; break
-    }
-
-    let deadline = null
-    if (newGoal.deadline_mode === 'auto') {
-      const now = new Date()
-      if (newGoal.period === 'day') {
-        deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
-      } else if (newGoal.period === 'week') {
-        const nextWeek = new Date(now)
-        nextWeek.setDate(now.getDate() + (7 - now.getDay()))
-        deadline = nextWeek.toISOString()
-      } else if (newGoal.period === 'month') {
-        deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
-      }
-    } else {
-      deadline = newGoal.manual_deadline ? new Date(newGoal.manual_deadline).toISOString() : null
-    }
-
-    const rewardRubles = newGoal.reward_mode === 'rubles' || newGoal.reward_mode === 'combo' ? newGoal.reward_rubles : 0
-    const rewardKarma = newGoal.reward_mode === 'karma' || newGoal.reward_mode === 'combo' ? newGoal.reward_karma : 0
-
-    const { error } = await supabase.from('goals').insert({
-      company_id: profile.company_id,
-      user_id: newGoal.user_id,
-      goal_type: newGoal.goal_type,
-      title,
-      target_value: newGoal.target_value,
-      period: newGoal.period,
-      reward_rubles: rewardRubles,
-      reward_karma: rewardKarma,
-      deadline,
-      created_by: profile.user_id
-    })
-
-    if (!error) {
-      await logAction('goal_created', 'goal', null, { ...newGoal })
-      setShowGoalModal(false)
-      setNewGoal({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', deadline_mode: 'auto', manual_deadline: '', reward_mode: 'none', reward_rubles: 0, reward_karma: 0 })
-      fetchGoals()
-      setSuccessModal({ show: true, message: 'Цель создана' })
-    } else {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
-    }
-  }
-
-  const handleDeleteGoal = async (goalId) => {
-    const { error } = await supabase.from('goals').update({ is_active: false }).eq('id', goalId)
-    if (!error) {
-      await logAction('goal_deleted', 'goal', goalId)
-      fetchGoals()
-      setSuccessModal({ show: true, message: 'Цель удалена' })
     }
   }
 
@@ -699,123 +609,14 @@ export default function CompanyAdmin() {
         </div>
       )}
 
-      {/* ===== ВКЛАДКА ЦЕЛИ ===== */}
+      {/* ===== ВКЛАДКА ЦЕЛИ (теперь ссылка на отдельную страницу) ===== */}
       {activeTab === 'goals' && (
-        <div className="dash-card">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold">Цели компании</h3>
-            <button onClick={() => setShowGoalModal(true)} className="action-btn text-xs px-4 py-2">Добавить цель</button>
-          </div>
-          {goals.length === 0 ? (
-            <p className="text-gray-400">Нет активных целей</p>
-          ) : (
-            <div className="space-y-4">
-              {goals.map(goal => (
-                <div key={goal.id} className="premium-card flex justify-between items-center">
-                  <div>
-                    <h4 className="text-white font-semibold">{goal.title}</h4>
-                    <p className="text-sm text-gray-400">
-                      Сотрудник: {goal.profiles?.display_name || goal.profiles?.email || '—'} |
-                      Тип: {goal.goal_type === 'calls' ? 'Звонки' : goal.goal_type === 'emails' ? 'Письма' : goal.goal_type === 'deals' ? 'Сделки' : goal.goal_type === 'comments' ? 'Комментарии' : 'Чаты'} |
-                      Период: {goal.period}
-                    </p>
-                    <p className="text-sm text-yellow-400 mt-1">
-                      Прогресс: {goal.current_value} / {goal.target_value}
-                      {goal.reward_karma > 0 && ` | +${goal.reward_karma} кармиков`}
-                      {goal.reward_rubles > 0 && ` | +${goal.reward_rubles} ₽`}
-                    </p>
-                  </div>
-                  <button onClick={() => handleDeleteGoal(goal.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Модальное окно создания цели */}
-      {showGoalModal && (
-        <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <h3 className="text-lg font-bold mb-4 text-gold">Новая цель</h3>
-            <div className="space-y-4">
-              {/* Сотрудник */}
-              <div>
-                <label className="text-sm text-gray-400">Сотрудник</label>
-                <select className="input-field" value={newGoal.user_id} onChange={e => setNewGoal({ ...newGoal, user_id: e.target.value })}>
-                  <option value="">Выберите сотрудника</option>
-                  {employees.map(emp => (
-                    <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
-                  ))}
-                </select>
-              </div>
-              {/* Тип цели */}
-              <div>
-                <label className="text-sm text-gray-400">Тип цели</label>
-                <select className="input-field" value={newGoal.goal_type} onChange={e => setNewGoal({ ...newGoal, goal_type: e.target.value })}>
-                  <option value="calls">Звонки</option>
-                  <option value="emails">Письма</option>
-                  <option value="deals">Изменения статусов сделок</option>
-                  <option value="comments">Кол-во комментариев в сделке</option>
-                  <option value="chats">Чаты</option>
-                </select>
-              </div>
-              {/* Количество */}
-              <div>
-                <label className="text-sm text-gray-400">Количество</label>
-                <input type="number" className="input-field" value={newGoal.target_value} onChange={e => setNewGoal({ ...newGoal, target_value: parseInt(e.target.value) || 0 })} min="1" />
-              </div>
-              {/* Период */}
-              <div>
-                <label className="text-sm text-gray-400">Период</label>
-                <select className="input-field" value={newGoal.period} onChange={e => setNewGoal({ ...newGoal, period: e.target.value })}>
-                  <option value="day">День</option>
-                  <option value="week">Неделя</option>
-                  <option value="month">Месяц</option>
-                </select>
-              </div>
-              {/* Режим дедлайна */}
-              <div>
-                <label className="text-sm text-gray-400">Дедлайн</label>
-                <select className="input-field" value={newGoal.deadline_mode} onChange={e => setNewGoal({ ...newGoal, deadline_mode: e.target.value })}>
-                  <option value="auto">Автоматически (по периоду)</option>
-                  <option value="manual">Вручную</option>
-                </select>
-              </div>
-              {newGoal.deadline_mode === 'manual' && (
-                <div>
-                  <label className="text-sm text-gray-400">Дата</label>
-                  <input type="date" className="input-field" value={newGoal.manual_deadline} onChange={e => setNewGoal({ ...newGoal, manual_deadline: e.target.value })} />
-                </div>
-              )}
-              {/* Режим награды */}
-              <div>
-                <label className="text-sm text-gray-400">Награда</label>
-                <select className="input-field" value={newGoal.reward_mode} onChange={e => setNewGoal({ ...newGoal, reward_mode: e.target.value })}>
-                  <option value="none">Без награды</option>
-                  <option value="rubles">Только рубли</option>
-                  <option value="karma">Только кармики</option>
-                  <option value="combo">Комбо (рубли + кармики)</option>
-                </select>
-              </div>
-              {(newGoal.reward_mode === 'rubles' || newGoal.reward_mode === 'combo') && (
-                <div>
-                  <label className="text-sm text-gray-400">Рубли</label>
-                  <input type="number" className="input-field" value={newGoal.reward_rubles} onChange={e => setNewGoal({ ...newGoal, reward_rubles: parseInt(e.target.value) || 0 })} min="0" />
-                </div>
-              )}
-              {(newGoal.reward_mode === 'karma' || newGoal.reward_mode === 'combo') && (
-                <div>
-                  <label className="text-sm text-gray-400">Кармики</label>
-                  <input type="number" className="input-field" value={newGoal.reward_karma} onChange={e => setNewGoal({ ...newGoal, reward_karma: parseInt(e.target.value) || 0 })} min="0" />
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowGoalModal(false)} className="btn-outline">Отмена</button>
-              <button onClick={handleCreateGoal} className="btn-gold">Создать</button>
-            </div>
-          </div>
+        <div className="dash-card text-center py-12">
+          <h3 className="text-lg font-bold mb-4">Управление целями</h3>
+          <p className="text-gray-400 mb-6">Назначайте и отслеживайте цели сотрудников.</p>
+          <Link href="/company-admin/goals" className="btn-gold px-6 py-2.5 text-sm inline-block no-underline">
+            Перейти к целям
+          </Link>
         </div>
       )}
 
