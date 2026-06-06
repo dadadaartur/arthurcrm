@@ -66,14 +66,14 @@ export default function TasksPage() {
   const uploadImage = async (file) => {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    // Загружаем в бакет task-images; если его нет — Supabase создаст автоматически при первой загрузке
-    const { error, data } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
+    const fileName = `task-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    // Используем существующий бакет avatars (как для логотипов компаний)
+    const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, file)
     if (error) {
-      console.error('Ошибка загрузки изображения:', error.message)
+      console.error('Ошибка загрузки аватара задания:', error.message)
       return null
     }
-    const { data: publicUrl } = supabase.storage.from('task-images').getPublicUrl(`public/${fileName}`)
+    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
   }
 
@@ -132,8 +132,13 @@ export default function TasksPage() {
       return
     }
 
-    if (form.selectedEmployees.length > 0) {
-      const assignments = form.selectedEmployees.map(userId => ({
+    // Определяем список сотрудников для назначения
+    const assignList = form.selectedEmployees.length > 0
+      ? form.selectedEmployees
+      : employees.map(emp => emp.user_id)  // если никого не выбрали – назначаем всем
+
+    if (assignList.length > 0) {
+      const assignments = assignList.map(userId => ({
         task_id: task.id,
         user_id: userId,
         status: 'assigned',
@@ -145,9 +150,10 @@ export default function TasksPage() {
         setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
         return
       }
-      setSuccessModal({ show: true, message: `Задание создано и назначено ${form.selectedEmployees.length} сотрудникам.` })
+      setSuccessModal({ show: true, message: `Задание создано и назначено ${assignList.length} сотрудникам.` })
     } else {
-      setSuccessModal({ show: true, message: 'Задание создано, но не назначено никому.' })
+      // Если employees пуст – компания без сотрудников
+      setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения.' })
     }
 
     setForm({
@@ -227,7 +233,6 @@ export default function TasksPage() {
               )}
             </div>
 
-            {/* Блок загрузки аватара с исправленными отступами */}
             <div>
               <label className="text-sm text-gray-400 block mb-2">Аватар задания</label>
               <div className="flex items-center gap-3">
@@ -240,7 +245,9 @@ export default function TasksPage() {
             </div>
 
             <div>
-              <label className="text-sm text-gray-400 mb-2 block">Назначить сотрудников</label>
+              <label className="text-sm text-gray-400 mb-2 block">
+                Назначить сотрудников (если не выбрано — назначается всем)
+              </label>
               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {employees.map(emp => (
                   <button
