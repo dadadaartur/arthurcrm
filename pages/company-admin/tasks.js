@@ -67,8 +67,12 @@ export default function TasksPage() {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
-    if (error) return null
+    // Загружаем в бакет task-images; если его нет — Supabase создаст автоматически при первой загрузке
+    const { error, data } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
+    if (error) {
+      console.error('Ошибка загрузки изображения:', error.message)
+      return null
+    }
     const { data: publicUrl } = supabase.storage.from('task-images').getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
   }
@@ -93,7 +97,7 @@ export default function TasksPage() {
     if (form.image_file) {
       imageUrl = await uploadImage(form.image_file)
       if (!imageUrl) {
-        setSuccessModal({ show: true, message: 'Ошибка загрузки изображения' })
+        setSuccessModal({ show: true, message: 'Не удалось загрузить изображение. Проверьте, что файл не превышает 2MB.' })
         return
       }
     }
@@ -222,14 +226,19 @@ export default function TasksPage() {
                 </div>
               )}
             </div>
+
+            {/* Блок загрузки аватара с исправленными отступами */}
             <div>
-              <label className="text-sm text-gray-400">Аватар задания</label>
-              <label className="file-upload-btn cursor-pointer mt-2 inline-block">
-                Загрузить изображение
-                <input type="file" accept="image/*" onChange={e => setForm({...form, image_file: e.target.files[0]})} className="hidden" />
-              </label>
-              {form.image_file && <span className="text-xs text-gray-400 ml-2">{form.image_file.name}</span>}
+              <label className="text-sm text-gray-400 block mb-2">Аватар задания</label>
+              <div className="flex items-center gap-3">
+                <label className="file-upload-btn cursor-pointer inline-block">
+                  Загрузить изображение
+                  <input type="file" accept="image/*" onChange={e => setForm({...form, image_file: e.target.files[0]})} className="hidden" />
+                </label>
+                {form.image_file && <span className="text-xs text-gray-400">{form.image_file.name}</span>}
+              </div>
             </div>
+
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Назначить сотрудников</label>
               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
