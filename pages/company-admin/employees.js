@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
@@ -55,23 +56,36 @@ export default function EmployeesPage() {
 
   const handleAddPosition = async () => {
     if (!newPositionTitle.trim()) return
-    await supabase.from('positions').insert({ company_id: companyId, title: newPositionTitle.trim() })
-    setNewPositionTitle('')
-    loadData(companyId)
+    const { error } = await supabase.from('positions').insert({ company_id: companyId, title: newPositionTitle.trim() })
+    if (!error) {
+      setNewPositionTitle('')
+      loadData(companyId)
+      setSuccessModal({ show: true, message: 'Должность добавлена' })
+    } else {
+      setSuccessModal({ show: true, message: 'Ошибка добавления должности: ' + error.message })
+    }
   }
 
   const handleEditPosition = async (id) => {
     if (!editPositionTitle.trim()) return
-    await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
-    setEditingPosition(null)
-    setEditPositionTitle('')
-    loadData(companyId)
+    const { error } = await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
+    if (!error) {
+      setEditingPosition(null)
+      setEditPositionTitle('')
+      loadData(companyId)
+    } else {
+      alert('Ошибка редактирования должности')
+    }
   }
 
   const handleDeletePosition = async (id) => {
-    await supabase.from('positions').delete().eq('id', id)
-    setDeletePositionId(null)
-    loadData(companyId)
+    const { error } = await supabase.from('positions').delete().eq('id', id)
+    if (!error) {
+      setDeletePositionId(null)
+      loadData(companyId)
+    } else {
+      alert('Ошибка удаления должности')
+    }
   }
 
   const handleAddEmployee = async () => {
@@ -111,10 +125,10 @@ export default function EmployeesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Управление командой</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Должности */}
         <div className="pastel-card">
           <h3 className="text-lg font-semibold mb-4">Должности</h3>
           <div className="flex gap-2 mb-4">
@@ -126,7 +140,7 @@ export default function EmployeesPage() {
               onChange={e => setNewPositionTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
             />
-            <button onClick={handleAddPosition} className="btn-outline text-sm px-4 py-2">Добавить</button>
+            <button onClick={handleAddPosition} className="btn-outline text-sm px-4 py-2 whitespace-nowrap">Добавить</button>
           </div>
           <div className="flex flex-wrap gap-2">
             {positions.map(pos => (
@@ -155,11 +169,10 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* Сотрудники */}
         <div className="pastel-card">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Сотрудники</h3>
-            <button onClick={() => setShowAddEmployee(true)} className="btn-outline text-sm px-4 py-2">Добавить</button>
+            <button onClick={() => setShowAddEmployee(true)} className="btn-outline text-sm px-4 py-2 whitespace-nowrap">Добавить</button>
           </div>
 
           {showAddEmployee && (
