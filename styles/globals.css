@@ -66,7 +66,7 @@ html, body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #000;                     /* АБСОЛЮТНО ЧЁРНЫЙ ЦЕНТР */
+  background: #000;
   box-shadow:
     0 0 20px rgba(249,115,22,0.3),
     0 0 40px rgba(249,115,22,0.15);
@@ -75,7 +75,6 @@ html, body {
   pointer-events: none;
 }
 
-/* Убираем псевдоэлементы – источник внутреннего света и линии */
 .black-hole::before,
 .black-hole::after {
   display: none;
@@ -262,6 +261,8 @@ html, body {
   border-radius: 50px;
   font-size: 13px;
   cursor: pointer;
+  min-width: 110px;
+  text-align: center;
 }
 
 .filter-pill.active {
@@ -269,11 +270,53 @@ html, body {
   color: white;
 }
 
-/* =============================================
-   ТОЧЕЧНЫЕ ИСПРАВЛЕНИЯ (не трогают ваш дизайн)
-   ============================================= */
+/* ===== ПАСТЕЛЬНЫЕ КАРТОЧКИ ДЛЯ РАЗДЕЛОВ АДМИНКИ ===== */
+.pastel-card {
+  background: linear-gradient(145deg, rgba(199, 181, 175, 0.12) 0%, rgba(168, 179, 190, 0.06) 100%);
+  border: 1px solid rgba(199, 181, 175, 0.35);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+}
+.pastel-card h3 {
+  background: linear-gradient(135deg, #c7b5af, #a8b3be);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
 
-/* 1. Убираем стрелки в полях с числами во всех браузерах */
+/* Календарь – светлая иконка на тёмном фоне */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #eaf0fb;
+}
+
+/* Кнопка загрузки – аккуратная обводка с небольшим отступом */
+.file-upload-btn {
+  display: inline-block;
+  background: rgba(199, 181, 175, 0.08);
+  border: 1px dashed rgba(199, 181, 175, 0.5);
+  border-radius: 14px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: #c7b5af;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.file-upload-btn:hover {
+  background: rgba(199, 181, 175, 0.15);
+  border-color: #a8b3be;
+}
+
+/* Убираем стрелки в input[type=number] */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none !important;
@@ -283,7 +326,7 @@ input[type=number] {
   -moz-appearance: textfield !important;
 }
 
-/* 2. Убираем системную стрелку у всех select и добавляем красивую */
+/* Убираем системную стрелку у всех select и добавляем красивую */
 select {
   appearance: none !important;
   -webkit-appearance: none !important;
@@ -292,20 +335,4 @@ select {
   background-repeat: no-repeat !important;
   background-position: right 12px center !important;
   padding-right: 36px !important;
-}
-
-/* 3. Кнопки-фильтры одинаковой ширины и с центровкой текста */
-.filter-pill {
-  min-width: 110px;
-  text-align: center;
-}
-
-/* 4. Календарь – белая иконка на тёмном фоне */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.8;
-  cursor: pointer;
-}
-input[type="date"]::-webkit-datetime-edit {
-  color: #eaf0fb;
 }
