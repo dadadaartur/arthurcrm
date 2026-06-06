@@ -2,357 +2,310 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === БАЗОВЫЕ СТИЛИ (твои оригинальные) === */
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: #0a1628;
+* {
+  cursor: default !important;
+  user-select: none;
+}
+
+a, button, .clickable, .action-btn, .wide-btn {
+  cursor: pointer !important;
+}
+
+*:focus { outline: none !important; }
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #0a1628 !important;
   color: #eaf0fb;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   min-height: 100vh;
-  overflow-x: hidden;
-  cursor: default;
+  position: relative;
 }
 
-a,
-button,
-.action-btn,
-.filter-pill,
-.btn-gold,
-.btn-outline,
-[role="button"],
-input[type="file"],
-select {
-  cursor: pointer;
-}
-
-input,
-textarea,
-[contenteditable="true"] {
-  cursor: text;
-}
-
-/* === ЗВЁЗДНЫЙ ФОН === */
+/* Звёздный фон (контейнер) */
 .stars-bg {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
 }
 
+/* Медленное мерцание настоящих звёзд */
 @keyframes realTwinkle {
-  0% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.1);
-    box-shadow: 0 0 8px #f97316, 0 0 12px #c084fc;
-  }
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
 }
 
-/* === СПИННЕР (твой оригинальный) === */
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 4px solid rgba(255, 255, 255, 0.15);
-  border-top-color: #d4af37;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
+/* АНИМАЦИЯ РАМОК BORDERSHINE */
+@keyframes borderShine {
+  0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
+  50% { border-color: rgba(192,132,252,0.8); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
+  100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === КАРТОЧКИ === */
-.premium-card {
-  background: linear-gradient(135deg, #1e1b4b 0%, #1a1a2e 100%);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-.premium-card:hover {
-  border-color: rgba(139, 92, 246, 0.45);
-  box-shadow: 0 8px 40px rgba(139, 92, 246, 0.15);
-}
-
-.dash-card {
-  background: #131b2f;
-  border: 1px solid #1f3350;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-/* === БАЛАНС С ЧЁРНОЙ ДЫРОЙ (твой уникальный дизайн) === */
+/* БАЛАНС-КАРТОЧКА */
 .balance-card {
+  background: #0A0A0A;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 28px;
+  padding: 24px 32px;
+  box-shadow: 0 0 30px rgba(249,115,22,0.2);
+  animation: borderShine 4s infinite;
+  width: 500px;
   position: relative;
-  background: radial-gradient(circle at 30% 30%, #1a2f4a, #0f1f35);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  border-radius: 32px;
-  padding: 32px 28px;
-  text-align: center;
-  box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
   overflow: hidden;
 }
 
+/* ЧЁРНАЯ ДЫРА – только чёрный круг и внешнее кольцо */
 .black-hole {
   position: absolute;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, #000 30%, transparent 70%);
-  border-radius: 50%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  filter: blur(15px);
-  opacity: 0.5;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: #000;                     /* АБСОЛЮТНО ЧЁРНЫЙ ЦЕНТР */
+  box-shadow:
+    0 0 20px rgba(249,115,22,0.3),
+    0 0 40px rgba(249,115,22,0.15);
+  animation: blackHolePulse 3s infinite;
   z-index: 0;
+  pointer-events: none;
 }
 
-/* === КНОПКИ === */
-.btn-gold {
-  background: linear-gradient(135deg, #d4af37 0%, #b8932e 100%);
-  border: none;
-  border-radius: 14px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0a1628;
-  cursor: pointer;
-  transition: all 0.25s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
-  text-decoration: none;
+/* Убираем псевдоэлементы – источник внутреннего света и линии */
+.black-hole::before,
+.black-hole::after {
+  display: none;
 }
 
-.btn-gold:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45);
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
+  100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
 }
 
-.btn-outline {
-  background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 14px;
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #d4af37;
-  cursor: pointer;
-  transition: all 0.25s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-outline:hover {
-  background: rgba(212, 175, 55, 0.08);
-  border-color: #d4af37;
-}
-
+/* КНОПКИ ДЕЙСТВИЙ */
 .action-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #eaf0fb;
+  flex: 1 1 0;
+  font-size: 14px;
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 50px;
+  padding: 12px 0;
   cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
+  color: rgba(255,255,255,0.82);
+  transition: all 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  animation: borderShine 4s infinite;
 }
-
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
 }
 
 .wide-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #eaf0fb;
+  flex-basis: 100%;
+  margin-top: 4px;
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 50px;
+  padding: 12px 0;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.wide-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* === ФИЛЬТРЫ-ПИЛЮЛИ === */
-.filter-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 40px;
-  padding: 6px 18px;
-  font-size: 13px;
+  color: rgba(255,255,255,0.82);
   font-weight: 500;
-  color: #9aa9c1;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  min-width: 110px;
   text-align: center;
-  justify-content: center;
+  transition: all 0.25s;
+  animation: borderShine 4s infinite;
+}
+.wide-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
 }
 
-.filter-pill.active {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
-  color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+/* КАРТОЧКИ РАЗДЕЛОВ */
+.dash-card {
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 20px;
+  padding: 32px;
+  animation: borderShine 4s infinite;
+  transition: all 0.3s;
+}
+.dash-card:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
+}
+.dash-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #f97316, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.filter-pill:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #eaf0fb;
+/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА */
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.9) 50%, transparent 65%);
+  box-shadow: 0 0 10px rgba(249,115,22,0.4);
+  animation: spin 1s linear infinite, blackHolePulse 2s infinite;
+  position: relative;
+}
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(249,115,22,0.6);
+  animation: diskRotate 2s linear infinite;
 }
 
-/* === ПОЛЯ ВВОДА === */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Разрешаем выделение текста в стикерах */
+.sticker-text {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+/* Остальные общие стили */
+.premium-card {
+  background: #152238;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f97316, #e65c00);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+}
+
+.btn-outline {
+  border: 1px solid #f97316;
+  color: #f97316;
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
 .input-field {
-  width: 100%;
-  background: #0d1424;
-  border: 1px solid #1f3350;
+  background: #0f1f35;
+  border: 1px solid rgba(249,115,22,0.5);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 10px 16px;
+  width: 100%;
   font-size: 14px;
   color: #eaf0fb;
-  outline: none;
-  transition: border-color 0.2s;
 }
-
 .input-field:focus {
-  border-color: #d4af37;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
 }
 
-.input-field::placeholder {
-  color: #4a5568;
-}
-
-/* === МОДАЛЬНЫЕ ОКНА === */
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
   backdrop-filter: blur(4px);
-  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  z-index: 1000;
 }
 
 .modal-content {
-  background: linear-gradient(145deg, #1a1f30 0%, #13192a 100%);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 24px;
-  padding: 32px;
-  max-width: 480px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: fadeSlide 0.3s ease;
+  background: linear-gradient(145deg, #1a2f4a 0%, #0f1f35 100%);
+  border: 1px solid #f97316;
+  border-radius: 28px;
+  padding: 36px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(249,115,22,0.6);
 }
 
-@keyframes fadeSlide {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.filter-pill {
+  border: 1px solid rgba(249,115,22,0.3);
+  background: transparent;
+  color: #9aa9c1;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
-/* =========================================
-   ТОЧЕЧНЫЕ ИСПРАВЛЕНИЯ (добавлено аккуратно)
-   ========================================= */
+.filter-pill.active {
+  background: linear-gradient(135deg, #f97316, #c084fc);
+  color: white;
+}
 
-/* Убираем стрелки в полях с числами */
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
+/* =============================================
+   ТОЧЕЧНЫЕ ИСПРАВЛЕНИЯ (не трогают ваш дизайн)
+   ============================================= */
+
+/* 1. Убираем стрелки в полях с числами во всех браузерах */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
   margin: 0;
 }
-input[type='number'] {
-  -moz-appearance: textfield;
+input[type=number] {
+  -moz-appearance: textfield !important;
 }
 
-/* Кастомная стрелка для select (класс no-arrow) */
-select.no-arrow {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%239aa9c1'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
+/* 2. Убираем системную стрелку у всех select и добавляем красивую */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%239aa9c1'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 36px !important;
 }
 
-/* Читаемый календарь на тёмном фоне */
-input[type='date']::-webkit-calendar-picker-indicator {
+/* 3. Кнопки-фильтры одинаковой ширины и с центровкой текста */
+.filter-pill {
+  min-width: 110px;
+  text-align: center;
+}
+
+/* 4. Календарь – белая иконка на тёмном фоне */
+input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   opacity: 0.8;
   cursor: pointer;
 }
-input[type='date']::-webkit-datetime-edit {
+input[type="date"]::-webkit-datetime-edit {
   color: #eaf0fb;
-}
-
-/* Надёжно убираем мигающие курсоры везде, кроме полей ввода */
-* {
-  cursor: default;
-}
-input,
-textarea,
-[contenteditable='true'],
-select {
-  cursor: text;
-}
-a,
-button,
-.action-btn,
-.filter-pill,
-.btn-gold,
-.btn-outline,
-.wide-btn,
-[role='button'],
-input[type='file'],
-input[type='date']::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-}
-
-/* Адаптивность */
-@media (max-width: 640px) {
-  .premium-card,
-  .dash-card,
-  .modal-content {
-    padding: 18px;
-  }
 }
