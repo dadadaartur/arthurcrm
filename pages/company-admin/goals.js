@@ -131,7 +131,7 @@ export default function GoalsPage() {
       {goals.length === 0 ? (
         <p className="text-gray-400">Нет активных целей</p>
       ) : (
-        <div className="overflow-x-auto pastel-card">
+        <div className="pastel-card overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-gray-400 border-b border-gray-700">
               <tr>
