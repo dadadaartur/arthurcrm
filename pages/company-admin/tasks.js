@@ -66,12 +66,12 @@ export default function TasksPage() {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
     const fileName = `task-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
+    const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, file)
     if (error) {
-      console.error('Ошибка загрузки аватара задания:', error.message)
+      setSuccessModal({ show: true, message: 'Ошибка загрузки изображения: ' + error.message })
       return null
     }
-    const { data: publicUrl } = supabase.storage.from('task-images').getPublicUrl(`public/${fileName}`)
+    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
   }
 
@@ -85,10 +85,7 @@ export default function TasksPage() {
     let imageUrl = null
     if (form.image_file) {
       imageUrl = await uploadImage(form.image_file)
-      if (!imageUrl) {
-        setSuccessModal({ show: true, message: 'Не удалось загрузить изображение.' })
-        return
-      }
+      if (!imageUrl) return
     }
 
     const deadlineAt = form.deadline_datetime ? new Date(form.deadline_datetime).toISOString() : null
@@ -121,7 +118,6 @@ export default function TasksPage() {
       return
     }
 
-    // Получаем всех сотрудников компании (кроме админов) и назначаем задание
     const { data: employeesList } = await supabase
       .from('profiles')
       .select('user_id')
