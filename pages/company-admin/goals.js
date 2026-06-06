@@ -6,7 +6,7 @@ import PremiumModal from '../../components/PremiumModal'
 
 export default function GoalsPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
   const [goals, setGoals] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,7 +32,7 @@ export default function GoalsPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('*, roles(name, is_system)')
+        .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
 
@@ -40,17 +40,19 @@ export default function GoalsPage() {
         router.push('/')
         return
       }
-      setProfile(profileData)
-      await loadData()
+
+      const compId = profileData.company_id
+      setCompanyId(compId)
+      await loadData(compId)
       setLoading(false)
     }
     init()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (compId) => {
     const [goalsRes, empRes] = await Promise.all([
-      supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', profile.company_id).eq('is_active', true).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', profile.company_id).not('role_id', 'in', '(1,2)').is('deleted_at', null)
+      supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
+      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).not('role_id', 'in', '(1,2)').is('deleted_at', null)
     ])
     setGoals(goalsRes.data || [])
     setEmployees(empRes.data || [])
@@ -91,7 +93,7 @@ export default function GoalsPage() {
     const rewardKarma = (form.reward_mode === 'karma' || form.reward_mode === 'combo') ? form.reward_karma : 0
 
     const { error } = await supabase.from('goals').insert({
-      company_id: profile.company_id,
+      company_id: companyId,
       user_id: form.user_id,
       goal_type: form.goal_type,
       title,
@@ -100,7 +102,7 @@ export default function GoalsPage() {
       reward_rubles: rewardRubles,
       reward_karma: rewardKarma,
       deadline,
-      created_by: profile.user_id
+      created_by: null
     })
 
     if (error) {
@@ -108,13 +110,13 @@ export default function GoalsPage() {
     } else {
       setShowModal(false)
       setForm({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', deadline_mode: 'auto', manual_deadline: '', reward_mode: 'none', reward_rubles: 0, reward_karma: 0 })
-      loadData()
+      loadData(companyId)
     }
   }
 
   const handleDeleteGoal = async (goalId) => {
     await supabase.from('goals').update({ is_active: false }).eq('id', goalId)
-    loadData()
+    loadData(companyId)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -122,7 +124,7 @@ export default function GoalsPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Цели компании</h1>
+        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Управление целями</h1>
         <button onClick={() => setShowModal(true)} className="btn-gold px-6 py-2.5 text-sm">
           Создать цель
         </button>
