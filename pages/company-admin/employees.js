@@ -11,35 +11,28 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState([])
   const [positions, setPositions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAddEmployee, setShowAddEmployee] = useState(false)
-  const [newEmployee, setNewEmployee] = useState({
-    email: '', first_name: '', last_name: '', position_id: '', role_id: 6
-  })
+  const [editingEmployee, setEditingEmployee] = useState(null) // объект сотрудника для редактирования
+  const [editForm, setEditForm] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newEmployee, setNewEmployee] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
   const [newPositionTitle, setNewPositionTitle] = useState('')
-  const [editingPosition, setEditingPosition] = useState(null)
-  const [editPositionTitle, setEditPositionTitle] = useState('')
-  const [deletePositionId, setDeletePositionId] = useState(null)
-  const [successModal, setSuccessModal] = useState({ show: false, message: '' })
+  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
-
       if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
         router.push('/')
         return
       }
-
-      const compId = profileData.company_id
-      setCompanyId(compId)
-      await loadData(compId)
+      setCompanyId(profileData.company_id)
+      await loadData(profileData.company_id)
       setLoading(false)
     }
     init()
@@ -54,48 +47,25 @@ export default function EmployeesPage() {
     setPositions(posRes.data || [])
   }
 
+  const showNotification = (msg) => {
+    setNotification({ show: true, message: msg })
+    setTimeout(() => setNotification({ show: false, message: '' }), 3000)
+  }
+
   const handleAddPosition = async () => {
     if (!newPositionTitle.trim()) return
     const { error } = await supabase.from('positions').insert({ company_id: companyId, title: newPositionTitle.trim() })
     if (!error) {
       setNewPositionTitle('')
       loadData(companyId)
-      setSuccessModal({ show: true, message: 'Должность добавлена' })
+      showNotification('Должность добавлена')
     } else {
-      setSuccessModal({ show: true, message: 'Ошибка добавления должности: ' + error.message })
-    }
-  }
-
-  const handleEditPosition = async (id) => {
-    if (!editPositionTitle.trim()) return
-    const { error } = await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
-    if (!error) {
-      setEditingPosition(null)
-      setEditPositionTitle('')
-      loadData(companyId)
-    } else {
-      alert('Ошибка редактирования должности')
-    }
-  }
-
-  const handleDeletePosition = async (id) => {
-    const { error } = await supabase.from('positions').delete().eq('id', id)
-    if (!error) {
-      setDeletePositionId(null)
-      loadData(companyId)
-    } else {
-      alert('Ошибка удаления должности')
+      showNotification('Ошибка добавления должности')
     }
   }
 
   const handleAddEmployee = async () => {
     if (!newEmployee.email) return
-    const { data: existing } = await supabase.from('profiles').select('id').eq('email', newEmployee.email).maybeSingle()
-    if (existing) {
-      setSuccessModal({ show: true, message: 'Сотрудник с таким email уже существует' })
-      return
-    }
-
     const { error } = await supabase.from('profiles').insert({
       email: newEmployee.email,
       first_name: newEmployee.first_name,
@@ -105,20 +75,50 @@ export default function EmployeesPage() {
       company_id: companyId,
       display_name: `${newEmployee.first_name} ${newEmployee.last_name}`.trim() || newEmployee.email
     })
-
     if (!error) {
-      setShowAddEmployee(false)
+      setShowAddModal(false)
       setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
       loadData(companyId)
-      setSuccessModal({ show: true, message: 'Сотрудник добавлен' })
+      showNotification('Сотрудник добавлен')
     } else {
-      setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
+      showNotification('Ошибка: ' + error.message)
     }
   }
 
-  const handleDeleteEmployee = async (employeeId) => {
-    await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', employeeId)
+  const handleEditEmployee = (emp) => {
+    setEditingEmployee(emp)
+    setEditForm({
+      email: emp.email || '',
+      first_name: emp.first_name || '',
+      last_name: emp.last_name || '',
+      position_id: emp.position_id || '',
+      role_id: emp.role_id || 6
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingEmployee) return
+    const { error } = await supabase.from('profiles').update({
+      email: editForm.email,
+      first_name: editForm.first_name,
+      last_name: editForm.last_name,
+      position_id: editForm.position_id || null,
+      role_id: editForm.role_id,
+      display_name: `${editForm.first_name} ${editForm.last_name}`.trim() || editForm.email
+    }).eq('id', editingEmployee.id)
+    if (!error) {
+      setEditingEmployee(null)
+      loadData(companyId)
+      showNotification('Сотрудник обновлён')
+    } else {
+      showNotification('Ошибка сохранения')
+    }
+  }
+
+  const handleDeleteEmployee = async (empId) => {
+    await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', empId)
     loadData(companyId)
+    showNotification('Сотрудник удалён')
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -126,105 +126,102 @@ export default function EmployeesPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Управление командой</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление командой</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="pastel-card">
-          <h3 className="text-lg font-semibold mb-4">Должности</h3>
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              className="input-field flex-1"
-              placeholder="Название должности"
-              value={newPositionTitle}
-              onChange={e => setNewPositionTitle(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
-            />
-            <button onClick={handleAddPosition} className="btn-outline text-sm px-4 py-2 whitespace-nowrap">Добавить</button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {positions.map(pos => (
-              <div key={pos.id} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-1">
-                {editingPosition === pos.id ? (
-                  <>
-                    <input
-                      type="text"
-                      className="input-field w-28 py-0.5"
-                      value={editPositionTitle}
-                      onChange={e => setEditPositionTitle(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleEditPosition(pos.id)}
-                    />
-                    <button onClick={() => handleEditPosition(pos.id)} className="text-xs text-green-400">✓</button>
-                    <button onClick={() => setEditingPosition(null)} className="text-xs text-red-400">✕</button>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-white text-sm">{pos.title}</span>
-                    <button onClick={() => { setEditingPosition(pos.id); setEditPositionTitle(pos.title) }} className="text-xs text-blue-400 ml-2">✎</button>
-                    <button onClick={() => setDeletePositionId(pos.id)} className="text-xs text-red-400 ml-1">✕</button>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="pastel-card">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Сотрудники</h3>
-            <button onClick={() => setShowAddEmployee(true)} className="btn-outline text-sm px-4 py-2 whitespace-nowrap">Добавить</button>
-          </div>
-
-          {showAddEmployee && (
-            <div className="modal-overlay" onClick={() => setShowAddEmployee(false)}>
-              <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <h3 className="text-lg font-bold mb-4 text-gold">Новый сотрудник</h3>
-                <div className="space-y-4">
-                  <input type="email" className="input-field" placeholder="Email" value={newEmployee.email} onChange={e => setNewEmployee({...newEmployee, email: e.target.value})} />
-                  <input type="text" className="input-field" placeholder="Имя" value={newEmployee.first_name} onChange={e => setNewEmployee({...newEmployee, first_name: e.target.value})} />
-                  <input type="text" className="input-field" placeholder="Фамилия" value={newEmployee.last_name} onChange={e => setNewEmployee({...newEmployee, last_name: e.target.value})} />
-                  <select className="input-field" value={newEmployee.position_id} onChange={e => setNewEmployee({...newEmployee, position_id: e.target.value})}>
-                    <option value="">Без должности</option>
-                    {positions.map(pos => <option key={pos.id} value={pos.id}>{pos.title}</option>)}
-                  </select>
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                  <button onClick={() => setShowAddEmployee(false)} className="btn-outline">Отмена</button>
-                  <button onClick={handleAddEmployee} className="btn-gold">Добавить</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {employees.map(emp => (
-              <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
-                <div>
-                  <span className="text-white">{emp.display_name || emp.email}</span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    {emp.positions?.title || 'Без должности'} — {emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}
-                  </span>
-                </div>
-                <button onClick={() => handleDeleteEmployee(emp.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Небольшая панель должностей */}
+      <div className="flex items-center gap-2 mb-4">
+        <input
+          type="text"
+          className="input-field w-48"
+          placeholder="Новая должность"
+          value={newPositionTitle}
+          onChange={e => setNewPositionTitle(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
+        />
+        <button onClick={handleAddPosition} className="btn-outline text-sm px-3 py-2">Добавить должность</button>
+        <button onClick={() => setShowAddModal(true)} className="btn-gold text-sm px-4 py-2 ml-auto">Добавить сотрудника</button>
       </div>
 
-      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
-        <p className="text-white">{successModal.message}</p>
-      </PremiumModal>
+      {/* Список сотрудников в таблице */}
+      <div className="pastel-card overflow-auto max-h-[70vh]">
+        <table className="w-full text-left text-sm">
+          <thead className="text-gray-400 border-b border-gray-700">
+            <tr>
+              <th className="py-2 pr-4">Имя</th>
+              <th className="py-2 pr-4">Email</th>
+              <th className="py-2 pr-4">Должность</th>
+              <th className="py-2 pr-4">Роль</th>
+              <th className="py-2">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employees.map(emp => (
+              <tr key={emp.id} className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
+                <td className="py-3 pr-4">{emp.display_name || emp.email}</td>
+                <td className="py-3 pr-4 text-gray-400">{emp.email}</td>
+                <td className="py-3 pr-4">{emp.positions?.title || '—'}</td>
+                <td className="py-3 pr-4">{emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}</td>
+                <td className="py-3" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => handleDeleteEmployee(emp.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {deletePositionId && (
-        <div className="modal-overlay" onClick={() => setDeletePositionId(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold mb-4 text-gold">Удалить должность?</h3>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setDeletePositionId(null)} className="btn-outline">Отмена</button>
-              <button onClick={() => handleDeletePosition(deletePositionId)} className="btn-gold">Удалить</button>
+      {/* Модальное окно редактирования сотрудника */}
+      {editingEmployee && (
+        <div className="modal-overlay" onClick={() => setEditingEmployee(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <h3 className="text-lg font-bold mb-4 text-gold">Редактирование сотрудника</h3>
+            <div className="space-y-4">
+              <input type="email" className="input-field" placeholder="Email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} />
+              <input type="text" className="input-field" placeholder="Имя" value={editForm.first_name} onChange={e => setEditForm({...editForm, first_name: e.target.value})} />
+              <input type="text" className="input-field" placeholder="Фамилия" value={editForm.last_name} onChange={e => setEditForm({...editForm, last_name: e.target.value})} />
+              <select className="input-field" value={editForm.position_id} onChange={e => setEditForm({...editForm, position_id: e.target.value})}>
+                <option value="">Без должности</option>
+                {positions.map(pos => <option key={pos.id} value={pos.id}>{pos.title}</option>)}
+              </select>
+              <select className="input-field" value={editForm.role_id} onChange={e => setEditForm({...editForm, role_id: parseInt(e.target.value)})}>
+                <option value={6}>Сотрудник</option>
+                <option value={4}>Модератор</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setEditingEmployee(null)} className="btn-outline">Отмена</button>
+              <button onClick={handleSaveEdit} className="btn-gold">Сохранить</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Модальное окно добавления сотрудника */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4 text-gold">Новый сотрудник</h3>
+            <div className="space-y-4">
+              <input type="email" className="input-field" placeholder="Email" value={newEmployee.email} onChange={e => setNewEmployee({...newEmployee, email: e.target.value})} />
+              <input type="text" className="input-field" placeholder="Имя" value={newEmployee.first_name} onChange={e => setNewEmployee({...newEmployee, first_name: e.target.value})} />
+              <input type="text" className="input-field" placeholder="Фамилия" value={newEmployee.last_name} onChange={e => setNewEmployee({...newEmployee, last_name: e.target.value})} />
+              <select className="input-field" value={newEmployee.position_id} onChange={e => setNewEmployee({...newEmployee, position_id: e.target.value})}>
+                <option value="">Без должности</option>
+                {positions.map(pos => <option key={pos.id} value={pos.id}>{pos.title}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowAddModal(false)} className="btn-outline">Отмена</button>
+              <button onClick={handleAddEmployee} className="btn-gold">Добавить</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Уведомление */}
+      {notification.show && (
+        <div className="fixed top-6 right-6 z-50 bg-gray-800 border border-gray-600 text-white px-6 py-4 rounded-xl shadow-lg">
+          {notification.message}
         </div>
       )}
     </div>
