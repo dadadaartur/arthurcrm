@@ -14,6 +14,7 @@ export default function TasksPage() {
 
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -38,8 +39,6 @@ export default function TasksPage() {
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(50)
 
-    console.log('Активные назначения:', active)
-
     const { data: completed } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
@@ -59,8 +58,10 @@ export default function TasksPage() {
       .eq('id', assignmentId)
 
     if (!error) {
-      alert('Задание принято в работу')
-      if (user) loadTasks(user.id)
+      setNotification({ show: true, message: 'Задание принято в работу' })
+      loadTasks(user.id)
+    } else {
+      setNotification({ show: true, message: 'Ошибка при начале задания' })
     }
   }
 
@@ -81,9 +82,10 @@ export default function TasksPage() {
 
     if (!error) {
       setSubmitModal({ show: false, assignmentId: null, comment: '' })
+      setNotification({ show: true, message: 'Задание отправлено на проверку' })
       loadTasks(user.id)
     } else {
-      alert('Ошибка отправки')
+      setNotification({ show: true, message: 'Ошибка отправки' })
     }
     setSubmitting(false)
   }
@@ -136,7 +138,6 @@ export default function TasksPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredTasks.map(assignment => {
               const t = assignment.tasks
-              // Если задача не загружена, показываем карточку с пояснением
               return (
                 <div key={assignment.id} className="premium-card relative overflow-hidden"
                   style={{
@@ -219,6 +220,7 @@ export default function TasksPage() {
         )
       )}
 
+      {/* Модальное окно для комментария при отправке */}
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -239,6 +241,15 @@ export default function TasksPage() {
           </div>
         </div>
       )}
+
+      {/* Уведомления вместо alert */}
+      <PremiumModal
+        isOpen={notification.show}
+        onClose={() => setNotification({ show: false, message: '' })}
+        title="Информация"
+      >
+        <p className="text-white">{notification.message}</p>
+      </PremiumModal>
     </div>
   )
 }
