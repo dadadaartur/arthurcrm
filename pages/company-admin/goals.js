@@ -7,6 +7,7 @@ import PremiumModal from '../../components/PremiumModal'
 export default function GoalsPage() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null) // сохраняем id компании сразу
   const [goals, setGoals] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,41 +28,54 @@ export default function GoalsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push('/login')
+          return
+        }
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*, roles(name, is_system)')
-        .eq('user_id', user.id)
-        .single()
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*, roles(name, is_system)')
+          .eq('user_id', user.id)
+          .single()
 
-      if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
-        router.push('/')
-        return
+        if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
+          router.push('/')
+          return
+        }
+
+        setProfile(profileData)
+        const compId = profileData.company_id
+        setCompanyId(compId) // запоминаем company_id
+
+        // Загружаем данные, используя compId напрямую
+        await Promise.all([fetchGoals(compId), fetchEmployees(compId)])
+      } catch (err) {
+        console.error('Ошибка инициализации целей:', err)
+      } finally {
+        setLoading(false)
       }
-      setProfile(profileData)
-      await Promise.all([fetchGoals(), fetchEmployees()])
-      setLoading(false)
     }
     init()
   }, [])
 
-  const fetchGoals = async () => {
+  const fetchGoals = async (compId) => {
     const { data } = await supabase
       .from('goals')
       .select('*, profiles(email, display_name)')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', compId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
     setGoals(data || [])
   }
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (compId) => {
     const { data } = await supabase
       .from('profiles')
       .select('user_id, email, display_name')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', compId)
       .is('deleted_at', null)
     setEmployees(data || [])
   }
@@ -84,6 +98,7 @@ export default function GoalsPage() {
       case 'deals': title = 'Изменения статусов сделок'; break
       case 'comments': title = 'Комментарии в сделке'; break
       case 'chats': title = 'Чаты'; break
+      default: title = form.goal_type
     }
 
     let deadline = null
@@ -102,11 +117,11 @@ export default function GoalsPage() {
       deadline = form.manual_deadline ? new Date(form.manual_deadline).toISOString() : null
     }
 
-    const rewardRubles = form.reward_mode === 'rubles' || form.reward_mode === 'combo' ? form.reward_rubles : 0
-    const rewardKarma = form.reward_mode === 'karma' || form.reward_mode === 'combo' ? form.reward_karma : 0
+    const rewardRubles = (form.reward_mode === 'rubles' || form.reward_mode === 'combo') ? form.reward_rubles : 0
+    const rewardKarma = (form.reward_mode === 'karma' || form.reward_mode === 'combo') ? form.reward_karma : 0
 
     const { error } = await supabase.from('goals').insert({
-      company_id: profile.company_id,
+      company_id: companyId,
       user_id: form.user_id,
       goal_type: form.goal_type,
       title,
@@ -115,7 +130,7 @@ export default function GoalsPage() {
       reward_rubles: rewardRubles,
       reward_karma: rewardKarma,
       deadline,
-      created_by: profile.user_id
+      created_by: profile?.user_id
     })
 
     if (error) {
@@ -133,13 +148,13 @@ export default function GoalsPage() {
         reward_rubles: 0,
         reward_karma: 0
       })
-      fetchGoals()
+      fetchGoals(companyId)
     }
   }
 
   const handleDeleteGoal = async (goalId) => {
     const { error } = await supabase.from('goals').update({ is_active: false }).eq('id', goalId)
-    if (!error) fetchGoals()
+    if (!error) fetchGoals(companyId)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
