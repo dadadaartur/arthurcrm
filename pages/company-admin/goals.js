@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
@@ -12,6 +13,7 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [successModal, setSuccessModal] = useState({ show: false, message: '' })
 
   const [form, setForm] = useState({
     user_id: '',
@@ -109,6 +111,7 @@ export default function GoalsPage() {
       setSubmitError('Ошибка создания цели: ' + error.message)
     } else {
       setShowModal(false)
+      setSuccessModal({ show: true, message: 'Цель создана' })
       setForm({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', deadline_mode: 'auto', manual_deadline: '', reward_mode: 'none', reward_rubles: 0, reward_karma: 0 })
       loadData(companyId)
     }
@@ -123,6 +126,7 @@ export default function GoalsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Управление целями</h1>
         <button onClick={() => setShowModal(true)} className="btn-gold px-6 py-2.5 text-sm">
@@ -130,10 +134,10 @@ export default function GoalsPage() {
         </button>
       </div>
 
-      {goals.length === 0 ? (
-        <p className="text-gray-400">Нет активных целей</p>
-      ) : (
-        <div className="pastel-card overflow-x-auto">
+      <div className="pastel-card overflow-auto" style={{ maxHeight: '70vh' }}>
+        {goals.length === 0 ? (
+          <p className="text-gray-400">Нет активных целей</p>
+        ) : (
           <table className="w-full text-left text-sm">
             <thead className="text-gray-400 border-b border-gray-700">
               <tr>
@@ -164,8 +168,8 @@ export default function GoalsPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Создать цель">
         <div className="space-y-4">
@@ -233,10 +237,14 @@ export default function GoalsPage() {
           )}
           {submitError && <p className="text-red-400 text-sm">{submitError}</p>}
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={() => setShowModal(false)} className="btn-outline">Отмена</button>
-            <button onClick={handleCreateGoal} className="btn-gold">Создать</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn-outline">Отмена</button>
+            <button type="button" onClick={handleCreateGoal} className="btn-gold">Создать</button>
           </div>
         </div>
+      </PremiumModal>
+
+      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
+        <p className="text-white">{successModal.message}</p>
       </PremiumModal>
     </div>
   )
