@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
-import PremiumModal from '../../components/PremiumModal'
 
 export default function GoalsPage() {
   const router = useRouter()
@@ -11,17 +10,15 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [submitError, setSubmitError] = useState('')
-  const [successModal, setSuccessModal] = useState({ show: false, message: '' })
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' })
 
   const [form, setForm] = useState({
-    user_id: '',
+    assign_to_all: true,
+    user_ids: [],
     goal_type: 'calls',
     target_value: 10,
-    period: 'day',
-    deadline_mode: 'auto',
-    manual_deadline: '',
+    period_type: 'day',    // 'day', 'week', 'month', 'manual'
+    manual_days: 30,
     reward_mode: 'none',
     reward_rubles: 0,
     reward_karma: 0
@@ -31,18 +28,15 @@ export default function GoalsPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
-
       if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
         router.push('/')
         return
       }
-
       const compId = profileData.company_id
       setCompanyId(compId)
       await loadData(compId)
@@ -60,61 +54,92 @@ export default function GoalsPage() {
     setEmployees(empRes.data || [])
   }
 
-  const handleCreateGoal = async () => {
-    setSubmitError('')
-    if (!form.user_id) { setSubmitError('Выберите сотрудника'); return }
-    if (!form.target_value || form.target_value < 1) { setSubmitError('Укажите количество больше 0'); return }
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type })
+    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000)
+  }
 
-    let title = ''
-    switch (form.goal_type) {
-      case 'calls': title = 'Звонки'; break
-      case 'emails': title = 'Письма'; break
-      case 'deals': title = 'Изменения статусов сделок'; break
-      case 'comments': title = 'Комментарии в сделке'; break
-      case 'chats': title = 'Чаты'; break
-      default: title = form.goal_type
+  const handleCreateGoal = async (e) => {
+    e.preventDefault()
+    if (!form.assign_to_all && form.user_ids.length === 0) {
+      showNotification('Выберите хотя бы одного сотрудника', 'error')
+      return
+    }
+    if (!form.target_value || form.target_value < 1) {
+      showNotification('Укажите количество больше 0', 'error')
+      return
     }
 
+    // Определяем список user_id
+    const targetUserIds = form.assign_to_all ? employees.map(e => e.user_id) : form.user_ids
+
+    // Собираем название типа цели
+    let goalTitle = ''
+    switch (form.goal_type) {
+      case 'calls': goalTitle = 'Звонки'; break
+      case 'emails': goalTitle = 'Письма'; break
+      case 'deals': goalTitle = 'Изменения статусов сделок'; break
+      case 'comments': goalTitle = 'Комментарии в сделке'; break
+      case 'chats': goalTitle = 'Чаты'; break
+      default: goalTitle = form.goal_type
+    }
+
+    // Вычисляем deadline
     let deadline = null
-    if (form.deadline_mode === 'auto') {
+    if (form.period_type === 'manual') {
+      const d = new Date()
+      d.setDate(d.getDate() + (form.manual_days || 30))
+      deadline = d.toISOString()
+    } else {
       const now = new Date()
-      if (form.period === 'day') {
+      if (form.period_type === 'day') {
         deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
-      } else if (form.period === 'week') {
+      } else if (form.period_type === 'week') {
         const nextWeek = new Date(now)
         nextWeek.setDate(now.getDate() + (7 - now.getDay()))
         deadline = nextWeek.toISOString()
-      } else if (form.period === 'month') {
+      } else if (form.period_type === 'month') {
         deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
       }
-    } else {
-      deadline = form.manual_deadline ? new Date(form.manual_deadline).toISOString() : null
     }
 
     const rewardRubles = (form.reward_mode === 'rubles' || form.reward_mode === 'combo') ? form.reward_rubles : 0
     const rewardKarma = (form.reward_mode === 'karma' || form.reward_mode === 'combo') ? form.reward_karma : 0
 
-    const { error } = await supabase.from('goals').insert({
+    // Вставляем цели для каждого сотрудника
+    const inserts = targetUserIds.map(userId => ({
       company_id: companyId,
-      user_id: form.user_id,
+      user_id: userId,
       goal_type: form.goal_type,
-      title,
+      title: goalTitle,
       target_value: form.target_value,
-      period: form.period,
+      period: form.period_type === 'manual' ? 'custom' : form.period_type,
       reward_rubles: rewardRubles,
       reward_karma: rewardKarma,
       deadline,
+      is_active: true,
       created_by: null
-    })
+    }))
 
+    const { error } = await supabase.from('goals').insert(inserts)
     if (error) {
-      setSubmitError('Ошибка создания цели: ' + error.message)
-    } else {
-      setShowModal(false)
-      setSuccessModal({ show: true, message: 'Цель создана' })
-      setForm({ user_id: '', goal_type: 'calls', target_value: 10, period: 'day', deadline_mode: 'auto', manual_deadline: '', reward_mode: 'none', reward_rubles: 0, reward_karma: 0 })
-      loadData(companyId)
+      showNotification('Ошибка создания целей: ' + error.message, 'error')
+      return
     }
+
+    setForm({
+      assign_to_all: true,
+      user_ids: [],
+      goal_type: 'calls',
+      target_value: 10,
+      period_type: 'day',
+      manual_days: 30,
+      reward_mode: 'none',
+      reward_rubles: 0,
+      reward_karma: 0
+    })
+    showNotification(`Цели созданы (${targetUserIds.length} шт.)`)
+    loadData(companyId)
   }
 
   const handleDeleteGoal = async (goalId) => {
@@ -125,16 +150,89 @@ export default function GoalsPage() {
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-full mx-auto px-6 py-8">
       <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Управление целями</h1>
-        <button onClick={() => setShowModal(true)} className="btn-gold px-6 py-2.5 text-sm">
-          Создать цель
-        </button>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление целями</h1>
+
+      {/* Форма создания (широкая) */}
+      <div className="pastel-card mb-8">
+        <h3 className="text-lg font-semibold mb-4">Новая цель</h3>
+        <form onSubmit={handleCreateGoal} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Левая колонка */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-gray-400">Тип цели</label>
+              <select className="input-field" value={form.goal_type} onChange={e => setForm({...form, goal_type: e.target.value})}>
+                <option value="calls">Звонки</option>
+                <option value="emails">Письма</option>
+                <option value="deals">Изменения статусов сделок</option>
+                <option value="comments">Комментарии в сделке</option>
+                <option value="chats">Чаты</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-400">Количество</label>
+              <input type="number" className="input-field" value={form.target_value} onChange={e => setForm({...form, target_value: parseInt(e.target.value) || 0})} min="1" />
+            </div>
+          </div>
+
+          {/* Средняя колонка */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-gray-400">Период</label>
+              <select className="input-field" value={form.period_type} onChange={e => setForm({...form, period_type: e.target.value})}>
+                <option value="day">День</option>
+                <option value="week">Неделя</option>
+                <option value="month">Месяц</option>
+                <option value="manual">Ручной (дней)</option>
+              </select>
+              {form.period_type === 'manual' && (
+                <input type="number" className="input-field mt-2" placeholder="Количество дней" value={form.manual_days} onChange={e => setForm({...form, manual_days: parseInt(e.target.value) || 30})} min="1" />
+              )}
+            </div>
+            <div>
+              <label className="text-sm text-gray-400">Награда</label>
+              <select className="input-field" value={form.reward_mode} onChange={e => setForm({...form, reward_mode: e.target.value})}>
+                <option value="none">Без награды</option>
+                <option value="rubles">Только рубли</option>
+                <option value="karma">Только кармики</option>
+                <option value="combo">Комбо</option>
+              </select>
+              <div className="flex gap-2 mt-2">
+                {(form.reward_mode === 'rubles' || form.reward_mode === 'combo') && (
+                  <input type="number" className="input-field" placeholder="Рубли" value={form.reward_rubles} onChange={e => setForm({...form, reward_rubles: parseInt(e.target.value) || 0})} min="0" />
+                )}
+                {(form.reward_mode === 'karma' || form.reward_mode === 'combo') && (
+                  <input type="number" className="input-field" placeholder="Кармики" value={form.reward_karma} onChange={e => setForm({...form, reward_karma: parseInt(e.target.value) || 0})} min="0" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Правая колонка */}
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-gray-400 text-sm">
+              <input type="checkbox" checked={form.assign_to_all} onChange={e => setForm({...form, assign_to_all: e.target.checked})} />
+              Назначить всем сотрудникам
+            </label>
+            {!form.assign_to_all && (
+              <div>
+                <label className="text-sm text-gray-400">Выберите сотрудников</label>
+                <select multiple className="input-field h-32" value={form.user_ids} onChange={e => setForm({...form, user_ids: Array.from(e.target.selectedOptions, option => option.value)})}>
+                  {employees.map(emp => (
+                    <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl/Cmd для выбора нескольких</p>
+              </div>
+            )}
+            <button type="submit" className="btn-gold w-full mt-4">Создать</button>
+          </div>
+        </form>
       </div>
 
-      <div className="pastel-card overflow-auto" style={{ maxHeight: '70vh' }}>
+      {/* Таблица целей */}
+      <div className="pastel-card overflow-auto" style={{ maxHeight: '60vh' }}>
         {goals.length === 0 ? (
           <p className="text-gray-400">Нет активных целей</p>
         ) : (
@@ -171,81 +269,12 @@ export default function GoalsPage() {
         )}
       </div>
 
-      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Создать цель">
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm text-gray-400">Сотрудник</label>
-            <select className="input-field" value={form.user_id} onChange={e => setForm({...form, user_id: e.target.value})}>
-              <option value="">Выберите сотрудника</option>
-              {employees.map(emp => (
-                <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Тип цели</label>
-            <select className="input-field" value={form.goal_type} onChange={e => setForm({...form, goal_type: e.target.value})}>
-              <option value="calls">Звонки</option>
-              <option value="emails">Письма</option>
-              <option value="deals">Изменения статусов сделок</option>
-              <option value="comments">Кол-во комментариев в сделке</option>
-              <option value="chats">Чаты</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Количество</label>
-            <input type="number" className="input-field" value={form.target_value} onChange={e => setForm({...form, target_value: parseInt(e.target.value) || 0})} min="1" />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Период</label>
-            <select className="input-field" value={form.period} onChange={e => setForm({...form, period: e.target.value})}>
-              <option value="day">День</option>
-              <option value="week">Неделя</option>
-              <option value="month">Месяц</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Дедлайн</label>
-            <select className="input-field" value={form.deadline_mode} onChange={e => setForm({...form, deadline_mode: e.target.value})}>
-              <option value="auto">Автоматически (по периоду)</option>
-              <option value="manual">Вручную</option>
-            </select>
-            {form.deadline_mode === 'manual' && (
-              <input type="date" className="input-field mt-2" value={form.manual_deadline} onChange={e => setForm({...form, manual_deadline: e.target.value})} />
-            )}
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Награда</label>
-            <select className="input-field" value={form.reward_mode} onChange={e => setForm({...form, reward_mode: e.target.value})}>
-              <option value="none">Без награды</option>
-              <option value="rubles">Только рубли</option>
-              <option value="karma">Только кармики</option>
-              <option value="combo">Комбо (рубли + кармики)</option>
-            </select>
-          </div>
-          {(form.reward_mode === 'rubles' || form.reward_mode === 'combo') && (
-            <div>
-              <label className="text-sm text-gray-400">Рубли</label>
-              <input type="number" className="input-field" value={form.reward_rubles} onChange={e => setForm({...form, reward_rubles: parseInt(e.target.value) || 0})} min="0" />
-            </div>
-          )}
-          {(form.reward_mode === 'karma' || form.reward_mode === 'combo') && (
-            <div>
-              <label className="text-sm text-gray-400">Кармики</label>
-              <input type="number" className="input-field" value={form.reward_karma} onChange={e => setForm({...form, reward_karma: parseInt(e.target.value) || 0})} min="0" />
-            </div>
-          )}
-          {submitError && <p className="text-red-400 text-sm">{submitError}</p>}
-          <div className="flex justify-end gap-3 mt-6">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-outline">Отмена</button>
-            <button type="button" onClick={handleCreateGoal} className="btn-gold">Создать</button>
-          </div>
+      {/* Уведомление (без кнопки «Понятно», само исчезает) */}
+      {notification.show && (
+        <div className="fixed top-6 right-6 z-50 bg-gray-800 border border-gray-600 text-white px-6 py-4 rounded-xl shadow-lg animate-fade-in">
+          {notification.message}
         </div>
-      </PremiumModal>
-
-      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
-        <p className="text-white">{successModal.message}</p>
-      </PremiumModal>
+      )}
     </div>
   )
 }
