@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner'
 
 export default function ReviewPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
   const [pendingReviews, setPendingReviews] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -15,23 +15,23 @@ export default function ReviewPage() {
       if (!user) { router.push('/login'); return }
       const { data } = await supabase
         .from('profiles')
-        .select('*, roles(name, is_system)')
+        .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
       if (!data || (data.role_id !== 1 && data.role_id !== 2)) { router.push('/'); return }
-      setProfile(data)
-      await fetchPendingReviews()
+      setCompanyId(data.company_id)
+      await fetchPendingReviews(data.company_id)
       setLoading(false)
     }
     init()
   }, [])
 
-  const fetchPendingReviews = async () => {
+  const fetchPendingReviews = async (compId) => {
     const { data, error } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
       .eq('status', 'pending_review')
-      .eq('tasks.company_id', profile.company_id)
+      .eq('tasks.company_id', compId)
 
     if (!error && data) {
       const enriched = await Promise.all(data.map(async (item) => {
@@ -49,7 +49,7 @@ export default function ReviewPage() {
       body: JSON.stringify({ assignmentId, action })
     })
     if (res.ok) {
-      fetchPendingReviews()
+      fetchPendingReviews(companyId)
     } else {
       const err = await res.json()
       alert('Ошибка: ' + (err.error || 'Неизвестная ошибка'))
@@ -60,7 +60,7 @@ export default function ReviewPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Проверка заданий</h1>
+      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Задания на проверке</h1>
       <div className="dash-card">
         {pendingReviews.length === 0 ? (
           <p className="text-gray-400">Нет заданий, ожидающих проверки</p>
