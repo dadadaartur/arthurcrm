@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === БАЗОВЫЕ СТИЛИ === */
+/* === БАЗОВЫЕ СТИЛИ (твои оригинальные) === */
 html,
 body {
   margin: 0;
@@ -56,7 +56,7 @@ textarea,
   }
 }
 
-/* === СПИННЕР === */
+/* === СПИННЕР (твой оригинальный) === */
 .spinner {
   width: 36px;
   height: 36px;
@@ -97,6 +97,7 @@ textarea,
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* === БАЛАНС С ЧЁРНОЙ ДЫРОЙ (твой уникальный дизайн) === */
 .balance-card {
   position: relative;
   background: radial-gradient(circle at 30% 30%, #1a2f4a, #0f1f35);
@@ -215,6 +216,9 @@ textarea,
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
+  min-width: 110px;
+  text-align: center;
+  justify-content: center;
 }
 
 .filter-pill.active {
@@ -286,7 +290,21 @@ textarea,
   }
 }
 
-/* === КАСТОМНАЯ СТРЕЛКА ДЛЯ SELECT === */
+/* =========================================
+   ТОЧЕЧНЫЕ ИСПРАВЛЕНИЯ (добавлено аккуратно)
+   ========================================= */
+
+/* Убираем стрелки в полях с числами */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Кастомная стрелка для select (класс no-arrow) */
 select.no-arrow {
   appearance: none;
   -webkit-appearance: none;
@@ -297,7 +315,40 @@ select.no-arrow {
   padding-right: 36px;
 }
 
-/* === ГАРМОНИЧНЫЙ СКЕЙЛ (опционально) === */
+/* Читаемый календарь на тёмном фоне */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+input[type='date']::-webkit-datetime-edit {
+  color: #eaf0fb;
+}
+
+/* Надёжно убираем мигающие курсоры везде, кроме полей ввода */
+* {
+  cursor: default;
+}
+input,
+textarea,
+[contenteditable='true'],
+select {
+  cursor: text;
+}
+a,
+button,
+.action-btn,
+.filter-pill,
+.btn-gold,
+.btn-outline,
+.wide-btn,
+[role='button'],
+input[type='file'],
+input[type='date']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* Адаптивность */
 @media (max-width: 640px) {
   .premium-card,
   .dash-card,
