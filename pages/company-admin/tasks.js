@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import PremiumModal from '../../components/PremiumModal'
 
 export default function TasksPage() {
   const router = useRouter()
@@ -9,6 +10,7 @@ export default function TasksPage() {
   const [employees, setEmployees] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [successModal, setSuccessModal] = useState({ show: false, message: '' })
 
   const [form, setForm] = useState({
     title: '',
@@ -64,7 +66,7 @@ export default function TasksPage() {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
+    const { error, data } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
     if (error) return null
     const { data: publicUrl } = supabase.storage.from('task-images').getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
@@ -82,12 +84,18 @@ export default function TasksPage() {
   const handleCreateTask = async (e) => {
     e.preventDefault()
     if (!form.reward_karma || form.reward_karma <= 0) {
-      alert('Укажите награду больше 0')
+      setSuccessModal({ show: true, message: 'Укажите награду больше 0' })
       return
     }
 
     let imageUrl = null
-    if (form.image_file) imageUrl = await uploadImage(form.image_file)
+    if (form.image_file) {
+      imageUrl = await uploadImage(form.image_file)
+      if (!imageUrl) {
+        setSuccessModal({ show: true, message: 'Ошибка загрузки изображения' })
+        return
+      }
+    }
 
     const deadlineAt = form.deadline_datetime ? new Date(form.deadline_datetime).toISOString() : null
 
@@ -104,7 +112,7 @@ export default function TasksPage() {
         min_energy_level: form.min_energy_level,
         requires_review: form.requires_review,
         deadline_at: deadlineAt,
-        created_by: null, // не передаём user_id, если не нужно, либо берите из профиля, но мы профиль не сохраняли
+        created_by: null,
         is_active: true,
         is_auto: form.is_auto,
         crm_action_type: form.crm_action_type,
@@ -115,7 +123,7 @@ export default function TasksPage() {
       .single()
 
     if (taskError) {
-      alert('Ошибка создания задания: ' + taskError.message)
+      setSuccessModal({ show: true, message: 'Ошибка создания задания: ' + taskError.message })
       return
     }
 
@@ -129,26 +137,18 @@ export default function TasksPage() {
       const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
       if (assignError) {
         await supabase.from('tasks').delete().eq('id', task.id)
-        alert('Ошибка назначения: ' + assignError.message)
+        setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
         return
       }
+      setSuccessModal({ show: true, message: `Задание создано и назначено ${form.selectedEmployees.length} сотрудникам.` })
+    } else {
+      setSuccessModal({ show: true, message: 'Задание создано, но не назначено никому.' })
     }
 
     setForm({
-      title: '',
-      description: '',
-      reward_karma: 10,
-      task_type: 'one_time',
-      frequency: 'once',
-      target_role: 'all',
-      min_energy_level: 0,
-      requires_review: true,
-      deadline_datetime: '',
-      is_auto: false,
-      crm_action_type: '',
-      crm_target_count: 0,
-      image_file: null,
-      selectedEmployees: []
+      title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all',
+      min_energy_level: 0, requires_review: true, deadline_datetime: '', is_auto: false,
+      crm_action_type: '', crm_target_count: 0, image_file: null, selectedEmployees: []
     })
     loadData(companyId)
   }
@@ -162,13 +162,14 @@ export default function TasksPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Управление заданиями</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Форма создания */}
         <div className="pastel-card">
           <h3 className="text-lg font-semibold mb-4">Новое задание</h3>
           <form onSubmit={handleCreateTask} className="space-y-4">
+            {/* все поля, без изменений */}
             <div>
               <label className="text-sm text-gray-400">Название</label>
               <input type="text" className="input-field" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
@@ -227,6 +228,7 @@ export default function TasksPage() {
                 Загрузить изображение
                 <input type="file" accept="image/*" onChange={e => setForm({...form, image_file: e.target.files[0]})} className="hidden" />
               </label>
+              {form.image_file && <span className="text-xs text-gray-400 ml-2">{form.image_file.name}</span>}
             </div>
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Назначить сотрудников</label>
@@ -251,7 +253,6 @@ export default function TasksPage() {
           </form>
         </div>
 
-        {/* Список заданий */}
         <div>
           <h3 className="text-lg font-semibold mb-4" style={{ color: '#c7b5af' }}>Активные задания ({tasks.length})</h3>
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
@@ -273,6 +274,10 @@ export default function TasksPage() {
           </div>
         </div>
       </div>
+
+      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
+        <p className="text-white">{successModal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
