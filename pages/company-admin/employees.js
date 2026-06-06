@@ -47,7 +47,8 @@ export default function EmployeesPage() {
       supabase.from('profiles').select('*, positions(title)').eq('company_id', profile.company_id).is('deleted_at', null),
       supabase.from('positions').select('*').eq('company_id', profile.company_id).order('title')
     ])
-    setEmployees(empRes.data || [])
+    // убираем суперадмина и текущего админа
+    setEmployees(empRes.data?.filter(emp => ![1,2].includes(emp.role_id)) || [])
     setPositions(posRes.data || [])
   }
 
@@ -160,7 +161,6 @@ export default function EmployeesPage() {
             <button onClick={() => setShowAddEmployee(true)} className="btn-outline text-sm px-4 py-2">Добавить</button>
           </div>
 
-          {/* Модальное окно для добавления сотрудника */}
           {showAddEmployee && (
             <div className="modal-overlay" onClick={() => setShowAddEmployee(false)}>
               <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -182,7 +182,6 @@ export default function EmployeesPage() {
             </div>
           )}
 
-          {/* Список сотрудников */}
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {employees.map(emp => (
               <div key={emp.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
