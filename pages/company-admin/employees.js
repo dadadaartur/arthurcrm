@@ -6,7 +6,7 @@ import PremiumModal from '../../components/PremiumModal'
 
 export default function EmployeesPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
   const [employees, setEmployees] = useState([])
   const [positions, setPositions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +27,7 @@ export default function EmployeesPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('*, roles(name, is_system)')
+        .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
 
@@ -35,28 +35,29 @@ export default function EmployeesPage() {
         router.push('/')
         return
       }
-      setProfile(profileData)
-      await loadData()
+
+      const compId = profileData.company_id
+      setCompanyId(compId)
+      await loadData(compId)
       setLoading(false)
     }
     init()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (compId) => {
     const [empRes, posRes] = await Promise.all([
-      supabase.from('profiles').select('*, positions(title)').eq('company_id', profile.company_id).is('deleted_at', null),
-      supabase.from('positions').select('*').eq('company_id', profile.company_id).order('title')
+      supabase.from('profiles').select('*, positions(title)').eq('company_id', compId).is('deleted_at', null),
+      supabase.from('positions').select('*').eq('company_id', compId).order('title')
     ])
-    // убираем суперадмина и текущего админа
     setEmployees(empRes.data?.filter(emp => ![1,2].includes(emp.role_id)) || [])
     setPositions(posRes.data || [])
   }
 
   const handleAddPosition = async () => {
     if (!newPositionTitle.trim()) return
-    await supabase.from('positions').insert({ company_id: profile.company_id, title: newPositionTitle.trim() })
+    await supabase.from('positions').insert({ company_id: companyId, title: newPositionTitle.trim() })
     setNewPositionTitle('')
-    loadData()
+    loadData(companyId)
   }
 
   const handleEditPosition = async (id) => {
@@ -64,13 +65,13 @@ export default function EmployeesPage() {
     await supabase.from('positions').update({ title: editPositionTitle.trim() }).eq('id', id)
     setEditingPosition(null)
     setEditPositionTitle('')
-    loadData()
+    loadData(companyId)
   }
 
   const handleDeletePosition = async (id) => {
     await supabase.from('positions').delete().eq('id', id)
     setDeletePositionId(null)
-    loadData()
+    loadData(companyId)
   }
 
   const handleAddEmployee = async () => {
@@ -87,14 +88,14 @@ export default function EmployeesPage() {
       last_name: newEmployee.last_name,
       position_id: newEmployee.position_id || null,
       role_id: newEmployee.role_id,
-      company_id: profile.company_id,
+      company_id: companyId,
       display_name: `${newEmployee.first_name} ${newEmployee.last_name}`.trim() || newEmployee.email
     })
 
     if (!error) {
       setShowAddEmployee(false)
       setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
-      loadData()
+      loadData(companyId)
       setSuccessModal({ show: true, message: 'Сотрудник добавлен' })
     } else {
       setSuccessModal({ show: true, message: 'Ошибка: ' + error.message })
@@ -103,14 +104,14 @@ export default function EmployeesPage() {
 
   const handleDeleteEmployee = async (employeeId) => {
     await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', employeeId)
-    loadData()
+    loadData(companyId)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Сотрудники и должности</h1>
+      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Управление командой</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Должности */}
