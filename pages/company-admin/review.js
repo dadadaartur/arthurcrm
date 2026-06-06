@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import PremiumModal from '../../components/PremiumModal'
 
 export default function ReviewPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [pendingReviews, setPendingReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [successModal, setSuccessModal] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -49,6 +52,7 @@ export default function ReviewPage() {
       body: JSON.stringify({ assignmentId, action })
     })
     if (res.ok) {
+      setSuccessModal({ show: true, message: action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено' })
       fetchPendingReviews(companyId)
     } else {
       const err = await res.json()
@@ -60,6 +64,7 @@ export default function ReviewPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Задания на проверке</h1>
       <div className="dash-card">
         {pendingReviews.length === 0 ? (
@@ -83,6 +88,10 @@ export default function ReviewPage() {
           </div>
         )}
       </div>
+
+      <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
+        <p className="text-white">{successModal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
