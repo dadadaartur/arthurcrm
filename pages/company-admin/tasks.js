@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner'
 
 export default function TasksPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
   const [employees, setEmployees] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -28,14 +28,13 @@ export default function TasksPage() {
   })
 
   useEffect(() => {
-    if (!router.isReady) return
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('*, roles(name, is_system)')
+        .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
 
@@ -43,17 +42,19 @@ export default function TasksPage() {
         router.push('/')
         return
       }
-      setProfile(profileData)
-      await loadData()
+
+      const compId = profileData.company_id
+      setCompanyId(compId)
+      await loadData(compId)
       setLoading(false)
     }
     init()
-  }, [router.isReady])
+  }, [])
 
-  const loadData = async () => {
+  const loadData = async (compId) => {
     const [tasksRes, employeesRes] = await Promise.all([
-      supabase.from('tasks').select('*').eq('company_id', profile.company_id).eq('is_active', true).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', profile.company_id).not('role_id', 'in', '(1,2)').is('deleted_at', null)
+      supabase.from('tasks').select('*').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
+      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).not('role_id', 'in', '(1,2)').is('deleted_at', null)
     ])
     setTasks(tasksRes.data || [])
     setEmployees(employeesRes.data || [])
@@ -93,7 +94,7 @@ export default function TasksPage() {
     const { data: task, error: taskError } = await supabase
       .from('tasks')
       .insert({
-        company_id: profile.company_id,
+        company_id: companyId,
         title: form.title,
         description: form.description,
         reward_karma: form.reward_karma,
@@ -103,7 +104,7 @@ export default function TasksPage() {
         min_energy_level: form.min_energy_level,
         requires_review: form.requires_review,
         deadline_at: deadlineAt,
-        created_by: profile.user_id,
+        created_by: null, // не передаём user_id, если не нужно, либо берите из профиля, но мы профиль не сохраняли
         is_active: true,
         is_auto: form.is_auto,
         crm_action_type: form.crm_action_type,
@@ -149,12 +150,12 @@ export default function TasksPage() {
       image_file: null,
       selectedEmployees: []
     })
-    loadData()
+    loadData(companyId)
   }
 
   const handleDelete = async (taskId) => {
     await supabase.from('tasks').update({ is_active: false }).eq('id', taskId)
-    loadData()
+    loadData(companyId)
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
