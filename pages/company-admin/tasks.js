@@ -8,7 +8,6 @@ import PremiumModal from '../../components/PremiumModal'
 export default function TasksPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
-  const [employees, setEmployees] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [successModal, setSuccessModal] = useState({ show: false, message: '' })
@@ -26,8 +25,7 @@ export default function TasksPage() {
     is_auto: false,
     crm_action_type: '',
     crm_target_count: 0,
-    image_file: null,
-    selectedEmployees: []
+    image_file: null
   })
 
   useEffect(() => {
@@ -55,35 +53,26 @@ export default function TasksPage() {
   }, [])
 
   const loadData = async (compId) => {
-    const [tasksRes, employeesRes] = await Promise.all([
-      supabase.from('tasks').select('*').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).not('role_id', 'in', '(1,2)').is('deleted_at', null)
-    ])
-    setTasks(tasksRes.data || [])
-    setEmployees(employeesRes.data || [])
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('company_id', compId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    setTasks(data || [])
   }
 
   const uploadImage = async (file) => {
     if (!file) return null
     const fileExt = file.name.split('.').pop()
     const fileName = `task-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    // Используем существующий бакет avatars (как для логотипов компаний)
-    const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, file)
+    const { error } = await supabase.storage.from('task-images').upload(`public/${fileName}`, file)
     if (error) {
       console.error('Ошибка загрузки аватара задания:', error.message)
       return null
     }
-    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
+    const { data: publicUrl } = supabase.storage.from('task-images').getPublicUrl(`public/${fileName}`)
     return publicUrl.publicUrl
-  }
-
-  const toggleEmployee = (userId) => {
-    setForm(prev => ({
-      ...prev,
-      selectedEmployees: prev.selectedEmployees.includes(userId)
-        ? prev.selectedEmployees.filter(id => id !== userId)
-        : [...prev.selectedEmployees, userId]
-    }))
   }
 
   const handleCreateTask = async (e) => {
@@ -97,7 +86,7 @@ export default function TasksPage() {
     if (form.image_file) {
       imageUrl = await uploadImage(form.image_file)
       if (!imageUrl) {
-        setSuccessModal({ show: true, message: 'Не удалось загрузить изображение. Проверьте, что файл не превышает 2MB.' })
+        setSuccessModal({ show: true, message: 'Не удалось загрузить изображение.' })
         return
       }
     }
@@ -132,15 +121,18 @@ export default function TasksPage() {
       return
     }
 
-    // Определяем список сотрудников для назначения
-    const assignList = form.selectedEmployees.length > 0
-      ? form.selectedEmployees
-      : employees.map(emp => emp.user_id)  // если никого не выбрали – назначаем всем
+    // Получаем всех сотрудников компании (кроме админов) и назначаем задание
+    const { data: employeesList } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('company_id', companyId)
+      .not('role_id', 'in', '(1,2)')
+      .is('deleted_at', null)
 
-    if (assignList.length > 0) {
-      const assignments = assignList.map(userId => ({
+    if (employeesList && employeesList.length > 0) {
+      const assignments = employeesList.map(emp => ({
         task_id: task.id,
-        user_id: userId,
+        user_id: emp.user_id,
         status: 'assigned',
         deadline_at: deadlineAt
       }))
@@ -150,16 +142,15 @@ export default function TasksPage() {
         setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
         return
       }
-      setSuccessModal({ show: true, message: `Задание создано и назначено ${assignList.length} сотрудникам.` })
+      setSuccessModal({ show: true, message: `Задание создано и назначено ${employeesList.length} сотрудникам.` })
     } else {
-      // Если employees пуст – компания без сотрудников
       setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения.' })
     }
 
     setForm({
       title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all',
       min_energy_level: 0, requires_review: true, deadline_datetime: '', is_auto: false,
-      crm_action_type: '', crm_target_count: 0, image_file: null, selectedEmployees: []
+      crm_action_type: '', crm_target_count: 0, image_file: null
     })
     loadData(companyId)
   }
@@ -232,10 +223,9 @@ export default function TasksPage() {
                 </div>
               )}
             </div>
-
             <div>
-              <label className="text-sm text-gray-400 block mb-2">Аватар задания</label>
-              <div className="flex items-center gap-3">
+              <label className="text-sm text-gray-400">Аватар задания</label>
+              <div className="flex items-center gap-3 mt-2">
                 <label className="file-upload-btn cursor-pointer inline-block">
                   Загрузить изображение
                   <input type="file" accept="image/*" onChange={e => setForm({...form, image_file: e.target.files[0]})} className="hidden" />
@@ -243,27 +233,13 @@ export default function TasksPage() {
                 {form.image_file && <span className="text-xs text-gray-400">{form.image_file.name}</span>}
               </div>
             </div>
-
             <div>
-              <label className="text-sm text-gray-400 mb-2 block">
-                Назначить сотрудников (если не выбрано — назначается всем)
-              </label>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                {employees.map(emp => (
-                  <button
-                    key={emp.user_id}
-                    type="button"
-                    onClick={() => toggleEmployee(emp.user_id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                      form.selectedEmployees.includes(emp.user_id)
-                        ? 'bg-pastel-rose text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    {emp.display_name || emp.email}
-                  </button>
-                ))}
-              </div>
+              <label className="text-sm text-gray-400">Для кого</label>
+              <select className="input-field mt-1" value={form.target_role} onChange={e => setForm({...form, target_role: e.target.value})}>
+                <option value="all">Все МОП</option>
+                <option value="new">Только новые (&lt; 1 мес.)</option>
+                <option value="experienced">Опытные (&gt; 1 мес.)</option>
+              </select>
             </div>
             <button type="submit" className="btn-gold w-full">Создать задание</button>
           </form>
