@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner'
 
 export default function HistoryPage() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
+  const [companyId, setCompanyId] = useState(null)
   const [history, setHistory] = useState([])
   const [filter, setFilter] = useState({ status: '', employee: '', dateFrom: '', dateTo: '' })
   const [page, setPage] = useState(0)
@@ -18,25 +18,25 @@ export default function HistoryPage() {
       if (!user) { router.push('/login'); return }
       const { data } = await supabase
         .from('profiles')
-        .select('*, roles(name, is_system)')
+        .select('company_id, role_id')
         .eq('user_id', user.id)
         .single()
       if (!data || (data.role_id !== 1 && data.role_id !== 2)) { router.push('/'); return }
-      setProfile(data)
+      setCompanyId(data.company_id)
       setLoading(false)
     }
     init()
   }, [])
 
   useEffect(() => {
-    if (profile) fetchHistory()
-  }, [profile, page, filter])
+    if (companyId) fetchHistory()
+  }, [companyId, page, filter])
 
   const fetchHistory = async () => {
     let query = supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, user_id, tasks( id, title, reward_karma )')
-      .eq('tasks.company_id', profile.company_id)
+      .eq('tasks.company_id', companyId)
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
       .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
