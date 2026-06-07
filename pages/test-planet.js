@@ -1,54 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  const centerX = 50 // центр по X (проценты)
-  const centerY = 42 // центр по Y (проценты)
-
-  // Базовые параметры кнопок
-  const baseBlocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', radius: 22, angle: 0,   colors: ['#7AC78F', '#c084fc'], speed: 0.015 },
-    { title: 'Гороскоп',   sub: 'профессий',  radius: 28, angle: 1.2, colors: ['#c084fc', '#F28B82'], speed: 0.012 },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', radius: 18, angle: 2.3, colors: ['#c084fc', '#7AC78F'], speed: 0.018 },
-    { title: 'Квиз',       sub: 'проверь себя', radius: 25, angle: 3.7, colors: ['#7AC78F', '#F28B82'], speed: 0.014 },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', radius: 20, angle: 4.8, colors: ['#A3E0B0', '#d4af37'], speed: 0.016 },
-    { title: 'Битва',      sub: 'отделов',      radius: 26, angle: 5.5, colors: ['#d4af37', '#A3E0B0'], speed: 0.013 }
-  ]
-
-  const [blocks, setBlocks] = useState(baseBlocks)
-
-  // Анимация вращения
-  useEffect(() => {
-    let animFrame
-    const animate = () => {
-      setBlocks(prev => prev.map(block => ({
-        ...block,
-        angle: block.angle + block.speed
-      })))
-      animFrame = requestAnimationFrame(animate)
-    }
-    animFrame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animFrame)
-  }, [])
-
-  // Вычисление позиции по углу и радиусу
-  const getPosition = (angle, radius) => {
-    const rad = angle * (Math.PI / 180)
-    const x = centerX + radius * Math.cos(rad)
-    const y = centerY + radius * Math.sin(rad)
-    return { left: `${x}%`, top: `${y}%` }
-  }
-
-  // Данные для лучей (короткие, размытые)
-  const beams = blocks.map(block => {
-    const rad = block.angle * (Math.PI / 180)
-    const dx = Math.cos(rad)
-    const dy = Math.sin(rad)
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-    const length = block.radius * 0.5 // короткий луч
-    return { angle, length }
-  })
-
   return (
     <>
       <Head>
@@ -76,116 +28,79 @@ export default function TestPlanetPage() {
         </div>
 
         {/* Космическое свечение */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
-          background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
-          animation: 'breathe1 12s ease-in-out infinite alternate', zIndex: 1
-        }} />
-        <div style={{
-          position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%',
-          background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)',
-          filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate', zIndex: 2
-        }} />
-        <div style={{
-          position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%',
-          background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)',
-          filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
-        }} />
-
-        {/* Чёрная дыра */}
-        <div style={{
-          position: 'absolute',
-          left: `${centerX}%`,
-          top: `${centerY}%`,
-          transform: 'translate(-50%, -50%)',
-          width: '90px',
-          height: '90px',
-          zIndex: 5
-        }}>
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
-            filter: 'blur(16px)',
-            animation: 'orbitSpin 10s linear infinite'
-          }} />
-          <div style={{
-            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
-            filter: 'blur(12px)',
-            animation: 'orbitSpin 8s linear infinite reverse'
-          }} />
-          <div style={{
-            position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%',
-            background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)',
-            boxShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2)',
-            filter: 'blur(2px)',
-            animation: 'blackHoleBreath 6s ease-in-out infinite'
-          }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+          <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Лучи-рукава */}
-        {beams.map((beam, idx) => (
-          <div
-            key={`beam-${idx}`}
-            style={{
-              position: 'absolute',
-              left: `${centerX}%`,
-              top: `${centerY}%`,
-              width: `${beam.length}%`,
-              height: '2px',
-              background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
-              transform: `rotate(${beam.angle}deg)`,
-              transformOrigin: '0 0',
-              filter: 'blur(4px)',
-              animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
-              pointerEvents: 'none',
-              zIndex: 6
-            }}
-          />
-        ))}
+        {/* Чёрная дыра */}
+        <div style={{ position: 'absolute', left: '50%', top: '42%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', zIndex: 5 }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)', filter: 'blur(16px)', animation: 'orbitSpin 10s linear infinite' }} />
+          <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)', filter: 'blur(12px)', animation: 'orbitSpin 8s linear infinite reverse' }} />
+          <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2)', filter: 'blur(2px)', animation: 'blackHoleBreath 6s ease-in-out infinite' }} />
+        </div>
 
-        {/* Парящие кнопки (вращение + покачивание) */}
-        {blocks.map((block, idx) => {
-          const [c1, c2] = block.colors
-          const { left, top } = getPosition(block.angle, block.radius)
-          return (
-            <div key={idx} style={{
-              position: 'absolute', left, top,
-              transform: 'translate(-50%, -50%)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              cursor: 'pointer', zIndex: 10,
-              animation: `wobble ${5 + idx * 2}s ease-in-out infinite alternate`,
-              transition: 'transform 0.3s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
-            >
-              <div style={{
-                fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
-                background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
-                textAlign: 'center'
-              }}>
-                {block.title}
+        {/* Вращающийся слой с кнопками и лучами */}
+        <div className="rotating-layer" style={{ position: 'absolute', left: '50%', top: '42%', width: 0, height: 0, zIndex: 10 }}>
+          {/* 6 кнопок на разных орбитах */}
+          {[
+            { title: 'Чемпионат', sub: 'менеджеров', colors: ['#7AC78F', '#c084fc'], radius: 22, angle: 0 },
+            { title: 'Гороскоп', sub: 'профессий', colors: ['#c084fc', '#F28B82'], radius: 28, angle: 60 },
+            { title: 'Журнал ПРО', sub: 'лучшие практики', colors: ['#c084fc', '#7AC78F'], radius: 18, angle: 120 },
+            { title: 'Квиз', sub: 'проверь себя', colors: ['#7AC78F', '#F28B82'], radius: 25, angle: 180 },
+            { title: 'ИИ‑питомец', sub: 'учи и развивай', colors: ['#A3E0B0', '#d4af37'], radius: 20, angle: 240 },
+            { title: 'Битва', sub: 'отделов', colors: ['#d4af37', '#A3E0B0'], radius: 26, angle: 300 }
+          ].map((btn, idx) => {
+            const rad = (btn.angle * Math.PI) / 180
+            const x = btn.radius * Math.cos(rad)
+            const y = btn.radius * Math.sin(rad)
+            // Луч (линия от центра к кнопке, короткий)
+            const beamLen = btn.radius * 0.5
+            const beamX = beamLen * Math.cos(rad)
+            const beamY = beamLen * Math.sin(rad)
+            return (
+              <div key={idx}>
+                {/* Луч */}
+                <div style={{
+                  position: 'absolute', left: 0, top: 0,
+                  width: `${beamLen}%`, height: '2px',
+                  background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
+                  transform: `rotate(${btn.angle}deg)`,
+                  transformOrigin: '0 0',
+                  filter: 'blur(4px)',
+                  animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
+                  pointerEvents: 'none'
+                }} />
+                {/* Кнопка */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  cursor: 'pointer',
+                  animation: `wobble ${5 + idx * 2}s ease-in-out infinite alternate`
+                }}>
+                  <div style={{
+                    fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
+                    background: `linear-gradient(135deg, ${btn.colors[0]}, ${btn.colors[1]})`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))', textAlign: 'center'
+                  }}>
+                    {btn.title}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 400, color: '#eaf0fb', filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center' }}>
+                    {btn.sub}
+                  </div>
+                </div>
               </div>
-              <div style={{
-                fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
-                opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
-              }}>
-                {block.sub}
-              </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
 
         {/* Кнопка назад */}
-        <a href="/" style={{
-          position: 'absolute', top: '20px', left: '24px', zIndex: 10, color: '#9aa9c1',
-          textDecoration: 'none', fontSize: '16px', background: 'rgba(0,0,0,0.4)',
-          padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(4px)'
-        }}>← На главную</a>
+        <a href="/" style={{ position: 'absolute', top: '20px', left: '24px', zIndex: 20, color: '#9aa9c1', textDecoration: 'none', fontSize: '16px', background: 'rgba(0,0,0,0.4)', padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>← На главную</a>
       </div>
 
       <style jsx global>{`
@@ -218,8 +133,18 @@ export default function TestPlanetPage() {
           100% { opacity: 0.55; }
         }
         @keyframes wobble {
-          0% { transform: translate(-50%, -50%) translateX(-5px) translateY(2px); }
-          100% { transform: translate(-50%, -50%) translateX(5px) translateY(-2px); }
+          0% { transform: translate(-50%, -50%) translateX(-4px) translateY(2px); }
+          100% { transform: translate(-50%, -50%) translateX(4px) translateY(-2px); }
+        }
+
+        /* Главное вращение всего слоя с кнопками и лучами */
+        .rotating-layer {
+          animation: rotateLayer 120s linear infinite;
+          transform-origin: 0 0;
+        }
+        @keyframes rotateLayer {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </>
