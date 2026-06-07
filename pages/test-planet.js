@@ -8,7 +8,7 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – верхняя часть, не перекрываются свечением благодаря z-index */}
+        {/* Звёзды */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 5 }}>
           {Array.from({ length: 130 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
@@ -27,15 +27,13 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Слой 1: глубокое оранжевое свечение, заполняет почти весь экран */}
+        {/* Свечение: сочные космические цвета */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
           background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
           animation: 'breathe1 12s ease-in-out infinite alternate',
           zIndex: 1
         }} />
-
-        {/* Слой 2: розовато-фиолетовое, смещено влево, с размытием */}
         <div style={{
           position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%',
           background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)',
@@ -43,8 +41,6 @@ export default function TestPlanetPage() {
           animation: 'breathe2 16s ease-in-out infinite alternate',
           zIndex: 2
         }} />
-
-        {/* Слой 3: сине-фиолетовое, справа */}
         <div style={{
           position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%',
           background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)',
@@ -52,8 +48,6 @@ export default function TestPlanetPage() {
           animation: 'breathe3 20s ease-in-out infinite alternate',
           zIndex: 2
         }} />
-
-        {/* Тонкая яркая полоса у самого горизонта – край солнца */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '30%',
           background: 'linear-gradient(to top, rgba(255,220,120,0.7), transparent)',
@@ -61,6 +55,67 @@ export default function TestPlanetPage() {
           animation: 'edgeGlow 8s ease-in-out infinite',
           zIndex: 3
         }} />
+
+        {/* Кнопки-заглушки */}
+        <div style={{
+          position: 'absolute', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', gap: '12px', zIndex: 10
+        }}>
+          <a href="/" style={{
+            background: 'rgba(21, 34, 56, 0.7)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(249, 115, 22, 0.5)',
+            borderRadius: '50px',
+            padding: '10px 24px',
+            color: '#eaf0fb',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
+          >
+            Магазин
+          </a>
+          <a href="/" style={{
+            background: 'rgba(21, 34, 56, 0.7)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(249, 115, 22, 0.5)',
+            borderRadius: '50px',
+            padding: '10px 24px',
+            color: '#eaf0fb',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
+          >
+            Задания
+          </a>
+          <a href="/" style={{
+            background: 'rgba(21, 34, 56, 0.7)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(249, 115, 22, 0.5)',
+            borderRadius: '50px',
+            padding: '10px 24px',
+            color: '#eaf0fb',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
+          }}
+          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
+          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
+          >
+            Чат
+          </a>
+        </div>
 
         {/* Кнопка назад */}
         <a href="/" style={{
