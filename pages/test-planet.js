@@ -1,14 +1,14 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  // Блоки с уникальными координатами (left%, top%) и цветовой парой
+  // Ручная балансировка: равномерное покрытие всего экрана
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 12, top: 8, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 58, top: 14, colors: ['#F28B82', '#f97316'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 35, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 68, top: 50, colors: ['#f97316', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 10, top: 60, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 52, top: 78, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 25, top: 8, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 72, top: 12, colors: ['#F28B82', '#f97316'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 10, top: 38, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 78, top: 40, colors: ['#f97316', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 40, top: 62, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 68, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   return (
@@ -66,7 +66,7 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Парящие слова – свободное расположение */}
+        {/* Парящие слова – сбалансированное распределение */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
