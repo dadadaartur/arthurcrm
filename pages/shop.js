@@ -29,7 +29,8 @@ export default function Shop() {
     const res = await fetch('/api/purchase', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rewardId: reward.id })
+      body: JSON.stringify({ rewardId: reward.id }),
+      credentials: 'include'  // ← важно для передачи кук
     })
     const result = await res.json()
     if (res.ok) {
