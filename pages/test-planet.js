@@ -13,16 +13,20 @@ export default function TestPlanetPage() {
     { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
-  // Усики пыли: набор углов и длин
+  // 12 усиков пыли с разными углами
   const wisps = [
-    { angle: 15, length: 18 },
-    { angle: 55, length: 22 },
-    { angle: 110, length: 16 },
-    { angle: 160, length: 20 },
-    { angle: 210, length: 14 },
-    { angle: 260, length: 19 },
-    { angle: 310, length: 17 },
-    { angle: 350, length: 21 }
+    { angle: 10, length: 16 },
+    { angle: 40, length: 20 },
+    { angle: 75, length: 14 },
+    { angle: 110, length: 22 },
+    { angle: 145, length: 18 },
+    { angle: 180, length: 15 },
+    { angle: 215, length: 21 },
+    { angle: 250, length: 17 },
+    { angle: 285, length: 19 },
+    { angle: 320, length: 13 },
+    { angle: 350, length: 20 },
+    { angle: 15, length: 23 }
   ]
 
   return (
@@ -68,7 +72,7 @@ export default function TestPlanetPage() {
           filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Облако космической пыли (три размытых слоя) */}
+        {/* Облако космической пыли (три слоя) */}
         <div style={{
           position: 'absolute',
           left: `${centerX}%`,
@@ -98,7 +102,7 @@ export default function TestPlanetPage() {
           }} />
         </div>
 
-        {/* Усики пыли (вместо геометричных нитей) */}
+        {/* Усики пыли (исходят от края облака, пульсируют) */}
         {wisps.map((wisp, idx) => (
           <div
             key={`wisp-${idx}`}
@@ -106,14 +110,14 @@ export default function TestPlanetPage() {
               position: 'absolute',
               left: `${centerX}%`,
               top: `${centerY}%`,
-              width: `${wisp.length}%`,
+              width: `${wisp.length + 5}%`,           // чуть длиннее, чтобы перекрыть отступ
               height: '1px',
-              background: `linear-gradient(90deg, rgba(212,175,55,0.7), transparent)`,
+              background: `linear-gradient(90deg, transparent 4%, rgba(212,175,55,0.7) 4%)`,
               transform: `rotate(${wisp.angle}deg)`,
               transformOrigin: '0 0',
-              opacity: 0.4,
-              filter: 'blur(2px)',
-              animation: `wispFade 4s ease-in-out infinite ${idx * 0.5}s`,
+              opacity: 0.5,
+              filter: 'blur(1.5px)',
+              animation: `wispPulse ${4 + idx % 3}s ease-in-out infinite alternate`,
               pointerEvents: 'none',
               zIndex: 6
             }}
@@ -184,9 +188,9 @@ export default function TestPlanetPage() {
           0%, 100% { transform: scale(1); opacity: 0.6; }
           50% { transform: scale(1.2); opacity: 1; }
         }
-        @keyframes wispFade {
-          0%, 100% { opacity: 0.3; transform: rotate(var(--angle)) translateX(0); }
-          50% { opacity: 0.6; transform: rotate(var(--angle)) translateX(3px); }
+        @keyframes wispPulse {
+          0% { opacity: 0.3; transform: rotate(deg) translateX(0); }
+          100% { opacity: 0.7; transform: rotate(deg) translateX(4px); }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
