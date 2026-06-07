@@ -14,8 +14,10 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // Получаем сессию отправителя из кук
-  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  // Создаём клиент с передачей кук из запроса – так он увидит сессию
+  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    global: { headers: { cookie: req.headers.cookie || '' } }
+  })
   const { data: { session } } = await supabaseClient.auth.getSession()
   if (!session) return res.status(401).json({ error: 'Не авторизован' })
 
@@ -48,8 +50,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Недостаточно кармиков' })
   }
 
-  // Выполняем перевод в транзакции (через вызов RPC или последовательные операции)
-  // 1. Списываем у отправителя
+  // Списываем у отправителя
   const { error: deductError } = await supabaseAdmin
     .from('karma_balance')
     .update({ balance: senderBalance.balance - transferAmount })
@@ -57,7 +58,7 @@ export default async function handler(req, res) {
 
   if (deductError) return res.status(500).json({ error: 'Ошибка списания' })
 
-  // 2. Начисляем получателю
+  // Начисляем получателю
   const { data: recipientBalance } = await supabaseAdmin
     .from('karma_balance')
     .select('balance')
@@ -65,7 +66,6 @@ export default async function handler(req, res) {
     .single()
 
   if (!recipientBalance) {
-    // Если у получателя ещё нет баланса – создаём
     await supabaseAdmin.from('karma_balance').insert({ user_id: toUserId, balance: transferAmount })
   } else {
     await supabaseAdmin
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       .eq('user_id', toUserId)
   }
 
-  // 3. Записываем перевод в таблицу transfers
+  // Записываем перевод в таблицу transfers
   const { error: transferError } = await supabaseAdmin.from('transfers').insert({
     from_user_id: fromUserId,
     to_user_id: toUserId,
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
   })
 
   if (transferError) {
-    // Откатываем списание (упрощённо: возвращаем отправителю, но лучше через транзакцию)
+    // Откатываем списание
     await supabaseAdmin
       .from('karma_balance')
       .update({ balance: senderBalance.balance })
@@ -91,21 +91,20 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка записи перевода' })
   }
 
-  // 4. Уведомление получателю
+  // Уведомление получателю
   await supabaseAdmin.from('notifications').insert({
     user_id: toUserId,
     message: `Вам перевели ${transferAmount} кармиков от ${session.user.email}.${comment ? ' Комментарий: ' + comment : ''}`,
     link: '/history'
   })
 
-  // 5. Уведомление отправителю
+  // Уведомление отправителю
   await supabaseAdmin.from('notifications').insert({
     user_id: fromUserId,
     message: `Вы перевели ${transferAmount} кармиков пользователю ${recipientEmail}`,
     link: '/history'
   })
 
-  // Возвращаем новый баланс отправителя
   const newBalance = senderBalance.balance - transferAmount
   res.status(200).json({ newBalance })
 }
