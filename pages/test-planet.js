@@ -8,8 +8,8 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – только верхняя часть */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 0 }}>
+        {/* Звёзды – верхняя часть, не перекрываются свечением благодаря z-index */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 5 }}>
           {Array.from({ length: 130 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
             const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
@@ -27,34 +27,39 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Динамичный свет внизу – три подвижных слоя */}
+        {/* Слой 1: глубокое оранжевое свечение, заполняет почти весь экран */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50%',
-          background: `
-            radial-gradient(ellipse at 30% 100%, rgba(249,115,22,0.35) 0%, transparent 60%),
-            radial-gradient(ellipse at 70% 100%, rgba(251,191,36,0.3) 0%, transparent 55%),
-            radial-gradient(ellipse at 50% 100%, rgba(192,132,252,0.25) 0%, transparent 50%)
-          `,
-          animation: 'glowShift 8s ease-in-out infinite alternate',
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
+          background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
+          animation: 'breathe1 12s ease-in-out infinite alternate',
           zIndex: 1
         }} />
 
-        {/* Дополнительный слой – медленное горизонтальное смещение */}
+        {/* Слой 2: розовато-фиолетовое, смещено влево, с размытием */}
         <div style={{
-          position: 'absolute', bottom: '-10px', left: '-20%', width: '140%', height: '200px',
-          background: 'radial-gradient(ellipse at 50% 100%, rgba(255,209,102,0.4) 0%, transparent 70%)',
-          filter: 'blur(10px)',
-          animation: 'drift 20s ease-in-out infinite alternate',
-          zIndex: 1
-        }} />
-
-        {/* Тонкая яркая полоса у самого горизонта (солнечный край) */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '60px',
-          background: 'linear-gradient(to top, rgba(255,245,200,0.6), transparent)',
-          filter: 'blur(4px)',
-          animation: 'pulse 6s ease-in-out infinite',
+          position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%',
+          background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)',
+          filter: 'blur(8px)',
+          animation: 'breathe2 16s ease-in-out infinite alternate',
           zIndex: 2
+        }} />
+
+        {/* Слой 3: сине-фиолетовое, справа */}
+        <div style={{
+          position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%',
+          background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)',
+          filter: 'blur(10px)',
+          animation: 'breathe3 20s ease-in-out infinite alternate',
+          zIndex: 2
+        }} />
+
+        {/* Тонкая яркая полоса у самого горизонта – край солнца */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '30%',
+          background: 'linear-gradient(to top, rgba(255,220,120,0.7), transparent)',
+          filter: 'blur(15px)',
+          animation: 'edgeGlow 8s ease-in-out infinite',
+          zIndex: 3
         }} />
 
         {/* Кнопка назад */}
@@ -70,17 +75,21 @@ export default function TestPlanetPage() {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
           50% { opacity: 0.7; transform: scale(1.05); }
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.8; }
+        @keyframes breathe1 {
+          0% { opacity: 0.7; transform: scaleY(1); }
+          100% { opacity: 1; transform: scaleY(1.15); }
         }
-        @keyframes glowShift {
-          0% { opacity: 0.7; transform: scaleX(1); }
-          100% { opacity: 1; transform: scaleX(1.2); }
+        @keyframes breathe2 {
+          0% { opacity: 0.5; transform: scaleY(1.05) translateX(-2%); }
+          100% { opacity: 0.9; transform: scaleY(1.25) translateX(2%); }
         }
-        @keyframes drift {
-          0% { transform: translateX(-5%); opacity: 0.5; }
-          100% { transform: translateX(5%); opacity: 0.9; }
+        @keyframes breathe3 {
+          0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
+          100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
+        }
+        @keyframes edgeGlow {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
       `}</style>
     </>
