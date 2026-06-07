@@ -1,13 +1,17 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
+  const centerX = 50 // центр шара по X (%)
+  const centerY = 42 // центр шара по Y (%)
+
+  // Блоки чуть ближе к центру
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 25, top: 8, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 72, top: 12, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 10, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 78, top: 40, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 40, top: 62, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 68, top: 72, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 28, top: 10, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 70, top: 14, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 18, top: 38, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 75, top: 40, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42, top: 62, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   return (
@@ -17,7 +21,7 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – всё небо */}
+        {/* Звёзды */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
           {Array.from({ length: 150 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
@@ -36,47 +40,90 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Космическое свечение */}
+        {/* Свечение */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
           background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
-          animation: 'breathe1 12s ease-in-out infinite alternate',
-          zIndex: 1
+          animation: 'breathe1 12s ease-in-out infinite alternate', zIndex: 1
         }} />
         <div style={{
           position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%',
           background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)',
-          filter: 'blur(8px)',
-          animation: 'breathe2 16s ease-in-out infinite alternate',
-          zIndex: 2
+          filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate', zIndex: 2
         }} />
         <div style={{
           position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%',
           background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)',
-          filter: 'blur(10px)',
-          animation: 'breathe3 20s ease-in-out infinite alternate',
-          zIndex: 2
+          filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Линия горизонта – заполняет пустоту в центре */}
+        {/* Линия горизонта */}
         <div style={{
           position: 'absolute', top: '45%', left: '5%', width: '90%', height: '2px',
           background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.7), rgba(192,132,252,0.7), transparent)',
-          filter: 'blur(3px)',
-          animation: 'horizonPulse 6s ease-in-out infinite',
-          zIndex: 4
+          filter: 'blur(3px)', animation: 'horizonPulse 6s ease-in-out infinite', zIndex: 4
         }} />
-
-        {/* Лёгкое свечение над линией горизонта */}
         <div style={{
           position: 'absolute', top: '40%', left: '10%', width: '80%', height: '40px',
           background: 'radial-gradient(ellipse at 50% 0%, rgba(255,220,120,0.3), transparent 70%)',
-          filter: 'blur(12px)',
-          animation: 'edgeGlow 8s ease-in-out infinite',
-          zIndex: 3
+          filter: 'blur(12px)', animation: 'edgeGlow 8s ease-in-out infinite', zIndex: 3
         }} />
 
-        {/* Парящие слова */}
+        {/* Золотые нити и шар */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 8 }}>
+          {/* Нити */}
+          {blocks.map((block, idx) => {
+            const dx = block.left - centerX
+            const dy = block.top - centerY
+            const length = Math.sqrt(dx * dx + dy * dy)
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+
+            return (
+              <div
+                key={`thread-${idx}`}
+                style={{
+                  position: 'absolute',
+                  left: `${centerX}%`,
+                  top: `${centerY}%`,
+                  width: `${length}%`,
+                  height: '1px',
+                  background: `linear-gradient(90deg, rgba(212,175,55,0.6), transparent)`,
+                  transform: `rotate(${angle}deg)`,
+                  transformOrigin: '0 0',
+                  opacity: 0.5,
+                  animation: 'threadFlicker 3s ease-in-out infinite',
+                  pointerEvents: 'none'
+                }}
+              />
+            )
+          })}
+
+          {/* Золотой шар */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `${centerX}%`,
+              top: `${centerY}%`,
+              transform: 'translate(-50%, -50%)',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 35%, #FFD700, #B8860B)',
+              boxShadow: '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)',
+              animation: 'orbPulse 4s ease-in-out infinite',
+              cursor: 'pointer',
+              zIndex: 9
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 50px rgba(255,215,0,1), 0 0 100px rgba(255,215,0,0.6)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)'
+            }}
+          />
+        </div>
+
+        {/* Парящие блоки */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -143,6 +190,14 @@ export default function TestPlanetPage() {
         @keyframes horizonPulse {
           0%, 100% { opacity: 0.4; transform: scaleX(1); }
           50% { opacity: 0.8; transform: scaleX(1.1); }
+        }
+        @keyframes orbPulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+        @keyframes threadFlicker {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
