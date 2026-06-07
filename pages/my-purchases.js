@@ -26,7 +26,6 @@ export default function MyPurchases() {
   }
 
   async function activate(purchaseId) {
-    // Меняем статус на 'pending', чтобы администратор увидел запрос
     const { error } = await supabase.from('purchases')
       .update({ status: 'pending' })
       .eq('id', purchaseId)
@@ -51,17 +50,17 @@ export default function MyPurchases() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-6">
         <h1 className="text-2xl font-bold text-white">Мои покупки</h1>
-        <p className="text-sm text-gray-400 mt-2">Здесь отображаются ваши приобретённые награды и их статус</p>
+        <p className="text-sm text-gray-300 mt-2">Здесь отображаются ваши приобретённые награды и их статус</p>
       </div>
       {purchases.length === 0 ? (
-        <p className="text-gray-400 text-center">Покупок пока нет</p>
+        <p className="text-gray-300 text-center">Покупок пока нет</p>
       ) : (
         <div className="space-y-4">
           {purchases.map(p => (
             <div key={p.id} className="premium-card flex justify-between items-center">
               <div>
                 <h3 className="font-semibold text-white">{p.reward_name}</h3>
-                <p className="text-sm text-gray-400">{new Date(p.created_at).toLocaleString('ru')}</p>
+                <p className="text-sm text-gray-300">{new Date(p.created_at).toLocaleString('ru')}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                   p.status === 'new' ? 'bg-blue-900 text-blue-300' :
                   p.status === 'pending' ? 'bg-yellow-900 text-yellow-300' :
