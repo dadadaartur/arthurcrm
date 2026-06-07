@@ -13,8 +13,8 @@ export default function TestPlanetPage() {
     { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
-  // Лучи для каждого блока: угол и длина
-  const beams = blocks.map((block, idx) => {
+  // Лучи-рукава к каждой кнопке (угол, длина)
+  const beams = blocks.map(block => {
     const dx = block.left - centerX
     const dy = block.top - centerY
     const angle = Math.atan2(dy, dx) * (180 / Math.PI)
@@ -48,7 +48,7 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Космическое свечение */}
+        {/* Космическое свечение внизу */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
           background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
@@ -65,7 +65,41 @@ export default function TestPlanetPage() {
           filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Лучи света от шара к кнопкам */}
+        {/* Чёрная дыра */}
+        <div style={{
+          position: 'absolute',
+          left: `${centerX}%`,
+          top: `${centerY}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '90px',
+          height: '90px',
+          zIndex: 5
+        }}>
+          {/* Внешний ореол (аккреционный диск) */}
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
+            filter: 'blur(16px)',
+            animation: 'orbitSpin 10s linear infinite'
+          }} />
+          {/* Средний слой */}
+          <div style={{
+            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
+            filter: 'blur(12px)',
+            animation: 'orbitSpin 8s linear infinite reverse'
+          }} />
+          {/* Горизонт событий (тёмное ядро) */}
+          <div style={{
+            position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%',
+            background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)',
+            boxShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2)',
+            filter: 'blur(2px)',
+            animation: 'blackHoleBreath 6s ease-in-out infinite'
+          }} />
+        </div>
+
+        {/* Лучи-рукава, исходящие из дыры к кнопкам */}
         {beams.map((beam, idx) => (
           <div
             key={`beam-${idx}`}
@@ -77,61 +111,21 @@ export default function TestPlanetPage() {
               height: '2px',
               background: `linear-gradient(90deg, 
                 rgba(255,200,50,0) 0%, 
-                rgba(255,180,0,0.4) 15%, 
-                rgba(255,140,0,0.6) 40%, 
-                rgba(255,100,0,0.2) 80%, 
+                rgba(255,180,0,0.3) 20%, 
+                rgba(255,140,0,0.5) 50%, 
+                rgba(255,100,0,0.15) 85%, 
                 transparent 100%)`,
               transform: `rotate(${beam.angle}deg)`,
               transformOrigin: '0 0',
-              filter: 'blur(3px)',
-              animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.4}s`,
+              filter: 'blur(2.5px)',
+              animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
               pointerEvents: 'none',
               zIndex: 6
             }}
           />
         ))}
 
-        {/* Шар-туманность (сложная структура) */}
-        <div style={{
-          position: 'absolute',
-          left: `${centerX}%`,
-          top: `${centerY}%`,
-          transform: 'translate(-50%, -50%)',
-          width: '90px',
-          height: '90px',
-          zIndex: 5
-        }}>
-          {/* Внешний ореол */}
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 45% 45%, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.1) 50%, transparent 80%)',
-            filter: 'blur(16px)',
-            animation: 'orbPulse 8s ease-in-out infinite'
-          }} />
-          {/* Средний слой */}
-          <div style={{
-            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 40% 40%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
-            filter: 'blur(10px)',
-            animation: 'orbPulse 6s ease-in-out infinite 0.5s'
-          }} />
-          {/* Ядро */}
-          <div style={{
-            position: 'absolute', top: '10%', left: '10%', width: '80%', height: '80%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 50% 50%, rgba(255,220,100,0.8) 0%, rgba(255,150,0,0.3) 50%, transparent 70%)',
-            filter: 'blur(5px)',
-            animation: 'orbPulse 5s ease-in-out infinite 1s'
-          }} />
-          {/* Искры внутри */}
-          <div style={{
-            position: 'absolute', top: '25%', left: '25%', width: '50%', height: '50%', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,255,200,0.9) 0%, rgba(255,200,0,0) 50%)',
-            filter: 'blur(2px)',
-            animation: 'sparkle 3s ease-in-out infinite'
-          }} />
-        </div>
-
-        {/* Парящие блоки */}
+        {/* Парящие кнопки (притягиваются и отталкиваются) */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -140,7 +134,7 @@ export default function TestPlanetPage() {
               transform: 'translate(-50%, -50%)',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               cursor: 'pointer', zIndex: 10,
-              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
+              animation: `floatAround ${6 + idx * 2}s ease-in-out infinite alternate`,
               transition: 'transform 0.3s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
@@ -191,29 +185,21 @@ export default function TestPlanetPage() {
           0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
           100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
         }
-        @keyframes orbPulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.15); opacity: 1; }
+        @keyframes orbitSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
-        @keyframes sparkle {
-          0%, 100% { opacity: 0.7; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.1); }
+        @keyframes blackHoleBreath {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2); }
+          50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(255,215,0,0.6), 0 0 100px rgba(255,180,0,0.35); }
         }
         @keyframes beamPulse {
-          0% { opacity: 0.3; transform: rotate(deg) translateX(0); }
-          100% { opacity: 0.8; transform: rotate(deg) translateX(5px); }
+          0% { opacity: 0.25; transform: rotate(deg) translateX(0); }
+          100% { opacity: 0.7; transform: rotate(deg) translateX(4px); }
         }
-        @keyframes drift0 {
-          0% { transform: translate(-50%, -50%) translateX(-10px); }
-          100% { transform: translate(-50%, -50%) translateX(10px); }
-        }
-        @keyframes drift1 {
-          0% { transform: translate(-50%, -50%) translateY(-8px); }
-          100% { transform: translate(-50%, -50%) translateY(8px); }
-        }
-        @keyframes drift2 {
-          0% { transform: translate(-50%, -50%) translateX(6px) translateY(4px); }
-          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(-4px); }
+        @keyframes floatAround {
+          0% { transform: translate(-50%, -50%) translateX(-6px) translateY(2px); }
+          100% { transform: translate(-50%, -50%) translateX(8px) translateY(-3px); }
         }
       `}</style>
     </>
