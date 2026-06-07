@@ -31,9 +31,9 @@ export default function TestPlanetPage() {
           {/* Звёздный фон */}
           <div className="stars-bg absolute inset-0"></div>
 
-          {/* Вид Земли снизу */}
-          <div className="earth-view-container">
-            <div className="earth-curve"></div>
+          {/* Земля — большой круг, уходящий за нижний край */}
+          <div className="earth-wrapper">
+            <div className="earth-planet"></div>
             <div className="atmosphere-arc"></div>
             <div className="city-lights"></div>
           </div>
@@ -64,28 +64,49 @@ export default function TestPlanetPage() {
           left: 0;
           width: 100%;
           height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg width='800' height='600' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='30' r='1.5' fill='white' opacity='0.8'/%3E%3Ccircle cx='120' cy='80' r='2' fill='white' opacity='0.6'/%3E%3Ccircle cx='200' cy='40' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='350' cy='90' r='1.5' fill='white' opacity='0.5'/%3E%3Ccircle cx='500' cy='20' r='2' fill='white' opacity='0.7'/%3E%3Ccircle cx='650' cy='70' r='1' fill='white' opacity='0.8'/%3E%3Ccircle cx='780' cy='50' r='1.5' fill='white' opacity='0.6'/%3E%3Ccircle cx='400' cy='150' r='2' fill='white' opacity='0.4'/%3E%3Ccircle cx='100' cy='200' r='1.5' fill='white' opacity='0.7'/%3E%3Ccircle cx='300' cy='180' r='1' fill='white' opacity='0.5'/%3E%3Ccircle cx='600' cy='160' r='2' fill='white' opacity='0.6'/%3E%3Ccircle cx='750' cy='220' r='1.5' fill='white' opacity='0.8'/%3E%3Ccircle cx='200' cy='250' r='1' fill='white' opacity='0.5'/%3E%3Ccircle cx='500' cy='240' r='2' fill='white' opacity='0.4'/%3E%3C/svg%3E");
-          background-size: cover;
+          box-shadow:
+            50px 30px 0 0 rgba(255,255,255,0.8),
+            120px 80px 0 0 rgba(255,255,255,0.6),
+            200px 40px 0 0 rgba(255,255,255,0.9),
+            350px 90px 0 0 rgba(255,255,255,0.5),
+            500px 20px 0 0 rgba(255,255,255,0.7),
+            650px 70px 0 0 rgba(255,255,255,0.8),
+            780px 50px 0 0 rgba(255,255,255,0.6),
+            400px 150px 0 0 rgba(255,255,255,0.4),
+            100px 200px 0 0 rgba(255,255,255,0.7),
+            300px 180px 0 0 rgba(255,255,255,0.5),
+            600px 160px 0 0 rgba(255,255,255,0.6),
+            750px 220px 0 0 rgba(255,255,255,0.8),
+            200px 250px 0 0 rgba(255,255,255,0.5),
+            500px 240px 0 0 rgba(255,255,255,0.4),
+            80px 300px 0 0 rgba(255,255,255,0.6),
+            350px 280px 0 0 rgba(255,255,255,0.5),
+            700px 300px 0 0 rgba(255,255,255,0.7);
+          border-radius: 50%;
           opacity: 0.8;
         }
 
-        .earth-view-container {
+        .earth-wrapper {
           position: relative;
           width: 100%;
           max-width: 100%;
-          height: 55vh; /* Земля занимает нижнюю половину экрана */
-          margin-bottom: 24px;
+          height: 50vh; /* Занимает половину экрана */
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+          overflow: hidden;
         }
 
-        /* Кривизна Земли */
-        .earth-curve {
+        /* Сама планета — круг, который на половину спрятан */
+        .earth-planet {
           position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border-radius: 50% / 100% 100% 0 0;
-          background: radial-gradient(circle at 50% 130%,
+          bottom: -40vh; /* Показываем только верхнюю половину */
+          left: 50%;
+          transform: translateX(-50%);
+          width: 120vw; /* Очень широкий круг, чтобы кривизна была заметна */
+          height: 120vw;
+          border-radius: 50%;
+          background: radial-gradient(circle at 50% 70%,
             #0B3D91 0%,
             #1D4ED8 20%,
             #3B82F6 35%,
@@ -98,32 +119,37 @@ export default function TestPlanetPage() {
           box-shadow: inset 0 -20px 60px rgba(0,0,0,0.5);
         }
 
-        /* Атмосферное свечение по дуге */
+        /* Атмосферное свечение */
         .atmosphere-arc {
           position: absolute;
           bottom: 0;
           left: 0;
           width: 100%;
-          height: 100%;
-          border-radius: 50% / 100% 100% 0 0;
-          background: transparent;
-          box-shadow:
-            0 0 80px rgba(249, 115, 22, 0.3) inset,
-            0 -20px 60px rgba(249, 115, 22, 0.2);
+          height: 40px; /* Только над горизонтом */
+          background: linear-gradient(to top, rgba(249,115,22,0.4), transparent);
           animation: atmospherePulse 8s ease-in-out infinite;
         }
 
-        /* Огни городов */
+        /* Огни городов (имитация россыпи точек) */
         .city-lights {
           position: absolute;
           bottom: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          border-radius: 50% / 100% 100% 0 0;
-          background: url("data:image/svg+xml,%3Csvg width='400' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='180' r='2' fill='%23FBBF24' opacity='0.6'/%3E%3Ccircle cx='120' cy='160' r='1.5' fill='%23FBBF24' opacity='0.5'/%3E%3Ccircle cx='200' cy='170' r='2' fill='%23F59E0B' opacity='0.7'/%3E%3Ccircle cx='280' cy='190' r='1.5' fill='%23FBBF24' opacity='0.4'/%3E%3Ccircle cx='340' cy='175' r='2' fill='%23F59E0B' opacity='0.6'/%3E%3Ccircle cx='180' cy='140' r='1' fill='%23FDE047' opacity='0.8'/%3E%3Ccircle cx='310' cy='155' r='1.5' fill='%23FBBF24' opacity='0.5'/%3E%3Ccircle cx='80' cy='155' r='1' fill='%23FDE047' opacity='0.7'/%3E%3Ccircle cx='370' cy='165' r='1.5' fill='%23FBBF24' opacity='0.6'/%3E%3Ccircle cx='250' cy='185' r='1' fill='%23FDE047' opacity='0.5'/%3E%3C/svg%3E");
-          background-size: cover;
-          opacity: 0.35;
+          pointer-events: none;
+        }
+        .city-lights::before {
+          content: '';
+          position: absolute;
+          bottom: 20px;
+          left: 10%;
+          width: 80%;
+          height: 30px;
+          background: radial-gradient(circle, rgba(251,191,36,0.4) 10%, transparent 70%);
+          box-shadow: 
+            0 0 10px rgba(251,191,36,0.3),
+            0 0 20px rgba(245,158,11,0.2);
           animation: lightsFlicker 4s ease-in-out infinite alternate;
         }
 
@@ -159,8 +185,8 @@ export default function TestPlanetPage() {
           50% { opacity: 1; }
         }
         @keyframes lightsFlicker {
-          0% { opacity: 0.25; }
-          100% { opacity: 0.5; }
+          0% { opacity: 0.5; }
+          100% { opacity: 0.8; }
         }
       `}</style>
     </>
