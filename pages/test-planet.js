@@ -5,13 +5,21 @@ export default function TestPlanetPage() {
   const centerY = 42
 
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', colors: ['#7AC78F', '#c084fc'], orbitRadius: 30, speed: 40 },
-    { title: 'Гороскоп', sub: 'профессий', colors: ['#c084fc', '#F28B82'], orbitRadius: 26, speed: 35 },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', colors: ['#c084fc', '#7AC78F'], orbitRadius: 34, speed: 45 },
-    { title: 'Квиз', sub: 'проверь себя', colors: ['#7AC78F', '#F28B82'], orbitRadius: 22, speed: 30 },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', colors: ['#A3E0B0', '#d4af37'], orbitRadius: 28, speed: 38 },
-    { title: 'Битва', sub: 'отделов', colors: ['#d4af37', '#A3E0B0'], orbitRadius: 32, speed: 42 }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 28, top: 10, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 70, top: 14, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 18, top: 38, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 75, top: 40, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42, top: 62, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
+
+  const beams = blocks.map(block => {
+    const dx = block.left - centerX
+    const dy = block.top - centerY
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+    const length = Math.sqrt(dx * dx + dy * dy) * 0.55
+    return { angle, length }
+  })
 
   return (
     <>
@@ -88,38 +96,40 @@ export default function TestPlanetPage() {
         </div>
 
         {/* Лучи-рукава (короткие и размытые) */}
-        {blocks.map((block, idx) => {
-          const orbitRadius = block.orbitRadius
-          const beamLength = orbitRadius * 0.55  // короткие лучи
-          return (
-            <div key={`beam-${idx}`} style={{
+        {beams.map((beam, idx) => (
+          <div
+            key={`beam-${idx}`}
+            style={{
               position: 'absolute',
               left: `${centerX}%`,
               top: `${centerY}%`,
-              width: `${beamLength}%`,
+              width: `${beam.length}%`,
               height: '2px',
-              background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
-              animation: `beamOrbit ${block.speed}s linear infinite`,
+              background: `linear-gradient(90deg, 
+                rgba(255,200,50,0) 0%, 
+                rgba(255,180,0,0.2) 30%, 
+                rgba(255,140,0,0.35) 60%, 
+                transparent 100%)`,
+              transform: `rotate(${beam.angle}deg)`,
+              transformOrigin: '0 0',
               filter: 'blur(4px)',
+              animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
               pointerEvents: 'none',
               zIndex: 6
-            }} />
-          )
-        })}
+            }}
+          />
+        ))}
 
-        {/* Парящие кнопки (вечное вращение с покачиванием) */}
+        {/* Парящие кнопки (простой дрейф) */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
-          const orbitRadius = block.orbitRadius
           return (
             <div key={idx} style={{
-              position: 'absolute',
-              left: `${centerX}%`,
-              top: `${centerY}%`,
+              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
               transform: 'translate(-50%, -50%)',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               cursor: 'pointer', zIndex: 10,
-              animation: `orbit ${block.speed}s linear infinite, floatAround ${6 + idx * 2}s ease-in-out infinite alternate`,
+              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
               transition: 'transform 0.3s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
@@ -178,17 +188,21 @@ export default function TestPlanetPage() {
           0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2); }
           50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(255,215,0,0.6), 0 0 100px rgba(255,180,0,0.35); }
         }
-        @keyframes beamOrbit {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes beamPulse {
+          0% { opacity: 0.2; }
+          100% { opacity: 0.55; }
         }
-        @keyframes orbit {
-          0% { transform: translate(-50%, -50%) rotate(0deg) translateX(calc(var(--orbitRadius) * 1vw)) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(360deg) translateX(calc(var(--orbitRadius) * 1vw)) rotate(-360deg); }
+        @keyframes drift0 {
+          0% { transform: translate(-50%, -50%) translateX(-10px); }
+          100% { transform: translate(-50%, -50%) translateX(10px); }
         }
-        @keyframes floatAround {
-          0% { transform: translate(-50%, -50%) translateX(-6px) translateY(2px); }
-          100% { transform: translate(-50%, -50%) translateX(8px) translateY(-3px); }
+        @keyframes drift1 {
+          0% { transform: translate(-50%, -50%) translateY(-8px); }
+          100% { transform: translate(-50%, -50%) translateY(8px); }
+        }
+        @keyframes drift2 {
+          0% { transform: translate(-50%, -50%) translateX(6px) translateY(4px); }
+          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(-4px); }
         }
       `}</style>
     </>
