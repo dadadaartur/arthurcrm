@@ -46,11 +46,22 @@ export default function Transfer() {
     }
     setLoading(true)
     try {
+      // Получаем токен сессии
+      const { data: { session } } = await supabase.auth.getSession()
+      const accessToken = session?.access_token
+      if (!accessToken) {
+        setError('Не удалось получить токен доступа')
+        setLoading(false)
+        return
+      }
+
       const res = await fetch('/api/transfer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientEmail, amount: transferAmount, comment }),
-        credentials: 'include'  // ← важно для передачи кук
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ recipientEmail, amount: transferAmount, comment })
       })
       const result = await res.json()
       if (!res.ok) {
