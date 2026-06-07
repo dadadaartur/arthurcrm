@@ -10,14 +10,34 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-    global: { headers: { cookie: req.headers.cookie || '' } }
-  })
-  const { data: { session } } = await supabaseClient.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Не авторизован' })
+  // --- Получаем access_token из кук ---
+  const rawCookie = req.headers.cookie || ''
+  const cookies = Object.fromEntries(
+    rawCookie.split('; ').map(c => {
+      const idx = c.indexOf('=')
+      if (idx === -1) return [c.trim(), '']
+      return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
+    })
+  )
+  const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+  if (!authKey) return res.status(401).json({ error: 'No auth cookie' })
 
-  const userId = session.user.id
+  let accessToken
+  try {
+    const parsed = JSON.parse(cookies[authKey])
+    accessToken = parsed.access_token
+    if (!accessToken) throw new Error('no token')
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid auth cookie' })
+  }
 
+  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(accessToken)
+  if (userError || !user) return res.status(401).json({ error: 'User not found' })
+
+  const userId = user.id
+
+  // --- Остальная логика (как раньше) ---
   // Получаем информацию о награде
   const { data: reward, error: rewardError } = await supabaseAdmin
     .from('rewards')
