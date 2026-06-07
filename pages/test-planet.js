@@ -13,6 +13,18 @@ export default function TestPlanetPage() {
     { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
+  // Усики пыли: набор углов и длин
+  const wisps = [
+    { angle: 15, length: 18 },
+    { angle: 55, length: 22 },
+    { angle: 110, length: 16 },
+    { angle: 160, length: 20 },
+    { angle: 210, length: 14 },
+    { angle: 260, length: 19 },
+    { angle: 310, length: 17 },
+    { angle: 350, length: 21 }
+  ]
+
   return (
     <>
       <Head>
@@ -56,80 +68,88 @@ export default function TestPlanetPage() {
           filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Облако космической пыли (шар) – теперь заметнее */}
+        {/* Облако космической пыли (три размытых слоя) */}
         <div style={{
           position: 'absolute',
           left: `${centerX}%`,
           top: `${centerY}%`,
           transform: 'translate(-50%, -50%)',
-          width: '70px',
-          height: '70px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle at 40% 40%, rgba(255,215,0,0.7) 0%, rgba(255,180,0,0.4) 30%, rgba(255,140,0,0.15) 60%, transparent 80%)',
-          boxShadow: '0 0 50px rgba(255,215,0,0.5), 0 0 100px rgba(255,180,0,0.25)',
-          filter: 'blur(5px)',
-          animation: 'orbPulse 6s ease-in-out infinite',
+          width: '80px',
+          height: '80px',
           zIndex: 5
-        }} />
+        }}>
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,215,0,0.6) 0%, rgba(255,180,0,0.2) 35%, transparent 70%)',
+            filter: 'blur(8px)',
+            animation: 'orbPulse 7s ease-in-out infinite'
+          }} />
+          <div style={{
+            position: 'absolute', top: '-10%', left: '-10%', width: '120%', height: '120%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 60%)',
+            filter: 'blur(12px)',
+            animation: 'orbPulse 9s ease-in-out infinite 0.5s'
+          }} />
+          <div style={{
+            position: 'absolute', top: '-15%', left: '-15%', width: '130%', height: '130%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,180,0,0.15) 0%, transparent 50%)',
+            filter: 'blur(15px)',
+            animation: 'orbPulse 11s ease-in-out infinite 1s'
+          }} />
+        </div>
 
-        {/* Нити и блоки */}
+        {/* Усики пыли (вместо геометричных нитей) */}
+        {wisps.map((wisp, idx) => (
+          <div
+            key={`wisp-${idx}`}
+            style={{
+              position: 'absolute',
+              left: `${centerX}%`,
+              top: `${centerY}%`,
+              width: `${wisp.length}%`,
+              height: '1px',
+              background: `linear-gradient(90deg, rgba(212,175,55,0.7), transparent)`,
+              transform: `rotate(${wisp.angle}deg)`,
+              transformOrigin: '0 0',
+              opacity: 0.4,
+              filter: 'blur(2px)',
+              animation: `wispFade 4s ease-in-out infinite ${idx * 0.5}s`,
+              pointerEvents: 'none',
+              zIndex: 6
+            }}
+          />
+        ))}
+
+        {/* Парящие блоки */}
         {blocks.map((block, idx) => {
-          const dx = block.left - centerX
-          const dy = block.top - centerY
-          const length = Math.sqrt(dx * dx + dy * dy)
-          const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-          // Нити чуть длиннее (75% от полной длины)
-          const threadLength = length * 0.75
-
           const [c1, c2] = block.colors
           return (
-            <div key={idx}>
-              {/* Нить – теперь виднее */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `${centerX}%`,
-                  top: `${centerY}%`,
-                  width: `${threadLength}%`,
-                  height: '1px',
-                  background: `linear-gradient(90deg, rgba(212,175,55,0.7), transparent)`,
-                  transform: `rotate(${angle}deg)`,
-                  transformOrigin: '0 0',
-                  opacity: 0.6,
-                  filter: 'blur(1px)',
-                  animation: 'threadFlicker 4s ease-in-out infinite',
-                  pointerEvents: 'none',
-                  zIndex: 6
-                }}
-              />
-              {/* Блок */}
+            <div key={idx} style={{
+              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
+              transform: 'translate(-50%, -50%)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              cursor: 'pointer', zIndex: 10,
+              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
+              transition: 'transform 0.3s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
+            >
               <div style={{
-                position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
-                transform: 'translate(-50%, -50%)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                cursor: 'pointer', zIndex: 10,
-                animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
-                transition: 'transform 0.3s'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
-              >
-                <div style={{
-                  fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
-                  background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
-                  textAlign: 'center'
-                }}>
-                  {block.title}
-                </div>
-                <div style={{
-                  fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
-                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
-                  opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
-                }}>
-                  {block.sub}
-                </div>
+                fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
+                background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
+                textAlign: 'center'
+              }}>
+                {block.title}
+              </div>
+              <div style={{
+                fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
+                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
+                opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
+              }}>
+                {block.sub}
               </div>
             </div>
           )
@@ -161,12 +181,12 @@ export default function TestPlanetPage() {
           100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
         }
         @keyframes orbPulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
-          50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.2); opacity: 1; }
         }
-        @keyframes threadFlicker {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
+        @keyframes wispFade {
+          0%, 100% { opacity: 0.3; transform: rotate(var(--angle)) translateX(0); }
+          50% { opacity: 0.6; transform: rotate(var(--angle)) translateX(3px); }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
