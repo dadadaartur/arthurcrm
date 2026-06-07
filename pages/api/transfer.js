@@ -14,36 +14,44 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // --- Получаем access_token из кук (как в tasks.js) ---
-  const rawCookie = req.headers.cookie || ''
-  const cookies = Object.fromEntries(
-    rawCookie.split('; ').map(c => {
-      const idx = c.indexOf('=')
-      if (idx === -1) return [c.trim(), '']
-      return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
-    })
-  )
-  const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
-  if (!authKey) return res.status(401).json({ error: 'No auth cookie' })
-
-  let accessToken
-  try {
-    const parsed = JSON.parse(cookies[authKey])
-    accessToken = parsed.access_token
-    if (!accessToken) throw new Error('no token')
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid auth cookie' })
+  // 1. Пытаемся получить токен из заголовка Authorization
+  let accessToken = null
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    accessToken = authHeader.split(' ')[1]
   }
 
-  // Проверяем пользователя через анонимный ключ
+  // 2. Если нет заголовка, пробуем куки
+  if (!accessToken) {
+    const rawCookie = req.headers.cookie || ''
+    const cookies = Object.fromEntries(
+      rawCookie.split('; ').map(c => {
+        const idx = c.indexOf('=')
+        if (idx === -1) return [c.trim(), '']
+        return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
+      })
+    )
+    const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (authKey) {
+      try {
+        const parsed = JSON.parse(cookies[authKey])
+        accessToken = parsed.access_token
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Не авторизован' })
+  }
+
+  // Проверяем токен
   const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser(accessToken)
-  if (userError || !user) return res.status(401).json({ error: 'User not found' })
+  if (userError || !user) return res.status(401).json({ error: 'Токен недействителен' })
 
   const fromUserId = user.id
 
-  // --- Остальная логика (как раньше) ---
-  // Находим получателя по email
+  // --- Логика перевода ---
   const { data: recipientProfile, error: recipientError } = await supabaseAdmin
     .from('profiles')
     .select('user_id, email')
@@ -59,7 +67,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Нельзя перевести самому себе' })
   }
 
-  // Проверяем баланс отправителя
   const { data: senderBalance, error: balanceError } = await supabaseAdmin
     .from('karma_balance')
     .select('balance')
@@ -70,7 +77,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Недостаточно кармиков' })
   }
 
-  // Списываем у отправителя
   const { error: deductError } = await supabaseAdmin
     .from('karma_balance')
     .update({ balance: senderBalance.balance - transferAmount })
@@ -78,7 +84,6 @@ export default async function handler(req, res) {
 
   if (deductError) return res.status(500).json({ error: 'Ошибка списания' })
 
-  // Начисляем получателю
   const { data: recipientBalance } = await supabaseAdmin
     .from('karma_balance')
     .select('balance')
@@ -94,7 +99,6 @@ export default async function handler(req, res) {
       .eq('user_id', toUserId)
   }
 
-  // Записываем перевод в таблицу transfers
   const { error: transferError } = await supabaseAdmin.from('transfers').insert({
     from_user_id: fromUserId,
     to_user_id: toUserId,
@@ -103,7 +107,6 @@ export default async function handler(req, res) {
   })
 
   if (transferError) {
-    // Откатываем списание
     await supabaseAdmin
       .from('karma_balance')
       .update({ balance: senderBalance.balance })
