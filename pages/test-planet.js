@@ -1,163 +1,163 @@
-// pages/planet.js
-import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
-// Убедись, что путь к стилям верный
-import '../styles/globals.css'; 
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import Link from 'next/link'
 
-export default function PlanetEarthPage() {
-  const [loading, setLoading] = useState(true);
+export default function TestPlanetPage() {
+  const [loading, setLoading] = useState(true)
 
-  // Имитация загрузки для плавного появления
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    const timer = setTimeout(() => setLoading(false), 800)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <>
       <Head>
-        <title>Ночная Земля | Свечение во тьме | CRM Лето</title>
+        <title>Вид с МКС | Кармический банк</title>
       </Head>
 
-      {/* Обертка страницы: ТЕМНЫЙ фон для контраста */}
-      <div className={`planet-page-wrapper dark ${loading ? 'loading' : ''}`}>
-        
-        {/* Шапка (твоя crm-topbar), адаптированная под темную тему */}
-        <header className="crm-topbar dark">
-          <div className="topbar-logo">✨ CRM Лето</div>
-          <div className="topbar-right">
-            <a href="/" className="back-link">← На главную</a>
-          </div>
+      <div className={`min-h-screen flex flex-col ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}>
+        <header className="flex justify-between items-center px-6 py-2 relative z-10 bg-transparent">
+          <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+            Кармический банк
+          </Link>
+          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
+            ← Вернуться на главную
+          </Link>
         </header>
 
-        {/* Центральная часть с планетой */}
-        <main className="planet-main">
-          
-          <div className="planet-earth-night-container">
-            {/* Твоя сочная фотография Земли во тьме */}
-            <img 
-              src="/earth-night.png" // Убедись, что файл лежит в public/
-              alt="Светящаяся Земля во тьме" 
-              className="earth-core"
-            />
-            
-            {/* Основное сияние вокруг планеты */}
-            <div className="atmosphere-glow-night"></div>
-            
-            {/* Внутреннее свечение городов (дополнительный эффект) */}
-            <div className="city-lights-glow"></div>
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+          {/* Звёздный фон */}
+          <div className="stars-bg absolute inset-0"></div>
+
+          {/* Вид Земли снизу */}
+          <div className="earth-view-container">
+            <div className="earth-curve"></div>
+            <div className="atmosphere-arc"></div>
+            <div className="city-lights"></div>
           </div>
 
-          <div className="planet-info-panel-night">
-            <h2>🌃 Магия Ночной Земли</h2>
-            <p>Так выглядит наш общий дом из космоса, когда заходит Солнце. Посмотрите на эти мириады огней — это жизнь, это работа, это творчество. Пусть этот вид напоминает вам о том, насколько масштабно и красиво всё, что мы делаем!</p>
+          <div className="planet-info-panel">
+            <h2>Вид с орбиты</h2>
+            <p>
+              Где-то там, внизу, кипит жизнь. Каждая сделка, каждый звонок — часть большой экосистемы. Смотрите вперёд, но не забывайте смотреть по сторонам.
+            </p>
           </div>
-
         </main>
       </div>
 
       <style jsx global>{`
-        /* ТЕМНАЯ ТЕМА СТРАНИЦЫ */
-        .planet-page-wrapper.dark {
-          min-height: 100vh;
-          // Очень глубокий сине-черный космос
-          background: radial-gradient(circle at center, #1B4332 0%, #10B981 10%, #000 70%); 
-          transition: opacity 0.5s ease;
-          color: white;
-          overflow: hidden; // Чтобы свечение не ломало верстку
+        .stars-bg {
+          background: radial-gradient(ellipse at 50% 100%, #0a1628 0%, #000 70%);
+          pointer-events: none;
         }
-        .planet-page-wrapper.loading { opacity: 0; }
-        
-        /* ТЕМНАЯ ТОПБАР */
-        .crm-topbar.dark { 
-          background: #000; 
-          border-bottom: 1px solid #1B4332; 
-          display: flex;
-          justify-content: space-between;
-          padding: 10px 20px;
-          align-items: center;
-        }
-        .topbar-logo { color: #10B981; font-weight: 700; font-size: 18px; }
-        .back-link { color: #74C69D; text-decoration: none; font-size: 14px; }
-
-        .planet-main {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 60px 20px;
-          gap: 50px;
-        }
-
-        /* КОНТЕЙНЕР ДЛЯ НОЧНОЙ ЗЕМЛИ */
-        .planet-earth-night-container {
-          position: relative;
-          width: 500px; // Сделаем побольше
-          height: 500px;
-          border-radius: 50%;
-          // Сделаем планету частью космоса
-          overflow: visible; 
-          cursor: pointer; // Чтобы хотелось кликнуть
-          z-index: 10;
-        }
-
-        /* Ядро планеты (фотография) */
-        .earth-core {
+        .stars-bg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          border-radius: 50%;
-          z-index: 1;
+          background-image: url("data:image/svg+xml,%3Csvg width='800' height='600' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='100' cy='50' r='1.5' fill='white' opacity='0.7'/%3E%3Ccircle cx='350' cy='120' r='1' fill='white' opacity='0.5'/%3E%3Ccircle cx='600' cy='80' r='2' fill='white' opacity='0.8'/%3E%3Ccircle cx='200' cy='180' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='750' cy='200' r='1.5' fill='white' opacity='0.7'/%3E%3Ccircle cx='450' cy='40' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='50' cy='300' r='1.5' fill='white' opacity='0.5'/%3E%3Ccircle cx='700' cy='350' r='1' fill='white' opacity='0.6'/%3E%3C/svg%3E");
+          background-size: cover;
+          opacity: 0.6;
         }
 
-        /* ОСНОВНОЕ СИЯНИЕ АТМОСФЕРЫ */
-        .atmosphere-glow-night {
+        .earth-view-container {
+          position: relative;
+          width: 100%;
+          max-width: 800px;
+          height: 400px;
+          margin-bottom: 40px;
+          overflow: hidden;
+          border-radius: 50% / 30% 30% 0 0;
+          box-shadow: 0 -10px 40px rgba(249, 115, 22, 0.2);
+        }
+
+        /* Кривизна Земли */
+        .earth-curve {
           position: absolute;
-          top: 0; left: 0; width: 100%; height: 100%;
-          border-radius: 50%;
-          // Сияние: тонкий синий ободок + мягкий зеленый отсвет
-          box-shadow: inset 0 0 50px rgba(16, 185, 129, 0.4), 
-                      0 0 80px rgba(16, 185, 129, 0.3), 
-                      0 0 120px rgba(16, 185, 129, 0.2);
-          z-index: 2;
-          // Плавная пульсация
-          animation: glowPulseNight 8s ease-in-out infinite;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50% / 30% 30% 0 0;
+          background: radial-gradient(circle at 50% 130%, 
+            #0B3D91 0%,          /* глубокий океан */
+            #1D4ED8 20%,         /* океан */
+            #3B82F6 35%,         /* светлая вода */
+            #6EE7B7 45%,         /* мелководье */
+            #34D399 48%,         /* зелень */
+            #059669 52%,         /* тёмная зелень */
+            #064E3B 55%,         /* лес */
+            #0B3D91 70%,         /* океан */
+            #000 100%);          /* космос */
+          box-shadow: inset 0 -20px 60px rgba(0,0,0,0.5);
         }
 
-        /* ЭФФЕКТ ДЛЯ ОГНЕЙ ГОРОДОВ */
-        .city-lights-glow {
+        /* Атмосферное свечение по дуге */
+        .atmosphere-arc {
           position: absolute;
-          top: 0; left: 0; width: 100%; height: 100%;
-          border-radius: 50%;
-          // Добавляем теплое золотистое сияние *поверх* городов
-          background: radial-gradient(circle at center, transparent 30%, rgba(244, 184, 96, 0.2) 60%);
-          z-index: 3;
-          opacity: 0.1;
-          animation: glowPulseCities 5s ease-in-out infinite; // Пульсирует быстрее
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50% / 30% 30% 0 0;
+          background: transparent;
+          box-shadow: 
+            0 0 80px rgba(249, 115, 22, 0.3) inset,
+            0 -20px 60px rgba(249, 115, 22, 0.2);
+          animation: atmospherePulse 8s ease-in-out infinite;
         }
 
-        /* ТЕМНАЯ ИНФО-ПАНЕЛЬ */
-        .planet-info-panel-night {
-          background: #000;
-          padding: 32px;
+        /* Огни городов */
+        .city-lights {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50% / 30% 30% 0 0;
+          background: url("data:image/svg+xml,%3Csvg width='400' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='160' r='2' fill='%23FBBF24' opacity='0.6'/%3E%3Ccircle cx='120' cy='140' r='1.5' fill='%23FBBF24' opacity='0.5'/%3E%3Ccircle cx='200' cy='150' r='2' fill='%23F59E0B' opacity='0.7'/%3E%3Ccircle cx='280' cy='170' r='1.5' fill='%23FBBF24' opacity='0.4'/%3E%3Ccircle cx='340' cy='155' r='2' fill='%23F59E0B' opacity='0.6'/%3E%3Ccircle cx='180' cy='130' r='1' fill='%23FDE047' opacity='0.8'/%3E%3Ccircle cx='310' cy='145' r='1.5' fill='%23FBBF24' opacity='0.5'/%3E%3C/svg%3E");
+          background-size: cover;
+          opacity: 0.3;
+          animation: lightsFlicker 4s ease-in-out infinite alternate;
+        }
+
+        .planet-info-panel {
+          background: rgba(21, 34, 56, 0.8);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(249, 115, 22, 0.3);
           border-radius: 24px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-          max-width: 650px;
+          padding: 32px;
+          max-width: 480px;
           text-align: center;
-          border: 1px solid #1B4332;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-        .planet-info-panel-night h2 { color: #10B981; margin-bottom: 14px; font-weight: 600; }
-        .planet-info-panel-night p { color: #74C69D; line-height: 1.7; font-size: 15px; }
+        .planet-info-panel h2 {
+          font-size: 26px;
+          font-weight: 700;
+          margin-bottom: 12px;
+          background: linear-gradient(135deg, #f97316, #c084fc);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        .planet-info-panel p {
+          color: #9aa9c1;
+          line-height: 1.6;
+          font-size: 16px;
+        }
 
-        /* АНИМАЦИИ */
-        @keyframes glowPulseNight {
-          0%, 100% { box-shadow: 0 0 80px rgba(16, 185, 129, 0.3); }
-          50% { box-shadow: 0 0 110px rgba(16, 185, 129, 0.5); }
+        @keyframes atmospherePulse {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
         }
-        @keyframes glowPulseCities {
-          0%, 100% { opacity: 0.1; }
-          50% { opacity: 0.25; }
+        @keyframes lightsFlicker {
+          0% { opacity: 0.2; }
+          100% { opacity: 0.5; }
         }
       `}</style>
     </>
-  );
+  )
 }
