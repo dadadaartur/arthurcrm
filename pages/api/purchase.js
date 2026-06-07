@@ -10,7 +10,9 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    global: { headers: { cookie: req.headers.cookie || '' } }
+  })
   const { data: { session } } = await supabaseClient.auth.getSession()
   if (!session) return res.status(401).json({ error: 'Не авторизован' })
 
