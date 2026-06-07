@@ -26,11 +26,21 @@ export default function Shop() {
 
   const purchase = async (reward) => {
     setLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      setModal({ show: true, message: 'Не удалось получить токен доступа', type: 'error' })
+      setLoading(false)
+      return
+    }
+
     const res = await fetch('/api/purchase', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rewardId: reward.id }),
-      credentials: 'include'  // ← важно для передачи кук
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ rewardId: reward.id })
     })
     const result = await res.json()
     if (res.ok) {
