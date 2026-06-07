@@ -1,23 +1,51 @@
+import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  const centerX = 50
-  const centerY = 42
+  const centerX = 50 // центр по X (проценты)
+  const centerY = 42 // центр по Y (проценты)
 
-  const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 28, top: 10, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 70, top: 14, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 18, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 75, top: 40, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42, top: 62, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
+  // Базовые параметры кнопок
+  const baseBlocks = [
+    { title: 'Чемпионат', sub: 'менеджеров', radius: 22, angle: 0,   colors: ['#7AC78F', '#c084fc'], speed: 0.015 },
+    { title: 'Гороскоп',   sub: 'профессий',  radius: 28, angle: 1.2, colors: ['#c084fc', '#F28B82'], speed: 0.012 },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', radius: 18, angle: 2.3, colors: ['#c084fc', '#7AC78F'], speed: 0.018 },
+    { title: 'Квиз',       sub: 'проверь себя', radius: 25, angle: 3.7, colors: ['#7AC78F', '#F28B82'], speed: 0.014 },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', radius: 20, angle: 4.8, colors: ['#A3E0B0', '#d4af37'], speed: 0.016 },
+    { title: 'Битва',      sub: 'отделов',      radius: 26, angle: 5.5, colors: ['#d4af37', '#A3E0B0'], speed: 0.013 }
   ]
 
+  const [blocks, setBlocks] = useState(baseBlocks)
+
+  // Анимация вращения
+  useEffect(() => {
+    let animFrame
+    const animate = () => {
+      setBlocks(prev => prev.map(block => ({
+        ...block,
+        angle: block.angle + block.speed
+      })))
+      animFrame = requestAnimationFrame(animate)
+    }
+    animFrame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animFrame)
+  }, [])
+
+  // Вычисление позиции по углу и радиусу
+  const getPosition = (angle, radius) => {
+    const rad = angle * (Math.PI / 180)
+    const x = centerX + radius * Math.cos(rad)
+    const y = centerY + radius * Math.sin(rad)
+    return { left: `${x}%`, top: `${y}%` }
+  }
+
+  // Данные для лучей (короткие, размытые)
   const beams = blocks.map(block => {
-    const dx = block.left - centerX
-    const dy = block.top - centerY
+    const rad = block.angle * (Math.PI / 180)
+    const dx = Math.cos(rad)
+    const dy = Math.sin(rad)
     const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-    const length = Math.sqrt(dx * dx + dy * dy) * 0.55
+    const length = block.radius * 0.5 // короткий луч
     return { angle, length }
   })
 
@@ -95,7 +123,7 @@ export default function TestPlanetPage() {
           }} />
         </div>
 
-        {/* Лучи-рукава (короткие и размытые) */}
+        {/* Лучи-рукава */}
         {beams.map((beam, idx) => (
           <div
             key={`beam-${idx}`}
@@ -105,11 +133,7 @@ export default function TestPlanetPage() {
               top: `${centerY}%`,
               width: `${beam.length}%`,
               height: '2px',
-              background: `linear-gradient(90deg, 
-                rgba(255,200,50,0) 0%, 
-                rgba(255,180,0,0.2) 30%, 
-                rgba(255,140,0,0.35) 60%, 
-                transparent 100%)`,
+              background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
               transform: `rotate(${beam.angle}deg)`,
               transformOrigin: '0 0',
               filter: 'blur(4px)',
@@ -120,16 +144,17 @@ export default function TestPlanetPage() {
           />
         ))}
 
-        {/* Парящие кнопки (простой дрейф) */}
+        {/* Парящие кнопки (вращение + покачивание) */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
+          const { left, top } = getPosition(block.angle, block.radius)
           return (
             <div key={idx} style={{
-              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
+              position: 'absolute', left, top,
               transform: 'translate(-50%, -50%)',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               cursor: 'pointer', zIndex: 10,
-              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
+              animation: `wobble ${5 + idx * 2}s ease-in-out infinite alternate`,
               transition: 'transform 0.3s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
@@ -192,17 +217,9 @@ export default function TestPlanetPage() {
           0% { opacity: 0.2; }
           100% { opacity: 0.55; }
         }
-        @keyframes drift0 {
-          0% { transform: translate(-50%, -50%) translateX(-10px); }
-          100% { transform: translate(-50%, -50%) translateX(10px); }
-        }
-        @keyframes drift1 {
-          0% { transform: translate(-50%, -50%) translateY(-8px); }
-          100% { transform: translate(-50%, -50%) translateY(8px); }
-        }
-        @keyframes drift2 {
-          0% { transform: translate(-50%, -50%) translateX(6px) translateY(4px); }
-          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(-4px); }
+        @keyframes wobble {
+          0% { transform: translate(-50%, -50%) translateX(-5px) translateY(2px); }
+          100% { transform: translate(-50%, -50%) translateX(5px) translateY(-2px); }
         }
       `}</style>
     </>
