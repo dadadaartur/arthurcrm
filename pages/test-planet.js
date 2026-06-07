@@ -1,6 +1,15 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
+  const blocks = [
+    { title: 'Чемпионат мира', subtitle: 'Менеджеры' },
+    { title: 'Гороскоп профессий', subtitle: 'Узнай свою роль' },
+    { title: 'Журнал «ПРО»', subtitle: 'Лучшие практики' },
+    { title: 'Квиз', subtitle: 'Проверь себя' },
+    { title: 'ИИ‑питомец', subtitle: 'Учи и развивай' },
+    { title: 'Битва отделов', subtitle: 'Кто круче?' }
+  ]
+
   return (
     <>
       <Head>
@@ -8,7 +17,7 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды */}
+        {/* Звёзды – верхняя часть */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 5 }}>
           {Array.from({ length: 130 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
@@ -27,7 +36,7 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Свечение: сочные космические цвета */}
+        {/* Космическое свечение */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
           background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
@@ -56,65 +65,43 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Кнопки-заглушки */}
+        {/* Сетка блоков */}
         <div style={{
-          position: 'absolute', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
-          display: 'flex', gap: '12px', zIndex: 10
+          position: 'absolute', bottom: '5%', left: '5%', right: '5%',
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px',
+          zIndex: 10
         }}>
-          <a href="/" style={{
-            background: 'rgba(21, 34, 56, 0.7)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(249, 115, 22, 0.5)',
-            borderRadius: '50px',
-            padding: '10px 24px',
-            color: '#eaf0fb',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            transition: 'all 0.2s',
-            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
-          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
-          >
-            Магазин
-          </a>
-          <a href="/" style={{
-            background: 'rgba(21, 34, 56, 0.7)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(249, 115, 22, 0.5)',
-            borderRadius: '50px',
-            padding: '10px 24px',
-            color: '#eaf0fb',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            transition: 'all 0.2s',
-            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
-          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
-          >
-            Задания
-          </a>
-          <a href="/" style={{
-            background: 'rgba(21, 34, 56, 0.7)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(249, 115, 22, 0.5)',
-            borderRadius: '50px',
-            padding: '10px 24px',
-            color: '#eaf0fb',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            transition: 'all 0.2s',
-            boxShadow: '0 0 15px rgba(249,115,22,0.2)'
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'rgba(249,115,22,0.2)'}
-          onMouseLeave={(e) => e.target.style.background = 'rgba(21,34,56,0.7)'}
-          >
-            Чат
-          </a>
+          {blocks.map((block, idx) => (
+            <div key={idx} style={{
+              background: 'rgba(10, 22, 40, 0.5)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(249, 115, 22, 0.4)',
+              borderRadius: '20px',
+              padding: '24px 20px',
+              textAlign: 'center',
+              color: '#eaf0fb',
+              boxShadow: '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)',
+              animation: `holoGlow 3s ease-in-out infinite alternate`,
+              transition: 'transform 0.3s, box-shadow 0.3s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 0 40px rgba(249, 115, 22, 0.3), inset 0 0 40px rgba(249, 115, 22, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)';
+            }}
+            >
+              <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', background: 'linear-gradient(135deg, #f97316, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {block.title}
+              </div>
+              <div style={{ fontSize: '14px', color: '#9aa9c1' }}>
+                {block.subtitle}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Кнопка назад */}
@@ -145,6 +132,10 @@ export default function TestPlanetPage() {
         @keyframes edgeGlow {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
+        }
+        @keyframes holoGlow {
+          0% { border-color: rgba(249,115,22,0.4); }
+          100% { border-color: rgba(192,132,252,0.7); }
         }
       `}</style>
     </>
