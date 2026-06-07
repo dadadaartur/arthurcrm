@@ -39,7 +39,7 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Свечение */}
+        {/* Космическое свечение */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
           background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)',
@@ -56,30 +56,18 @@ export default function TestPlanetPage() {
           filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Линия горизонта */}
-        <div style={{
-          position: 'absolute', top: '45%', left: '5%', width: '90%', height: '2px',
-          background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.7), rgba(192,132,252,0.7), transparent)',
-          filter: 'blur(3px)', animation: 'horizonPulse 6s ease-in-out infinite', zIndex: 4
-        }} />
-        <div style={{
-          position: 'absolute', top: '40%', left: '10%', width: '80%', height: '40px',
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(255,220,120,0.3), transparent 70%)',
-          filter: 'blur(12px)', animation: 'edgeGlow 8s ease-in-out infinite', zIndex: 3
-        }} />
-
-        {/* Облако космической пыли (размытый золотой шар) */}
+        {/* Облако космической пыли (шар) – теперь заметнее */}
         <div style={{
           position: 'absolute',
           left: `${centerX}%`,
           top: `${centerY}%`,
           transform: 'translate(-50%, -50%)',
-          width: '60px',
-          height: '60px',
+          width: '70px',
+          height: '70px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle at 40% 40%, rgba(255,215,0,0.5) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.05) 60%, transparent 80%)',
-          boxShadow: '0 0 40px rgba(255,215,0,0.3), 0 0 80px rgba(255,180,0,0.15)',
-          filter: 'blur(10px)',
+          background: 'radial-gradient(circle at 40% 40%, rgba(255,215,0,0.7) 0%, rgba(255,180,0,0.4) 30%, rgba(255,140,0,0.15) 60%, transparent 80%)',
+          boxShadow: '0 0 50px rgba(255,215,0,0.5), 0 0 100px rgba(255,180,0,0.25)',
+          filter: 'blur(5px)',
           animation: 'orbPulse 6s ease-in-out infinite',
           zIndex: 5
         }} />
@@ -90,25 +78,25 @@ export default function TestPlanetPage() {
           const dy = block.top - centerY
           const length = Math.sqrt(dx * dx + dy * dy)
           const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-          // Укороченные нити (60% от полной длины)
-          const shortLength = length * 0.6
+          // Нити чуть длиннее (75% от полной длины)
+          const threadLength = length * 0.75
 
           const [c1, c2] = block.colors
           return (
             <div key={idx}>
-              {/* Нить */}
+              {/* Нить – теперь виднее */}
               <div
                 style={{
                   position: 'absolute',
                   left: `${centerX}%`,
                   top: `${centerY}%`,
-                  width: `${shortLength}%`,
+                  width: `${threadLength}%`,
                   height: '1px',
-                  background: `linear-gradient(90deg, rgba(212,175,55,0.4), transparent)`,
+                  background: `linear-gradient(90deg, rgba(212,175,55,0.7), transparent)`,
                   transform: `rotate(${angle}deg)`,
                   transformOrigin: '0 0',
-                  opacity: 0.3,
-                  filter: 'blur(2px)',
+                  opacity: 0.6,
+                  filter: 'blur(1px)',
                   animation: 'threadFlicker 4s ease-in-out infinite',
                   pointerEvents: 'none',
                   zIndex: 6
@@ -172,21 +160,13 @@ export default function TestPlanetPage() {
           0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
           100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
         }
-        @keyframes edgeGlow {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-        @keyframes horizonPulse {
-          0%, 100% { opacity: 0.4; transform: scaleX(1); }
-          50% { opacity: 0.8; transform: scaleX(1.1); }
-        }
         @keyframes orbPulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+          50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
         }
         @keyframes threadFlicker {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.4; }
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.8; }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
