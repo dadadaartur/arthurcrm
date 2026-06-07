@@ -17,8 +17,8 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – верхняя часть */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 5 }}>
+        {/* Звёзды – всё небо */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 5 }}>
           {Array.from({ length: 130 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
             const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
@@ -65,10 +65,10 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Сетка блоков */}
+        {/* Сетка блоков – равномерно по всему экрану */}
         <div style={{
-          position: 'absolute', bottom: '5%', left: '5%', right: '5%',
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px',
+          position: 'absolute', top: '12%', left: '6%', right: '6%', bottom: '12%',
+          display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '20px',
           zIndex: 10
         }}>
           {blocks.map((block, idx) => (
@@ -78,7 +78,7 @@ export default function TestPlanetPage() {
               border: '1px solid rgba(249, 115, 22, 0.4)',
               borderRadius: '20px',
               padding: '24px 20px',
-              textAlign: 'center',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
               color: '#eaf0fb',
               boxShadow: '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)',
               animation: `holoGlow 3s ease-in-out infinite alternate`,
@@ -94,10 +94,10 @@ export default function TestPlanetPage() {
               e.currentTarget.style.boxShadow = '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)';
             }}
             >
-              <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', background: 'linear-gradient(135deg, #f97316, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', background: 'linear-gradient(135deg, #f97316, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
                 {block.title}
               </div>
-              <div style={{ fontSize: '14px', color: '#9aa9c1' }}>
+              <div style={{ fontSize: '14px', color: '#9aa9c1', textAlign: 'center' }}>
                 {block.subtitle}
               </div>
             </div>
