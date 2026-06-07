@@ -7,24 +7,32 @@ export default function TestPlanetPage() {
   useEffect(() => {
     const container = starsRef.current
     if (!container) return
-
-    // Очищаем старые звёзды, если есть
     container.innerHTML = ''
 
-    // Создаём 100 мерцающих звёзд
-    for (let i = 0; i < 100; i++) {
+    const starColors = [
+      '#ffffff', // белый
+      '#ffcccc', // красноватый
+      '#ffdd99', // оранжевый
+      '#ccccff', // голубоватый
+      '#aaccff', // синеватый
+      '#ffffcc', // желтоватый
+    ]
+
+    for (let i = 0; i < 120; i++) {
       const star = document.createElement('div')
       star.style.position = 'absolute'
       star.style.left = Math.random() * 100 + '%'
-      star.style.top = Math.random() * 60 + '%' // только в верхней части (над планетой)
-      const size = Math.random() * 3 + 1
+      star.style.top = Math.random() * 55 + '%' // только в верхней части, над планетой
+      const size = Math.random() * 3 + 1.5
       star.style.width = size + 'px'
       star.style.height = size + 'px'
       star.style.borderRadius = '50%'
-      star.style.background = 'white'
-      star.style.opacity = Math.random() * 0.7 + 0.3
-      star.style.animation = `twinkle ${Math.random() * 4 + 2}s ease-in-out infinite`
-      star.style.animationDelay = Math.random() * 5 + 's'
+      const color = starColors[Math.floor(Math.random() * starColors.length)]
+      star.style.background = color
+      star.style.boxShadow = `0 0 ${size * 2}px ${color}` // размытое свечение
+      star.style.opacity = Math.random() * 0.5 + 0.3
+      star.style.animation = `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`
+      star.style.animationDelay = Math.random() * 6 + 's'
       container.appendChild(star)
     }
   }, [])
@@ -43,41 +51,46 @@ export default function TestPlanetPage() {
         position: 'relative',
         fontFamily: 'Inter, sans-serif'
       }}>
-        {/* Мерцающие звёзды */}
-        <div ref={starsRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
+        {/* Звёздное небо (только над планетой) */}
+        <div ref={starsRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
 
-        {/* Планета Земля — CSS‑градиент */}
+        {/* Планета Земля */}
         <div style={{
           position: 'absolute',
-          bottom: '-35vh',
+          bottom: '-38vh',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '140vw',
-          height: '140vw',
+          width: '145vw',
+          height: '145vw',
           borderRadius: '50%',
           background: `
-            radial-gradient(circle at 35% 65%, #0B3D91 0%, #1D4ED8 18%, #3B82F6 30%, transparent 40%),
-            radial-gradient(circle at 65% 70%, #064E3B 0%, #059669 15%, #34D399 25%, transparent 35%),
-            radial-gradient(circle at 50% 55%, #6EE7B7 0%, #34D399 20%, transparent 30%),
-            radial-gradient(circle at 50% 80%, #0B3D91 0%, #000 70%)
+            /* Океаны */
+            radial-gradient(circle at 30% 60%, #1D4ED8 0%, #0B3D91 30%, transparent 50%),
+            radial-gradient(circle at 70% 55%, #2563EB 0%, #0B3D91 25%, transparent 45%),
+            /* Материки (зелёные и коричневые) */
+            radial-gradient(ellipse at 40% 65%, #059669 0%, #064E3B 15%, transparent 30%),
+            radial-gradient(ellipse at 55% 70%, #34D399 0%, #059669 10%, transparent 25%),
+            radial-gradient(ellipse at 65% 60%, #D97706 0%, #92400E 12%, transparent 25%),
+            /* Общая тень */
+            radial-gradient(circle at 50% 75%, #000 0%, transparent 70%)
           `,
-          boxShadow: 'inset 0 -30px 80px rgba(0,0,0,0.7)',
-          zIndex: 0
+          boxShadow: 'inset 0 -40px 100px rgba(0,0,0,0.8)',
+          zIndex: 1
         }} />
 
-        {/* Атмосферное свечение */}
+        {/* Атмосферное свечение над горизонтом */}
         <div style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           width: '100%',
-          height: '60px',
-          background: 'linear-gradient(to top, rgba(249,115,22,0.4), transparent)',
+          height: '70px',
+          background: 'linear-gradient(to top, rgba(249,115,22,0.5), transparent)',
           animation: 'pulse 8s ease-in-out infinite',
           zIndex: 2
         }} />
 
-        {/* Кнопка возврата (только стрелка) */}
+        {/* Кнопка "На главную" */}
         <a href="/" style={{
           position: 'absolute',
           top: '20px',
@@ -101,12 +114,12 @@ export default function TestPlanetPage() {
 
       <style jsx global>{`
         @keyframes twinkle {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 0.15; transform: scale(0.9); }
+          50% { opacity: 1; transform: scale(1.1); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.9; }
         }
       `}</style>
     </>
