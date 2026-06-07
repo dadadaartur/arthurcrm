@@ -1,12 +1,11 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  // Ручная балансировка: равномерное покрытие всего экрана
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 25, top: 8, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 72, top: 12, colors: ['#F28B82', '#f97316'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 72, top: 12, colors: ['#c084fc', '#F28B82'] },
     { title: 'Журнал ПРО', sub: 'лучшие практики', left: 10, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 78, top: 40, colors: ['#f97316', '#F28B82'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 78, top: 40, colors: ['#7AC78F', '#F28B82'] },
     { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 40, top: 62, colors: ['#A3E0B0', '#d4af37'] },
     { title: 'Битва', sub: 'отделов', left: 68, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
@@ -58,15 +57,26 @@ export default function TestPlanetPage() {
           animation: 'breathe3 20s ease-in-out infinite alternate',
           zIndex: 2
         }} />
+
+        {/* Линия горизонта – заполняет пустоту в центре */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '30%',
-          background: 'linear-gradient(to top, rgba(255,220,120,0.7), transparent)',
-          filter: 'blur(15px)',
+          position: 'absolute', top: '45%', left: '5%', width: '90%', height: '2px',
+          background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.7), rgba(192,132,252,0.7), transparent)',
+          filter: 'blur(3px)',
+          animation: 'horizonPulse 6s ease-in-out infinite',
+          zIndex: 4
+        }} />
+
+        {/* Лёгкое свечение над линией горизонта */}
+        <div style={{
+          position: 'absolute', top: '40%', left: '10%', width: '80%', height: '40px',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(255,220,120,0.3), transparent 70%)',
+          filter: 'blur(12px)',
           animation: 'edgeGlow 8s ease-in-out infinite',
           zIndex: 3
         }} />
 
-        {/* Парящие слова – сбалансированное распределение */}
+        {/* Парящие слова */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -129,6 +139,10 @@ export default function TestPlanetPage() {
         @keyframes edgeGlow {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
+        }
+        @keyframes horizonPulse {
+          0%, 100% { opacity: 0.4; transform: scaleX(1); }
+          50% { opacity: 0.8; transform: scaleX(1.1); }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
