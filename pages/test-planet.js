@@ -1,14 +1,31 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  const blocks = [
-    { title: 'Чемпионат', subtitle: 'менеджеров' },
-    { title: 'Гороскоп', subtitle: 'профессий' },
-    { title: 'Журнал ПРО', subtitle: 'лучшие практики' },
-    { title: 'Квиз', subtitle: 'проверь себя' },
-    { title: 'ИИ‑питомец', subtitle: 'учи и развивай' },
-    { title: 'Битва', subtitle: 'отделов' }
+  // Пирамида: 3 сверху, 2 в середине, 1 внизу
+  const rows = [
+    [
+      { title: 'Чемпионат', subtitle: 'менеджеров' },
+      { title: 'Гороскоп', subtitle: 'профессий' },
+      { title: 'Журнал ПРО', subtitle: 'лучшие практики' }
+    ],
+    [
+      { title: 'Квиз', subtitle: 'проверь себя' },
+      { title: 'ИИ‑питомец', subtitle: 'учи и развивай' }
+    ],
+    [
+      { title: 'Битва', subtitle: 'отделов' }
+    ]
   ]
+
+  const colorPairs = [
+    ['#7AC78F', '#c084fc'],
+    ['#F28B82', '#f97316'],
+    ['#c084fc', '#7AC78F'],
+    ['#f97316', '#F28B82'],
+    ['#A3E0B0', '#d4af37'],
+    ['#d4af37', '#A3E0B0']
+  ]
+  let colorIndex = 0
 
   return (
     <>
@@ -65,50 +82,50 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Парящие слова – без фона, без рамок */}
+        {/* Парящие слова – пирамида */}
         <div style={{
           position: 'absolute', top: '10%', left: '8%', right: '8%', bottom: '15%',
-          display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '20px',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '30px',
           zIndex: 10
         }}>
-          {blocks.map((block, idx) => {
-            // Уникальные цвета для каждого блока
-            const colors = [
-              ['#7AC78F', '#c084fc'], // зелёный -> фиолетовый
-              ['#F28B82', '#f97316'], // розовый -> оранжевый
-              ['#c084fc', '#7AC78F'], // фиолетовый -> зелёный
-              ['#f97316', '#F28B82'], // оранжевый -> розовый
-              ['#A3E0B0', '#d4af37'], // мятный -> золотой
-              ['#d4af37', '#A3E0B0']  // золотой -> мятный
-            ];
-            const [c1, c2] = colors[idx];
-            return (
-              <div key={idx} style={{
-                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-                textAlign: 'center', cursor: 'pointer', transition: 'transform 0.3s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-              >
-                <div style={{
-                  fontSize: '28px', fontWeight: 700, lineHeight: 1.2, marginBottom: '6px',
-                  background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 15px rgba(192,132,252,0.5))',
-                  animation: `textGlow 3s ease-in-out infinite alternate`
-                }}>
-                  {block.title}
-                </div>
-                <div style={{
-                  fontSize: '16px', fontWeight: 400, color: '#eaf0fb',
-                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4))',
-                  opacity: 0.9, letterSpacing: '0.5px'
-                }}>
-                  {block.subtitle}
-                </div>
-              </div>
-            )
-          })}
+          {rows.map((row, rowIdx) => (
+            <div key={rowIdx} style={{
+              display: 'flex', justifyContent: 'center', gap: '40px', flexWrap: 'wrap'
+            }}>
+              {row.map((block) => {
+                const [c1, c2] = colorPairs[colorIndex % colorPairs.length]
+                colorIndex++
+                return (
+                  <div key={block.title} style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    cursor: 'pointer', transition: 'transform 0.3s',
+                    maxWidth: '200px'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  >
+                    <div style={{
+                      fontSize: '28px', fontWeight: 700, lineHeight: 1.2, marginBottom: '6px',
+                      background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                      filter: 'drop-shadow(0 0 15px rgba(192,132,252,0.5))',
+                      animation: 'textGlow 3s ease-in-out infinite alternate',
+                      textAlign: 'center'
+                    }}>
+                      {block.title}
+                    </div>
+                    <div style={{
+                      fontSize: '16px', fontWeight: 400, color: '#eaf0fb',
+                      filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4))',
+                      opacity: 0.9, letterSpacing: '0.5px', textAlign: 'center'
+                    }}>
+                      {block.subtitle}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Кнопка назад */}
