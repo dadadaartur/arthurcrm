@@ -13,12 +13,12 @@ export default function TestPlanetPage() {
     { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
-  // Лучи-рукава к каждой кнопке (угол, длина)
+  // Укороченные лучи (55% от расстояния)
   const beams = blocks.map(block => {
     const dx = block.left - centerX
     const dy = block.top - centerY
     const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-    const length = Math.sqrt(dx * dx + dy * dy)
+    const length = Math.sqrt(dx * dx + dy * dy) * 0.55
     return { angle, length }
   })
 
@@ -75,21 +75,18 @@ export default function TestPlanetPage() {
           height: '90px',
           zIndex: 5
         }}>
-          {/* Внешний ореол (аккреционный диск) */}
           <div style={{
             width: '100%', height: '100%', borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
             filter: 'blur(16px)',
             animation: 'orbitSpin 10s linear infinite'
           }} />
-          {/* Средний слой */}
           <div style={{
             position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
             background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
             filter: 'blur(12px)',
             animation: 'orbitSpin 8s linear infinite reverse'
           }} />
-          {/* Горизонт событий (тёмное ядро) */}
           <div style={{
             position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%',
             background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)',
@@ -99,7 +96,7 @@ export default function TestPlanetPage() {
           }} />
         </div>
 
-        {/* Лучи-рукава, исходящие из дыры к кнопкам */}
+        {/* Лучи-рукава (укороченные и размытые) */}
         {beams.map((beam, idx) => (
           <div
             key={`beam-${idx}`}
@@ -111,13 +108,12 @@ export default function TestPlanetPage() {
               height: '2px',
               background: `linear-gradient(90deg, 
                 rgba(255,200,50,0) 0%, 
-                rgba(255,180,0,0.3) 20%, 
-                rgba(255,140,0,0.5) 50%, 
-                rgba(255,100,0,0.15) 85%, 
+                rgba(255,180,0,0.2) 30%, 
+                rgba(255,140,0,0.35) 60%, 
                 transparent 100%)`,
               transform: `rotate(${beam.angle}deg)`,
               transformOrigin: '0 0',
-              filter: 'blur(2.5px)',
+              filter: 'blur(4px)',
               animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
               pointerEvents: 'none',
               zIndex: 6
@@ -125,7 +121,7 @@ export default function TestPlanetPage() {
           />
         ))}
 
-        {/* Парящие кнопки (притягиваются и отталкиваются) */}
+        {/* Парящие кнопки */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -194,8 +190,8 @@ export default function TestPlanetPage() {
           50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(255,215,0,0.6), 0 0 100px rgba(255,180,0,0.35); }
         }
         @keyframes beamPulse {
-          0% { opacity: 0.25; transform: rotate(deg) translateX(0); }
-          100% { opacity: 0.7; transform: rotate(deg) translateX(4px); }
+          0% { opacity: 0.2; }
+          100% { opacity: 0.55; }
         }
         @keyframes floatAround {
           0% { transform: translate(-50%, -50%) translateX(-6px) translateY(2px); }
