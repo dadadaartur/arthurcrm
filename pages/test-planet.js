@@ -33,18 +33,18 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Центр космической инсталляции – теперь правее
-  const centerX = 35
-  const centerY = 32
+  // Центр чёрной дыры (вокруг неё летают кнопки)
+  const centerX = 55
+  const centerY = 40
 
-  // Летающие кнопки сдвинуты вправо
+  // Кнопки равномерно вокруг центра (радиус ~25%)
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 45, top: 12, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 68, top: 18, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 48, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 72, top: 42, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 52, top: 58, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 70, top: 65, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз',       sub: 'проверь себя', left: 30, top: 40, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва',      sub: 'отделов',      left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   const beams = blocks.map(block => {
@@ -96,11 +96,35 @@ export default function TestPlanetPage() {
           <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Уменьшенная чёрная дыра (левая часть) */}
-        <div style={{ position: 'absolute', left: `${centerX}%`, top: `${centerY}%`, transform: 'translate(-50%, -50%)', width: '70px', height: '70px', zIndex: 5 }}>
-          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)', filter: 'blur(12px)', animation: 'orbitSpin 10s linear infinite' }} />
-          <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 8s linear infinite reverse' }} />
-          <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2)', filter: 'blur(2px)', animation: 'blackHoleBreath 6s ease-in-out infinite' }} />
+        {/* Чёрная дыра (центр притяжения) */}
+        <div style={{
+          position: 'absolute',
+          left: `${centerX}%`,
+          top: `${centerY}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '80px',
+          height: '80px',
+          zIndex: 5
+        }}>
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
+            filter: 'blur(14px)',
+            animation: 'orbitSpin 10s linear infinite'
+          }} />
+          <div style={{
+            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
+            filter: 'blur(10px)',
+            animation: 'orbitSpin 8s linear infinite reverse'
+          }} />
+          <div style={{
+            position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%',
+            background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)',
+            boxShadow: '0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2)',
+            filter: 'blur(2px)',
+            animation: 'blackHoleBreath 6s ease-in-out infinite'
+          }} />
         </div>
 
         {/* Лучи-рукава */}
@@ -117,7 +141,7 @@ export default function TestPlanetPage() {
           }} />
         ))}
 
-        {/* Парящие кнопки (уменьшены) */}
+        {/* Парящие кнопки */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -152,10 +176,10 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – слева вверху (уменьшенный) */}
+        {/* Блок баланса – слева вверху, с чёрной дырой и кнопками */}
         <div style={{
-          position: 'absolute', left: '5%', top: '5%',
-          zIndex: 20, width: '300px',
+          position: 'absolute', left: '4%', top: '4%',
+          zIndex: 20, width: '380px',
           background: '#0A0A0A',
           border: '1px solid rgba(249,115,22,0.5)',
           borderRadius: '24px',
@@ -165,18 +189,23 @@ export default function TestPlanetPage() {
           overflow: 'hidden'
         }}>
           <div style={{ position: 'relative', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Чёрная дыра баланса */}
             <div style={{
-              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              position: 'absolute',
+              top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
               width: '100px', height: '100px', borderRadius: '50%',
               background: 'radial-gradient(circle, #000 30%, transparent 70%)',
-              filter: 'blur(12px)', opacity: 0.5, zIndex: 0
+              filter: 'blur(10px)',
+              opacity: 0.5,
+              zIndex: 0
             }} />
             <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               <div style={{ fontSize: '13px', fontWeight: 600, color: '#f97316', marginBottom: '6px' }}>Баланс</div>
               <div style={{
                 fontSize: '42px', fontWeight: 800, color: 'transparent',
-                backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)',
+                backgroundImage: 'linear-gradient(180deg, #FFD700, #FFC107)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.6))',
                 marginBottom: '4px'
               }}>
                 {balance}
@@ -184,26 +213,32 @@ export default function TestPlanetPage() {
               <div style={{ fontSize: '13px', fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
             </div>
           </div>
+
+          {/* Кнопки действий */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px', justifyContent: 'center' }}>
             <button onClick={() => router.push('/transfer')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px',
+              flex: '1 1 0'
             }}>Перевести</button>
             <button onClick={() => router.push('/shop')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px',
+              flex: '2 1 0'
             }}>Магазин</button>
             <button onClick={() => router.push('/history')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px',
+              flex: '1 1 0'
             }}>Операции</button>
             <button onClick={() => router.push('/my-purchases')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px', flexBasis: '100%'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px',
+              flex: '1 1 0'
             }}>Мои покупки</button>
           </div>
         </div>
