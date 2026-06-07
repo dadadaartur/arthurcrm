@@ -13,21 +13,14 @@ export default function TestPlanetPage() {
     { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
-  // 12 усиков пыли с разными углами
-  const wisps = [
-    { angle: 10, length: 16 },
-    { angle: 40, length: 20 },
-    { angle: 75, length: 14 },
-    { angle: 110, length: 22 },
-    { angle: 145, length: 18 },
-    { angle: 180, length: 15 },
-    { angle: 215, length: 21 },
-    { angle: 250, length: 17 },
-    { angle: 285, length: 19 },
-    { angle: 320, length: 13 },
-    { angle: 350, length: 20 },
-    { angle: 15, length: 23 }
-  ]
+  // Лучи для каждого блока: угол и длина
+  const beams = blocks.map((block, idx) => {
+    const dx = block.left - centerX
+    const dy = block.top - centerY
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+    const length = Math.sqrt(dx * dx + dy * dy)
+    return { angle, length }
+  })
 
   return (
     <>
@@ -72,57 +65,71 @@ export default function TestPlanetPage() {
           filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate', zIndex: 2
         }} />
 
-        {/* Облако космической пыли (три слоя) */}
-        <div style={{
-          position: 'absolute',
-          left: `${centerX}%`,
-          top: `${centerY}%`,
-          transform: 'translate(-50%, -50%)',
-          width: '80px',
-          height: '80px',
-          zIndex: 5
-        }}>
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 45% 45%, rgba(255,215,0,0.6) 0%, rgba(255,180,0,0.2) 35%, transparent 70%)',
-            filter: 'blur(8px)',
-            animation: 'orbPulse 7s ease-in-out infinite'
-          }} />
-          <div style={{
-            position: 'absolute', top: '-10%', left: '-10%', width: '120%', height: '120%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 50% 50%, rgba(255,215,0,0.3) 0%, transparent 60%)',
-            filter: 'blur(12px)',
-            animation: 'orbPulse 9s ease-in-out infinite 0.5s'
-          }} />
-          <div style={{
-            position: 'absolute', top: '-15%', left: '-15%', width: '130%', height: '130%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 50% 50%, rgba(255,180,0,0.15) 0%, transparent 50%)',
-            filter: 'blur(15px)',
-            animation: 'orbPulse 11s ease-in-out infinite 1s'
-          }} />
-        </div>
-
-        {/* Усики пыли (исходят от края облака, пульсируют) */}
-        {wisps.map((wisp, idx) => (
+        {/* Лучи света от шара к кнопкам */}
+        {beams.map((beam, idx) => (
           <div
-            key={`wisp-${idx}`}
+            key={`beam-${idx}`}
             style={{
               position: 'absolute',
               left: `${centerX}%`,
               top: `${centerY}%`,
-              width: `${wisp.length + 5}%`,           // чуть длиннее, чтобы перекрыть отступ
-              height: '1px',
-              background: `linear-gradient(90deg, transparent 4%, rgba(212,175,55,0.7) 4%)`,
-              transform: `rotate(${wisp.angle}deg)`,
+              width: `${beam.length}%`,
+              height: '2px',
+              background: `linear-gradient(90deg, 
+                rgba(255,200,50,0) 0%, 
+                rgba(255,180,0,0.4) 15%, 
+                rgba(255,140,0,0.6) 40%, 
+                rgba(255,100,0,0.2) 80%, 
+                transparent 100%)`,
+              transform: `rotate(${beam.angle}deg)`,
               transformOrigin: '0 0',
-              opacity: 0.5,
-              filter: 'blur(1.5px)',
-              animation: `wispPulse ${4 + idx % 3}s ease-in-out infinite alternate`,
+              filter: 'blur(3px)',
+              animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.4}s`,
               pointerEvents: 'none',
               zIndex: 6
             }}
           />
         ))}
+
+        {/* Шар-туманность (сложная структура) */}
+        <div style={{
+          position: 'absolute',
+          left: `${centerX}%`,
+          top: `${centerY}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '90px',
+          height: '90px',
+          zIndex: 5
+        }}>
+          {/* Внешний ореол */}
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.1) 50%, transparent 80%)',
+            filter: 'blur(16px)',
+            animation: 'orbPulse 8s ease-in-out infinite'
+          }} />
+          {/* Средний слой */}
+          <div style={{
+            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 40% 40%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
+            filter: 'blur(10px)',
+            animation: 'orbPulse 6s ease-in-out infinite 0.5s'
+          }} />
+          {/* Ядро */}
+          <div style={{
+            position: 'absolute', top: '10%', left: '10%', width: '80%', height: '80%', borderRadius: '50%',
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,220,100,0.8) 0%, rgba(255,150,0,0.3) 50%, transparent 70%)',
+            filter: 'blur(5px)',
+            animation: 'orbPulse 5s ease-in-out infinite 1s'
+          }} />
+          {/* Искры внутри */}
+          <div style={{
+            position: 'absolute', top: '25%', left: '25%', width: '50%', height: '50%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,200,0.9) 0%, rgba(255,200,0,0) 50%)',
+            filter: 'blur(2px)',
+            animation: 'sparkle 3s ease-in-out infinite'
+          }} />
+        </div>
 
         {/* Парящие блоки */}
         {blocks.map((block, idx) => {
@@ -186,11 +193,15 @@ export default function TestPlanetPage() {
         }
         @keyframes orbPulse {
           0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.2); opacity: 1; }
+          50% { transform: scale(1.15); opacity: 1; }
         }
-        @keyframes wispPulse {
+        @keyframes sparkle {
+          0%, 100% { opacity: 0.7; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+        @keyframes beamPulse {
           0% { opacity: 0.3; transform: rotate(deg) translateX(0); }
-          100% { opacity: 0.7; transform: rotate(deg) translateX(4px); }
+          100% { opacity: 0.8; transform: rotate(deg) translateX(5px); }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
