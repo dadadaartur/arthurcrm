@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import PremiumModal from '../components/PremiumModal'
 
 export default function MyPurchases() {
   const [user, setUser] = useState(null)
   const [purchases, setPurchases] = useState([])
+  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -24,35 +26,47 @@ export default function MyPurchases() {
   }
 
   async function activate(purchaseId) {
-    await supabase.from('purchases').update({ status: 'pending' }).eq('id', purchaseId)
-    loadPurchases(user.id)
+    // Меняем статус на 'pending', чтобы администратор увидел запрос
+    const { error } = await supabase.from('purchases')
+      .update({ status: 'pending' })
+      .eq('id', purchaseId)
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setNotification({ show: true, message: 'Запрос на активацию отправлен администратору' })
+      loadPurchases(user.id)
+    } else {
+      setNotification({ show: true, message: 'Ошибка активации' })
+    }
   }
 
   const statusLabels = {
     new: 'Новая',
     pending: 'Ожидает подтверждения',
     approved: 'Активирована',
+    rejected: 'Отклонена'
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Мои покупки</h1>
-        <p className="text-sm text-gray-500 mt-2">Здесь отображаются ваши приобретённые награды и их статус</p>
+        <h1 className="text-2xl font-bold text-white">Мои покупки</h1>
+        <p className="text-sm text-gray-400 mt-2">Здесь отображаются ваши приобретённые награды и их статус</p>
       </div>
       {purchases.length === 0 ? (
-        <p className="text-gray-500 text-center">Покупок пока нет</p>
+        <p className="text-gray-400 text-center">Покупок пока нет</p>
       ) : (
         <div className="space-y-4">
           {purchases.map(p => (
             <div key={p.id} className="premium-card flex justify-between items-center">
               <div>
-                <h3 className="font-semibold text-gray-800">{p.reward_name}</h3>
-                <p className="text-sm text-gray-500">{new Date(p.created_at).toLocaleString('ru')}</p>
+                <h3 className="font-semibold text-white">{p.reward_name}</h3>
+                <p className="text-sm text-gray-400">{new Date(p.created_at).toLocaleString('ru')}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  p.status === 'new' ? 'bg-blue-100 text-blue-700' :
-                  p.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-green-100 text-green-700'
+                  p.status === 'new' ? 'bg-blue-900 text-blue-300' :
+                  p.status === 'pending' ? 'bg-yellow-900 text-yellow-300' :
+                  p.status === 'approved' ? 'bg-green-900 text-green-300' :
+                  'bg-red-900 text-red-300'
                 }`}>{statusLabels[p.status] || p.status}</span>
               </div>
               <div className="text-right">
@@ -65,6 +79,10 @@ export default function MyPurchases() {
           ))}
         </div>
       )}
+
+      <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false, message: '' })} title="Уведомление">
+        <p className="text-white">{notification.message}</p>
+      </PremiumModal>
     </div>
   )
 }
