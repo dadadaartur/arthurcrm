@@ -1,25 +1,68 @@
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
+import Link from 'next/link'
+import { supabase } from '../lib/supabaseClient'
+
+function getKarmikWord(n) {
+  const lastDigit = n % 10
+  const lastTwoDigits = n % 100
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
+  if (lastDigit === 1) return 'кармик'
+  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
+  return 'кармиков'
+}
 
 export default function TestPlanetPage() {
-  const centerX = 50
-  const centerY = 42
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const [balance, setBalance] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  // Загружаем пользователя и баланс (как на главной)
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+
+      const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
+      if (bal) setBalance(bal.balance)
+      setLoading(false)
+    }
+    init()
+  }, [])
+
+  const karmikWord = getKarmikWord(balance)
+
+  // Уменьшенная центральная инсталляция (левая часть)
+  const centerX = 25   // смещено влево
+  const centerY = 30
 
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 28, top: 10, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 70, top: 14, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 18, top: 38, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 75, top: 40, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42, top: 62, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 60, top: 72, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 10, top: 15, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 40, top: 10, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 12, top: 40, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 38, top: 38, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 20, top: 55, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 35, top: 58, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   const beams = blocks.map(block => {
     const dx = block.left - centerX
     const dy = block.top - centerY
     const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-    const length = Math.sqrt(dx * dx + dy * dy) * 0.55
+    const length = Math.sqrt(dx * dx + dy * dy) * 0.5
     return { angle, length }
   })
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}>
+        <div className="spinner" />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -54,28 +97,28 @@ export default function TestPlanetPage() {
           <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Чёрная дыра */}
-        <div style={{ position: 'absolute', left: `${centerX}%`, top: `${centerY}%`, transform: 'translate(-50%, -50%)', width: '90px', height: '90px', zIndex: 5 }}>
-          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)', filter: 'blur(16px)', animation: 'orbitSpin 10s linear infinite' }} />
-          <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)', filter: 'blur(12px)', animation: 'orbitSpin 8s linear infinite reverse' }} />
-          <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2)', filter: 'blur(2px)', animation: 'blackHoleBreath 6s ease-in-out infinite' }} />
+        {/* Уменьшенная чёрная дыра (левая часть) */}
+        <div style={{ position: 'absolute', left: `${centerX}%`, top: `${centerY}%`, transform: 'translate(-50%, -50%)', width: '70px', height: '70px', zIndex: 5 }}>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)', filter: 'blur(12px)', animation: 'orbitSpin 10s linear infinite' }} />
+          <div style={{ position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 8s linear infinite reverse' }} />
+          <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2)', filter: 'blur(2px)', animation: 'blackHoleBreath 6s ease-in-out infinite' }} />
         </div>
 
         {/* Лучи-рукава */}
         {beams.map((beam, idx) => (
           <div key={`beam-${idx}`} style={{
             position: 'absolute', left: `${centerX}%`, top: `${centerY}%`,
-            width: `${beam.length}%`, height: '2px',
+            width: `${beam.length}%`, height: '1px',
             background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
             transform: `rotate(${beam.angle}deg)`, transformOrigin: '0 0',
-            filter: 'blur(4px)',
+            filter: 'blur(3px)',
             animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
             pointerEvents: 'none',
             zIndex: 6
           }} />
         ))}
 
-        {/* Парящие кнопки (фиксированные позиции) */}
+        {/* Парящие кнопки (уменьшены) */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -91,24 +134,81 @@ export default function TestPlanetPage() {
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
             >
               <div style={{
-                fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
+                fontSize: '14px', fontWeight: 600, lineHeight: 1.2, marginBottom: '2px',
                 background: `linear-gradient(135deg, ${c1}, ${c2})`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
+                filter: 'drop-shadow(0 0 8px rgba(192,132,252,0.6))',
                 textAlign: 'center'
               }}>
                 {block.title}
               </div>
               <div style={{
-                fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
-                opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
+                fontSize: '11px', fontWeight: 400, color: '#eaf0fb',
+                filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))',
+                opacity: 0.85, textAlign: 'center'
               }}>
                 {block.sub}
               </div>
             </div>
           )
         })}
+
+        {/* Блок баланса (из индекса) */}
+        <div style={{
+          position: 'absolute', right: '8%', top: '50%', transform: 'translateY(-50%)',
+          zIndex: 20, width: '360px',
+          background: '#0A0A0A',
+          border: '1px solid rgba(249,115,22,0.5)',
+          borderRadius: '28px',
+          padding: '24px 32px',
+          boxShadow: '0 0 30px rgba(249,115,22,0.2)',
+          animation: 'borderShine 4s infinite',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Чёрная дыра внутри баланса */}
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              width: '120px', height: '120px', borderRadius: '50%',
+              background: 'radial-gradient(circle, #000 30%, transparent 70%)',
+              filter: 'blur(15px)', opacity: 0.5, zIndex: 0
+            }} />
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#f97316', marginBottom: '8px' }}>Баланс</div>
+              <div style={{
+                fontSize: '48px', fontWeight: 800, color: 'transparent',
+                backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                marginBottom: '4px'
+              }}>
+                {balance}
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+            <button onClick={() => router.push('/transfer')} style={{
+              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+            }}>Перевести</button>
+            <button onClick={() => router.push('/shop')} style={{
+              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+            }}>Магазин</button>
+            <button onClick={() => router.push('/history')} style={{
+              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+            }}>Операции</button>
+            <button onClick={() => router.push('/my-purchases')} style={{
+              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px', flexBasis: '100%'
+            }}>Мои покупки</button>
+          </div>
+        </div>
 
         {/* Кнопка назад */}
         <a href="/" style={{ position: 'absolute', top: '20px', left: '24px', zIndex: 20, color: '#9aa9c1', textDecoration: 'none', fontSize: '16px', background: 'rgba(0,0,0,0.4)', padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>← На главную</a>
@@ -136,24 +236,29 @@ export default function TestPlanetPage() {
           100% { transform: rotate(360deg); }
         }
         @keyframes blackHoleBreath {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,180,0,0.2); }
-          50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(255,215,0,0.6), 0 0 100px rgba(255,180,0,0.35); }
+          0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2); }
+          50% { transform: scale(1.1); box-shadow: 0 0 50px rgba(255,215,0,0.6), 0 0 90px rgba(255,180,0,0.35); }
         }
         @keyframes beamPulse {
           0% { opacity: 0.2; }
           100% { opacity: 0.55; }
         }
+        @keyframes borderShine {
+          0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
+          50% { border-color: rgba(192,132,252,0.8); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
+          100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+        }
         @keyframes drift0 {
-          0% { transform: translate(-50%, -50%) translateX(-10px); }
-          100% { transform: translate(-50%, -50%) translateX(10px); }
+          0% { transform: translate(-50%, -50%) translateX(-8px) translateY(4px); }
+          100% { transform: translate(-50%, -50%) translateX(8px) translateY(-4px); }
         }
         @keyframes drift1 {
-          0% { transform: translate(-50%, -50%) translateY(-8px); }
-          100% { transform: translate(-50%, -50%) translateY(8px); }
+          0% { transform: translate(-50%, -50%) translateX(6px) translateY(-6px); }
+          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(6px); }
         }
         @keyframes drift2 {
-          0% { transform: translate(-50%, -50%) translateX(6px) translateY(4px); }
-          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(-4px); }
+          0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
+          100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
         }
       `}</style>
     </>
