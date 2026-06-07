@@ -8,8 +8,8 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – только в верхней половине экрана */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '50%', zIndex: 0, overflow: 'hidden' }}>
+        {/* Звёзды – только верхняя половина */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '55%', zIndex: 0 }}>
           {Array.from({ length: 120 }).map((_, i) => {
             const size = Math.random() * 2.5 + 0.8
             const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd']
@@ -27,24 +27,30 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Планета – только нижняя дуга */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50vh', overflow: 'hidden', zIndex: 1 }}>
+        {/* Планета – только нижняя часть с мягким затемнением */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '55vh', overflow: 'hidden', zIndex: 1 }}>
+          {/* Само изображение */}
           <img
             src="https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg"
             alt="Земля"
             style={{
-              position: 'absolute', bottom: '-38vh', left: '50%', transform: 'translateX(-50%)',
-              width: '140vw', height: '140vw', borderRadius: '50%', objectFit: 'cover',
-              objectPosition: 'center 30%', boxShadow: 'inset 0 -40px 100px rgba(0,0,0,0.8)'
+              position: 'absolute', bottom: '-30vh', left: '50%', transform: 'translateX(-50%)',
+              width: '130vw', height: '130vw', borderRadius: '50%', objectFit: 'cover',
+              objectPosition: 'center 30%'
             }}
           />
+          {/* Градиентная тень по краю (создаёт эффект атмосферного рассеивания) */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
+            background: 'radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)',
+          }} />
         </div>
 
-        {/* Атмосферное свечение над горизонтом */}
+        {/* Атмосферное свечение над горизонтом (размытое и широкое) */}
         <div style={{
-          position: 'absolute', bottom: '50vh', left: 0, width: '100%', height: '40px',
-          background: 'linear-gradient(to top, rgba(249,115,22,0.5), transparent)',
-          animation: 'pulse 10s ease-in-out infinite', zIndex: 2
+          position: 'absolute', bottom: '55vh', left: 0, width: '100%', height: '60px',
+          background: 'linear-gradient(to top, rgba(249,115,22,0.6), transparent)',
+          filter: 'blur(8px)', zIndex: 2, animation: 'pulse 10s ease-in-out infinite'
         }} />
 
         {/* Кнопка назад */}
@@ -62,7 +68,7 @@ export default function TestPlanetPage() {
         }
         @keyframes pulse {
           0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.7; }
+          50% { opacity: 0.8; }
         }
       `}</style>
     </>
