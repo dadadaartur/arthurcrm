@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
+import PremiumModal from '../components/PremiumModal'
 
 export default function Transfer() {
   const router = useRouter()
@@ -48,7 +49,8 @@ export default function Transfer() {
       const res = await fetch('/api/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientEmail, amount: transferAmount, comment })
+        body: JSON.stringify({ recipientEmail, amount: transferAmount, comment }),
+        credentials: 'include'  // ← важно для передачи кук
       })
       const result = await res.json()
       if (!res.ok) {
@@ -69,8 +71,8 @@ export default function Transfer() {
   return (
     <div className="max-w-md mx-auto px-4 py-10">
       <div className="premium-card">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Перевод кармиков</h2>
-        <div className="text-sm text-gray-500 mb-4">
+        <h2 className="text-2xl font-bold text-white mb-6">Перевод кармиков</h2>
+        <div className="text-sm text-gray-300 mb-4">
           Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
         </div>
         <form onSubmit={handleTransfer} className="space-y-4">
@@ -98,21 +100,15 @@ export default function Transfer() {
             onChange={e => setComment(e.target.value)}
             className="input-field"
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-400 text-sm">{error}</p>}
           <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? 'Отправка...' : 'Отправить'}
           </button>
         </form>
       </div>
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Перевод выполнен!</h3>
-            <p className="text-gray-600">Операция записана в историю.</p>
-            <button onClick={() => setShowModal(false)} className="btn-gold mt-6">Ок</button>
-          </div>
-        </div>
-      )}
+      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Перевод выполнен!">
+        <p className="text-white">Операция записана в историю.</p>
+      </PremiumModal>
     </div>
   )
 }
