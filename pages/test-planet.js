@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 
 function getKarmikWord(n) {
@@ -19,7 +18,6 @@ export default function TestPlanetPage() {
   const [balance, setBalance] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  // Загружаем пользователя и баланс (как на главной)
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -35,17 +33,18 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Уменьшенная центральная инсталляция (левая часть)
-  const centerX = 25   // смещено влево
-  const centerY = 30
+  // Центр космической инсталляции – теперь правее
+  const centerX = 35
+  const centerY = 32
 
+  // Летающие кнопки сдвинуты вправо
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 10, top: 15, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп', sub: 'профессий', left: 40, top: 10, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 12, top: 40, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз', sub: 'проверь себя', left: 38, top: 38, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 20, top: 55, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва', sub: 'отделов', left: 35, top: 58, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Чемпионат', sub: 'менеджеров', left: 45, top: 12, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 68, top: 18, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 48, top: 38, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 72, top: 42, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 52, top: 58, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 70, top: 65, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   const beams = blocks.map(block => {
@@ -153,65 +152,61 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса (из индекса) */}
+        {/* Блок баланса – слева вверху (уменьшенный) */}
         <div style={{
-          position: 'absolute', right: '8%', top: '50%', transform: 'translateY(-50%)',
-          zIndex: 20, width: '360px',
+          position: 'absolute', left: '5%', top: '5%',
+          zIndex: 20, width: '300px',
           background: '#0A0A0A',
           border: '1px solid rgba(249,115,22,0.5)',
-          borderRadius: '28px',
-          padding: '24px 32px',
+          borderRadius: '24px',
+          padding: '20px 24px',
           boxShadow: '0 0 30px rgba(249,115,22,0.2)',
           animation: 'borderShine 4s infinite',
           overflow: 'hidden'
         }}>
-          <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {/* Чёрная дыра внутри баланса */}
+          <div style={{ position: 'relative', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div style={{
               position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-              width: '120px', height: '120px', borderRadius: '50%',
+              width: '100px', height: '100px', borderRadius: '50%',
               background: 'radial-gradient(circle, #000 30%, transparent 70%)',
-              filter: 'blur(15px)', opacity: 0.5, zIndex: 0
+              filter: 'blur(12px)', opacity: 0.5, zIndex: 0
             }} />
             <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#f97316', marginBottom: '8px' }}>Баланс</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#f97316', marginBottom: '6px' }}>Баланс</div>
               <div style={{
-                fontSize: '48px', fontWeight: 800, color: 'transparent',
+                fontSize: '42px', fontWeight: 800, color: 'transparent',
                 backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 marginBottom: '4px'
               }}>
                 {balance}
               </div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px', justifyContent: 'center' }}>
             <button onClick={() => router.push('/transfer')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
             }}>Перевести</button>
             <button onClick={() => router.push('/shop')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
             }}>Магазин</button>
             <button onClick={() => router.push('/history')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px'
             }}>Операции</button>
             <button onClick={() => router.push('/my-purchases')} style={{
               background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '8px 16px',
-              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '13px', flexBasis: '100%'
+              border: '1px solid rgba(249,115,22,0.5)', borderRadius: '50px', padding: '6px 14px',
+              color: 'rgba(255,255,255,0.82)', cursor: 'pointer', fontSize: '12px', flexBasis: '100%'
             }}>Мои покупки</button>
           </div>
         </div>
-
-        {/* Кнопка назад */}
-        <a href="/" style={{ position: 'absolute', top: '20px', left: '24px', zIndex: 20, color: '#9aa9c1', textDecoration: 'none', fontSize: '16px', background: 'rgba(0,0,0,0.4)', padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>← На главную</a>
       </div>
 
       <style jsx global>{`
