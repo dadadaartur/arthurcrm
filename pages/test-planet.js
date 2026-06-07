@@ -1,31 +1,15 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  // Пирамида: 3 сверху, 2 в середине, 1 внизу
-  const rows = [
-    [
-      { title: 'Чемпионат', subtitle: 'менеджеров' },
-      { title: 'Гороскоп', subtitle: 'профессий' },
-      { title: 'Журнал ПРО', subtitle: 'лучшие практики' }
-    ],
-    [
-      { title: 'Квиз', subtitle: 'проверь себя' },
-      { title: 'ИИ‑питомец', subtitle: 'учи и развивай' }
-    ],
-    [
-      { title: 'Битва', subtitle: 'отделов' }
-    ]
+  // Блоки с уникальными координатами (left%, top%) и цветовой парой
+  const blocks = [
+    { title: 'Чемпионат', sub: 'менеджеров', left: 12, top: 8, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Гороскоп', sub: 'профессий', left: 58, top: 14, colors: ['#F28B82', '#f97316'] },
+    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 35, top: 38, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'Квиз', sub: 'проверь себя', left: 68, top: 50, colors: ['#f97316', '#F28B82'] },
+    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 10, top: 60, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Битва', sub: 'отделов', left: 52, top: 78, colors: ['#d4af37', '#A3E0B0'] }
   ]
-
-  const colorPairs = [
-    ['#7AC78F', '#c084fc'],
-    ['#F28B82', '#f97316'],
-    ['#c084fc', '#7AC78F'],
-    ['#f97316', '#F28B82'],
-    ['#A3E0B0', '#d4af37'],
-    ['#d4af37', '#A3E0B0']
-  ]
-  let colorIndex = 0
 
   return (
     <>
@@ -82,51 +66,40 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Парящие слова – пирамида */}
-        <div style={{
-          position: 'absolute', top: '10%', left: '8%', right: '8%', bottom: '15%',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '30px',
-          zIndex: 10
-        }}>
-          {rows.map((row, rowIdx) => (
-            <div key={rowIdx} style={{
-              display: 'flex', justifyContent: 'center', gap: '40px', flexWrap: 'wrap'
-            }}>
-              {row.map((block) => {
-                const [c1, c2] = colorPairs[colorIndex % colorPairs.length]
-                colorIndex++
-                return (
-                  <div key={block.title} style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    cursor: 'pointer', transition: 'transform 0.3s',
-                    maxWidth: '200px'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  >
-                    <div style={{
-                      fontSize: '28px', fontWeight: 700, lineHeight: 1.2, marginBottom: '6px',
-                      background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                      filter: 'drop-shadow(0 0 15px rgba(192,132,252,0.5))',
-                      animation: 'textGlow 3s ease-in-out infinite alternate',
-                      textAlign: 'center'
-                    }}>
-                      {block.title}
-                    </div>
-                    <div style={{
-                      fontSize: '16px', fontWeight: 400, color: '#eaf0fb',
-                      filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4))',
-                      opacity: 0.9, letterSpacing: '0.5px', textAlign: 'center'
-                    }}>
-                      {block.subtitle}
-                    </div>
-                  </div>
-                )
-              })}
+        {/* Парящие слова – свободное расположение */}
+        {blocks.map((block, idx) => {
+          const [c1, c2] = block.colors
+          return (
+            <div key={idx} style={{
+              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
+              transform: 'translate(-50%, -50%)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              cursor: 'pointer', zIndex: 10,
+              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
+              transition: 'transform 0.3s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
+            >
+              <div style={{
+                fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
+                background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
+                textAlign: 'center'
+              }}>
+                {block.title}
+              </div>
+              <div style={{
+                fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
+                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
+                opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
+              }}>
+                {block.sub}
+              </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
 
         {/* Кнопка назад */}
         <a href="/" style={{
@@ -157,9 +130,17 @@ export default function TestPlanetPage() {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
-        @keyframes textGlow {
-          0% { filter: drop-shadow(0 0 15px rgba(192,132,252,0.5)); }
-          100% { filter: drop-shadow(0 0 25px rgba(249,115,22,0.7)); }
+        @keyframes drift0 {
+          0% { transform: translate(-50%, -50%) translateX(-10px); }
+          100% { transform: translate(-50%, -50%) translateX(10px); }
+        }
+        @keyframes drift1 {
+          0% { transform: translate(-50%, -50%) translateY(-8px); }
+          100% { transform: translate(-50%, -50%) translateY(8px); }
+        }
+        @keyframes drift2 {
+          0% { transform: translate(-50%, -50%) translateX(6px) translateY(4px); }
+          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(-4px); }
         }
       `}</style>
     </>
