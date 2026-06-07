@@ -27,25 +27,34 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Свечение снизу – имитация солнечного света за горизонтом */}
+        {/* Динамичный свет внизу – три подвижных слоя */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '45%',
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '50%',
           background: `
-            radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.25) 0%, transparent 60%),
-            radial-gradient(ellipse at 30% 90%, rgba(251,191,36,0.2) 0%, transparent 50%),
-            radial-gradient(ellipse at 70% 85%, rgba(192,132,252,0.15) 0%, transparent 50%)
+            radial-gradient(ellipse at 30% 100%, rgba(249,115,22,0.35) 0%, transparent 60%),
+            radial-gradient(ellipse at 70% 100%, rgba(251,191,36,0.3) 0%, transparent 55%),
+            radial-gradient(ellipse at 50% 100%, rgba(192,132,252,0.25) 0%, transparent 50%)
           `,
-          animation: 'glowShift 12s ease-in-out infinite alternate',
+          animation: 'glowShift 8s ease-in-out infinite alternate',
           zIndex: 1
         }} />
 
-        {/* Дополнительный мягкий рассеянный свет прямо у горизонта */}
+        {/* Дополнительный слой – медленное горизонтальное смещение */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '120px',
-          background: 'linear-gradient(to top, rgba(249,115,22,0.5), transparent)',
-          filter: 'blur(12px)',
-          animation: 'pulse 8s ease-in-out infinite',
+          position: 'absolute', bottom: '-10px', left: '-20%', width: '140%', height: '200px',
+          background: 'radial-gradient(ellipse at 50% 100%, rgba(255,209,102,0.4) 0%, transparent 70%)',
+          filter: 'blur(10px)',
+          animation: 'drift 20s ease-in-out infinite alternate',
           zIndex: 1
+        }} />
+
+        {/* Тонкая яркая полоса у самого горизонта (солнечный край) */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '60px',
+          background: 'linear-gradient(to top, rgba(255,245,200,0.6), transparent)',
+          filter: 'blur(4px)',
+          animation: 'pulse 6s ease-in-out infinite',
+          zIndex: 2
         }} />
 
         {/* Кнопка назад */}
@@ -62,12 +71,16 @@ export default function TestPlanetPage() {
           50% { opacity: 0.7; transform: scale(1.05); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 0.4; }
+          0%, 100% { opacity: 0.3; }
           50% { opacity: 0.8; }
         }
         @keyframes glowShift {
-          0% { opacity: 0.7; }
-          100% { opacity: 1; }
+          0% { opacity: 0.7; transform: scaleX(1); }
+          100% { opacity: 1; transform: scaleX(1.2); }
+        }
+        @keyframes drift {
+          0% { transform: translateX(-5%); opacity: 0.5; }
+          100% { transform: translateX(5%); opacity: 0.9; }
         }
       `}</style>
     </>
