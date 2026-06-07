@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
+import PremiumModal from '../components/PremiumModal'
 
 export default function Shop() {
   const router = useRouter()
@@ -43,16 +44,16 @@ export default function Shop() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Магазин наград</h1>
-        <div className="text-sm text-gray-500 mt-2">
+        <h1 className="text-2xl font-bold text-white">Магазин наград</h1>
+        <div className="text-sm text-gray-400 mt-2">
           Баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
         </div>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {rewards.map(reward => (
           <div key={reward.id} className="premium-card flex flex-col">
-            <h3 className="font-semibold text-lg text-gray-800">{reward.name}</h3>
-            <p className="text-gray-600 text-sm mt-2">{reward.description}</p>
+            <h3 className="font-semibold text-lg text-white">{reward.name}</h3>
+            <p className="text-gray-400 text-sm mt-2">{reward.description}</p>
             <div className="mt-auto flex justify-between items-center pt-4">
               <span className="text-gold font-bold">{reward.cost} к.</span>
               <button onClick={() => purchase(reward)} disabled={loading} className="btn-gold text-sm">
@@ -62,15 +63,9 @@ export default function Shop() {
           </div>
         ))}
       </div>
-      {modal.show && (
-        <div className="modal-overlay" onClick={() => setModal({ ...modal, show: false })}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">{modal.type === 'success' ? 'Успешно' : 'Ошибка'}</h3>
-            <p className="text-gray-600">{modal.message}</p>
-            <button onClick={() => setModal({ ...modal, show: false })} className="btn-gold mt-6">Ок</button>
-          </div>
-        </div>
-      )}
+      <PremiumModal isOpen={modal.show} onClose={() => setModal({ ...modal, show: false })} title={modal.type === 'success' ? 'Успешно' : 'Ошибка'}>
+        <p className="text-white">{modal.message}</p>
+      </PremiumModal>
     </div>
   )
 }
