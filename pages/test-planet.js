@@ -1,10 +1,9 @@
 import Head from 'next/head'
 
 export default function TestPlanetPage() {
-  const centerX = 50 // центр шара по X (%)
-  const centerY = 42 // центр шара по Y (%)
+  const centerX = 50
+  const centerY = 42
 
-  // Блоки чуть ближе к центру
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 28, top: 10, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп', sub: 'профессий', left: 70, top: 14, colors: ['#c084fc', '#F28B82'] },
@@ -69,90 +68,80 @@ export default function TestPlanetPage() {
           filter: 'blur(12px)', animation: 'edgeGlow 8s ease-in-out infinite', zIndex: 3
         }} />
 
-        {/* Золотые нити и шар */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 8 }}>
-          {/* Нити */}
-          {blocks.map((block, idx) => {
-            const dx = block.left - centerX
-            const dy = block.top - centerY
-            const length = Math.sqrt(dx * dx + dy * dy)
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+        {/* Облако космической пыли (размытый золотой шар) */}
+        <div style={{
+          position: 'absolute',
+          left: `${centerX}%`,
+          top: `${centerY}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 40% 40%, rgba(255,215,0,0.5) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.05) 60%, transparent 80%)',
+          boxShadow: '0 0 40px rgba(255,215,0,0.3), 0 0 80px rgba(255,180,0,0.15)',
+          filter: 'blur(10px)',
+          animation: 'orbPulse 6s ease-in-out infinite',
+          zIndex: 5
+        }} />
 
-            return (
+        {/* Нити и блоки */}
+        {blocks.map((block, idx) => {
+          const dx = block.left - centerX
+          const dy = block.top - centerY
+          const length = Math.sqrt(dx * dx + dy * dy)
+          const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+          // Укороченные нити (60% от полной длины)
+          const shortLength = length * 0.6
+
+          const [c1, c2] = block.colors
+          return (
+            <div key={idx}>
+              {/* Нить */}
               <div
-                key={`thread-${idx}`}
                 style={{
                   position: 'absolute',
                   left: `${centerX}%`,
                   top: `${centerY}%`,
-                  width: `${length}%`,
+                  width: `${shortLength}%`,
                   height: '1px',
-                  background: `linear-gradient(90deg, rgba(212,175,55,0.6), transparent)`,
+                  background: `linear-gradient(90deg, rgba(212,175,55,0.4), transparent)`,
                   transform: `rotate(${angle}deg)`,
                   transformOrigin: '0 0',
-                  opacity: 0.5,
-                  animation: 'threadFlicker 3s ease-in-out infinite',
-                  pointerEvents: 'none'
+                  opacity: 0.3,
+                  filter: 'blur(2px)',
+                  animation: 'threadFlicker 4s ease-in-out infinite',
+                  pointerEvents: 'none',
+                  zIndex: 6
                 }}
               />
-            )
-          })}
-
-          {/* Золотой шар */}
-          <div
-            style={{
-              position: 'absolute',
-              left: `${centerX}%`,
-              top: `${centerY}%`,
-              transform: 'translate(-50%, -50%)',
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle at 35% 35%, #FFD700, #B8860B)',
-              boxShadow: '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)',
-              animation: 'orbPulse 4s ease-in-out infinite',
-              cursor: 'pointer',
-              zIndex: 9
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 50px rgba(255,215,0,1), 0 0 100px rgba(255,215,0,0.6)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4)'
-            }}
-          />
-        </div>
-
-        {/* Парящие блоки */}
-        {blocks.map((block, idx) => {
-          const [c1, c2] = block.colors
-          return (
-            <div key={idx} style={{
-              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
-              transform: 'translate(-50%, -50%)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              cursor: 'pointer', zIndex: 10,
-              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
-              transition: 'transform 0.3s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
-            >
+              {/* Блок */}
               <div style={{
-                fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
-                background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
-                textAlign: 'center'
-              }}>
-                {block.title}
-              </div>
-              <div style={{
-                fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
-                opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
-              }}>
-                {block.sub}
+                position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
+                transform: 'translate(-50%, -50%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                cursor: 'pointer', zIndex: 10,
+                animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
+                transition: 'transform 0.3s'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
+              >
+                <div style={{
+                  fontSize: '24px', fontWeight: 700, lineHeight: 1.2, marginBottom: '4px',
+                  background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 12px rgba(192,132,252,0.6))',
+                  textAlign: 'center'
+                }}>
+                  {block.title}
+                </div>
+                <div style={{
+                  fontSize: '14px', fontWeight: 400, color: '#eaf0fb',
+                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))',
+                  opacity: 0.85, letterSpacing: '0.3px', textAlign: 'center'
+                }}>
+                  {block.sub}
+                </div>
               </div>
             </div>
           )
@@ -192,12 +181,12 @@ export default function TestPlanetPage() {
           50% { opacity: 0.8; transform: scaleX(1.1); }
         }
         @keyframes orbPulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); }
-          50% { transform: translate(-50%, -50%) scale(1.2); }
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
         }
         @keyframes threadFlicker {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.7; }
+          0%, 100% { opacity: 0.2; }
+          50% { opacity: 0.4; }
         }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-10px); }
