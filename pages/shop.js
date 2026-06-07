@@ -45,7 +45,7 @@ export default function Shop() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-8">
         <h1 className="text-2xl font-bold text-white">Магазин наград</h1>
-        <div className="text-sm text-gray-400 mt-2">
+        <div className="text-sm text-gray-300 mt-2">
           Баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function Shop() {
         {rewards.map(reward => (
           <div key={reward.id} className="premium-card flex flex-col">
             <h3 className="font-semibold text-lg text-white">{reward.name}</h3>
-            <p className="text-gray-400 text-sm mt-2">{reward.description}</p>
+            <p className="text-gray-300 text-sm mt-2">{reward.description}</p>
             <div className="mt-auto flex justify-between items-center pt-4">
               <span className="text-gold font-bold">{reward.cost} к.</span>
               <button onClick={() => purchase(reward)} disabled={loading} className="btn-gold text-sm">
