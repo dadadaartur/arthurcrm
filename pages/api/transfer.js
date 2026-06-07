@@ -14,15 +14,35 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // Создаём клиент с передачей кук из запроса – так он увидит сессию
-  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
-    global: { headers: { cookie: req.headers.cookie || '' } }
-  })
-  const { data: { session } } = await supabaseClient.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Не авторизован' })
+  // --- Получаем access_token из кук (как в tasks.js) ---
+  const rawCookie = req.headers.cookie || ''
+  const cookies = Object.fromEntries(
+    rawCookie.split('; ').map(c => {
+      const idx = c.indexOf('=')
+      if (idx === -1) return [c.trim(), '']
+      return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
+    })
+  )
+  const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+  if (!authKey) return res.status(401).json({ error: 'No auth cookie' })
 
-  const fromUserId = session.user.id
+  let accessToken
+  try {
+    const parsed = JSON.parse(cookies[authKey])
+    accessToken = parsed.access_token
+    if (!accessToken) throw new Error('no token')
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid auth cookie' })
+  }
 
+  // Проверяем пользователя через анонимный ключ
+  const supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(accessToken)
+  if (userError || !user) return res.status(401).json({ error: 'User not found' })
+
+  const fromUserId = user.id
+
+  // --- Остальная логика (как раньше) ---
   // Находим получателя по email
   const { data: recipientProfile, error: recipientError } = await supabaseAdmin
     .from('profiles')
@@ -91,14 +111,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка записи перевода' })
   }
 
-  // Уведомление получателю
+  // Уведомления
   await supabaseAdmin.from('notifications').insert({
     user_id: toUserId,
-    message: `Вам перевели ${transferAmount} кармиков от ${session.user.email}.${comment ? ' Комментарий: ' + comment : ''}`,
+    message: `Вам перевели ${transferAmount} кармиков от ${user.email}.${comment ? ' Комментарий: ' + comment : ''}`,
     link: '/history'
   })
-
-  // Уведомление отправителю
   await supabaseAdmin.from('notifications').insert({
     user_id: fromUserId,
     message: `Вы перевели ${transferAmount} кармиков пользователю ${recipientEmail}`,
