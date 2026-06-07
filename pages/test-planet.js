@@ -8,49 +8,44 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды – только верхняя половина */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '55%', zIndex: 0 }}>
-          {Array.from({ length: 120 }).map((_, i) => {
-            const size = Math.random() * 2.5 + 0.8
-            const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd']
+        {/* Звёзды – только верхняя часть */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '65%', zIndex: 0 }}>
+          {Array.from({ length: 130 }).map((_, i) => {
+            const size = Math.random() * 2.8 + 0.6
+            const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
             const color = colors[Math.floor(Math.random() * colors.length)]
             return (
               <div key={i} style={{
                 position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
                 width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-                boxShadow: `0 0 ${size * 1.5}px ${color}`,
-                opacity: Math.random() * 0.4 + 0.3,
-                animation: `twinkle ${Math.random() * 8 + 6}s ease-in-out infinite`,
+                boxShadow: `0 0 ${size * 2}px ${color}`,
+                opacity: Math.random() * 0.5 + 0.3,
+                animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
                 animationDelay: Math.random() * 10 + 's'
               }} />
             )
           })}
         </div>
 
-        {/* Планета – только нижняя часть с мягким затемнением */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '55vh', overflow: 'hidden', zIndex: 1 }}>
-          {/* Само изображение */}
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg"
-            alt="Земля"
-            style={{
-              position: 'absolute', bottom: '-30vh', left: '50%', transform: 'translateX(-50%)',
-              width: '130vw', height: '130vw', borderRadius: '50%', objectFit: 'cover',
-              objectPosition: 'center 30%'
-            }}
-          />
-          {/* Градиентная тень по краю (создаёт эффект атмосферного рассеивания) */}
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%',
-            background: 'radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 60%)',
-          }} />
-        </div>
-
-        {/* Атмосферное свечение над горизонтом (размытое и широкое) */}
+        {/* Свечение снизу – имитация солнечного света за горизонтом */}
         <div style={{
-          position: 'absolute', bottom: '55vh', left: 0, width: '100%', height: '60px',
-          background: 'linear-gradient(to top, rgba(249,115,22,0.6), transparent)',
-          filter: 'blur(8px)', zIndex: 2, animation: 'pulse 10s ease-in-out infinite'
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '45%',
+          background: `
+            radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.25) 0%, transparent 60%),
+            radial-gradient(ellipse at 30% 90%, rgba(251,191,36,0.2) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 85%, rgba(192,132,252,0.15) 0%, transparent 50%)
+          `,
+          animation: 'glowShift 12s ease-in-out infinite alternate',
+          zIndex: 1
+        }} />
+
+        {/* Дополнительный мягкий рассеянный свет прямо у горизонта */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, width: '100%', height: '120px',
+          background: 'linear-gradient(to top, rgba(249,115,22,0.5), transparent)',
+          filter: 'blur(12px)',
+          animation: 'pulse 8s ease-in-out infinite',
+          zIndex: 1
         }} />
 
         {/* Кнопка назад */}
@@ -63,12 +58,16 @@ export default function TestPlanetPage() {
 
       <style jsx global>{`
         @keyframes twinkle {
-          0%, 100% { opacity: 0.25; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.03); }
+          0%, 100% { opacity: 0.2; transform: scale(0.95); }
+          50% { opacity: 0.7; transform: scale(1.05); }
         }
         @keyframes pulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 0.8; }
+        }
+        @keyframes glowShift {
+          0% { opacity: 0.7; }
+          100% { opacity: 1; }
         }
       `}</style>
     </>
