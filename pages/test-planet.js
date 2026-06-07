@@ -8,27 +8,28 @@ export default function TestPlanetPage() {
       </Head>
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды */}
+        {/* Звёзды – плавное и медленное мерцание */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          {Array.from({ length: 150 }).map((_, i) => {
-            const size = Math.random() * 3 + 1
-            const colors = ['#fff', '#ffcccc', '#ffdd99', '#ccccff', '#ffffcc']
+          {Array.from({ length: 120 }).map((_, i) => {
+            const size = Math.random() * 2.5 + 0.8
+            const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd']
             const color = colors[Math.floor(Math.random() * colors.length)]
             return (
               <div key={i} style={{
                 position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 55 + '%',
                 width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-                boxShadow: `0 0 ${size * 2}px ${color}`, opacity: Math.random() * 0.7 + 0.3,
-                animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-                animationDelay: Math.random() * 6 + 's'
+                boxShadow: `0 0 ${size * 1.5}px ${color}`,
+                opacity: Math.random() * 0.4 + 0.3,
+                animation: `twinkle ${Math.random() * 8 + 6}s ease-in-out infinite`,
+                animationDelay: Math.random() * 10 + 's'
               }} />
             )
           })}
         </div>
 
-        {/* Планета – твоя фотография из папки public */}
+        {/* Планета – твоё фото */}
         <img
-          src="/earth.jpg"
+          src="/136604.jpg"
           alt="Земля"
           style={{
             position: 'absolute', bottom: '-30vh', left: '50%', transform: 'translateX(-50%)',
@@ -40,8 +41,8 @@ export default function TestPlanetPage() {
         {/* Атмосфера */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%', height: '70px',
-          background: 'linear-gradient(to top, rgba(249,115,22,0.5), transparent)',
-          animation: 'pulse 8s ease-in-out infinite', zIndex: 2
+          background: 'linear-gradient(to top, rgba(249,115,22,0.4), transparent)',
+          animation: 'pulse 10s ease-in-out infinite', zIndex: 2
         }} />
 
         {/* Кнопка назад */}
@@ -54,12 +55,12 @@ export default function TestPlanetPage() {
 
       <style jsx global>{`
         @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.9); }
-          50% { opacity: 1; transform: scale(1.1); }
+          0%, 100% { opacity: 0.25; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.03); }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.9; }
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
         }
       `}</style>
     </>
