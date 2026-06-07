@@ -27,14 +27,14 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Планета – твоё фото */}
+        {/* Планета – фото NASA в высоком разрешении */}
         <img
-          src="/136604.jpg"
+          src="https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg"
           alt="Земля"
           style={{
-            position: 'absolute', bottom: '-30vh', left: '50%', transform: 'translateX(-50%)',
-            width: '130vw', height: '130vw', borderRadius: '50%', objectFit: 'cover',
-            objectPosition: 'center top', boxShadow: 'inset 0 -40px 100px rgba(0,0,0,0.8)', zIndex: 1
+            position: 'absolute', bottom: '-20vh', left: '50%', transform: 'translateX(-50%)',
+            width: '110vw', height: '110vw', borderRadius: '50%', objectFit: 'cover',
+            objectPosition: 'center 30%', boxShadow: 'inset 0 -40px 100px rgba(0,0,0,0.8)', zIndex: 1
           }}
         />
 
