@@ -2,12 +2,12 @@ import Head from 'next/head'
 
 export default function TestPlanetPage() {
   const blocks = [
-    { title: 'Чемпионат мира', subtitle: 'Менеджеры' },
-    { title: 'Гороскоп профессий', subtitle: 'Узнай свою роль' },
-    { title: 'Журнал «ПРО»', subtitle: 'Лучшие практики' },
-    { title: 'Квиз', subtitle: 'Проверь себя' },
-    { title: 'ИИ‑питомец', subtitle: 'Учи и развивай' },
-    { title: 'Битва отделов', subtitle: 'Кто круче?' }
+    { title: 'Чемпионат', subtitle: 'менеджеров' },
+    { title: 'Гороскоп', subtitle: 'профессий' },
+    { title: 'Журнал ПРО', subtitle: 'лучшие практики' },
+    { title: 'Квиз', subtitle: 'проверь себя' },
+    { title: 'ИИ‑питомец', subtitle: 'учи и развивай' },
+    { title: 'Битва', subtitle: 'отделов' }
   ]
 
   return (
@@ -18,8 +18,8 @@ export default function TestPlanetPage() {
 
       <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
         {/* Звёзды – всё небо */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 5 }}>
-          {Array.from({ length: 130 }).map((_, i) => {
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+          {Array.from({ length: 150 }).map((_, i) => {
             const size = Math.random() * 2.8 + 0.6
             const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
             const color = colors[Math.floor(Math.random() * colors.length)]
@@ -65,43 +65,50 @@ export default function TestPlanetPage() {
           zIndex: 3
         }} />
 
-        {/* Сетка блоков – равномерно по всему экрану */}
+        {/* Парящие слова – без фона, без рамок */}
         <div style={{
-          position: 'absolute', top: '12%', left: '6%', right: '6%', bottom: '12%',
+          position: 'absolute', top: '10%', left: '8%', right: '8%', bottom: '15%',
           display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(3, 1fr)', gap: '20px',
           zIndex: 10
         }}>
-          {blocks.map((block, idx) => (
-            <div key={idx} style={{
-              background: 'rgba(10, 22, 40, 0.5)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(249, 115, 22, 0.4)',
-              borderRadius: '20px',
-              padding: '24px 20px',
-              display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-              color: '#eaf0fb',
-              boxShadow: '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)',
-              animation: `holoGlow 3s ease-in-out infinite alternate`,
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 0 40px rgba(249, 115, 22, 0.3), inset 0 0 40px rgba(249, 115, 22, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 0 25px rgba(249, 115, 22, 0.15), inset 0 0 25px rgba(249, 115, 22, 0.05)';
-            }}
-            >
-              <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', background: 'linear-gradient(135deg, #f97316, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
-                {block.title}
+          {blocks.map((block, idx) => {
+            // Уникальные цвета для каждого блока
+            const colors = [
+              ['#7AC78F', '#c084fc'], // зелёный -> фиолетовый
+              ['#F28B82', '#f97316'], // розовый -> оранжевый
+              ['#c084fc', '#7AC78F'], // фиолетовый -> зелёный
+              ['#f97316', '#F28B82'], // оранжевый -> розовый
+              ['#A3E0B0', '#d4af37'], // мятный -> золотой
+              ['#d4af37', '#A3E0B0']  // золотой -> мятный
+            ];
+            const [c1, c2] = colors[idx];
+            return (
+              <div key={idx} style={{
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                textAlign: 'center', cursor: 'pointer', transition: 'transform 0.3s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <div style={{
+                  fontSize: '28px', fontWeight: 700, lineHeight: 1.2, marginBottom: '6px',
+                  background: `linear-gradient(135deg, ${c1}, ${c2})`,
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 15px rgba(192,132,252,0.5))',
+                  animation: `textGlow 3s ease-in-out infinite alternate`
+                }}>
+                  {block.title}
+                </div>
+                <div style={{
+                  fontSize: '16px', fontWeight: 400, color: '#eaf0fb',
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4))',
+                  opacity: 0.9, letterSpacing: '0.5px'
+                }}>
+                  {block.subtitle}
+                </div>
               </div>
-              <div style={{ fontSize: '14px', color: '#9aa9c1', textAlign: 'center' }}>
-                {block.subtitle}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Кнопка назад */}
@@ -133,9 +140,9 @@ export default function TestPlanetPage() {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
-        @keyframes holoGlow {
-          0% { border-color: rgba(249,115,22,0.4); }
-          100% { border-color: rgba(192,132,252,0.7); }
+        @keyframes textGlow {
+          0% { filter: drop-shadow(0 0 15px rgba(192,132,252,0.5)); }
+          100% { filter: drop-shadow(0 0 25px rgba(249,115,22,0.7)); }
         }
       `}</style>
     </>
