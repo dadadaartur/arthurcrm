@@ -156,62 +156,49 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === НОВЫЙ БЛОК БАЛАНСА — ГОЛОГРАММНОЕ ОБЛАКО === */}
+        {/* === БЛОК БАЛАНСА — НАСТОЯЩАЯ ГОЛОГРАММА === */}
         <div style={{
           position: 'absolute',
           left: '3%',
           top: '4%',
           zIndex: 20,
-          width: 280,
-          height: 280,
+          width: 300,
+          height: 300,
           animation: 'driftBalance 20s ease-in-out infinite alternate'
         }}>
-          {/* Слой 1 – медленное цветное пятно */}
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 180, height: 180,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(100,150,255,0.2) 0%, rgba(80,100,200,0.1) 40%, transparent 70%)',
-            filter: 'blur(25px)',
-            animation: 'cloudShift1 12s ease-in-out infinite alternate'
-          }} />
-          {/* Слой 2 – золотистое облако */}
+          {/* Фоновые голографические пятна (размытые, разноцветные) */}
           <div style={{
             position: 'absolute',
             top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
             width: 200, height: 200,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,180,0,0.3) 0%, rgba(255,140,0,0.15) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(180,220,255,0.3) 0%, rgba(100,180,255,0.1) 50%, transparent 70%)',
             filter: 'blur(30px)',
-            animation: 'cloudShift2 15s ease-in-out infinite alternate'
+            animation: 'holoSpot1 8s ease-in-out infinite alternate'
           }} />
-          {/* Слой 3 – розоватое свечение */}
           <div style={{
             position: 'absolute',
             top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 170, height: 170,
+            width: 220, height: 220,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,120,120,0.25) 0%, rgba(200,80,100,0.1) 50%, transparent 70%)',
-            filter: 'blur(28px)',
-            animation: 'cloudShift3 18s ease-in-out infinite alternate'
-          }} />
-          {/* Слой 4 – голубое мерцание */}
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 160, height: 160,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(150,200,255,0.3) 0%, rgba(100,150,255,0.1) 50%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255,180,200,0.25) 0%, rgba(255,100,150,0.1) 50%, transparent 70%)',
             filter: 'blur(35px)',
-            animation: 'cloudShift4 20s ease-in-out infinite alternate'
+            animation: 'holoSpot2 10s ease-in-out infinite alternate'
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 180, height: 180,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,180,0.3) 0%, rgba(255,200,100,0.15) 50%, transparent 70%)',
+            filter: 'blur(28px)',
+            animation: 'holoSpot3 12s ease-in-out infinite alternate'
           }} />
 
-          {/* Цифра и подпись */}
+          {/* Цифра с радужным градиентом и тенью */}
           <div style={{
             position: 'absolute',
             top: '50%',
@@ -222,14 +209,17 @@ export default function TestPlanetPage() {
             pointerEvents: 'none'
           }}>
             <div style={{
-              fontSize: 44,
-              fontWeight: 500,
+              fontSize: 48,
+              fontWeight: 600,
               fontFamily: 'Inter, sans-serif',
-              color: '#ffffff',
-              textShadow: '0 0 15px rgba(255,220,150,0.8), 0 0 30px rgba(255,180,80,0.5)',
-              letterSpacing: 2,
+              background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
+              backgroundSize: '200% 200%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
+              animation: 'rainbowShift 4s ease-in-out infinite alternate',
               lineHeight: 1,
-              marginBottom: 6
+              marginBottom: 8
             }}>
               {balance}
             </div>
@@ -238,7 +228,7 @@ export default function TestPlanetPage() {
               fontWeight: 300,
               fontFamily: 'Inter, sans-serif',
               color: 'rgba(255,255,255,0.9)',
-              textShadow: '0 0 8px rgba(255,200,100,0.8), 0 0 16px rgba(255,150,50,0.5)',
+              textShadow: '0 0 8px rgba(100,200,255,0.8), 0 0 16px rgba(255,150,200,0.6)',
               letterSpacing: 2,
               opacity: 0.9
             }}>
@@ -246,21 +236,21 @@ export default function TestPlanetPage() {
             </div>
           </div>
 
-          {/* Кнопки – ряд под облаком */}
+          {/* Кнопки — тонкий ряд с голографическими точками */}
           <div style={{
             position: 'absolute',
-            bottom: 10,
+            bottom: 15,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: 24,
+            gap: 30,
             zIndex: 3
           }}>
             {[
-              { label: 'Перевести', path: '/transfer' },
-              { label: 'Операции', path: '/history' },
-              { label: 'Покупки', path: '/my-purchases' },
-              { label: 'Магазин', path: '/shop' }
+              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
+              { label: 'Операции', path: '/history', color: '#ffb3c6' },
+              { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
+              { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
             ].map((btn, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
                 <div
@@ -268,30 +258,30 @@ export default function TestPlanetPage() {
                   style={{
                     fontSize: 12,
                     fontWeight: 400,
-                    color: 'rgba(255,255,255,0.7)',
+                    color: 'rgba(255,255,255,0.6)',
                     cursor: 'pointer',
-                    textShadow: '0 0 5px rgba(255,200,100,0.5)',
+                    textShadow: '0 0 5px rgba(100,200,255,0.4)',
                     transition: 'all 0.3s ease',
-                    marginBottom: 2
+                    marginBottom: 6
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#FFD700';
-                    e.currentTarget.style.textShadow = '0 0 10px rgba(255,200,100,1)';
+                    e.currentTarget.style.color = btn.color;
+                    e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
-                    e.currentTarget.style.textShadow = '0 0 5px rgba(255,200,100,0.5)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                    e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)';
                   }}
                 >
                   {btn.label}
                 </div>
                 <div style={{
-                  width: 4,
-                  height: 4,
+                  width: 6,
+                  height: 6,
                   borderRadius: '50%',
-                  background: 'rgba(255,200,100,0.4)',
+                  background: btn.color,
                   margin: '0 auto',
-                  boxShadow: '0 0 4px rgba(255,200,100,0.4)'
+                  boxShadow: `0 0 8px ${btn.color}, 0 0 15px ${btn.color}`
                 }} />
               </div>
             ))}
@@ -346,23 +336,23 @@ export default function TestPlanetPage() {
         }
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
-          100% { transform: translate(6px, -6px); }
+          100% { transform: translate(5px, -5px); }
         }
-        @keyframes cloudShift1 {
+        @keyframes holoSpot1 {
           0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.6; }
-          100% { transform: translate(-50%, -50%) translate(8px, -5px) scale(1.1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) translate(5px, -8px) scale(1.1); opacity: 1; }
         }
-        @keyframes cloudShift2 {
-          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.7; }
-          100% { transform: translate(-50%, -50%) translate(-6px, 8px) scale(1.15); opacity: 1; }
-        }
-        @keyframes cloudShift3 {
+        @keyframes holoSpot2 {
           0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.5; }
-          100% { transform: translate(-50%, -50%) translate(-10px, -6px) scale(1.05); opacity: 0.9; }
+          100% { transform: translate(-50%, -50%) translate(-7px, 6px) scale(1.15); opacity: 0.9; }
         }
-        @keyframes cloudShift4 {
-          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.4; }
-          100% { transform: translate(-50%, -50%) translate(6px, 10px) scale(1.1); opacity: 0.8; }
+        @keyframes holoSpot3 {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(-50%, -50%) translate(-4px, -10px) scale(1.05); opacity: 0.8; }
+        }
+        @keyframes rainbowShift {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
         }
       `}</style>
     </>
