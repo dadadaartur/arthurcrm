@@ -116,8 +116,14 @@ export default function Shop() {
             </div>
           </div>
 
-          {/* Горизонтальный скролл */}
-          <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}>
+          {/* Горизонтальный скролл с поддержкой колесика мыши */}
+          <div
+            style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}
+            onWheel={(e) => {
+              e.preventDefault();
+              e.currentTarget.scrollLeft += e.deltaY;
+            }}
+          >
             <div style={{ display: 'inline-flex', gap: 30 }}>
               {rewards.map(reward => (
                 <div key={reward.id} style={{
