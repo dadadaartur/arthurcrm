@@ -11,7 +11,7 @@ export default function Shop() {
   const [rewards, setRewards] = useState([])
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
-  const [selectedReward, setSelectedReward] = useState(null) // для модалки товара
+  const [selectedReward, setSelectedReward] = useState(null)
 
   useEffect(() => {
     const init = async () => {
@@ -53,10 +53,37 @@ export default function Shop() {
     setLoading(false)
   }
 
-  // Открыть карточку товара
   const openRewardDetail = (reward) => {
     setSelectedReward(reward)
   }
+
+  // Стилизованный баланс
+  const BalanceDisplay = () => (
+    <div style={{
+      background: 'rgba(255,255,255,0.03)',
+      backdropFilter: 'blur(16px)',
+      borderRadius: 50,
+      padding: '8px 24px',
+      border: '1px solid rgba(255,215,0,0.2)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 10,
+      boxShadow: '0 0 20px rgba(255,200,0,0.1)'
+    }}>
+      <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
+      <span style={{
+        fontSize: 20,
+        fontWeight: 600,
+        background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
+      }}>
+        {balance}
+      </span>
+      <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
+    </div>
+  )
 
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
@@ -81,31 +108,38 @@ export default function Shop() {
         })}
       </div>
 
-      {/* Переливы */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '40px 20px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px' }}>
+        <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
-            <div style={{ fontSize: 18, color: '#FFD700' }}>Баланс: {balance} кармиков</div>
+            <BalanceDisplay />
           </div>
 
-          {/* Горизонтальный скролл */}
-          <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16, WebkitOverflowScrolling: 'touch' }}>
-            <div style={{ display: 'inline-flex', gap: 24 }}>
+          {/* Стилизованный скроллбар */}
+          <style jsx>{`
+            .custom-scroll::-webkit-scrollbar { height: 6px; }
+            .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+            .custom-scroll::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #a0e9ff, #ffb3c6); border-radius: 3px; }
+            .modal-scroll::-webkit-scrollbar { width: 4px; }
+            .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+            .modal-scroll::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius: 2px; }
+          `}</style>
+
+          <div className="custom-scroll" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}>
+            <div style={{ display: 'inline-flex', gap: 30 }}>
               {rewards.map(reward => (
                 <div key={reward.id} style={{
-                  width: 280,
+                  width: 340,
                   background: 'rgba(15, 20, 35, 0.8)',
                   backdropFilter: 'blur(10px)',
-                  borderRadius: 20,
+                  borderRadius: 24,
                   overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   cursor: 'pointer',
                   display: 'inline-flex',
@@ -113,48 +147,54 @@ export default function Shop() {
                   whiteSpace: 'normal',
                   verticalAlign: 'top'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,180,0,0.2)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(255,180,0,0.25)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
                 onClick={() => openRewardDetail(reward)}
                 >
-                  <div style={{ width: '100%', height: 200, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: 240, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
                       <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />
                     )}
                     {reward.type === 'digital' && (
-                      <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Сертификат</span>
+                      <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: '#FFD700', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Сертификат</span>
                     )}
                     {reward.requires_approval && (
-                      <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255,0,0,0.6)', color: '#fff', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Требуется согласование</span>
+                      <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,0,0,0.5)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Требуется согласование</span>
                     )}
                   </div>
-                  <div style={{ padding: '16px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{reward.name}</h3>
-                    <p style={{ fontSize: 14, color: '#ccc', marginBottom: 16, lineHeight: 1.5, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
+                  <div style={{ padding: '20px 24px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{reward.name}</h3>
+                    <p style={{ fontSize: 14, color: '#aaa', marginBottom: 20, lineHeight: 1.6, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                      <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{reward.cost} к.</span>
+                      <span style={{ fontSize: 22, fontWeight: 700, color: '#FFD700' }}>{reward.cost} к.</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); purchase(reward); }}
                         disabled={loading}
                         style={{
-                          background: 'rgba(255,255,255,0.08)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255,215,0,0.3)',
-                          borderRadius: 12,
-                          padding: '8px 18px',
+                          background: 'rgba(255,255,255,0.06)',
+                          backdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(255,215,0,0.25)',
+                          borderRadius: 14,
+                          padding: '10px 24px',
                           fontSize: 14,
                           fontWeight: 500,
-                          color: 'transparent',
-                          backgroundImage: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
+                          color: '#fff',
                           cursor: 'pointer',
-                          transition: 'all 0.3s'
+                          transition: 'all 0.3s',
+                          textShadow: '0 0 10px rgba(255,200,0,0.5)'
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = '#FFD700'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                          e.currentTarget.style.borderColor = '#FFD700';
+                          e.currentTarget.style.boxShadow = '0 0 20px rgba(255,200,0,0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                          e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
                       >
                         Купить
                       </button>
@@ -167,35 +207,30 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Модалка с деталями товара */}
+      {/* Модалка товара со стилизованным скроллом */}
       {selectedReward && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
-          <div style={{ background: 'rgba(10,10,20,0.95)', backdropFilter: 'blur(12px)', borderRadius: 24, border: '1px solid rgba(255,215,0,0.2)', padding: 32, maxWidth: 500, width: '90%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 16, marginBottom: 20 }} />}
-            <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 12, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#ccc', marginBottom: 20 }}>{selectedReward.description}</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
+          <div className="modal-scroll" style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 18, marginBottom: 24 }} />}
+            <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} кармиков</span>
+              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} кармиков</span>
               <button
                 onClick={() => { purchase(selectedReward); setSelectedReward(null); }}
                 disabled={loading}
                 style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,215,0,0.3)',
-                  borderRadius: 12,
-                  padding: '10px 24px',
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,215,0,0.25)',
+                  borderRadius: 14,
+                  padding: '12px 28px',
                   fontSize: 15,
                   fontWeight: 500,
-                  color: 'transparent',
-                  backgroundImage: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
+                  color: '#fff',
                   cursor: 'pointer',
-                  transition: 'all 0.3s'
+                  textShadow: '0 0 10px rgba(255,200,0,0.5)'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
               >
                 Купить
               </button>
