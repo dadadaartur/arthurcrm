@@ -52,7 +52,6 @@ export default function Shop() {
     setLoading(false)
   }
 
-  // Фон как на главной (звёзды + переливы)
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
@@ -82,51 +81,63 @@ export default function Shop() {
       </div>
 
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
-          <div style={{ fontSize: 18, color: '#FFD700' }}>Баланс: {balance} кармиков</div>
-        </div>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 20px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
+            <div style={{ fontSize: 18, color: '#FFD700' }}>Баланс: {balance} кармиков</div>
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
-          {rewards.map(reward => (
-            <div key={reward.id} style={{
-              background: 'rgba(15, 20, 35, 0.8)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: 20,
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,180,0,0.2)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)'; }}
-            >
-              <div style={{ width: '100%', height: 180, background: reward.image_url ? `url(${reward.image_url}) center/cover` : 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', position: 'relative' }}>
-                {reward.type === 'digital' && (
-                  <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Сертификат</span>
-                )}
-                {reward.requires_approval && (
-                  <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255,0,0,0.6)', color: '#fff', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Требуется согласование</span>
-                )}
-              </div>
-              <div style={{ padding: 20 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{reward.name}</h3>
-                <p style={{ fontSize: 14, color: '#ccc', marginBottom: 16, lineHeight: 1.5 }}>{reward.description}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{reward.cost} к.</span>
-                  <button onClick={() => purchase(reward)} disabled={loading} style={{
-                    background: 'linear-gradient(135deg, #f97316, #e65c00)',
-                    border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 10,
-                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    transition: 'opacity 0.2s'
-                  }}>Купить</button>
+          {/* Горизонтальный скролл */}
+          <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16, WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'inline-flex', gap: 24 }}>
+              {rewards.map(reward => (
+                <div key={reward.id} style={{
+                  width: 280,
+                  background: 'rgba(15, 20, 35, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                  transition: 'transform 0.3s, box-shadow 0.3s',
+                  cursor: 'pointer',
+                  display: 'inline-block',
+                  whiteSpace: 'normal',
+                  verticalAlign: 'top'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,180,0,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)'; }}
+                >
+                  <div style={{ width: '100%', height: 200, position: 'relative', overflow: 'hidden' }}>
+                    {reward.image_url ? (
+                      <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />
+                    )}
+                    {reward.type === 'digital' && (
+                      <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.6)', color: '#FFD700', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Сертификат</span>
+                    )}
+                    {reward.requires_approval && (
+                      <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255,0,0,0.6)', color: '#fff', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Требуется согласование</span>
+                    )}
+                  </div>
+                  <div style={{ padding: 20 }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{reward.name}</h3>
+                    <p style={{ fontSize: 14, color: '#ccc', marginBottom: 16, lineHeight: 1.5 }}>{reward.description}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{reward.cost} к.</span>
+                      <button onClick={() => purchase(reward)} disabled={loading} style={{
+                        background: 'linear-gradient(135deg, #f97316, #e65c00)',
+                        border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 10,
+                        fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                      }}>Купить</button>
+                    </div>
+                  </div>
                 </div>
-                {/* Место для рейтинга (позже) */}
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
