@@ -1,4 +1,4 @@
-/* 2026-06-08 force update */
+/* 2026-06-08 balance fix */
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -35,15 +35,15 @@ export default function TestPlanetPage() {
   const karmikWord = getKarmikWord(balance)
 
   // Центр чёрной дыры (вокруг неё летают кнопки)
-  const centerX = 55
+  const centerX = 58
   const centerY = 40
 
-  // Кнопки равномерно вокруг центра
+  // Кнопки равномерно вокруг центра, чуть правее и крупнее
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
     { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз',       sub: 'проверь себя', left: 30, top: 40, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'Квиз',       sub: 'проверь себя', left: 33, top: 35, colors: ['#7AC78F', '#F28B82'] },
     { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
     { title: 'Битва',      sub: 'отделов',      left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
   ]
@@ -142,7 +142,7 @@ export default function TestPlanetPage() {
           }} />
         ))}
 
-        {/* Парящие кнопки */}
+        {/* Парящие кнопки (чуть крупнее) */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -158,17 +158,17 @@ export default function TestPlanetPage() {
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
             >
               <div style={{
-                fontSize: '14px', fontWeight: 600, lineHeight: 1.2, marginBottom: '2px',
+                fontSize: '16px', fontWeight: 600, lineHeight: 1.2, marginBottom: '4px',
                 background: `linear-gradient(135deg, ${c1}, ${c2})`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 8px rgba(192,132,252,0.6))',
+                filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.6))',
                 textAlign: 'center'
               }}>
                 {block.title}
               </div>
               <div style={{
-                fontSize: '11px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.5))',
+                fontSize: '13px', fontWeight: 400, color: '#eaf0fb',
+                filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))',
                 opacity: 0.85, textAlign: 'center'
               }}>
                 {block.sub}
