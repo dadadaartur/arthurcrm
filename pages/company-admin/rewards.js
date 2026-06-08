@@ -14,7 +14,8 @@ export default function RewardsAdmin() {
     cost: 0,
     type: 'physical',
     requires_approval: false,
-    image_file: null
+    image_file: null,
+    preview_url: ''
   })
   const [editingId, setEditingId] = useState(null)
 
@@ -40,15 +41,17 @@ export default function RewardsAdmin() {
     e.preventDefault()
     if (!form.name || !form.cost) return
 
-    let imageUrl = null
+    let imageUrl = form.preview_url || null
     if (form.image_file) {
       const fileExt = form.image_file.name.split('.').pop()
       const fileName = `reward-${Date.now()}.${fileExt}`
       const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, form.image_file)
-      if (!error) {
-        const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
-        imageUrl = publicUrl.publicUrl
+      if (error) {
+        alert('Ошибка загрузки изображения')
+        return
       }
+      const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
+      imageUrl = publicUrl.publicUrl
     }
 
     const rewardData = {
@@ -65,10 +68,11 @@ export default function RewardsAdmin() {
       if (error) return alert('Ошибка обновления')
     } else {
       const { error } = await supabase.from('rewards').insert(rewardData)
-      if (error) return alert('Ошибка создания')
+      if (error) return alert('Ошибка создания: ' + error.message)
     }
 
-    setForm({ name: '', description: '', cost: 0, type: 'physical', requires_approval: false, image_file: null })
+    // Сброс формы
+    setForm({ name: '', description: '', cost: 0, type: 'physical', requires_approval: false, image_file: null, preview_url: '' })
     setEditingId(null)
     loadRewards()
   }
@@ -94,7 +98,6 @@ export default function RewardsAdmin() {
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
 
-  // Обёртка со звёздным фоном (как в админке)
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 20px', position: 'relative' }}>
       {/* Звёзды */}
@@ -149,19 +152,37 @@ export default function RewardsAdmin() {
               <input type="checkbox" checked={form.requires_approval} onChange={e => setForm({ ...form, requires_approval: e.target.checked })} />
               Требуется согласование
             </label>
-            {form.type === 'digital' && !form.requires_approval && (
-              <span style={{ fontSize: 12, color: '#FFA500' }}>Цифровые товары обычно требуют согласования</span>
-            )}
           </div>
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: 14, color: '#aaa' }}>Изображение</label>
-            <input type="file" accept="image/*" onChange={e => setForm({ ...form, image_file: e.target.files[0] })} style={{ color: '#fff' }} />
-            {form.preview_url && !form.image_file && <img src={form.preview_url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+            <label style={{ fontSize: 14, color: '#aaa', display: 'block', marginBottom: 8 }}>Изображение</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <label style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px dashed rgba(255,255,255,0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: 14,
+                color: '#ccc'
+              }}>
+                {form.image_file ? form.image_file.name : form.preview_url ? 'Заменить изображение' : 'Выбрать файл'}
+                <input type="file" accept="image/*" onChange={e => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setForm({ ...form, image_file: file, preview_url: URL.createObjectURL(file) });
+                  }
+                }} style={{ display: 'none' }} />
+              </label>
+              {form.preview_url && (
+                <img src={form.preview_url} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />
+              )}
+            </div>
           </div>
           <button type="submit" style={{
             gridColumn: 'span 2',
             background: 'linear-gradient(135deg, #f97316, #e65c00)',
-            border: 'none', color: '#fff', padding: '12px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 16
+            border: 'none', color: '#fff', padding: '12px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 16,
+            fontWeight: 500
           }}>
             {editingId ? 'Сохранить изменения' : 'Создать товар'}
           </button>
@@ -169,6 +190,7 @@ export default function RewardsAdmin() {
 
         {/* Список товаров */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {rewards.length === 0 && <p style={{ color: '#aaa' }}>Товаров пока нет</p>}
           {rewards.map(reward => (
             <div key={reward.id} style={{
               background: 'rgba(20,25,45,0.9)', backdropFilter: 'blur(10px)',
@@ -179,10 +201,27 @@ export default function RewardsAdmin() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{reward.name}</div>
                 <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
-                <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков | {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'}</div>
+                <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'}</div>
               </div>
-              <button onClick={() => handleEdit(reward)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '6px 12px', borderRadius: 8 }}>Редактировать</button>
-              <button onClick={() => handleDelete(reward.id)} style={{ background: 'transparent', border: '1px solid #f44', color: '#f44', padding: '6px 12px', borderRadius: 8 }}>Удалить</button>
+              <button onClick={() => handleEdit(reward)} style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#fff',
+                padding: '8px 16px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 14,
+                transition: 'all 0.2s'
+              }}>Редактировать</button>
+              <button onClick={() => handleDelete(reward.id)} style={{
+                background: 'rgba(255,0,0,0.1)',
+                border: '1px solid rgba(255,0,0,0.4)',
+                color: '#f44',
+                padding: '8px 16px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 14
+              }}>Удалить</button>
             </div>
           ))}
         </div>
