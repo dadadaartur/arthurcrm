@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import PremiumModal from '../../components/PremiumModal'
 
 export default function RewardsAdmin() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function RewardsAdmin() {
   })
   const [editingId, setEditingId] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
+  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -44,7 +46,7 @@ export default function RewardsAdmin() {
     e.preventDefault()
     const costValue = parseInt(form.cost, 10)
     if (!form.name || isNaN(costValue) || costValue < 0) {
-      alert('Введите название и корректную стоимость (целое число от 0)')
+      alert('Введите название и корректную стоимость')
       return
     }
 
@@ -54,7 +56,7 @@ export default function RewardsAdmin() {
       const fileName = `reward-${Date.now()}.${fileExt}`
       const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, form.image_file)
       if (error) {
-        alert('Ошибка загрузки изображения')
+        setNotification({ show: true, message: 'Ошибка загрузки изображения' })
         return
       }
       const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
@@ -71,13 +73,16 @@ export default function RewardsAdmin() {
       image_url: imageUrl
     }
 
-    if (editingId) {
-      const { error } = await supabase.from('rewards').update(rewardData).eq('id', editingId)
-      if (error) return alert('Ошибка обновления')
-    } else {
-      const { error } = await supabase.from('rewards').insert(rewardData)
-      if (error) return alert('Ошибка создания: ' + error.message)
+    const { error } = editingId
+      ? await supabase.from('rewards').update(rewardData).eq('id', editingId)
+      : await supabase.from('rewards').insert(rewardData)
+
+    if (error) {
+      setNotification({ show: true, message: 'Ошибка сохранения товара' })
+      return
     }
+
+    setNotification({ show: true, message: editingId ? 'Товар обновлён' : 'Товар создан!' })
 
     setForm({ name: '', description: '', cost: '', type: 'physical', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
     setEditingId(null)
@@ -102,6 +107,7 @@ export default function RewardsAdmin() {
   const handleDelete = async (id) => {
     if (!confirm('Удалить товар?')) return
     await supabase.from('rewards').delete().eq('id', id)
+    setNotification({ show: true, message: 'Товар удалён' })
     loadRewards()
   }
 
@@ -129,28 +135,21 @@ export default function RewardsAdmin() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Кнопка назад */}
-        <Link href="/company-admin" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          fontSize: 14, color: '#aaa', textDecoration: 'none',
-          marginBottom: 24, transition: 'color 0.3s'
-        }}>
+        <Link href="/company-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>←</span> Назад
         </Link>
 
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Управление товарами</h1>
 
-        {/* Кнопка переключения на историю */}
         <button onClick={() => setShowHistory(!showHistory)} style={{
           background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
           borderRadius: 12, padding: '10px 20px', color: '#fff', cursor: 'pointer',
-          marginBottom: 24, fontSize: 14, transition: 'all 0.3s'
+          marginBottom: 24, fontSize: 14
         }}>
           {showHistory ? 'Создать товар' : 'История товаров'}
         </button>
 
         {showHistory ? (
-          /* История товаров */
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {rewards.length === 0 && <p style={{ color: '#aaa' }}>Товаров пока нет</p>}
             {rewards.map(reward => (
@@ -165,26 +164,18 @@ export default function RewardsAdmin() {
                   <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
                   <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
                 </div>
-                <button onClick={() => handleEdit(reward)} style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#fff', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14
-                }}>Редактировать</button>
-                <button onClick={() => handleDelete(reward.id)} style={{
-                  background: 'rgba(255,0,0,0.1)',
-                  border: '1px solid rgba(255,0,0,0.4)',
-                  color: '#f44', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14
-                }}>Удалить</button>
+                <button onClick={() => handleEdit(reward)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>Редактировать</button>
+                <button onClick={() => handleDelete(reward.id)} style={{ background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.4)', color: '#f44', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>Удалить</button>
               </div>
             ))}
           </div>
         ) : (
-          /* Форма создания/редактирования */
           <form onSubmit={handleSubmit} style={{
             background: 'rgba(20,25,45,0.9)', backdropFilter: 'blur(10px)',
             borderRadius: 16, padding: 24, marginBottom: 32,
             border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr'
           }}>
+            {/* ... (форма без изменений) */}
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ fontSize: 14, color: '#aaa' }}>Название</label>
               <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
@@ -250,6 +241,10 @@ export default function RewardsAdmin() {
           </form>
         )}
       </div>
+
+      <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Информация">
+        <p style={{ color: '#fff' }}>{notification.message}</p>
+      </PremiumModal>
       <style jsx global>{`
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
