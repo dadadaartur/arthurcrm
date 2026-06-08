@@ -156,60 +156,39 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – финальная версия */}
+        {/* Блок баланса – теперь как на главной, с чёрной дырой и ровными кнопками */}
         <div style={{
           position: 'absolute', left: '4%', top: '4%',
-          background: '#0A0A0A', border: '1px solid rgba(249,115,22,0.5)',
-          borderRadius: 24, padding: 20, width: 380,
-          boxShadow: '0 0 30px rgba(249,115,22,0.2)', zIndex: 20
+          width: 380,   // чуть компактнее, чем на главной
+          zIndex: 20
         }}>
-          <div style={{ position: 'relative', height: 130, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {/* Чёрная дыра баланса – теперь точно видна */}
-            <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-              width: 100, height: 100, borderRadius: '50%',
-              background: 'radial-gradient(circle, #000 40%, #111 70%, transparent 100%)',
-              filter: 'blur(8px)',
-              opacity: 0.7,
-              zIndex: 0
-            }} />
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316', marginBottom: 6 }}>Баланс</div>
-              <div style={{
-                fontSize: 42, fontWeight: 800, color: 'transparent',
-                backgroundImage: 'linear-gradient(180deg, #FFD700, #FFC107)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.6))', marginBottom: 4
-              }}>
-                {balance}
+          <div className="balance-card" style={{ width: '100%' }}>
+            {/* Чёрная дыра точно как на главной */}
+            <div style={{ position: 'relative', height: 130, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div className="black-hole" />
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316', marginBottom: 6 }}>Баланс</div>
+                <div style={{
+                  fontSize: 42, fontWeight: 800, color: 'transparent',
+                  backgroundImage: 'linear-gradient(180deg, #FFD700, #FFC107)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.6))', marginBottom: 4
+                }}>
+                  {balance}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
             </div>
-          </div>
 
-          {/* Кнопки: три в ряд, Магазин под ними широкий */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-            {/* Первая строка – три маленькие кнопки */}
-            <div style={{ display: 'flex', gap: 6, width: '100%' }}>
-              <button onClick={() => router.push('/transfer')}
-                style={{ flex: 1, background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
-                Перевести
-              </button>
-              <button onClick={() => router.push('/history')}
-                style={{ flex: 1, background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
-                Операции
-              </button>
-              <button onClick={() => router.push('/my-purchases')}
-                style={{ flex: 1, background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
-                Покупки
-              </button>
+            {/* Кнопки – одинаковый шрифт, ровные ряды */}
+            <div style={{ marginTop: 12 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1 }}>Перевести</button>
+                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1 }}>Операции</button>
+                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1 }}>Покупки</button>
+              </div>
+              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%' }}>Магазин</button>
             </div>
-            {/* Вторая строка – широкая кнопка Магазин */}
-            <button onClick={() => router.push('/shop')}
-              style={{ width: '100%', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '8px 16px', color: 'white', fontSize: 14, cursor: 'pointer', marginTop: 4 }}>
-              Магазин
-            </button>
           </div>
         </div>
       </div>
