@@ -136,7 +136,7 @@ export default function CompanyAdminDashboard() {
             background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
             padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Запросы на покупки</Link>
+          }}>Подтверждение сертификатов</Link>
         </div>
       </div>
       <style jsx global>{`
