@@ -156,24 +156,24 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса с жидким золотом */}
+        {/* Блок баланса без рамки, с жидким золотом и каллиграфической цифрой */}
         <div style={{
           position: 'absolute',
           left: '3%',
           top: '2%',
           zIndex: 20
         }}>
-          <div className="balance-card" style={{
-            width: '340px',
-            padding: '20px 24px',
+          <div style={{
+            width: '300px',
+            padding: '24px 20px 20px',
             background: '#0A0A0A',
-            border: '1px solid rgba(249,115,22,0.5)',
-            borderRadius: 28,
-            boxShadow: '0 0 30px rgba(249,115,22,0.2)',
+            borderRadius: 24,
+            boxShadow: '0 0 40px rgba(249,115,22,0.25)',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            border: 'none'   // рамка убрана
           }}>
-            {/* Жидкое золотое сияние (вместо сфер) */}
+            {/* Жидкое золотое сияние */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
               <div style={{
                 position: 'absolute',
@@ -198,23 +198,47 @@ export default function TestPlanetPage() {
               }} />
             </div>
 
-            {/* Текст баланса (поверх сияния) */}
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', paddingTop: 20, paddingBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#FFD700', marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase', textShadow: '0 0 10px rgba(255,200,0,0.8)' }}>
-                Карма
-              </div>
+            {/* Текст баланса */}
+            <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{
-                fontSize: 48, fontWeight: 700, color: 'transparent',
-                backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 15px rgba(255,200,0,0.9))',
-                marginBottom: 4,
-                lineHeight: 1
+                textAlign: 'left',
+                fontSize: 12,
+                fontWeight: 500,
+                color: '#FFD700',
+                opacity: 0.8,
+                marginBottom: 16,
+                letterSpacing: 1,
+                textShadow: '0 0 6px rgba(255,200,0,0.5)'
               }}>
-                {balance}
+                Мой счёт
               </div>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#FFD700', textShadow: '0 0 8px rgba(255,200,0,0.6)', opacity: 0.9 }}>
-                {karmikWord}
+
+              <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                <div style={{
+                  fontSize: 56,
+                  fontWeight: 700,
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  fontStyle: 'italic',
+                  color: 'transparent',
+                  backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 18px rgba(255,200,0,0.9))',
+                  lineHeight: 1,
+                  marginBottom: 6
+                }}>
+                  {balance}
+                </div>
+                <div style={{
+                  fontSize: 13,
+                  fontWeight: 400,
+                  color: '#FFD700',
+                  opacity: 0.85,
+                  textShadow: '0 0 6px rgba(255,200,0,0.4)',
+                  letterSpacing: 0.5
+                }}>
+                  {karmikWord}
+                </div>
               </div>
             </div>
 
