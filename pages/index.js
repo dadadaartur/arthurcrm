@@ -19,6 +19,12 @@ export default function Home() {
   const [stats, setStats] = useState({ active: 0, completed: 0, earned: 0 })
   const [loading, setLoading] = useState(true)
 
+  // Скрываем скролл на этой странице
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -51,7 +57,6 @@ export default function Home() {
   const centerX = 58
   const centerY = 40
 
-  // Меню сцены: заменили "Битва отделов" на "Задания"
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
@@ -148,9 +153,6 @@ export default function Home() {
           const handleClick = () => {
             if (block.title === 'Задания') {
               router.push('/tasks')
-            } else {
-              // Остальные кнопки пока не имеют маршрутов, можно добавить позже
-              // Пока заглушка или ничего
             }
           }
           return (
@@ -224,7 +226,7 @@ export default function Home() {
             {karmikWord}
           </div>
 
-          {/* Кнопки — стройный ряд (без "Задания") */}
+          {/* Кнопки — стройный ряд */}
           <div style={{
             display: 'flex',
             gap: 28,
@@ -261,7 +263,6 @@ export default function Home() {
                 >
                   {btn.label}
                 </div>
-                {/* Тонкий разделитель-точка */}
                 <div style={{
                   width: 3,
                   height: 3,
