@@ -167,29 +167,16 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ЗАВЕРШЁННАЯ СЦЕНА === */}
+        {/* === БЛОК БАЛАНСА — ЗАВЕРШЁННАЯ СЦЕНА (сетка убрана, позиция скорректирована) === */}
         <div style={{
           position: 'absolute',
-          left: '2%',
-          top: '2%',
+          left: '2.5%',
+          top: '1.5%',
           zIndex: 20,
           width: 320,
           height: 320,
           animation: 'driftBalance 25s ease-in-out infinite alternate'
         }}>
-          {/* Голографическая сетка (фон) */}
-          <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundImage: `
-              linear-gradient(rgba(160,233,255,0.06) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(160,233,255,0.06) 1px, transparent 1px)
-            `,
-            backgroundSize: '30px 30px',
-            zIndex: 0,
-            animation: 'gridShift 20s linear infinite'
-          }} />
-
           {/* Медленные кольца */}
           <div style={{
             position: 'absolute',
@@ -405,10 +392,6 @@ export default function TestPlanetPage() {
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
           100% { transform: translate(6px, -6px); }
-        }
-        @keyframes gridShift {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(30px, 30px); }
         }
         @keyframes ringRotate1 {
           0% { transform: translate(-50%, -50%) rotate(0deg); }
