@@ -64,7 +64,6 @@ export default function CompanyAdminDashboard() {
         })}
       </div>
 
-      {/* Контент */}
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto' }}>
         <h1 style={{
           fontSize: 28, fontWeight: 600, marginBottom: 32,
@@ -72,71 +71,29 @@ export default function CompanyAdminDashboard() {
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
         }}>Панель управления</h1>
 
-        {/* Метрики */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
-          <div style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
+          <div style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.tasks}</div>
             <div style={{ fontSize: 14, color: '#aaa' }}>заданий</div>
           </div>
-          <div style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
+          <div style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.employees}</div>
             <div style={{ fontSize: 14, color: '#aaa' }}>сотрудников</div>
           </div>
-          <div style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
+          <div style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.goals}</div>
             <div style={{ fontSize: 14, color: '#aaa' }}>целей</div>
           </div>
         </div>
 
-        {/* Навигационные кнопки */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          <Link href="/company-admin/tasks" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Управление заданиями</Link>
-          <Link href="/company-admin/employees" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Управление командой</Link>
-          <Link href="/company-admin/goals" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Управление целями</Link>
-          <Link href="/company-admin/review" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Задания на проверке</Link>
-          <Link href="/company-admin/history" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>История заданий</Link>
-          <Link href="/company-admin/rewards" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Товары магазина</Link>
-          <Link href="/company-admin/purchases" style={{
-            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
-          }}>Подтверждение сертификатов</Link>
+          <Link href="/company-admin/tasks" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none', transition: 'all 0.3s' }}>Управление заданиями</Link>
+          <Link href="/company-admin/employees" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>Управление командой</Link>
+          <Link href="/company-admin/goals" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>Управление целями</Link>
+          <Link href="/company-admin/review" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>Задания на проверке</Link>
+          <Link href="/company-admin/history" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>История заданий</Link>
+          <Link href="/company-admin/rewards" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>Управление товарами</Link>
+          <Link href="/company-admin/purchases" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 50, padding: '10px 24px', color: '#fff', fontSize: 14, textDecoration: 'none' }}>Подтверждение сертификатов</Link>
         </div>
       </div>
       <style jsx global>{`
