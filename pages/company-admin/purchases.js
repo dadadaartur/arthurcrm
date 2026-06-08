@@ -20,16 +20,32 @@ export default function PurchasesAdmin() {
       const { data: prof } = await supabase.from('profiles').select('company_id, role_id').eq('user_id', user.id).single()
       if (!prof || (prof.role_id !== 1 && prof.role_id !== 2)) { router.push('/'); return }
       setProfile(prof)
-      loadPurchases(prof.company_id)
+      await loadPurchases(prof.company_id)
     }
     init()
   }, [])
 
   const loadPurchases = async (companyId) => {
+    // Получаем всех сотрудников компании
     const { data: employees } = await supabase.from('profiles').select('user_id').eq('company_id', companyId)
-    if (!employees?.length) return setPurchases([])
+    if (!employees || employees.length === 0) {
+      setPurchases([])
+      return
+    }
     const userIds = employees.map(e => e.user_id)
-    const { data } = await supabase.from('purchases').select('*').in('user_id', userIds).eq('status', 'pending').order('created_at', { ascending: false })
+    // Загружаем покупки этих сотрудников со статусом pending
+    const { data, error } = await supabase
+      .from('purchases')
+      .select('*')
+      .in('user_id', userIds)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Ошибка загрузки покупок:', error)
+      setPurchases([])
+      return
+    }
     setPurchases(data || [])
   }
 
@@ -91,22 +107,15 @@ export default function PurchasesAdmin() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Кнопка назад */}
-        <Link href="/company-admin" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          fontSize: 14, color: '#aaa', textDecoration: 'none',
-          marginBottom: 24, transition: 'color 0.3s'
-        }}>
+        <Link href="/company-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>←</span> Назад
         </Link>
 
-        <h1 style={{
-          fontSize: 28, marginBottom: 32,
-          background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-        }}>Подтверждение сертификатов</h1>
+        <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Подтверждение сертификатов</h1>
 
-        {purchases.length === 0 ? <p style={{ color: '#aaa' }}>Нет запросов</p> : (
+        {purchases.length === 0 ? (
+          <p style={{ color: '#aaa' }}>Нет запросов</p>
+        ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {purchases.map(p => (
               <div key={p.id} style={{
@@ -128,7 +137,7 @@ export default function PurchasesAdmin() {
         )}
       </div>
 
-      {/* Модальное окно */}
+      {/* Модальное окно подтверждения */}
       {modal.show && modal.purchase && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setModal({ show: false })}>
           <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 500, width: '90%' }} onClick={e => e.stopPropagation()}>
