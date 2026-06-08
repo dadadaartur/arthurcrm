@@ -156,7 +156,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – исправлен, стоит на месте */}
+        {/* Блок баланса – парит, прозрачный, тонкий шрифт */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -164,51 +164,39 @@ export default function TestPlanetPage() {
           zIndex: 20,
           width: '360px',
           padding: '24px 20px 20px',
-          background: 'rgba(10, 10, 10, 0.4)',  // лёгкая дымка, не сплошной квадрат
-          backdropFilter: 'blur(8px)',
-          borderRadius: 20,
+          background: 'transparent',
           border: 'none',
-          boxShadow: 'none'
+          boxShadow: 'none',
+          animation: 'driftBalance 10s ease-in-out infinite alternate'
         }}>
-          {/* Текст баланса */}
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{
               textAlign: 'left',
-              fontSize: 12,
-              fontWeight: 500,
+              fontSize: 14,
+              fontWeight: 300,
               color: '#FFD700',
-              opacity: 0.8,
-              marginBottom: 16,
-              letterSpacing: 1,
-              textShadow: '0 0 6px rgba(255,200,0,0.5)'
+              opacity: 0.9,
+              marginBottom: 12,
+              letterSpacing: 2,
+              textShadow: '0 0 8px rgba(255,200,0,0.4)',
+              fontFamily: 'Inter, sans-serif'
             }}>
-              Мой счёт
+              Баланс кармиков
             </div>
 
-            <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
               <div style={{
-                fontSize: 48,
-                fontWeight: 700,
+                fontSize: 52,
+                fontWeight: 300,
                 fontFamily: 'Inter, sans-serif',
                 color: 'transparent',
                 backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 14px rgba(255,200,0,0.8))',
-                lineHeight: 1,
-                marginBottom: 6
+                filter: 'drop-shadow(0 0 12px rgba(255,200,0,0.7))',
+                lineHeight: 1
               }}>
                 {balance}
-              </div>
-              <div style={{
-                fontSize: 12,
-                fontWeight: 400,
-                color: '#FFD700',
-                opacity: 0.85,
-                textShadow: '0 0 6px rgba(255,200,0,0.4)',
-                letterSpacing: 0.5
-              }}>
-                {karmikWord}
               </div>
             </div>
           </div>
@@ -277,6 +265,10 @@ export default function TestPlanetPage() {
         @keyframes drift2 {
           0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
+        }
+        @keyframes driftBalance {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(4px, -4px); }
         }
       `}</style>
     </>
