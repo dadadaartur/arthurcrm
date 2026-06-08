@@ -43,6 +43,15 @@ export default function TestPlanetPage() {
 
   if (loading) return <div style={{ color:'white', textAlign:'center', paddingTop:100 }}>Загрузка...</div>
 
+  const starButtons = [
+    { label: 'Перевести', path: '/transfer', x: 70, y: 40 },
+    { label: 'Операции', path: '/history', x: 230, y: 40 },
+    { label: 'Покупки', path: '/my-purchases', x: 70, y: 140 },
+    { label: 'Магазин', path: '/shop', x: 230, y: 140 }
+  ]
+
+  const centerStar = { x: 150, y: 90 }
+
   return (
     <>
       <Head>
@@ -145,53 +154,164 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — КРАСИВЫЙ, ЖИВОЙ, БЕЗ РАМОК === */}
+        {/* === БЛОК БАЛАНСА — СОЗВЕЗДИЕ === */}
         <div style={{
           position: 'absolute',
           left: '4%',
-          top: '3%',
+          top: '5%',
           zIndex: 20,
           animation: 'driftBalance 12s ease-in-out infinite alternate'
         }}>
           {/* Заголовок */}
           <div style={{
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: 300,
             letterSpacing: 3,
             color: '#FFD700',
-            opacity: 0.9,
-            textShadow: '0 0 12px rgba(255,200,0,0.6)',
-            marginBottom: 8
+            opacity: 0.8,
+            textShadow: '0 0 10px rgba(255,200,0,0.5)',
+            marginBottom: 16,
+            textAlign: 'center'
           }}>
             Баланс кармиков
           </div>
 
-          {/* Цифра */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{
-              fontSize: 68,
-              fontWeight: 200,
-              fontFamily: 'Inter, sans-serif',
-              color: 'transparent',
-              backgroundImage: 'linear-gradient(180deg, #FFD700 0%, #FFB347 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 20px rgba(255,215,0,0.8))',
-              lineHeight: 1,
-              animation: 'glowPulse 3s ease-in-out infinite'
-            }}>
-              {balance}
-            </div>
-          </div>
+          {/* Контейнер созвездия */}
+          <div style={{
+            position: 'relative',
+            width: 300,
+            height: 180,
+            margin: '0 auto'
+          }}>
+            {/* SVG с линиями */}
+            <svg
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 1
+              }}
+              viewBox="0 0 300 180"
+            >
+              {starButtons.map((btn, i) => (
+                <line
+                  key={i}
+                  x1={centerStar.x}
+                  y1={centerStar.y}
+                  x2={btn.x}
+                  y2={btn.y}
+                  stroke="rgba(255,215,0,0.4)"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                  className="constellation-line"
+                />
+              ))}
+            </svg>
 
-          {/* Кнопки (текстовые, с неоновым эффектом при наведении) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 18 }}>
-              <span onClick={() => router.push('/transfer')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Перевести</span>
-              <span onClick={() => router.push('/history')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Операции</span>
-              <span onClick={() => router.push('/my-purchases')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Покупки</span>
+            {/* Центральная звезда */}
+            <div style={{
+              position: 'absolute',
+              left: centerStar.x,
+              top: centerStar.y,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 2,
+              width: 60,
+              height: 60,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Лучи */}
+              <div className="star-rays" style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                background: 'radial-gradient(circle, rgba(255,215,0,0.6) 0%, transparent 70%)',
+                borderRadius: '50%',
+                animation: 'spin 8s linear infinite'
+              }} />
+              {/* Ядро */}
+              <div style={{
+                position: 'absolute',
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, #FFD700 0%, #FFA500 60%, transparent 100%)',
+                boxShadow: '0 0 30px rgba(255,215,0,0.9), 0 0 60px rgba(255,180,0,0.6)',
+                animation: 'glowPulse 3s ease-in-out infinite'
+              }} />
+              {/* Цифра */}
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                fontSize: 24,
+                fontWeight: 400,
+                fontFamily: 'Inter, sans-serif',
+                color: '#0a0a0a',
+                textShadow: '0 0 10px rgba(255,215,0,0.8)',
+                lineHeight: 1
+              }}>
+                {balance}
+              </div>
             </div>
-            <span onClick={() => router.push('/shop')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Магазин</span>
+
+            {/* Звёзды-кнопки */}
+            {starButtons.map((btn, i) => (
+              <div
+                key={i}
+                onClick={() => router.push(btn.path)}
+                style={{
+                  position: 'absolute',
+                  left: btn.x,
+                  top: btn.y,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 2,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.querySelector('.star-dot').style.boxShadow = '0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,180,0,0.9)';
+                  e.currentTarget.querySelector('.star-dot').style.transform = 'scale(1.3)';
+                  e.currentTarget.querySelector('.star-label').style.color = '#FFD700';
+                  e.currentTarget.querySelector('.star-label').style.textShadow = '0 0 10px rgba(255,200,0,0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.querySelector('.star-dot').style.boxShadow = '0 0 8px rgba(255,215,0,0.6), 0 0 18px rgba(255,180,0,0.4)';
+                  e.currentTarget.querySelector('.star-dot').style.transform = 'scale(1)';
+                  e.currentTarget.querySelector('.star-label').style.color = 'rgba(234,240,251,0.8)';
+                  e.currentTarget.querySelector('.star-label').style.textShadow = '0 0 4px rgba(255,200,0,0.3)';
+                }}
+              >
+                <div
+                  className="star-dot"
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: '#FFD700',
+                    boxShadow: '0 0 8px rgba(255,215,0,0.6), 0 0 18px rgba(255,180,0,0.4)',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+                <span
+                  className="star-label"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 300,
+                    color: 'rgba(234,240,251,0.8)',
+                    textShadow: '0 0 4px rgba(255,200,0,0.3)',
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {btn.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -245,14 +365,20 @@ export default function TestPlanetPage() {
           0% { transform: translate(0, 0); }
           100% { transform: translate(6px, -6px); }
         }
-        @keyframes glowPulse {
-          0%, 100% { filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); }
-          50% { filter: drop-shadow(0 0 35px rgba(255,215,0,1)); }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        .hover-glow:hover {
-          color: #FFD700 !important;
-          text-shadow: 0 0 10px rgba(255,200,0,0.8);
-          opacity: 1 !important;
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.9), 0 0 60px rgba(255,180,0,0.6); }
+          50% { box-shadow: 0 0 50px rgba(255,215,0,1), 0 0 90px rgba(255,180,0,0.8); }
+        }
+        .constellation-line {
+          animation: lineDashMove 2s linear infinite;
+        }
+        @keyframes lineDashMove {
+          0% { stroke-dashoffset: 0; }
+          100% { stroke-dashoffset: -8; }
         }
       `}</style>
     </>
