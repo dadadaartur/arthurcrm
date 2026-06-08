@@ -44,18 +44,8 @@ html, body {
   100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
 }
 
-/* БАЛАНС-КАРТОЧКА */
-.balance-card {
-  background: #0A0A0A;
-  border: 1px solid rgba(249,115,22,0.5);
-  border-radius: 28px;
-  padding: 24px 32px;
-  box-shadow: 0 0 30px rgba(249,115,22,0.2);
-  animation: borderShine 4s infinite;
-  width: 500px;
-  position: relative;
-  overflow: hidden;
-}
+/* БАЛАНС-КАРТОЧКА — полностью убрал, чтобы не мешала */
+/* .balance-card удалён */
 
 /* ЧЁРНАЯ ДЫРА – только чёрный круг и внешнее кольцо */
 .black-hole {
@@ -335,10 +325,4 @@ select {
   background-repeat: no-repeat !important;
   background-position: right 12px center !important;
   padding-right: 36px !important;
-}
-/* убираем фон и рамки у тестового блока баланса */
-div[style*="width: 360px"][style*="padding: 24px 20px 20px"] {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
 }
