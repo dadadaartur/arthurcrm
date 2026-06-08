@@ -145,7 +145,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – прозрачный, парит, тонкий шрифт */}
+        {/* Блок баланса – прозрачный, парит, тонкий шрифт, без глобальных классов */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -153,7 +153,6 @@ export default function TestPlanetPage() {
           zIndex: 20,
           width: '360px',
           padding: '24px 20px 20px',
-          // Никакого фона, рамок и теней
           background: 'transparent',
           border: 'none',
           boxShadow: 'none',
@@ -191,14 +190,34 @@ export default function TestPlanetPage() {
             </div>
           </div>
 
-          {/* Кнопки */}
+          {/* Кнопки с собственными стилями (не используют .action-btn и .wide-btn) */}
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Перевести</button>
-              <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Операции</button>
-              <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Покупки</button>
+              <button onClick={() => router.push('/transfer')} style={{
+                flex: 1, padding: '8px 0', fontSize: 12,
+                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
+                transition: 'all 0.25s', textAlign: 'center'
+              }}>Перевести</button>
+              <button onClick={() => router.push('/history')} style={{
+                flex: 1, padding: '8px 0', fontSize: 12,
+                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
+                transition: 'all 0.25s', textAlign: 'center'
+              }}>Операции</button>
+              <button onClick={() => router.push('/my-purchases')} style={{
+                flex: 1, padding: '8px 0', fontSize: 12,
+                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
+                transition: 'all 0.25s', textAlign: 'center'
+              }}>Покупки</button>
             </div>
-            <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>Магазин</button>
+            <button onClick={() => router.push('/shop')} style={{
+              width: '100%', padding: '8px 0', fontSize: 13,
+              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
+              border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
+              transition: 'all 0.25s', textAlign: 'center'
+            }}>Магазин</button>
           </div>
         </div>
       </div>
