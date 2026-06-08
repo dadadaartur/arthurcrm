@@ -53,49 +53,133 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
 
   return (
-    <div className="flex flex-col items-start px-6 py-8">
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
-        <div className="flex flex-col items-start">
-          <div className="balance-card">
-            <div style={{ position: 'relative', height: '180px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div className="black-hole" />
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div className="text-sm font-bold text-yellow-500 mb-2">Баланс</div>
-                <div className="text-5xl font-extrabold text-yellow-400 mb-2" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundImage: 'linear-gradient(180deg, #FFD700, #C5A04E)' }}>
-                  {balance}
-                </div>
-                <div className="text-sm font-bold text-yellow-500">{karmikWord}</div>
+    <>
+      <Head>
+        <title>Кармический банк</title>
+      </Head>
+
+      <div className="flex flex-col items-start px-6 py-8">
+        <div className="flex flex-col lg:flex-row gap-8 w-full">
+          {/* Левая колонка — баланс */}
+          <div className="flex flex-col items-start" style={{ minWidth: '280px' }}>
+            {/* Новый блок баланса */}
+            <div style={{
+              animation: 'driftBalance 25s ease-in-out infinite alternate',
+              marginBottom: 30
+            }}>
+              {/* Цифра */}
+              <div style={{
+                fontSize: 48,
+                fontWeight: 600,
+                fontFamily: 'Inter, sans-serif',
+                background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
+                backgroundSize: '200% 200%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
+                animation: 'rainbowShift 4s ease-in-out infinite alternate',
+                lineHeight: 1,
+                marginBottom: 4,
+                textAlign: 'center'
+              }}>
+                {balance}
+              </div>
+
+              {/* Подпись "кармиков" */}
+              <div style={{
+                fontSize: 13,
+                fontWeight: 300,
+                fontFamily: 'Inter, sans-serif',
+                color: 'rgba(255,255,255,0.85)',
+                textShadow: '0 0 8px rgba(100,200,255,0.7), 0 0 16px rgba(255,150,200,0.5)',
+                letterSpacing: 2,
+                marginBottom: 20,
+                textAlign: 'center'
+              }}>
+                {karmikWord}
+              </div>
+
+              {/* Кнопки — стройный ряд */}
+              <div style={{
+                display: 'flex',
+                gap: 28,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                {[
+                  { label: 'Задания', path: '/tasks', color: '#a0e9ff' },
+                  { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
+                  { label: 'Операции', path: '/history', color: '#ffb3c6' },
+                  { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
+                  { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
+                ].map((btn, idx) => (
+                  <div key={idx} style={{ textAlign: 'center' }}>
+                    <div
+                      onClick={() => router.push(btn.path)}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 400,
+                        color: 'rgba(255,255,255,0.6)',
+                        cursor: 'pointer',
+                        textShadow: '0 0 5px rgba(100,200,255,0.4)',
+                        transition: 'all 0.3s ease',
+                        marginBottom: 6
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = btn.color;
+                        e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                        e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)';
+                      }}
+                    >
+                      {btn.label}
+                    </div>
+                    {/* Тонкий разделитель-точка */}
+                    <div style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: '50%',
+                      background: btn.color,
+                      margin: '0 auto',
+                      boxShadow: `0 0 6px ${btn.color}`
+                    }} />
+                  </div>
+                ))}
               </div>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '20px' }}>
-              <button onClick={() => router.push('/transfer')} className="action-btn">Перевести</button>
-              <button onClick={() => router.push('/shop')} className="action-btn">Магазин</button>
-              <button onClick={() => router.push('/history')} className="action-btn">Операции</button>
-              <button onClick={() => router.push('/my-purchases')} className="wide-btn">Мои покупки</button>
-            </div>
           </div>
-        </div>
 
-        <div className="flex-1 flex flex-col gap-6">
-          <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
-            <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="text-center"><p className="text-gray-400 text-sm">В работе</p><p className="text-2xl font-bold text-white">{stats.active}</p></div>
-              <div className="text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{stats.completed}</p></div>
-              <div className="text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p></div>
+          {/* Правая колонка — статистика и ссылки */}
+          <div className="flex-1 flex flex-col gap-6">
+            <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
+              <h3 className="text-lg font-semibold text-white mb-4">Задания</h3>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center"><p className="text-gray-400 text-sm">В работе</p><p className="text-2xl font-bold text-white">{stats.active}</p></div>
+                <div className="text-center"><p className="text-gray-400 text-sm">Выполнено</p><p className="text-2xl font-bold text-green-400">{stats.completed}</p></div>
+                <div className="text-center"><p className="text-gray-400 text-sm">Заработано</p><p className="text-2xl font-bold text-yellow-400">+{stats.earned}</p></div>
+              </div>
             </div>
-            <div className="flex justify-center">
-              <button onClick={() => router.push('/tasks')} className="action-btn text-sm px-6 py-2">
-                Перейти к заданиям
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
+              <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="dash-card"><h3>Рейтинг</h3><p className="text-sm text-gray-400">Твоя позиция среди лучших</p></div>
-            <div className="dash-card"><h3>Соревнования</h3><p className="text-sm text-gray-400">Докажи своё мастерство в битве</p></div>
           </div>
         </div>
       </div>
-    </div>
+
+      <style jsx global>{`
+        @keyframes driftBalance {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(5px, -5px); }
+        }
+        @keyframes rainbowShift {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+      `}</style>
+    </>
   )
 }
