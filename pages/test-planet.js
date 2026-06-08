@@ -54,16 +54,13 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Частицы для фона блока баланса
-  const particles = Array.from({ length: 8 }).map((_, i) => ({
-    id: i,
-    x: 20 + Math.random() * 260,
-    y: 20 + Math.random() * 260,
-    size: 1.5 + Math.random() * 2.5,
-    duration: 15 + Math.random() * 20,
-    delay: Math.random() * 5,
-    color: ['#a0e9ff', '#ffb3c6', '#ffe29f', '#b3f0ff'][i % 4]
-  }))
+  // Кнопки-осколки
+  const buttons = [
+    { label: 'Перевести', path: '/transfer', color: '#ff6666' },
+    { label: 'Операции', path: '/history', color: '#ff9999' },
+    { label: 'Покупки', path: '/my-purchases', color: '#ff4d4d' },
+    { label: 'Магазин', path: '/shop', color: '#cc0000' }
+  ]
 
   return (
     <>
@@ -167,177 +164,125 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ЗАВЕРШЁННАЯ СЦЕНА (сетка убрана, позиция скорректирована) === */}
+        {/* === БЛОК БАЛАНСА — РУБИН === */}
         <div style={{
           position: 'absolute',
-          left: '2.5%',
+          left: '2%',
           top: '1.5%',
           zIndex: 20,
           width: 320,
-          height: 320,
+          height: 380,
           animation: 'driftBalance 25s ease-in-out infinite alternate'
         }}>
-          {/* Медленные кольца */}
+          {/* Рубин */}
           <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 220, height: 220,
-            borderRadius: '50%',
-            border: '1px solid rgba(160,233,255,0.25)',
-            filter: 'blur(1px)',
-            animation: 'ringRotate1 60s linear infinite',
-            zIndex: 0
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 240, height: 240,
-            borderRadius: '50%',
-            border: '1px solid rgba(255,179,198,0.2)',
-            filter: 'blur(1.5px)',
-            animation: 'ringRotate2 90s linear infinite',
-            zIndex: 0
-          }} />
-
-          {/* Размытые пятна (глубина) */}
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 200, height: 200,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(180,220,255,0.3) 0%, rgba(100,180,255,0.1) 50%, transparent 70%)',
-            filter: 'blur(30px)',
-            animation: 'holoSpot1 8s ease-in-out infinite alternate'
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 220, height: 220,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,180,200,0.25) 0%, rgba(255,100,150,0.1) 50%, transparent 70%)',
-            filter: 'blur(35px)',
-            animation: 'holoSpot2 10s ease-in-out infinite alternate'
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 180, height: 180,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,255,180,0.3) 0%, rgba(255,200,100,0.15) 50%, transparent 70%)',
-            filter: 'blur(28px)',
-            animation: 'holoSpot3 12s ease-in-out infinite alternate'
-          }} />
-
-          {/* Парящие частицы */}
-          {particles.map(p => (
-            <div
-              key={p.id}
-              style={{
-                position: 'absolute',
-                left: p.x,
-                top: p.y,
-                width: p.size,
-                height: p.size,
-                borderRadius: '50%',
-                background: p.color,
-                boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
-                opacity: 0.7,
-                zIndex: 2,
-                animation: `particleFloat ${p.duration}s ease-in-out infinite alternate`,
-                animationDelay: `${p.delay}s`
-              }}
-            />
-          ))}
-
-          {/* Цифра и подпись */}
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            zIndex: 3,
-            pointerEvents: 'none'
+            position: 'relative',
+            width: 200,
+            height: 200,
+            margin: '0 auto',
+            animation: 'rotateRuby 12s linear infinite',
+            transformOrigin: 'center center'
           }}>
+            {/* Основа рубина (восьмиугольник) */}
             <div style={{
-              fontSize: 46,
-              fontWeight: 600,
-              fontFamily: 'Inter, sans-serif',
-              background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
-              backgroundSize: '200% 200%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
-              animation: 'rainbowShift 4s ease-in-out infinite alternate',
-              lineHeight: 1,
-              marginBottom: 8
-            }}>
-              {balance}
-            </div>
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              clipPath: 'polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 20% 80%, 0% 50%, 20% 20%)',
+              background: 'radial-gradient(circle at 30% 30%, #ff6666, #800000)',
+              boxShadow: 'inset 0 0 20px rgba(255,255,255,0.3), 0 0 30px rgba(255,0,0,0.6)',
+              zIndex: 1
+            }} />
+            {/* Блик (верхняя левая грань) */}
             <div style={{
-              fontSize: 12,
-              fontWeight: 300,
-              fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255,255,255,0.9)',
-              textShadow: '0 0 8px rgba(100,200,255,0.8), 0 0 16px rgba(255,150,200,0.6)',
-              letterSpacing: 2,
-              opacity: 0.9
+              position: 'absolute',
+              top: 10, left: 20, right: 60, bottom: 60,
+              clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 100% 100%, 0% 100%, 0% 50%)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 60%)',
+              zIndex: 2,
+              pointerEvents: 'none'
+            }} />
+            {/* Цифра и подпись */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 3,
+              textAlign: 'center',
+              pointerEvents: 'none'
             }}>
-              {karmikWord}
+              <div style={{
+                fontSize: 48,
+                fontWeight: 700,
+                fontFamily: 'Inter, sans-serif',
+                color: '#fff',
+                textShadow: '0 0 15px rgba(255,215,0,0.9), 0 0 30px rgba(255,100,0,0.7)',
+                lineHeight: 1,
+                marginBottom: 4
+              }}>
+                {balance}
+              </div>
+              <div style={{
+                fontSize: 12,
+                fontWeight: 400,
+                fontFamily: 'Inter, sans-serif',
+                color: '#fff',
+                textShadow: '0 0 8px rgba(255,200,0,0.8)',
+                letterSpacing: 1.5,
+                opacity: 0.9
+              }}>
+                {karmikWord}
+              </div>
             </div>
           </div>
 
-          {/* Кнопки — крупнее, с акцентными линиями */}
+          {/* Кнопки-осколки */}
           <div style={{
-            position: 'absolute',
-            bottom: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
             display: 'flex',
-            gap: 32,
-            zIndex: 3
+            justifyContent: 'center',
+            gap: 24,
+            marginTop: 30
           }}>
-            {[
-              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
-              { label: 'Операции', path: '/history', color: '#ffb3c6' },
-              { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
-              { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
-            ].map((btn, i) => (
-              <div key={i} style={{ textAlign: 'center' }}>
+            {buttons.map((btn, idx) => (
+              <div key={idx} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                cursor: 'pointer'
+              }}>
                 <div
                   onClick={() => router.push(btn.path)}
                   style={{
-                    fontSize: 13,
-                    fontWeight: 400,
-                    color: 'rgba(255,255,255,0.6)',
-                    cursor: 'pointer',
-                    textShadow: '0 0 5px rgba(100,200,255,0.4)',
+                    width: 24,
+                    height: 24,
+                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                    background: `radial-gradient(circle at 30% 30%, ${btn.color}, #400000)`,
+                    boxShadow: `0 0 10px ${btn.color}`,
                     transition: 'all 0.3s ease',
                     marginBottom: 6
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = btn.color;
-                    e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`;
+                    e.currentTarget.style.width = '32px';
+                    e.currentTarget.style.height = '32px';
+                    e.currentTarget.style.boxShadow = `0 0 20px ${btn.color}`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
-                    e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)';
+                    e.currentTarget.style.width = '24px';
+                    e.currentTarget.style.height = '24px';
+                    e.currentTarget.style.boxShadow = `0 0 10px ${btn.color}`;
                   }}
+                />
+                <span style={{
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.7)',
+                  textShadow: '0 0 4px rgba(255,100,100,0.5)',
+                  transition: 'color 0.3s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = btn.color; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
                 >
                   {btn.label}
-                </div>
-                <div style={{
-                  width: 24,
-                  height: 1,
-                  background: `linear-gradient(90deg, transparent, ${btn.color}, transparent)`,
-                  margin: '0 auto',
-                  boxShadow: `0 0 4px ${btn.color}`
-                }} />
+                </span>
               </div>
             ))}
           </div>
@@ -391,35 +336,11 @@ export default function TestPlanetPage() {
         }
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
-          100% { transform: translate(6px, -6px); }
+          100% { transform: translate(5px, -5px); }
         }
-        @keyframes ringRotate1 {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        @keyframes ringRotate2 {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(-360deg); }
-        }
-        @keyframes holoSpot1 {
-          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.6; }
-          100% { transform: translate(-50%, -50%) translate(5px, -8px) scale(1.1); opacity: 1; }
-        }
-        @keyframes holoSpot2 {
-          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.5; }
-          100% { transform: translate(-50%, -50%) translate(-7px, 6px) scale(1.15); opacity: 0.9; }
-        }
-        @keyframes holoSpot3 {
-          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.7; }
-          100% { transform: translate(-50%, -50%) translate(-4px, -10px) scale(1.05); opacity: 0.8; }
-        }
-        @keyframes rainbowShift {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 100% 50%; }
-        }
-        @keyframes particleFloat {
-          0% { transform: translate(0, 0); opacity: 0.4; }
-          100% { transform: translate(-8px, -12px); opacity: 0.9; }
+        @keyframes rotateRuby {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </>
