@@ -323,3 +323,20 @@ select {
   background-position: right 12px center !important;
   padding-right: 36px !important;
 }
+
+/* Стилизованный скроллбар для всего сайта */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #a0e9ff, #ffb3c6);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,200,0,0.4);
+}
