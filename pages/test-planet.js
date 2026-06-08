@@ -39,7 +39,7 @@ export default function TestPlanetPage() {
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
     { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз',       sub: 'проверь себя', left: 33, top: 35, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'Квиз',       sub: 'проверь себя', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },  // сдвинут правее
     { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
     { title: 'Битва',      sub: 'отделов',      left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
   ]
@@ -83,9 +83,10 @@ export default function TestPlanetPage() {
         {/* Мягкие переливы внизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
           <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
+          {/* Левый свет – теперь тусклее */}
+          <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.25) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.3) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.2) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
         </div>
 
         {/* Чёрная дыра (центр притяжения) */}
@@ -156,58 +157,58 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса — теперь дыра внутри и кнопки ровные */}
+        {/* Блок баланса – компактный, тонкий, не перекрывает "Квиз" */}
         <div style={{
           position: 'absolute',
-          left: '4%',
-          top: '3%',   // чуть приподняли
+          left: '3%',
+          top: '2%',   // чуть выше
           zIndex: 20
         }}>
           <div className="balance-card" style={{
-            width: '420px',   // стал шире
-            padding: '24px 28px'
+            width: '340px',   // уже, чем раньше
+            padding: '20px 24px'
           }}>
-            {/* Чёрная дыра – уменьшена и точно в блоке */}
-            <div style={{ position: 'relative', height: 140, display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+            {/* Чёрная дыра – ещё меньше */}
+            <div style={{ position: 'relative', height: 110, display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
               <div style={{
                 position: 'absolute',
                 top: '50%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: 140, height: 140,   // уменьшили с 180 до 140
+                width: 110, height: 110,
                 borderRadius: '50%',
                 background: '#000',
-                boxShadow: '0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15)',
+                boxShadow: '0 0 15px rgba(249,115,22,0.3), 0 0 30px rgba(249,115,22,0.15)',
                 animation: 'blackHolePulse 3s infinite',
                 zIndex: 0
               }} />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316', marginBottom: 6 }}>Баланс</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#f97316', marginBottom: 4 }}>Баланс</div>
                 <div style={{
-                  fontSize: 42, fontWeight: 800, color: 'transparent',
+                  fontSize: 34, fontWeight: 600, color: 'transparent',
                   backgroundImage: 'linear-gradient(180deg, #FFD700, #FFC107)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.6))', marginBottom: 4
+                  filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.5))', marginBottom: 2
                 }}>
                   {balance}
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316' }}>{karmikWord}</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#f97316' }}>{karmikWord}</div>
               </div>
             </div>
 
-            {/* Кнопки – аккуратные, равномерные */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+            {/* Кнопки – легче и аккуратнее */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
                   Перевести
                 </button>
-                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
                   Операции
                 </button>
-                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
                   Покупки
                 </button>
               </div>
-              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '10px 0', fontSize: 14 }}>
+              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>
                 Магазин
               </button>
             </div>
@@ -261,9 +262,9 @@ export default function TestPlanetPage() {
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
         }
         @keyframes blackHolePulse {
-          0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
-          50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
-          100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+          0% { box-shadow: 0 0 15px rgba(249,115,22,0.3), 0 0 30px rgba(249,115,22,0.15); }
+          50% { box-shadow: 0 0 25px rgba(249,115,22,0.5), 0 0 45px rgba(249,115,22,0.25); }
+          100% { box-shadow: 0 0 15px rgba(249,115,22,0.3), 0 0 30px rgba(249,115,22,0.15); }
         }
       `}</style>
     </>
