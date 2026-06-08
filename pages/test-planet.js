@@ -3,15 +3,6 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase } from '../lib/supabaseClient'
 
-function getKarmikWord(n) {
-  const lastDigit = n % 10
-  const lastTwoDigits = n % 100
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
-  if (lastDigit === 1) return 'кармик'
-  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
-  return 'кармиков'
-}
-
 export default function TestPlanetPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -29,8 +20,6 @@ export default function TestPlanetPage() {
     }
     init()
   }, [])
-
-  const karmikWord = getKarmikWord(balance)
 
   const centerX = 58
   const centerY = 40
@@ -156,7 +145,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – парит, прозрачный, тонкий шрифт */}
+        {/* Блок баланса – прозрачный, парит, тонкий шрифт */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -164,6 +153,7 @@ export default function TestPlanetPage() {
           zIndex: 20,
           width: '360px',
           padding: '24px 20px 20px',
+          // Никакого фона, рамок и теней
           background: 'transparent',
           border: 'none',
           boxShadow: 'none',
@@ -204,19 +194,11 @@ export default function TestPlanetPage() {
           {/* Кнопки */}
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                Перевести
-              </button>
-              <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                Операции
-              </button>
-              <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                Покупки
-              </button>
+              <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Перевести</button>
+              <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Операции</button>
+              <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>Покупки</button>
             </div>
-            <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>
-              Магазин
-            </button>
+            <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>Магазин</button>
           </div>
         </div>
       </div>
