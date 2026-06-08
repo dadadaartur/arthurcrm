@@ -156,16 +156,30 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – теперь как на главной, с чёрной дырой и ровными кнопками */}
+        {/* Блок баланса — теперь дыра внутри и кнопки ровные */}
         <div style={{
-          position: 'absolute', left: '4%', top: '4%',
-          width: 380,   // чуть компактнее, чем на главной
+          position: 'absolute',
+          left: '4%',
+          top: '3%',   // чуть приподняли
           zIndex: 20
         }}>
-          <div className="balance-card" style={{ width: '100%' }}>
-            {/* Чёрная дыра точно как на главной */}
-            <div style={{ position: 'relative', height: 130, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div className="black-hole" />
+          <div className="balance-card" style={{
+            width: '420px',   // стал шире
+            padding: '24px 28px'
+          }}>
+            {/* Чёрная дыра – уменьшена и точно в блоке */}
+            <div style={{ position: 'relative', height: 140, display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{
+                position: 'absolute',
+                top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 140, height: 140,   // уменьшили с 180 до 140
+                borderRadius: '50%',
+                background: '#000',
+                boxShadow: '0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15)',
+                animation: 'blackHolePulse 3s infinite',
+                zIndex: 0
+              }} />
               <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316', marginBottom: 6 }}>Баланс</div>
                 <div style={{
@@ -180,14 +194,22 @@ export default function TestPlanetPage() {
               </div>
             </div>
 
-            {/* Кнопки – одинаковый шрифт, ровные ряды */}
-            <div style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1 }}>Перевести</button>
-                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1 }}>Операции</button>
-                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1 }}>Покупки</button>
+            {/* Кнопки – аккуратные, равномерные */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+                  Перевести
+                </button>
+                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+                  Операции
+                </button>
+                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '10px 0', fontSize: 13 }}>
+                  Покупки
+                </button>
               </div>
-              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%' }}>Магазин</button>
+              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '10px 0', fontSize: 14 }}>
+                Магазин
+              </button>
             </div>
           </div>
         </div>
@@ -237,6 +259,11 @@ export default function TestPlanetPage() {
         @keyframes drift2 {
           0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
+        }
+        @keyframes blackHolePulse {
+          0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+          50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
+          100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
         }
       `}</style>
     </>
