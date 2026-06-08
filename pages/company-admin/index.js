@@ -105,8 +105,7 @@ export default function CompanyAdminDashboard() {
           <Link href="/company-admin/tasks" style={{
             background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
-            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none',
-            transition: 'all 0.3s'
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
           }}>Управление заданиями</Link>
           <Link href="/company-admin/employees" style={{
             background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
@@ -128,6 +127,11 @@ export default function CompanyAdminDashboard() {
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
             padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
           }}>История заданий</Link>
+          <Link href="/company-admin/rewards" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>Товары магазина</Link>
           <Link href="/company-admin/purchases" style={{
             background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
