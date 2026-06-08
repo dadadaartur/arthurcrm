@@ -23,6 +23,8 @@ export default function RewardsAdmin() {
   const [editingId, setEditingId] = useState(null)
   const [showHistory, setShowHistory] = useState(false)
   const [notification, setNotification] = useState({ show: false, message: '' })
+  // Состояние для модалки подтверждения удаления
+  const [deleteModal, setDeleteModal] = useState({ show: false, rewardId: null, rewardName: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -78,7 +80,7 @@ export default function RewardsAdmin() {
       : await supabase.from('rewards').insert(rewardData)
 
     if (error) {
-      setNotification({ show: true, message: 'Ошибка сохранения товара' })
+      setNotification({ show: true, message: 'Ошибка сохранения товара: ' + error.message })
       return
     }
 
@@ -104,11 +106,24 @@ export default function RewardsAdmin() {
     })
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Удалить товар?')) return
-    await supabase.from('rewards').delete().eq('id', id)
-    setNotification({ show: true, message: 'Товар удалён' })
-    loadRewards()
+  // Открыть модалку подтверждения удаления
+  const confirmDelete = (reward) => {
+    setDeleteModal({ show: true, rewardId: reward.id, rewardName: reward.name })
+  }
+
+  // Реальное удаление после подтверждения
+  const handleDelete = async () => {
+    const { rewardId } = deleteModal
+    if (!rewardId) return
+
+    const { error } = await supabase.from('rewards').delete().eq('id', rewardId)
+    if (error) {
+      setNotification({ show: true, message: 'Ошибка удаления: ' + error.message })
+    } else {
+      setNotification({ show: true, message: 'Товар удалён' })
+      loadRewards()
+    }
+    setDeleteModal({ show: false, rewardId: null, rewardName: '' })
   }
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
@@ -144,8 +159,7 @@ export default function RewardsAdmin() {
         <button onClick={() => setShowHistory(!showHistory)} style={{
           background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
           borderRadius: 14, padding: '10px 24px', color: '#fff', cursor: 'pointer',
-          marginBottom: 24, fontSize: 14, backdropFilter: 'blur(12px)',
-          transition: 'all 0.3s'
+          marginBottom: 24, fontSize: 14, backdropFilter: 'blur(12px)'
         }}>
           {showHistory ? 'Создать товар' : 'История товаров'}
         </button>
@@ -170,7 +184,7 @@ export default function RewardsAdmin() {
                   borderRadius: 14, padding: '8px 20px', color: '#fff', cursor: 'pointer',
                   backdropFilter: 'blur(8px)', fontSize: 14
                 }}>Редактировать</button>
-                <button onClick={() => handleDelete(reward.id)} style={{
+                <button onClick={() => confirmDelete(reward)} style={{
                   background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.4)',
                   borderRadius: 14, padding: '8px 20px', color: '#f44', cursor: 'pointer',
                   backdropFilter: 'blur(8px)', fontSize: 14
@@ -184,6 +198,7 @@ export default function RewardsAdmin() {
             borderRadius: 16, padding: 24, marginBottom: 32,
             border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr'
           }}>
+            {/* Поля формы без изменений, для краткости опущены, но они точно такие же как в предыдущем коде */}
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ fontSize: 14, color: '#aaa' }}>Название</label>
               <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
@@ -266,6 +281,20 @@ export default function RewardsAdmin() {
           </form>
         )}
       </div>
+
+      {/* Модалка подтверждения удаления */}
+      {deleteModal.show && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setDeleteModal({ show: false })}>
+          <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%', border: '1px solid rgba(255,215,0,0.2)' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 20, marginBottom: 16, color: '#fff' }}>Удалить товар?</h3>
+            <p style={{ color: '#aaa', marginBottom: 24 }}>Вы действительно хотите удалить «{deleteModal.rewardName}»?</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setDeleteModal({ show: false })} style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '10px', color: '#fff' }}>Отмена</button>
+              <button onClick={handleDelete} style={{ flex: 1, background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 600 }}>Удалить</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Информация">
         <p style={{ color: '#fff' }}>{notification.message}</p>
