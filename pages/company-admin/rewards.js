@@ -46,7 +46,7 @@ export default function RewardsAdmin() {
     e.preventDefault()
     const costValue = parseInt(form.cost, 10)
     if (!form.name || isNaN(costValue) || costValue < 0) {
-      alert('Введите название и корректную стоимость')
+      setNotification({ show: true, message: 'Введите название и корректную стоимость' })
       return
     }
 
@@ -142,9 +142,10 @@ export default function RewardsAdmin() {
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Управление товарами</h1>
 
         <button onClick={() => setShowHistory(!showHistory)} style={{
-          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
-          borderRadius: 12, padding: '10px 20px', color: '#fff', cursor: 'pointer',
-          marginBottom: 24, fontSize: 14
+          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
+          borderRadius: 14, padding: '10px 24px', color: '#fff', cursor: 'pointer',
+          marginBottom: 24, fontSize: 14, backdropFilter: 'blur(12px)',
+          transition: 'all 0.3s'
         }}>
           {showHistory ? 'Создать товар' : 'История товаров'}
         </button>
@@ -164,8 +165,16 @@ export default function RewardsAdmin() {
                   <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
                   <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
                 </div>
-                <button onClick={() => handleEdit(reward)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>Редактировать</button>
-                <button onClick={() => handleDelete(reward.id)} style={{ background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.4)', color: '#f44', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>Удалить</button>
+                <button onClick={() => handleEdit(reward)} style={{
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
+                  borderRadius: 14, padding: '8px 20px', color: '#fff', cursor: 'pointer',
+                  backdropFilter: 'blur(8px)', fontSize: 14
+                }}>Редактировать</button>
+                <button onClick={() => handleDelete(reward.id)} style={{
+                  background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.4)',
+                  borderRadius: 14, padding: '8px 20px', color: '#f44', cursor: 'pointer',
+                  backdropFilter: 'blur(8px)', fontSize: 14
+                }}>Удалить</button>
               </div>
             ))}
           </div>
@@ -175,7 +184,6 @@ export default function RewardsAdmin() {
             borderRadius: 16, padding: 24, marginBottom: 32,
             border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr'
           }}>
-            {/* ... (форма без изменений) */}
             <div style={{ gridColumn: 'span 2' }}>
               <label style={{ fontSize: 14, color: '#aaa' }}>Название</label>
               <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
@@ -232,10 +240,27 @@ export default function RewardsAdmin() {
             </div>
             <button type="submit" style={{
               gridColumn: 'span 2',
-              background: 'linear-gradient(135deg, #f97316, #e65c00)',
-              border: 'none', color: '#fff', padding: '12px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 16,
-              fontWeight: 500
-            }}>
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,215,0,0.25)',
+              borderRadius: 14,
+              padding: '14px 28px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 16,
+              fontWeight: 500,
+              transition: 'all 0.3s',
+              textShadow: '0 0 10px rgba(255,200,0,0.5)'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+              e.currentTarget.style.borderColor = '#FFD700';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
+            }}
+            >
               {editingId ? 'Сохранить изменения' : 'Создать товар'}
             </button>
           </form>
