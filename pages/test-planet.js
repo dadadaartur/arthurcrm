@@ -156,7 +156,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса без рамки, с жидким золотом и каллиграфической цифрой */}
+        {/* === БЛОК БАЛАНСА (НОВЫЙ ДИЗАЙН) === */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -171,9 +171,9 @@ export default function TestPlanetPage() {
             boxShadow: '0 0 40px rgba(249,115,22,0.25)',
             position: 'relative',
             overflow: 'hidden',
-            border: 'none'   // рамка убрана
+            border: 'none'
           }}>
-            {/* Жидкое золотое сияние */}
+            {/* Жидкое золотое сияние (без сфер) */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
               <div style={{
                 position: 'absolute',
@@ -261,6 +261,7 @@ export default function TestPlanetPage() {
             </div>
           </div>
         </div>
+        {/* === КОНЕЦ БЛОКА БАЛАНСА === */}
       </div>
 
       <style jsx global>{`
