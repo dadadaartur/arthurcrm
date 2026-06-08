@@ -145,50 +145,53 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса — теперь как летающие буквы, без фона и рамок */}
+        {/* === БЛОК БАЛАНСА — КРАСИВЫЙ, ЖИВОЙ, БЕЗ РАМОК === */}
         <div style={{
           position: 'absolute',
-          left: '3%',
-          top: '2%',
+          left: '4%',
+          top: '3%',
           zIndex: 20,
-          animation: 'driftBalance 10s ease-in-out infinite alternate'
+          animation: 'driftBalance 12s ease-in-out infinite alternate'
         }}>
-          <div style={{ marginBottom: 12 }}>
+          {/* Заголовок */}
+          <div style={{
+            fontSize: 15,
+            fontWeight: 300,
+            letterSpacing: 3,
+            color: '#FFD700',
+            opacity: 0.9,
+            textShadow: '0 0 12px rgba(255,200,0,0.6)',
+            marginBottom: 8
+          }}>
+            Баланс кармиков
+          </div>
+
+          {/* Цифра */}
+          <div style={{ marginBottom: 16 }}>
             <div style={{
-              fontSize: 14,
-              fontWeight: 300,
-              color: '#FFD700',
-              opacity: 0.9,
-              marginBottom: 6,
-              letterSpacing: 2,
-              textShadow: '0 0 8px rgba(255,200,0,0.4)',
-              fontFamily: 'Inter, sans-serif'
-            }}>
-              Баланс кармиков
-            </div>
-            <div style={{
-              fontSize: 52,
-              fontWeight: 300,
+              fontSize: 68,
+              fontWeight: 200,
               fontFamily: 'Inter, sans-serif',
               color: 'transparent',
-              backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
+              backgroundImage: 'linear-gradient(180deg, #FFD700 0%, #FFB347 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 12px rgba(255,200,0,0.7))',
-              lineHeight: 1
+              filter: 'drop-shadow(0 0 20px rgba(255,215,0,0.8))',
+              lineHeight: 1,
+              animation: 'glowPulse 3s ease-in-out infinite'
             }}>
               {balance}
             </div>
           </div>
 
-          {/* Кнопки как чистый текст, без фона */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
-            <div style={{ display: 'flex', gap: 20 }}>
-              <span onClick={() => router.push('/transfer')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Перевести</span>
-              <span onClick={() => router.push('/history')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Операции</span>
-              <span onClick={() => router.push('/my-purchases')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Покупки</span>
+          {/* Кнопки (текстовые, с неоновым эффектом при наведении) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 18 }}>
+              <span onClick={() => router.push('/transfer')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Перевести</span>
+              <span onClick={() => router.push('/history')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Операции</span>
+              <span onClick={() => router.push('/my-purchases')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Покупки</span>
             </div>
-            <span onClick={() => router.push('/shop')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Магазин</span>
+            <span onClick={() => router.push('/shop')} className="hover-glow" style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.85, transition: 'all 0.3s' }}>Магазин</span>
           </div>
         </div>
       </div>
@@ -240,7 +243,16 @@ export default function TestPlanetPage() {
         }
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
-          100% { transform: translate(4px, -4px); }
+          100% { transform: translate(6px, -6px); }
+        }
+        @keyframes glowPulse {
+          0%, 100% { filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); }
+          50% { filter: drop-shadow(0 0 35px rgba(255,215,0,1)); }
+        }
+        .hover-glow:hover {
+          color: #FFD700 !important;
+          text-shadow: 0 0 10px rgba(255,200,0,0.8);
+          opacity: 1 !important;
         }
       `}</style>
     </>
