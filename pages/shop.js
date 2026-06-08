@@ -80,10 +80,12 @@ export default function Shop() {
         })}
       </div>
 
+      {/* Переливы */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
+      {/* Контент */}
       <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px' }}>
         <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
@@ -114,7 +116,8 @@ export default function Shop() {
             </div>
           </div>
 
-          <div className="custom-scroll" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}>
+          {/* Горизонтальный скролл */}
+          <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}>
             <div style={{ display: 'inline-flex', gap: 30 }}>
               {rewards.map(reward => (
                 <div key={reward.id} style={{
@@ -195,7 +198,7 @@ export default function Shop() {
       {/* Модалка товара */}
       {selectedReward && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
-          <div className="modal-scroll" style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 18, marginBottom: 24 }} />}
             <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
@@ -237,12 +240,6 @@ export default function Shop() {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
         }
-        .custom-scroll::-webkit-scrollbar { height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #a0e9ff, #ffb3c6); border-radius: 3px; }
-        .modal-scroll::-webkit-scrollbar { width: 4px; }
-        .modal-scroll::-webkit-scrollbar-track { background: transparent; }
-        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius: 2px; }
       `}</style>
     </div>
   )
