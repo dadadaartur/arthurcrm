@@ -156,84 +156,79 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – прозрачный, летающий, без свечения */}
+        {/* Блок баланса – исправлен, стоит на месте */}
         <div style={{
           position: 'absolute',
           left: '3%',
           top: '2%',
-          zIndex: 20
+          zIndex: 20,
+          width: '360px',
+          padding: '24px 20px 20px',
+          background: 'rgba(10, 10, 10, 0.4)',  // лёгкая дымка, не сплошной квадрат
+          backdropFilter: 'blur(8px)',
+          borderRadius: 20,
+          border: 'none',
+          boxShadow: 'none'
         }}>
-          <div style={{
-            width: '360px',             // стал шире
-            padding: '24px 20px 20px',
-            background: 'transparent',  // теперь без фона
-            borderRadius: 0,
-            boxShadow: 'none',
-            border: 'none',
-            animation: 'drift0 10s ease-in-out infinite alternate'  // летает как меню
-          }}>
-            {/* Внутреннее свечение полностью убрано */}
-
-            {/* Текст баланса */}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{
-                textAlign: 'left',
-                fontSize: 12,
-                fontWeight: 500,
-                color: '#FFD700',
-                opacity: 0.8,
-                marginBottom: 16,
-                letterSpacing: 1,
-                textShadow: '0 0 6px rgba(255,200,0,0.5)'
-              }}>
-                Мой счёт
-              </div>
-
-              <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                <div style={{
-                  fontSize: 48,
-                  fontWeight: 700,
-                  fontFamily: 'Inter, sans-serif',  // ровный шрифт без засечек
-                  color: 'transparent',
-                  backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 14px rgba(255,200,0,0.8))',
-                  lineHeight: 1,
-                  marginBottom: 6
-                }}>
-                  {balance}
-                </div>
-                <div style={{
-                  fontSize: 12,            // такой же размер, как "Мой счёт"
-                  fontWeight: 400,
-                  color: '#FFD700',
-                  opacity: 0.85,
-                  textShadow: '0 0 6px rgba(255,200,0,0.4)',
-                  letterSpacing: 0.5
-                }}>
-                  {karmikWord}
-                </div>
-              </div>
+          {/* Текст баланса */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              textAlign: 'left',
+              fontSize: 12,
+              fontWeight: 500,
+              color: '#FFD700',
+              opacity: 0.8,
+              marginBottom: 16,
+              letterSpacing: 1,
+              textShadow: '0 0 6px rgba(255,200,0,0.5)'
+            }}>
+              Мой счёт
             </div>
 
-            {/* Кнопки */}
-            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                  Перевести
-                </button>
-                <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                  Операции
-                </button>
-                <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
-                  Покупки
-                </button>
+            <div style={{ textAlign: 'center', marginBottom: 12 }}>
+              <div style={{
+                fontSize: 48,
+                fontWeight: 700,
+                fontFamily: 'Inter, sans-serif',
+                color: 'transparent',
+                backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 14px rgba(255,200,0,0.8))',
+                lineHeight: 1,
+                marginBottom: 6
+              }}>
+                {balance}
               </div>
-              <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>
-                Магазин
+              <div style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: '#FFD700',
+                opacity: 0.85,
+                textShadow: '0 0 6px rgba(255,200,0,0.4)',
+                letterSpacing: 0.5
+              }}>
+                {karmikWord}
+              </div>
+            </div>
+          </div>
+
+          {/* Кнопки */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
+                Перевести
+              </button>
+              <button onClick={() => router.push('/history')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
+                Операции
+              </button>
+              <button onClick={() => router.push('/my-purchases')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
+                Покупки
               </button>
             </div>
+            <button onClick={() => router.push('/shop')} className="wide-btn" style={{ width: '100%', padding: '8px 0', fontSize: 13 }}>
+              Магазин
+            </button>
           </div>
         </div>
       </div>
