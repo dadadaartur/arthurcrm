@@ -80,9 +80,13 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Космическое свечение */}
+        {/* Мягкие переливы внизу (добавлены оттенки) */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
           <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
+          {/* Дополнительные мягкие оттенки */}
+          <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.3) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
         </div>
 
         {/* Чёрная дыра (центр притяжения) */}
@@ -153,21 +157,25 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса */}
+        {/* Блок баланса – исправленный: чёрная дыра, широкий блок, кнопки переставлены */}
         <div style={{
           position: 'absolute', left: '4%', top: '4%',
           background: '#0A0A0A', border: '1px solid rgba(249,115,22,0.5)',
-          borderRadius: 24, padding: 20, width: 340,
+          borderRadius: 24, padding: 20, width: 380,                    // стало чуть шире
           boxShadow: '0 0 30px rgba(249,115,22,0.2)', zIndex: 20
         }}>
           <div style={{ position: 'relative', height: 130, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Чёрная дыра баланса (теперь точно видна) */}
             <div style={{
-              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              position: 'absolute',
+              top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
               width: 100, height: 100, borderRadius: '50%',
               background: 'radial-gradient(circle, #000 30%, transparent 70%)',
-              filter: 'blur(10px)', opacity: 0.5
+              filter: 'blur(10px)',
+              opacity: 0.5,
+              zIndex: 0
             }} />
-            <div style={{ position: 'relative', textAlign: 'center' }}>
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#f97316', marginBottom: 6 }}>Баланс</div>
               <div style={{
                 fontSize: 42, fontWeight: 800, color: 'transparent',
@@ -181,11 +189,24 @@ export default function TestPlanetPage() {
             </div>
           </div>
 
+          {/* Кнопки действий: Магазин – широкая, Покупки – маленькая */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-            <button onClick={() => router.push('/transfer')} style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '8px 14px', color: 'white', fontSize: 13 }}>Перевести</button>
-            <button onClick={() => router.push('/shop')} style={{ flex: '2 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '8px 14px', color: 'white', fontSize: 13 }}>Магазин</button>
-            <button onClick={() => router.push('/history')} style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '8px 14px', color: 'white', fontSize: 13 }}>Операции</button>
-            <button onClick={() => router.push('/my-purchases')} style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '8px 14px', color: 'white', fontSize: 13 }}>Мои покупки</button>
+            <button onClick={() => router.push('/transfer')}
+              style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
+              Перевести
+            </button>
+            <button onClick={() => router.push('/shop')}
+              style={{ flex: '2 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
+              Магазин
+            </button>
+            <button onClick={() => router.push('/history')}
+              style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
+              Операции
+            </button>
+            <button onClick={() => router.push('/my-purchases')}
+              style={{ flex: '1 1 0', background: '#1a2a45', border: '1px solid rgba(249,115,22,0.5)', borderRadius: 50, padding: '6px 12px', color: 'white', fontSize: 12, cursor: 'pointer' }}>
+              Покупки
+            </button>
           </div>
         </div>
       </div>
@@ -198,6 +219,18 @@ export default function TestPlanetPage() {
         @keyframes breathe1 {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
+        }
+        @keyframes breathe2 {
+          0% { opacity: 0.5; transform: scaleY(1.05) translateX(-2%); }
+          100% { opacity: 0.9; transform: scaleY(1.25) translateX(2%); }
+        }
+        @keyframes breathe3 {
+          0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
+          100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
+        }
+        @keyframes breathe4 {
+          0% { opacity: 0.3; transform: scale(1); }
+          100% { opacity: 0.6; transform: scale(1.1); }
         }
         @keyframes orbitSpin {
           0% { transform: rotate(0deg); }
