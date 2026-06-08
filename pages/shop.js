@@ -57,34 +57,6 @@ export default function Shop() {
     setSelectedReward(reward)
   }
 
-  // Стилизованный баланс
-  const BalanceDisplay = () => (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      backdropFilter: 'blur(16px)',
-      borderRadius: 50,
-      padding: '8px 24px',
-      border: '1px solid rgba(255,215,0,0.2)',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 10,
-      boxShadow: '0 0 20px rgba(255,200,0,0.1)'
-    }}>
-      <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
-      <span style={{
-        fontSize: 20,
-        fontWeight: 600,
-        background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
-      }}>
-        {balance}
-      </span>
-      <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
-    </div>
-  )
-
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
@@ -116,18 +88,31 @@ export default function Shop() {
         <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
-            <BalanceDisplay />
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 50,
+              padding: '8px 24px',
+              border: '1px solid rgba(255,215,0,0.2)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 0 20px rgba(255,200,0,0.1)'
+            }}>
+              <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
+              <span style={{
+                fontSize: 20,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
+              }}>
+                {balance}
+              </span>
+              <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
+            </div>
           </div>
-
-          {/* Стилизованный скроллбар */}
-          <style jsx>{`
-            .custom-scroll::-webkit-scrollbar { height: 6px; }
-            .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
-            .custom-scroll::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #a0e9ff, #ffb3c6); border-radius: 3px; }
-            .modal-scroll::-webkit-scrollbar { width: 4px; }
-            .modal-scroll::-webkit-scrollbar-track { background: transparent; }
-            .modal-scroll::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius: 2px; }
-          `}</style>
 
           <div className="custom-scroll" style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}>
             <div style={{ display: 'inline-flex', gap: 30 }}>
@@ -207,7 +192,7 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Модалка товара со стилизованным скроллом */}
+      {/* Модалка товара */}
       {selectedReward && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
           <div className="modal-scroll" style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
@@ -242,6 +227,7 @@ export default function Shop() {
       <PremiumModal isOpen={modal.show} onClose={() => setModal({ ...modal, show: false })} title={modal.type === 'success' ? 'Успешно' : 'Ошибка'}>
         <p style={{ color: '#fff' }}>{modal.message}</p>
       </PremiumModal>
+
       <style jsx global>{`
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
@@ -251,6 +237,12 @@ export default function Shop() {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
         }
+        .custom-scroll::-webkit-scrollbar { height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #a0e9ff, #ffb3c6); border-radius: 3px; }
+        .modal-scroll::-webkit-scrollbar { width: 4px; }
+        .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius: 2px; }
       `}</style>
     </div>
   )
