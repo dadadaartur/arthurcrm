@@ -145,79 +145,50 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – прозрачный, парит, тонкий шрифт, без глобальных классов */}
+        {/* Блок баланса — теперь как летающие буквы, без фона и рамок */}
         <div style={{
           position: 'absolute',
           left: '3%',
           top: '2%',
           zIndex: 20,
-          width: '360px',
-          padding: '24px 20px 20px',
-          background: 'transparent',
-          border: 'none',
-          boxShadow: 'none',
           animation: 'driftBalance 10s ease-in-out infinite alternate'
         }}>
-          <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ marginBottom: 12 }}>
             <div style={{
-              textAlign: 'left',
               fontSize: 14,
               fontWeight: 300,
               color: '#FFD700',
               opacity: 0.9,
-              marginBottom: 12,
+              marginBottom: 6,
               letterSpacing: 2,
               textShadow: '0 0 8px rgba(255,200,0,0.4)',
               fontFamily: 'Inter, sans-serif'
             }}>
               Баланс кармиков
             </div>
-
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <div style={{
-                fontSize: 52,
-                fontWeight: 300,
-                fontFamily: 'Inter, sans-serif',
-                color: 'transparent',
-                backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 12px rgba(255,200,0,0.7))',
-                lineHeight: 1
-              }}>
-                {balance}
-              </div>
+            <div style={{
+              fontSize: 52,
+              fontWeight: 300,
+              fontFamily: 'Inter, sans-serif',
+              color: 'transparent',
+              backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 12px rgba(255,200,0,0.7))',
+              lineHeight: 1
+            }}>
+              {balance}
             </div>
           </div>
 
-          {/* Кнопки с собственными стилями (не используют .action-btn и .wide-btn) */}
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => router.push('/transfer')} style={{
-                flex: 1, padding: '8px 0', fontSize: 12,
-                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
-                transition: 'all 0.25s', textAlign: 'center'
-              }}>Перевести</button>
-              <button onClick={() => router.push('/history')} style={{
-                flex: 1, padding: '8px 0', fontSize: 12,
-                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
-                transition: 'all 0.25s', textAlign: 'center'
-              }}>Операции</button>
-              <button onClick={() => router.push('/my-purchases')} style={{
-                flex: 1, padding: '8px 0', fontSize: 12,
-                background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-                border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
-                transition: 'all 0.25s', textAlign: 'center'
-              }}>Покупки</button>
+          {/* Кнопки как чистый текст, без фона */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+            <div style={{ display: 'flex', gap: 20 }}>
+              <span onClick={() => router.push('/transfer')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Перевести</span>
+              <span onClick={() => router.push('/history')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Операции</span>
+              <span onClick={() => router.push('/my-purchases')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Покупки</span>
             </div>
-            <button onClick={() => router.push('/shop')} style={{
-              width: '100%', padding: '8px 0', fontSize: 13,
-              background: 'radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%)',
-              border: 'none', borderRadius: 50, color: 'rgba(255,255,255,0.82)', cursor: 'pointer',
-              transition: 'all 0.25s', textAlign: 'center'
-            }}>Магазин</button>
+            <span onClick={() => router.push('/shop')} style={{ fontSize: 14, fontWeight: 400, color: '#eaf0fb', cursor: 'pointer', opacity: 0.9, textShadow: '0 0 5px rgba(255,255,255,0.3)' }}>Магазин</span>
           </div>
         </div>
       </div>
