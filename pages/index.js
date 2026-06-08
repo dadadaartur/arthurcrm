@@ -51,13 +51,14 @@ export default function Home() {
   const centerX = 58
   const centerY = 40
 
+  // Меню сцены: заменили "Битва отделов" на "Задания"
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
     { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
     { title: 'Квиз',       sub: 'проверь себя', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },
     { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва',      sub: 'отделов',      left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Задания',    sub: '',             left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   const beams = blocks.map(block => {
@@ -144,6 +145,14 @@ export default function Home() {
         {/* Парящие кнопки меню */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
+          const handleClick = () => {
+            if (block.title === 'Задания') {
+              router.push('/tasks')
+            } else {
+              // Остальные кнопки пока не имеют маршрутов, можно добавить позже
+              // Пока заглушка или ничего
+            }
+          }
           return (
             <div key={idx} style={{
               position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
@@ -153,6 +162,7 @@ export default function Home() {
               animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
               transition: 'transform 0.3s'
             }}
+            onClick={handleClick}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
             >
@@ -174,7 +184,7 @@ export default function Home() {
           )
         })}
 
-        {/* === НОВЫЙ БЛОК БАЛАНСА (как на тестовой) === */}
+        {/* === НОВЫЙ БЛОК БАЛАНСА (без кнопки "Задания") === */}
         <div style={{
           position: 'absolute',
           left: '2.5%',
@@ -214,7 +224,7 @@ export default function Home() {
             {karmikWord}
           </div>
 
-          {/* Кнопки — стройный ряд */}
+          {/* Кнопки — стройный ряд (без "Задания") */}
           <div style={{
             display: 'flex',
             gap: 28,
@@ -223,7 +233,6 @@ export default function Home() {
             flexWrap: 'wrap'
           }}>
             {[
-              { label: 'Задания', path: '/tasks', color: '#a0e9ff' },
               { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
               { label: 'Операции', path: '/history', color: '#ffb3c6' },
               { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
