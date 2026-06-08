@@ -14,6 +14,7 @@ export default function RewardsAdmin() {
     cost: '',
     type: 'physical',
     requires_approval: false,
+    limit_per_user: '',
     image_file: null,
     preview_url: ''
   })
@@ -64,6 +65,7 @@ export default function RewardsAdmin() {
       cost: costValue,
       type: form.type,
       requires_approval: form.requires_approval,
+      limit_per_user: form.limit_per_user ? parseInt(form.limit_per_user) : null,
       image_url: imageUrl
     }
 
@@ -75,7 +77,7 @@ export default function RewardsAdmin() {
       if (error) return alert('Ошибка создания: ' + error.message)
     }
 
-    setForm({ name: '', description: '', cost: '', type: 'physical', requires_approval: false, image_file: null, preview_url: '' })
+    setForm({ name: '', description: '', cost: '', type: 'physical', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
     setEditingId(null)
     loadRewards()
   }
@@ -88,6 +90,7 @@ export default function RewardsAdmin() {
       cost: reward.cost.toString(),
       type: reward.type || 'physical',
       requires_approval: reward.requires_approval || false,
+      limit_per_user: reward.limit_per_user ? reward.limit_per_user.toString() : '',
       image_file: null,
       preview_url: reward.image_url || ''
     })
@@ -156,6 +159,10 @@ export default function RewardsAdmin() {
               Требуется согласование
             </label>
           </div>
+          <div>
+            <label style={{ fontSize: 14, color: '#aaa' }}>Лимит на сотрудника</label>
+            <input type="number" value={form.limit_per_user} onChange={e => setForm({ ...form, limit_per_user: e.target.value })} placeholder="Без ограничений" style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} min="1" step="1" />
+          </div>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={{ fontSize: 14, color: '#aaa', display: 'block', marginBottom: 8 }}>Изображение</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -204,7 +211,7 @@ export default function RewardsAdmin() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{reward.name}</div>
                 <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
-                <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'}</div>
+                <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
               </div>
               <button onClick={() => handleEdit(reward)} style={{
                 background: 'rgba(255,255,255,0.1)',
