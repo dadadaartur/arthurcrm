@@ -41,36 +41,106 @@ export default function CompanyAdminDashboard() {
     init()
   }, [])
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Панель управления</h1>
-
-      {/* Метрики в ряд */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <div className="dash-card text-center flex-1 min-w-[120px]">
-          <div className="text-2xl font-bold text-white">{stats.tasks}</div>
-          <div className="text-sm text-gray-400">заданий</div>
-        </div>
-        <div className="dash-card text-center flex-1 min-w-[120px]">
-          <div className="text-2xl font-bold text-white">{stats.employees}</div>
-          <div className="text-sm text-gray-400">сотрудников</div>
-        </div>
-        <div className="dash-card text-center flex-1 min-w-[120px]">
-          <div className="text-2xl font-bold text-white">{stats.goals}</div>
-          <div className="text-sm text-gray-400">целей</div>
-        </div>
+    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 20px', position: 'relative' }}>
+      {/* Звёзды */}
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        {Array.from({ length: 80 }).map((_, i) => {
+          const size = Math.random() * 2 + 0.5
+          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
+          const color = colors[Math.floor(Math.random() * colors.length)]
+          return (
+            <div key={i} style={{
+              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
+              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
+              boxShadow: `0 0 ${size * 2}px ${color}`,
+              opacity: Math.random() * 0.5 + 0.3,
+              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
+              animationDelay: Math.random() * 10 + 's'
+            }} />
+          )
+        })}
       </div>
 
-      {/* Навигационные пилюли */}
-      <div className="flex flex-wrap gap-2">
-        <Link href="/company-admin/tasks" className="filter-pill">Управление заданиями</Link>
-        <Link href="/company-admin/employees" className="filter-pill">Управление командой</Link>
-        <Link href="/company-admin/goals" className="filter-pill">Управление целями</Link>
-        <Link href="/company-admin/review" className="filter-pill">Задания на проверке</Link>
-        <Link href="/company-admin/history" className="filter-pill">История заданий</Link>
+      {/* Контент */}
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{
+          fontSize: 28, fontWeight: 600, marginBottom: 32,
+          background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+        }}>Панель управления</h1>
+
+        {/* Метрики */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
+          <div style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.tasks}</div>
+            <div style={{ fontSize: 14, color: '#aaa' }}>заданий</div>
+          </div>
+          <div style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.employees}</div>
+            <div style={{ fontSize: 14, color: '#aaa' }}>сотрудников</div>
+          </div>
+          <div style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            borderRadius: 16, padding: 24, flex: '1 1 150px', textAlign: 'center',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#FFD700' }}>{stats.goals}</div>
+            <div style={{ fontSize: 14, color: '#aaa' }}>целей</div>
+          </div>
+        </div>
+
+        {/* Навигационные кнопки */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <Link href="/company-admin/tasks" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none',
+            transition: 'all 0.3s'
+          }}>Управление заданиями</Link>
+          <Link href="/company-admin/employees" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>Управление командой</Link>
+          <Link href="/company-admin/goals" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>Управление целями</Link>
+          <Link href="/company-admin/review" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>Задания на проверке</Link>
+          <Link href="/company-admin/history" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>История заданий</Link>
+          <Link href="/company-admin/purchases" style={{
+            background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 50,
+            padding: '10px 20px', color: '#fff', fontSize: 14, textDecoration: 'none'
+          }}>Запросы на покупки</Link>
+        </div>
       </div>
+      <style jsx global>{`
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.95); }
+          50% { opacity: 0.7; transform: scale(1.05); }
+        }
+      `}</style>
     </div>
   )
 }
