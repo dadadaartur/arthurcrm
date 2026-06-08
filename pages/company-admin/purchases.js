@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabaseClient'
 import PremiumModal from '../../components/PremiumModal'
 
 export default function PurchasesAdmin() {
@@ -14,59 +13,46 @@ export default function PurchasesAdmin() {
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('company_id, role_id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (!prof || (prof.role_id !== 1 && prof.role_id !== 2)) {
+    (async () => {
+      // Проверяем, админ ли пользователь
+      const res = await fetch('/api/admin/check-admin')
+      if (!res.ok) {
         router.push('/')
         return
       }
-
-      setProfile(prof)
-      loadPurchases()
-    }
-    init()
+      const data = await res.json()
+      setProfile(data.profile)
+      // Загружаем заявки
+      const purchasesRes = await fetch('/api/admin/get-pending-purchases')
+      if (purchasesRes.ok) {
+        const list = await purchasesRes.json()
+        setPurchases(list)
+      }
+    })()
   }, [])
 
   const loadPurchases = async () => {
-    // Обычный клиент, RLS решает, что админ видит
-    const { data, error } = await supabase
-      .from('purchases')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-
-    if (!error) setPurchases(data || [])
-    else console.error('Ошибка загрузки:', error)
+    const res = await fetch('/api/admin/get-pending-purchases')
+    if (res.ok) {
+      const list = await res.json()
+      setPurchases(list)
+    }
   }
 
   const handleApprove = async () => {
     const { purchase } = modal
     if (!purchase) return
-
-    const updateData = {
-      status: 'approved',
-      approved_comment: comment,
-      certificate_data: {
-        valid_date: dateOption === 'any' ? 'any' : specificDate,
-        comment: comment
-      }
-    }
-
-    const { error } = await supabase.from('purchases').update(updateData).eq('id', purchase.id)
-    if (!error) {
-      await supabase.from('notifications').insert({
-        user_id: purchase.user_id,
-        message: `Ваша покупка "${purchase.reward_name}" одобрена!`,
-        link: '/my-purchases'
+    const res = await fetch('/api/admin/approve-purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purchaseId: purchase.id,
+        comment,
+        dateOption,
+        specificDate
       })
+    })
+    if (res.ok) {
       setModal({ show: false })
       loadPurchases()
     }
@@ -75,18 +61,11 @@ export default function PurchasesAdmin() {
   const handleReject = async () => {
     const { purchase } = modal
     if (!purchase) return
-
-    await supabase.from('purchases').update({
-      status: 'rejected',
-      approved_comment: comment
-    }).eq('id', purchase.id)
-
-    await supabase.from('notifications').insert({
-      user_id: purchase.user_id,
-      message: `Ваша покупка "${purchase.reward_name}" отклонена. Причина: ${comment || 'не указана'}.`,
-      link: '/my-purchases'
+    await fetch('/api/admin/reject-purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purchaseId: purchase.id, comment })
     })
-
     setModal({ show: false })
     loadPurchases()
   }
