@@ -156,74 +156,62 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ЭНЕРГЕТИЧЕСКАЯ ВЯЗЬ === */}
+        {/* === НОВЫЙ БЛОК БАЛАНСА — ГОЛОГРАММНОЕ ОБЛАКО === */}
         <div style={{
           position: 'absolute',
-          left: '4%',
+          left: '3%',
           top: '4%',
           zIndex: 20,
-          width: 360,
-          height: 360,
-          animation: 'driftBalance 15s ease-in-out infinite alternate'
+          width: 280,
+          height: 280,
+          animation: 'driftBalance 20s ease-in-out infinite alternate'
         }}>
-          {/* SVG с нитями */}
-          <svg width="360" height="360" viewBox="0 0 360 360" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
-            <defs>
-              <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFD700" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#FFA500" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#B87333" stopOpacity="0.3" />
-              </linearGradient>
-              <linearGradient id="copper" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#B87333" stopOpacity="0.7" />
-                <stop offset="50%" stopColor="#D2691E" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#FFA500" stopOpacity="0.2" />
-              </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              <filter id="softGlow">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-              </filter>
-            </defs>
+          {/* Слой 1 – медленное цветное пятно */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 180, height: 180,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(100,150,255,0.2) 0%, rgba(80,100,200,0.1) 40%, transparent 70%)',
+            filter: 'blur(25px)',
+            animation: 'cloudShift1 12s ease-in-out infinite alternate'
+          }} />
+          {/* Слой 2 – золотистое облако */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 200, height: 200,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,180,0,0.3) 0%, rgba(255,140,0,0.15) 40%, transparent 70%)',
+            filter: 'blur(30px)',
+            animation: 'cloudShift2 15s ease-in-out infinite alternate'
+          }} />
+          {/* Слой 3 – розоватое свечение */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 170, height: 170,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,120,120,0.25) 0%, rgba(200,80,100,0.1) 50%, transparent 70%)',
+            filter: 'blur(28px)',
+            animation: 'cloudShift3 18s ease-in-out infinite alternate'
+          }} />
+          {/* Слой 4 – голубое мерцание */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 160, height: 160,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(150,200,255,0.3) 0%, rgba(100,150,255,0.1) 50%, transparent 70%)',
+            filter: 'blur(35px)',
+            animation: 'cloudShift4 20s ease-in-out infinite alternate'
+          }} />
 
-            {/* Группа нитей, вращающаяся медленно */}
-            <g style={{ animation: 'weaveRotate1 20s linear infinite', transformOrigin: '180px 180px' }}>
-              <path d="M180 100 C 120 80, 60 150, 100 200 C 140 250, 200 220, 220 180 C 240 140, 200 110, 180 120" 
-                    fill="none" stroke="url(#gold)" strokeWidth="1.5" filter="url(#glow)"
-                    style={{ animation: 'weaveDash 3s ease-in-out infinite alternate' }} />
-              <path d="M180 260 C 240 280, 300 210, 260 160 C 220 110, 160 140, 140 180 C 120 220, 160 250, 180 240" 
-                    fill="none" stroke="url(#copper)" strokeWidth="1.2" filter="url(#glow)"
-                    style={{ animation: 'weaveDash 4s ease-in-out infinite alternate-reverse' }} />
-            </g>
-
-            {/* Вторая группа нитей, вращающаяся в другую сторону */}
-            <g style={{ animation: 'weaveRotate2 25s linear infinite', transformOrigin: '180px 180px' }}>
-              <path d="M120 180 C 100 120, 150 70, 200 90 C 250 110, 260 160, 230 190 C 200 220, 160 210, 140 190" 
-                    fill="none" stroke="url(#gold)" strokeWidth="1.4" filter="url(#softGlow)"
-                    style={{ animation: 'weaveDash 5s ease-in-out infinite alternate' }} />
-              <path d="M240 180 C 260 240, 210 290, 160 270 C 110 250, 100 200, 130 170 C 160 140, 200 150, 220 170" 
-                    fill="none" stroke="url(#copper)" strokeWidth="1.3" filter="url(#softGlow)"
-                    style={{ animation: 'weaveDash 3.5s ease-in-out infinite alternate-reverse' }} />
-            </g>
-
-            {/* Третья группа нитей (дополнительная сложность) */}
-            <g style={{ animation: 'weaveRotate3 30s linear infinite', transformOrigin: '180px 180px' }}>
-              <path d="M140 140 C 100 100, 150 50, 200 80 C 250 110, 250 160, 210 180 C 170 200, 130 170, 150 150" 
-                    fill="none" stroke="url(#gold)" strokeWidth="1" filter="url(#glow)"
-                    style={{ animation: 'weaveDash 4.5s ease-in-out infinite alternate' }} />
-              <path d="M220 220 C 260 260, 210 310, 160 280 C 110 250, 110 200, 150 180 C 190 160, 230 190, 210 210" 
-                    fill="none" stroke="url(#copper)" strokeWidth="1.1" filter="url(#glow)"
-                    style={{ animation: 'weaveDash 3.8s ease-in-out infinite alternate-reverse' }} />
-            </g>
-          </svg>
-
-          {/* Центральная звезда-цифра */}
+          {/* Цифра и подпись */}
           <div style={{
             position: 'absolute',
             top: '50%',
@@ -234,11 +222,11 @@ export default function TestPlanetPage() {
             pointerEvents: 'none'
           }}>
             <div style={{
-              fontSize: 46,
-              fontWeight: 600,
+              fontSize: 44,
+              fontWeight: 500,
               fontFamily: 'Inter, sans-serif',
-              color: '#FFD700',
-              textShadow: '0 0 20px rgba(255,200,0,0.9), 0 0 40px rgba(255,140,0,0.6)',
+              color: '#ffffff',
+              textShadow: '0 0 15px rgba(255,220,150,0.8), 0 0 30px rgba(255,180,80,0.5)',
               letterSpacing: 2,
               lineHeight: 1,
               marginBottom: 6
@@ -249,8 +237,8 @@ export default function TestPlanetPage() {
               fontSize: 12,
               fontWeight: 300,
               fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255,255,255,0.95)',
-              textShadow: '0 0 10px rgba(255,200,100,0.9), 0 0 20px rgba(255,150,0,0.7)',
+              color: 'rgba(255,255,255,0.9)',
+              textShadow: '0 0 8px rgba(255,200,100,0.8), 0 0 16px rgba(255,150,50,0.5)',
               letterSpacing: 2,
               opacity: 0.9
             }}>
@@ -258,57 +246,56 @@ export default function TestPlanetPage() {
             </div>
           </div>
 
-          {/* Узелки-кнопки */}
-          {[
-            { label: 'Перевести', path: '/transfer', x: 90, y: 60 },
-            { label: 'Операции', path: '/history', x: 270, y: 60 },
-            { label: 'Покупки', path: '/my-purchases', x: 90, y: 300 },
-            { label: 'Магазин', path: '/shop', x: 270, y: 300 }
-          ].map((btn, i) => (
-            <div key={i} style={{
-              position: 'absolute',
-              left: btn.x,
-              top: btn.y,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 3,
-              cursor: 'pointer'
-            }}>
-              <div
-                onClick={() => router.push(btn.path)}
-                style={{
-                  width: 12,
-                  height: 12,
+          {/* Кнопки – ряд под облаком */}
+          <div style={{
+            position: 'absolute',
+            bottom: 10,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: 24,
+            zIndex: 3
+          }}>
+            {[
+              { label: 'Перевести', path: '/transfer' },
+              { label: 'Операции', path: '/history' },
+              { label: 'Покупки', path: '/my-purchases' },
+              { label: 'Магазин', path: '/shop' }
+            ].map((btn, i) => (
+              <div key={i} style={{ textAlign: 'center' }}>
+                <div
+                  onClick={() => router.push(btn.path)}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: 'rgba(255,255,255,0.7)',
+                    cursor: 'pointer',
+                    textShadow: '0 0 5px rgba(255,200,100,0.5)',
+                    transition: 'all 0.3s ease',
+                    marginBottom: 2
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#FFD700';
+                    e.currentTarget.style.textShadow = '0 0 10px rgba(255,200,100,1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                    e.currentTarget.style.textShadow = '0 0 5px rgba(255,200,100,0.5)';
+                  }}
+                >
+                  {btn.label}
+                </div>
+                <div style={{
+                  width: 4,
+                  height: 4,
                   borderRadius: '50%',
-                  background: 'radial-gradient(circle, #FFD700, #B87333)',
-                  boxShadow: '0 0 10px #FFD700, 0 0 20px #FFA500',
-                  transition: 'all 0.3s ease',
-                  margin: '0 auto'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.width = '18px';
-                  e.currentTarget.style.height = '18px';
-                  e.currentTarget.style.boxShadow = '0 0 18px #FFD700, 0 0 36px #FFA500';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.width = '12px';
-                  e.currentTarget.style.height = '12px';
-                  e.currentTarget.style.boxShadow = '0 0 10px #FFD700, 0 0 20px #FFA500';
-                }}
-              />
-              <div style={{
-                marginTop: 8,
-                fontSize: 11,
-                fontWeight: 400,
-                color: 'rgba(255,255,255,0.8)',
-                textShadow: '0 0 6px rgba(255,200,100,0.7)',
-                whiteSpace: 'nowrap',
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-              }}>
-                {btn.label}
+                  background: 'rgba(255,200,100,0.4)',
+                  margin: '0 auto',
+                  boxShadow: '0 0 4px rgba(255,200,100,0.4)'
+                }} />
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -359,23 +346,23 @@ export default function TestPlanetPage() {
         }
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
-          100% { transform: translate(8px, -8px); }
+          100% { transform: translate(6px, -6px); }
         }
-        @keyframes weaveRotate1 {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes cloudShift1 {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.6; }
+          100% { transform: translate(-50%, -50%) translate(8px, -5px) scale(1.1); opacity: 1; }
         }
-        @keyframes weaveRotate2 {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(-360deg); }
+        @keyframes cloudShift2 {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(-50%, -50%) translate(-6px, 8px) scale(1.15); opacity: 1; }
         }
-        @keyframes weaveRotate3 {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes cloudShift3 {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.5; }
+          100% { transform: translate(-50%, -50%) translate(-10px, -6px) scale(1.05); opacity: 0.9; }
         }
-        @keyframes weaveDash {
-          0% { stroke-dashoffset: 0; stroke-dasharray: 200 200; }
-          100% { stroke-dashoffset: -400; stroke-dasharray: 200 200; }
+        @keyframes cloudShift4 {
+          0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.4; }
+          100% { transform: translate(-50%, -50%) translate(6px, 10px) scale(1.1); opacity: 0.8; }
         }
       `}</style>
     </>
