@@ -123,7 +123,7 @@ export default function TestPlanetPage() {
           }} />
         ))}
 
-        {/* Парящие кнопки */}
+        {/* Парящие кнопки меню */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           return (
@@ -156,7 +156,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА (НОВЫЙ ДИЗАЙН) === */}
+        {/* Блок баланса – прозрачный, летающий, без свечения */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -164,39 +164,15 @@ export default function TestPlanetPage() {
           zIndex: 20
         }}>
           <div style={{
-            width: '300px',
+            width: '360px',             // стал шире
             padding: '24px 20px 20px',
-            background: '#0A0A0A',
-            borderRadius: 24,
-            boxShadow: '0 0 40px rgba(249,115,22,0.25)',
-            position: 'relative',
-            overflow: 'hidden',
-            border: 'none'
+            background: 'transparent',  // теперь без фона
+            borderRadius: 0,
+            boxShadow: 'none',
+            border: 'none',
+            animation: 'drift0 10s ease-in-out infinite alternate'  // летает как меню
           }}>
-            {/* Жидкое золотое сияние (без сфер) */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
-              <div style={{
-                position: 'absolute',
-                top: '10%', left: '10%', width: '80%', height: '80%',
-                background: 'radial-gradient(ellipse at 30% 30%, rgba(255,200,0,0.3) 0%, transparent 70%)',
-                filter: 'blur(20px)',
-                animation: 'goldFlow1 8s ease-in-out infinite'
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: '20%', right: '10%', width: '70%', height: '70%',
-                background: 'radial-gradient(ellipse at 60% 40%, rgba(255,140,0,0.4) 0%, transparent 70%)',
-                filter: 'blur(25px)',
-                animation: 'goldFlow2 10s ease-in-out infinite'
-              }} />
-              <div style={{
-                position: 'absolute',
-                bottom: '10%', left: '15%', width: '60%', height: '60%',
-                background: 'radial-gradient(ellipse at 40% 70%, rgba(255,255,150,0.3) 0%, transparent 60%)',
-                filter: 'blur(22px)',
-                animation: 'goldFlow3 7s ease-in-out infinite'
-              }} />
-            </div>
+            {/* Внутреннее свечение полностью убрано */}
 
             {/* Текст баланса */}
             <div style={{ position: 'relative', zIndex: 1 }}>
@@ -215,22 +191,21 @@ export default function TestPlanetPage() {
 
               <div style={{ textAlign: 'center', marginBottom: 12 }}>
                 <div style={{
-                  fontSize: 56,
+                  fontSize: 48,
                   fontWeight: 700,
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                  fontStyle: 'italic',
+                  fontFamily: 'Inter, sans-serif',  // ровный шрифт без засечек
                   color: 'transparent',
                   backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 18px rgba(255,200,0,0.9))',
+                  filter: 'drop-shadow(0 0 14px rgba(255,200,0,0.8))',
                   lineHeight: 1,
                   marginBottom: 6
                 }}>
                   {balance}
                 </div>
                 <div style={{
-                  fontSize: 13,
+                  fontSize: 12,            // такой же размер, как "Мой счёт"
                   fontWeight: 400,
                   color: '#FFD700',
                   opacity: 0.85,
@@ -261,7 +236,6 @@ export default function TestPlanetPage() {
             </div>
           </div>
         </div>
-        {/* === КОНЕЦ БЛОКА БАЛАНСА === */}
       </div>
 
       <style jsx global>{`
@@ -308,20 +282,6 @@ export default function TestPlanetPage() {
         @keyframes drift2 {
           0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
-        }
-        @keyframes goldFlow1 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-          50% { transform: translate(10px, -5px) scale(1.1); opacity: 0.9; }
-        }
-        @keyframes goldFlow2 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-          33% { transform: translate(-8px, 4px) scale(1.05); opacity: 1; }
-          66% { transform: translate(5px, -3px) scale(0.95); opacity: 0.5; }
-        }
-        @keyframes goldFlow3 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-          25% { transform: translate(-5px, -8px) scale(1.1); opacity: 0.8; }
-          75% { transform: translate(8px, 5px) scale(0.9); opacity: 0.6; }
         }
       `}</style>
     </>
