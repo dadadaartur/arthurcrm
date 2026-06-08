@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('reward_id', rewardId)
-      .neq('status', 'rejected') // не считаем отклонённые
+      .neq('status', 'rejected')
     if (count >= reward.limit_per_user) {
       return res.status(400).json({ error: `Вы уже исчерпали лимит (${reward.limit_per_user} шт.) на этот товар` })
     }
@@ -79,12 +79,12 @@ export default async function handler(req, res) {
     link: '/my-purchases'
   })
 
-  // Уведомление админам компании, если требуется согласование
+  // Уведомление админам компании
   if (reward.requires_approval) {
     const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
     if (profile?.company_id) {
       const { data: admins } = await supabaseAdmin.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1,2])
-      if (admins?.length) {
+      if (admins && admins.length > 0) {
         const notifs = admins.map(a => ({
           user_id: a.user_id,
           message: `Сотрудник хочет приобрести "${reward.name}". Требуется подтверждение.`,
