@@ -1,3 +1,4 @@
+/* 2026-06-08 force update */
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -37,7 +38,7 @@ export default function TestPlanetPage() {
   const centerX = 55
   const centerY = 40
 
-  // Кнопки равномерно вокруг центра (радиус ~25%)
+  // Кнопки равномерно вокруг центра
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
