@@ -31,11 +31,9 @@ export default async function handler(req, res) {
   if (userError || !user) return res.status(401).json({ error: 'Токен недействителен' })
   const userId = user.id
 
-  // Получаем товар
   const { data: reward, error: rewardError } = await supabaseAdmin.from('rewards').select('*').eq('id', rewardId).single()
   if (rewardError || !reward) return res.status(404).json({ error: 'Награда не найдена' })
 
-  // Проверка лимита на пользователя
   if (reward.limit_per_user) {
     const { count } = await supabaseAdmin.from('purchases')
       .select('*', { count: 'exact', head: true })
@@ -47,7 +45,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Проверка баланса
   const { data: userBalance, error: balanceError } = await supabaseAdmin.from('karma_balance').select('balance').eq('user_id', userId).single()
   if (balanceError || !userBalance || userBalance.balance < reward.cost) {
     return res.status(400).json({ error: 'Недостаточно кармиков' })
@@ -79,7 +76,6 @@ export default async function handler(req, res) {
     link: '/my-purchases'
   })
 
-  // Уведомление админам компании
   if (reward.requires_approval) {
     const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
     if (profile?.company_id) {
