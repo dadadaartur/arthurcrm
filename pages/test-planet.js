@@ -54,14 +54,6 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Планеты с медленными орбитами и индивидуальными цветами
-  const planets = [
-    { label: 'Перевести', path: '/transfer', orbit: 90, speed: 40, color: '#4a6fa5', shadow: '#1a2f4a' },
-    { label: 'Операции', path: '/history', orbit: 115, speed: 50, color: '#8b7d6b', shadow: '#3a3127' },
-    { label: 'Покупки', path: '/my-purchases', orbit: 135, speed: 45, color: '#5ba0c8', shadow: '#1e3a5f' },
-    { label: 'Магазин', path: '/shop', orbit: 155, speed: 55, color: '#c87a3a', shadow: '#5a2a1a' }
-  ]
-
   return (
     <>
       <Head>
@@ -164,148 +156,156 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ЗВЕЗДА С ПЛАНЕТАМИ (исправлено) === */}
+        {/* === БЛОК БАЛАНСА — ЭНЕРГЕТИЧЕСКАЯ ВЯЗЬ === */}
         <div style={{
           position: 'absolute',
           left: '4%',
-          top: '5%',
+          top: '4%',
           zIndex: 20,
           width: 360,
           height: 360,
           animation: 'driftBalance 15s ease-in-out infinite alternate'
         }}>
-          {/* Центральная звезда */}
+          {/* SVG с нитями */}
+          <svg width="360" height="360" viewBox="0 0 360 360" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
+            <defs>
+              <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFD700" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#FFA500" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#B87333" stopOpacity="0.3" />
+              </linearGradient>
+              <linearGradient id="copper" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#B87333" stopOpacity="0.7" />
+                <stop offset="50%" stopColor="#D2691E" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#FFA500" stopOpacity="0.2" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <filter id="softGlow">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+            </defs>
+
+            {/* Группа нитей, вращающаяся медленно */}
+            <g style={{ animation: 'weaveRotate1 20s linear infinite', transformOrigin: '180px 180px' }}>
+              <path d="M180 100 C 120 80, 60 150, 100 200 C 140 250, 200 220, 220 180 C 240 140, 200 110, 180 120" 
+                    fill="none" stroke="url(#gold)" strokeWidth="1.5" filter="url(#glow)"
+                    style={{ animation: 'weaveDash 3s ease-in-out infinite alternate' }} />
+              <path d="M180 260 C 240 280, 300 210, 260 160 C 220 110, 160 140, 140 180 C 120 220, 160 250, 180 240" 
+                    fill="none" stroke="url(#copper)" strokeWidth="1.2" filter="url(#glow)"
+                    style={{ animation: 'weaveDash 4s ease-in-out infinite alternate-reverse' }} />
+            </g>
+
+            {/* Вторая группа нитей, вращающаяся в другую сторону */}
+            <g style={{ animation: 'weaveRotate2 25s linear infinite', transformOrigin: '180px 180px' }}>
+              <path d="M120 180 C 100 120, 150 70, 200 90 C 250 110, 260 160, 230 190 C 200 220, 160 210, 140 190" 
+                    fill="none" stroke="url(#gold)" strokeWidth="1.4" filter="url(#softGlow)"
+                    style={{ animation: 'weaveDash 5s ease-in-out infinite alternate' }} />
+              <path d="M240 180 C 260 240, 210 290, 160 270 C 110 250, 100 200, 130 170 C 160 140, 200 150, 220 170" 
+                    fill="none" stroke="url(#copper)" strokeWidth="1.3" filter="url(#softGlow)"
+                    style={{ animation: 'weaveDash 3.5s ease-in-out infinite alternate-reverse' }} />
+            </g>
+
+            {/* Третья группа нитей (дополнительная сложность) */}
+            <g style={{ animation: 'weaveRotate3 30s linear infinite', transformOrigin: '180px 180px' }}>
+              <path d="M140 140 C 100 100, 150 50, 200 80 C 250 110, 250 160, 210 180 C 170 200, 130 170, 150 150" 
+                    fill="none" stroke="url(#gold)" strokeWidth="1" filter="url(#glow)"
+                    style={{ animation: 'weaveDash 4.5s ease-in-out infinite alternate' }} />
+              <path d="M220 220 C 260 260, 210 310, 160 280 C 110 250, 110 200, 150 180 C 190 160, 230 190, 210 210" 
+                    fill="none" stroke="url(#copper)" strokeWidth="1.1" filter="url(#glow)"
+                    style={{ animation: 'weaveDash 3.8s ease-in-out infinite alternate-reverse' }} />
+            </g>
+          </svg>
+
+          {/* Центральная звезда-цифра */}
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 140,
-            height: 140
+            textAlign: 'center',
+            zIndex: 2,
+            pointerEvents: 'none'
           }}>
-            {/* Спокойное свечение короны */}
             <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 160, height: 160,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255,150,0,0.7) 0%, rgba(255,80,0,0.3) 50%, transparent 70%)',
-              filter: 'blur(10px)',
-              animation: 'starGlow 4s ease-in-out infinite alternate'
-            }} />
-            {/* Ядро звезды (градиент + тени) */}
-            <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 100, height: 100,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle at 35% 35%, #fff 5%, #ffe680 25%, #ff8800 60%, #991100 100%)',
-              boxShadow: '0 0 30px rgba(255,100,0,0.9), 0 0 60px rgba(255,50,0,0.5)',
-              animation: 'coreBreath 3s ease-in-out infinite alternate'
-            }} />
-            {/* Цифра и слово "кармиков" */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              zIndex: 2,
-              lineHeight: 1
+              fontSize: 46,
+              fontWeight: 600,
+              fontFamily: 'Inter, sans-serif',
+              color: '#FFD700',
+              textShadow: '0 0 20px rgba(255,200,0,0.9), 0 0 40px rgba(255,140,0,0.6)',
+              letterSpacing: 2,
+              lineHeight: 1,
+              marginBottom: 6
             }}>
-              <div style={{
-                fontSize: 32,
-                fontWeight: 600,
-                fontFamily: 'Inter, sans-serif',
-                color: 'white',
-                textShadow: '0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,200,0,0.8)',
-                marginBottom: 4
-              }}>
-                {balance}
-              </div>
-              <div style={{
-                fontSize: 11,
-                fontWeight: 300,
-                fontFamily: 'Inter, sans-serif',
-                color: 'rgba(255,255,255,0.95)',
-                textShadow: '0 0 8px rgba(255,200,100,0.9), 0 0 16px rgba(255,150,0,0.7)',
-                letterSpacing: 1,
-                opacity: 0.9
-              }}>
-                {karmikWord}
-              </div>
+              {balance}
+            </div>
+            <div style={{
+              fontSize: 12,
+              fontWeight: 300,
+              fontFamily: 'Inter, sans-serif',
+              color: 'rgba(255,255,255,0.95)',
+              textShadow: '0 0 10px rgba(255,200,100,0.9), 0 0 20px rgba(255,150,0,0.7)',
+              letterSpacing: 2,
+              opacity: 0.9
+            }}>
+              {karmikWord}
             </div>
           </div>
 
-          {/* Планеты, вращающиеся вокруг центра */}
-          {planets.map((planet, idx) => (
-            <div key={idx} style={{
+          {/* Узелки-кнопки */}
+          {[
+            { label: 'Перевести', path: '/transfer', x: 90, y: 60 },
+            { label: 'Операции', path: '/history', x: 270, y: 60 },
+            { label: 'Покупки', path: '/my-purchases', x: 90, y: 300 },
+            { label: 'Магазин', path: '/shop', x: 270, y: 300 }
+          ].map((btn, i) => (
+            <div key={i} style={{
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: planet.orbit * 2,
-              height: planet.orbit * 2,
-              marginTop: -planet.orbit,
-              marginLeft: -planet.orbit,
-              animation: `planetOrbit ${planet.speed}s linear infinite`,
-              zIndex: 1
+              left: btn.x,
+              top: btn.y,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 3,
+              cursor: 'pointer'
             }}>
-              {/* Орбита (едва заметный пунктир) */}
-              <div style={{
-                position: 'absolute',
-                top: 0, left: 0,
-                width: '100%', height: '100%',
-                borderRadius: '50%',
-                border: '1px dashed rgba(255,255,255,0.15)',
-                boxSizing: 'border-box'
-              }} />
-              {/* Планета-кнопка */}
               <div
-                onClick={() => router.push(planet.path)}
+                onClick={() => router.push(btn.path)}
                 style={{
-                  position: 'absolute',
-                  top: -7,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 14,
-                  height: 14,
+                  width: 12,
+                  height: 12,
                   borderRadius: '50%',
-                  background: `radial-gradient(circle at 30% 30%, ${planet.color}, ${planet.shadow})`,
-                  boxShadow: `0 0 8px ${planet.color}, 0 0 16px ${planet.shadow}`,
-                  cursor: 'pointer',
+                  background: 'radial-gradient(circle, #FFD700, #B87333)',
+                  boxShadow: '0 0 10px #FFD700, 0 0 20px #FFA500',
                   transition: 'all 0.3s ease',
-                  zIndex: 3
+                  margin: '0 auto'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.width = '20px';
-                  e.currentTarget.style.height = '20px';
-                  e.currentTarget.style.top = '-10px';
-                  e.currentTarget.style.boxShadow = `0 0 16px ${planet.color}, 0 0 32px ${planet.shadow}`;
+                  e.currentTarget.style.width = '18px';
+                  e.currentTarget.style.height = '18px';
+                  e.currentTarget.style.boxShadow = '0 0 18px #FFD700, 0 0 36px #FFA500';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.width = '14px';
-                  e.currentTarget.style.height = '14px';
-                  e.currentTarget.style.top = '-7px';
-                  e.currentTarget.style.boxShadow = `0 0 8px ${planet.color}, 0 0 16px ${planet.shadow}`;
+                  e.currentTarget.style.width = '12px';
+                  e.currentTarget.style.height = '12px';
+                  e.currentTarget.style.boxShadow = '0 0 10px #FFD700, 0 0 20px #FFA500';
                 }}
               />
-              {/* Название планеты (видно всегда, снаружи орбиты) */}
               <div style={{
-                position: 'absolute',
-                top: -25,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: 10,
+                marginTop: 8,
+                fontSize: 11,
                 fontWeight: 400,
-                color: 'rgba(255,255,255,0.85)',
+                color: 'rgba(255,255,255,0.8)',
+                textShadow: '0 0 6px rgba(255,200,100,0.7)',
                 whiteSpace: 'nowrap',
-                textShadow: '0 0 6px rgba(255,200,100,0.8)',
-                pointerEvents: 'none',
-                zIndex: 2
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
               }}>
-                {planet.label}
+                {btn.label}
               </div>
             </div>
           ))}
@@ -361,17 +361,21 @@ export default function TestPlanetPage() {
           0% { transform: translate(0, 0); }
           100% { transform: translate(8px, -8px); }
         }
-        @keyframes starGlow {
-          0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-          100% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-        }
-        @keyframes coreBreath {
-          0% { box-shadow: 0 0 25px rgba(255,100,0,0.9), 0 0 50px rgba(255,50,0,0.5); }
-          100% { box-shadow: 0 0 40px rgba(255,140,0,1), 0 0 80px rgba(255,80,0,0.7); }
-        }
-        @keyframes planetOrbit {
+        @keyframes weaveRotate1 {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes weaveRotate2 {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        @keyframes weaveRotate3 {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes weaveDash {
+          0% { stroke-dashoffset: 0; stroke-dasharray: 200 200; }
+          100% { stroke-dashoffset: -400; stroke-dasharray: 200 200; }
         }
       `}</style>
     </>
