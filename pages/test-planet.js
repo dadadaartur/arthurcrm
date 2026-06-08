@@ -54,12 +54,12 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Планеты-кнопки: координаты относительно центра звезды (0,0)
+  // Планеты с медленными орбитами и индивидуальными цветами
   const planets = [
-    { label: 'Перевести', path: '/transfer', orbit: 110, speed: 20, color1: '#4a6fa5', color2: '#1a2f4a', type: 'gas' },
-    { label: 'Операции', path: '/history', orbit: 150, speed: 28, color1: '#8b7d6b', color2: '#3a3127', type: 'rock' },
-    { label: 'Покупки', path: '/my-purchases', orbit: 130, speed: 24, color1: '#5ba0c8', color2: '#1e3a5f', type: 'ice' },
-    { label: 'Магазин', path: '/shop', orbit: 170, speed: 32, color1: '#c87a3a', color2: '#5a2a1a', type: 'lava' }
+    { label: 'Перевести', path: '/transfer', orbit: 90, speed: 40, color: '#4a6fa5', shadow: '#1a2f4a' },
+    { label: 'Операции', path: '/history', orbit: 115, speed: 50, color: '#8b7d6b', shadow: '#3a3127' },
+    { label: 'Покупки', path: '/my-purchases', orbit: 135, speed: 45, color: '#5ba0c8', shadow: '#1e3a5f' },
+    { label: 'Магазин', path: '/shop', orbit: 155, speed: 55, color: '#c87a3a', shadow: '#5a2a1a' }
   ]
 
   return (
@@ -164,205 +164,151 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ЗВЕЗДА СТИВЕНСОН 2-18 С ПЛАНЕТАМИ === */}
+        {/* === БЛОК БАЛАНСА — ЗВЕЗДА С ПЛАНЕТАМИ (исправлено) === */}
         <div style={{
           position: 'absolute',
           left: '4%',
-          top: '4%',
+          top: '5%',
           zIndex: 20,
+          width: 360,
+          height: 360,
           animation: 'driftBalance 15s ease-in-out infinite alternate'
         }}>
-          {/* Звезда */}
+          {/* Центральная звезда */}
           <div style={{
-            position: 'relative',
-            width: 180,
-            height: 180,
-            margin: '0 auto 30px auto',
-            transform: 'scale(1)',
-            animation: 'starPulse 6s ease-in-out infinite'
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 140,
+            height: 140
           }}>
-            {/* Внешняя корона */}
+            {/* Спокойное свечение короны */}
             <div style={{
               position: 'absolute',
               top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 180, height: 180,
+              width: 160, height: 160,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255,120,0,0.9) 0%, rgba(255,60,0,0.4) 40%, transparent 70%)',
-              filter: 'blur(8px)',
-              animation: 'coronaPulse 4s ease-in-out infinite alternate'
+              background: 'radial-gradient(circle, rgba(255,150,0,0.7) 0%, rgba(255,80,0,0.3) 50%, transparent 70%)',
+              filter: 'blur(10px)',
+              animation: 'starGlow 4s ease-in-out infinite alternate'
             }} />
-            {/* Протуберанцы (дуги) */}
-            <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 200, height: 200,
-              borderRadius: '50%',
-              border: '2px solid transparent',
-              borderTopColor: 'rgba(255,200,50,0.7)',
-              borderRightColor: 'rgba(255,100,0,0.5)',
-              filter: 'blur(3px)',
-              animation: 'protuberance1 3s linear infinite'
-            }} />
-            <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 190, height: 190,
-              borderRadius: '50%',
-              border: '2px solid transparent',
-              borderBottomColor: 'rgba(255,140,0,0.6)',
-              borderLeftColor: 'rgba(255,80,0,0.4)',
-              filter: 'blur(2px)',
-              animation: 'protuberance2 4s linear infinite reverse'
-            }} />
-            {/* Ядро звезды */}
-            <div style={{
-              position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 120, height: 120,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle at 40% 40%, #ffffff 0%, #ffe066 10%, #ff9900 30%, #cc3300 70%, #330000 100%)',
-              boxShadow: '0 0 40px rgba(255,100,0,0.9), 0 0 80px rgba(255,50,0,0.6), 0 0 120px rgba(255,0,0,0.4)',
-              animation: 'coreSpin 10s linear infinite'
-            }} />
-            {/* Грануляция (живые пятна) */}
+            {/* Ядро звезды (градиент + тени) */}
             <div style={{
               position: 'absolute',
               top: '50%', left: '50%',
               transform: 'translate(-50%, -50%)',
               width: 100, height: 100,
               borderRadius: '50%',
-              background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5) 0%, transparent 40%), radial-gradient(circle at 60% 50%, rgba(255,200,0,0.4) 0%, transparent 30%), radial-gradient(circle at 20% 70%, rgba(255,100,0,0.3) 0%, transparent 35%)',
-              filter: 'blur(4px)',
-              animation: 'granulation 5s ease-in-out infinite alternate'
+              background: 'radial-gradient(circle at 35% 35%, #fff 5%, #ffe680 25%, #ff8800 60%, #991100 100%)',
+              boxShadow: '0 0 30px rgba(255,100,0,0.9), 0 0 60px rgba(255,50,0,0.5)',
+              animation: 'coreBreath 3s ease-in-out infinite alternate'
             }} />
-            {/* Цифра баланса */}
+            {/* Цифра и слово "кармиков" */}
             <div style={{
               position: 'absolute',
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 2,
-              fontSize: 38,
-              fontWeight: 600,
-              fontFamily: 'Inter, sans-serif',
-              color: 'white',
-              textShadow: '0 0 15px rgba(255,255,255,0.8), 0 0 30px rgba(255,200,0,0.8)',
-              letterSpacing: 2
-            }}>
-              {balance}
-            </div>
-            {/* Голограммная подпись "кармиков" */}
-            <div style={{
-              position: 'absolute',
-              bottom: 10,
+              top: '50%',
               left: '50%',
-              transform: 'translateX(-50%)',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
               zIndex: 2,
-              fontSize: 10,
-              fontWeight: 300,
-              fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255,255,255,0.9)',
-              textShadow: '0 0 6px rgba(255,200,100,0.8), 0 0 12px rgba(255,150,0,0.6)',
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              opacity: 0.9,
-              background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.3), transparent)',
-              padding: '0 8px',
-              borderRadius: 10,
-              animation: 'hologramFlicker 2s infinite'
+              lineHeight: 1
             }}>
-              {karmikWord}
+              <div style={{
+                fontSize: 32,
+                fontWeight: 600,
+                fontFamily: 'Inter, sans-serif',
+                color: 'white',
+                textShadow: '0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,200,0,0.8)',
+                marginBottom: 4
+              }}>
+                {balance}
+              </div>
+              <div style={{
+                fontSize: 11,
+                fontWeight: 300,
+                fontFamily: 'Inter, sans-serif',
+                color: 'rgba(255,255,255,0.95)',
+                textShadow: '0 0 8px rgba(255,200,100,0.9), 0 0 16px rgba(255,150,0,0.7)',
+                letterSpacing: 1,
+                opacity: 0.9
+              }}>
+                {karmikWord}
+              </div>
             </div>
           </div>
 
-          {/* Планеты */}
-          <div style={{
-            position: 'relative',
-            width: 300,
-            height: 300,
-            margin: '0 auto'
-          }}>
-            {planets.map((planet, idx) => (
+          {/* Планеты, вращающиеся вокруг центра */}
+          {planets.map((planet, idx) => (
+            <div key={idx} style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: planet.orbit * 2,
+              height: planet.orbit * 2,
+              marginTop: -planet.orbit,
+              marginLeft: -planet.orbit,
+              animation: `planetOrbit ${planet.speed}s linear infinite`,
+              zIndex: 1
+            }}>
+              {/* Орбита (едва заметный пунктир) */}
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0,
+                width: '100%', height: '100%',
+                borderRadius: '50%',
+                border: '1px dashed rgba(255,255,255,0.15)',
+                boxSizing: 'border-box'
+              }} />
+              {/* Планета-кнопка */}
               <div
-                key={idx}
                 onClick={() => router.push(planet.path)}
                 style={{
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: planet.orbit * 2,
-                  height: planet.orbit * 2,
-                  marginTop: -planet.orbit,
-                  marginLeft: -planet.orbit,
-                  animation: `orbitSpin ${planet.speed}s linear infinite`,
-                  zIndex: 1
-                }}
-              >
-                {/* Орбита (пунктир) */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0, left: 0,
-                  width: '100%', height: '100%',
-                  borderRadius: '50%',
-                  border: '1px dashed rgba(255,255,255,0.2)',
-                  boxSizing: 'border-box',
-                  animation: 'orbitDash 2s linear infinite'
-                }} />
-                {/* Сама планета */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: -8,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: `radial-gradient(circle at 30% 30%, ${planet.color1}, ${planet.color2})`,
-                    boxShadow: `0 0 10px ${planet.color1}, 0 0 20px ${planet.color2}`,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    animation: `planetGlow ${2 + idx}s ease-in-out infinite alternate`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.width = '24px';
-                    e.currentTarget.style.height = '24px';
-                    e.currentTarget.style.top = '-12px';
-                    e.currentTarget.style.boxShadow = `0 0 20px ${planet.color1}, 0 0 40px ${planet.color2}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.width = '16px';
-                    e.currentTarget.style.height = '16px';
-                    e.currentTarget.style.top = '-8px';
-                    e.currentTarget.style.boxShadow = `0 0 10px ${planet.color1}, 0 0 20px ${planet.color2}`;
-                  }}
-                />
-                {/* Название планеты (скрыто по умолчанию) */}
-                <div style={{
-                  position: 'absolute',
-                  top: -30,
+                  top: -7,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  fontSize: 10,
-                  fontWeight: 400,
-                  color: 'rgba(255,255,255,0.7)',
-                  whiteSpace: 'nowrap',
-                  textShadow: '0 0 4px rgba(255,200,100,0.5)',
-                  opacity: 0,
-                  transition: 'opacity 0.3s',
-                  pointerEvents: 'none'
+                  width: 14,
+                  height: 14,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle at 30% 30%, ${planet.color}, ${planet.shadow})`,
+                  boxShadow: `0 0 8px ${planet.color}, 0 0 16px ${planet.shadow}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  zIndex: 3
                 }}
-                className="planet-label"
-                >
-                  {planet.label}
-                </div>
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.width = '20px';
+                  e.currentTarget.style.height = '20px';
+                  e.currentTarget.style.top = '-10px';
+                  e.currentTarget.style.boxShadow = `0 0 16px ${planet.color}, 0 0 32px ${planet.shadow}`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.width = '14px';
+                  e.currentTarget.style.height = '14px';
+                  e.currentTarget.style.top = '-7px';
+                  e.currentTarget.style.boxShadow = `0 0 8px ${planet.color}, 0 0 16px ${planet.shadow}`;
+                }}
+              />
+              {/* Название планеты (видно всегда, снаружи орбиты) */}
+              <div style={{
+                position: 'absolute',
+                top: -25,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: 10,
+                fontWeight: 400,
+                color: 'rgba(255,255,255,0.85)',
+                whiteSpace: 'nowrap',
+                textShadow: '0 0 6px rgba(255,200,100,0.8)',
+                pointerEvents: 'none',
+                zIndex: 2
+              }}>
+                {planet.label}
               </div>
-            ))}
-            {/* Показать названия при наведении на контейнер планет (опционально) */}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -415,45 +361,17 @@ export default function TestPlanetPage() {
           0% { transform: translate(0, 0); }
           100% { transform: translate(8px, -8px); }
         }
-        @keyframes starPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.03); }
-        }
-        @keyframes coronaPulse {
-          0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-          100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        @keyframes protuberance1 {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        @keyframes protuberance2 {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(-360deg); }
-        }
-        @keyframes coreSpin {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
-          100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        @keyframes granulation {
+        @keyframes starGlow {
           0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
           100% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
         }
-        @keyframes hologramFlicker {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; text-shadow: 0 0 8px rgba(255,200,100,1), 0 0 16px rgba(255,150,0,0.9); }
+        @keyframes coreBreath {
+          0% { box-shadow: 0 0 25px rgba(255,100,0,0.9), 0 0 50px rgba(255,50,0,0.5); }
+          100% { box-shadow: 0 0 40px rgba(255,140,0,1), 0 0 80px rgba(255,80,0,0.7); }
         }
-        @keyframes orbitDash {
-          0% { stroke-dashoffset: 0; }
-          100% { stroke-dashoffset: -20; }
-        }
-        @keyframes planetGlow {
-          0% { box-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
-          100% { box-shadow: 0 0 15px currentColor, 0 0 30px currentColor; }
-        }
-        /* Показываем название планеты при наведении на весь орбитальный контейнер */
-        div[style*="animation: orbitSpin"]:hover .planet-label {
-          opacity: 1 !important;
+        @keyframes planetOrbit {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </>
