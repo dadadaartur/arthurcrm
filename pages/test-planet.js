@@ -54,6 +54,17 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
+  // Частицы для фона блока баланса
+  const particles = Array.from({ length: 8 }).map((_, i) => ({
+    id: i,
+    x: 20 + Math.random() * 260,
+    y: 20 + Math.random() * 260,
+    size: 1.5 + Math.random() * 2.5,
+    duration: 15 + Math.random() * 20,
+    delay: Math.random() * 5,
+    color: ['#a0e9ff', '#ffb3c6', '#ffe29f', '#b3f0ff'][i % 4]
+  }))
+
   return (
     <>
       <Head>
@@ -156,17 +167,54 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — НАСТОЯЩАЯ ГОЛОГРАММА === */}
+        {/* === БЛОК БАЛАНСА — ЗАВЕРШЁННАЯ СЦЕНА === */}
         <div style={{
           position: 'absolute',
-          left: '3%',
-          top: '4%',
+          left: '2%',
+          top: '2%',
           zIndex: 20,
-          width: 300,
-          height: 300,
-          animation: 'driftBalance 20s ease-in-out infinite alternate'
+          width: 320,
+          height: 320,
+          animation: 'driftBalance 25s ease-in-out infinite alternate'
         }}>
-          {/* Фоновые голографические пятна (размытые, разноцветные) */}
+          {/* Голографическая сетка (фон) */}
+          <div style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundImage: `
+              linear-gradient(rgba(160,233,255,0.06) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(160,233,255,0.06) 1px, transparent 1px)
+            `,
+            backgroundSize: '30px 30px',
+            zIndex: 0,
+            animation: 'gridShift 20s linear infinite'
+          }} />
+
+          {/* Медленные кольца */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 220, height: 220,
+            borderRadius: '50%',
+            border: '1px solid rgba(160,233,255,0.25)',
+            filter: 'blur(1px)',
+            animation: 'ringRotate1 60s linear infinite',
+            zIndex: 0
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 240, height: 240,
+            borderRadius: '50%',
+            border: '1px solid rgba(255,179,198,0.2)',
+            filter: 'blur(1.5px)',
+            animation: 'ringRotate2 90s linear infinite',
+            zIndex: 0
+          }} />
+
+          {/* Размытые пятна (глубина) */}
           <div style={{
             position: 'absolute',
             top: '50%', left: '50%',
@@ -198,18 +246,39 @@ export default function TestPlanetPage() {
             animation: 'holoSpot3 12s ease-in-out infinite alternate'
           }} />
 
-          {/* Цифра с радужным градиентом и тенью */}
+          {/* Парящие частицы */}
+          {particles.map(p => (
+            <div
+              key={p.id}
+              style={{
+                position: 'absolute',
+                left: p.x,
+                top: p.y,
+                width: p.size,
+                height: p.size,
+                borderRadius: '50%',
+                background: p.color,
+                boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+                opacity: 0.7,
+                zIndex: 2,
+                animation: `particleFloat ${p.duration}s ease-in-out infinite alternate`,
+                animationDelay: `${p.delay}s`
+              }}
+            />
+          ))}
+
+          {/* Цифра и подпись */}
           <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
-            zIndex: 2,
+            zIndex: 3,
             pointerEvents: 'none'
           }}>
             <div style={{
-              fontSize: 48,
+              fontSize: 46,
               fontWeight: 600,
               fontFamily: 'Inter, sans-serif',
               background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
@@ -236,14 +305,14 @@ export default function TestPlanetPage() {
             </div>
           </div>
 
-          {/* Кнопки — тонкий ряд с голографическими точками */}
+          {/* Кнопки — крупнее, с акцентными линиями */}
           <div style={{
             position: 'absolute',
-            bottom: 15,
+            bottom: 12,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: 30,
+            gap: 32,
             zIndex: 3
           }}>
             {[
@@ -256,7 +325,7 @@ export default function TestPlanetPage() {
                 <div
                   onClick={() => router.push(btn.path)}
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 400,
                     color: 'rgba(255,255,255,0.6)',
                     cursor: 'pointer',
@@ -276,12 +345,11 @@ export default function TestPlanetPage() {
                   {btn.label}
                 </div>
                 <div style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: btn.color,
+                  width: 24,
+                  height: 1,
+                  background: `linear-gradient(90deg, transparent, ${btn.color}, transparent)`,
                   margin: '0 auto',
-                  boxShadow: `0 0 8px ${btn.color}, 0 0 15px ${btn.color}`
+                  boxShadow: `0 0 4px ${btn.color}`
                 }} />
               </div>
             ))}
@@ -336,7 +404,19 @@ export default function TestPlanetPage() {
         }
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
-          100% { transform: translate(5px, -5px); }
+          100% { transform: translate(6px, -6px); }
+        }
+        @keyframes gridShift {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(30px, 30px); }
+        }
+        @keyframes ringRotate1 {
+          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes ringRotate2 {
+          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          100% { transform: translate(-50%, -50%) rotate(-360deg); }
         }
         @keyframes holoSpot1 {
           0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 0.6; }
@@ -353,6 +433,10 @@ export default function TestPlanetPage() {
         @keyframes rainbowShift {
           0% { background-position: 0% 50%; }
           100% { background-position: 100% 50%; }
+        }
+        @keyframes particleFloat {
+          0% { transform: translate(0, 0); opacity: 0.4; }
+          100% { transform: translate(-8px, -12px); opacity: 0.9; }
         }
       `}</style>
     </>
