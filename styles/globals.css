@@ -336,3 +336,9 @@ select {
   background-position: right 12px center !important;
   padding-right: 36px !important;
 }
+/* убираем фон и рамки у тестового блока баланса */
+div[style*="width: 360px"][style*="padding: 24px 20px 20px"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
