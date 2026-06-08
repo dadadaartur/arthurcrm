@@ -11,7 +11,7 @@ export default function RewardsAdmin() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    cost: 0,
+    cost: '',
     type: 'physical',
     requires_approval: false,
     image_file: null,
@@ -39,7 +39,11 @@ export default function RewardsAdmin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name || !form.cost) return
+    const costValue = parseInt(form.cost, 10)
+    if (!form.name || isNaN(costValue) || costValue < 0) {
+      alert('Введите название и корректную стоимость (целое число от 0)')
+      return
+    }
 
     let imageUrl = form.preview_url || null
     if (form.image_file) {
@@ -57,7 +61,7 @@ export default function RewardsAdmin() {
     const rewardData = {
       name: form.name,
       description: form.description,
-      cost: form.cost,
+      cost: costValue,
       type: form.type,
       requires_approval: form.requires_approval,
       image_url: imageUrl
@@ -71,8 +75,7 @@ export default function RewardsAdmin() {
       if (error) return alert('Ошибка создания: ' + error.message)
     }
 
-    // Сброс формы
-    setForm({ name: '', description: '', cost: 0, type: 'physical', requires_approval: false, image_file: null, preview_url: '' })
+    setForm({ name: '', description: '', cost: '', type: 'physical', requires_approval: false, image_file: null, preview_url: '' })
     setEditingId(null)
     loadRewards()
   }
@@ -82,7 +85,7 @@ export default function RewardsAdmin() {
     setForm({
       name: reward.name,
       description: reward.description || '',
-      cost: reward.cost,
+      cost: reward.cost.toString(),
       type: reward.type || 'physical',
       requires_approval: reward.requires_approval || false,
       image_file: null,
@@ -122,23 +125,19 @@ export default function RewardsAdmin() {
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Управление товарами</h1>
 
-        {/* Форма создания/редактирования */}
+        {/* Форма */}
         <form onSubmit={handleSubmit} style={{
           background: 'rgba(20,25,45,0.9)', backdropFilter: 'blur(10px)',
           borderRadius: 16, padding: 24, marginBottom: 32,
           border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr'
         }}>
-          <div>
+          <div style={{ gridColumn: 'span 2' }}>
             <label style={{ fontSize: 14, color: '#aaa' }}>Название</label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
           </div>
           <div>
             <label style={{ fontSize: 14, color: '#aaa' }}>Стоимость (кармики)</label>
-            <input type="number" value={form.cost} onChange={e => setForm({ ...form, cost: parseInt(e.target.value) || 0 })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
-          </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: 14, color: '#aaa' }}>Описание</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} rows={3} />
+            <input type="number" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} placeholder="Например, 100" style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} min="0" step="1" />
           </div>
           <div>
             <label style={{ fontSize: 14, color: '#aaa' }}>Тип</label>
@@ -146,6 +145,10 @@ export default function RewardsAdmin() {
               <option value="physical">Физический</option>
               <option value="digital">Цифровой (сертификат)</option>
             </select>
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ fontSize: 14, color: '#aaa' }}>Описание</label>
+            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} rows={3} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa' }}>
@@ -210,8 +213,7 @@ export default function RewardsAdmin() {
                 padding: '8px 16px',
                 borderRadius: 8,
                 cursor: 'pointer',
-                fontSize: 14,
-                transition: 'all 0.2s'
+                fontSize: 14
               }}>Редактировать</button>
               <button onClick={() => handleDelete(reward.id)} style={{
                 background: 'rgba(255,0,0,0.1)',
