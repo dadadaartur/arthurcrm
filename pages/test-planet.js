@@ -156,7 +156,7 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса с энергетическим шаром */}
+        {/* Блок баланса с жидким золотом */}
         <div style={{
           position: 'absolute',
           left: '3%',
@@ -166,81 +166,60 @@ export default function TestPlanetPage() {
           <div className="balance-card" style={{
             width: '340px',
             padding: '20px 24px',
-            background: '#0A0A0A', // сохраним тёмный фон карточки
+            background: '#0A0A0A',
             border: '1px solid rgba(249,115,22,0.5)',
             borderRadius: 28,
             boxShadow: '0 0 30px rgba(249,115,22,0.2)',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
-            {/* Энергетический шар вместо чёрной дыры */}
-            <div style={{ position: 'relative', height: 140, display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
-              {/* Основная сфера */}
+            {/* Жидкое золотое сияние (вместо сфер) */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}>
               <div style={{
                 position: 'absolute',
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 120, height: 120,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,200,0,0.6) 0%, rgba(255,140,0,0.4) 30%, transparent 70%)',
-                boxShadow: '0 0 40px rgba(255,180,0,0.6), 0 0 80px rgba(255,100,0,0.3)',
-                animation: 'sphereGlow 3s ease-in-out infinite'
-              }} />
-              {/* Дополнительные слои для переливов */}
-              <div style={{
-                position: 'absolute',
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 110, height: 110,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle at 30% 30%, rgba(255,255,100,0.8) 0%, transparent 40%)',
-                filter: 'blur(8px)',
-                animation: 'sphereSpin 8s linear infinite'
+                top: '10%', left: '10%', width: '80%', height: '80%',
+                background: 'radial-gradient(ellipse at 30% 30%, rgba(255,200,0,0.3) 0%, transparent 70%)',
+                filter: 'blur(20px)',
+                animation: 'goldFlow1 8s ease-in-out infinite'
               }} />
               <div style={{
                 position: 'absolute',
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 100, height: 100,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle at 70% 70%, rgba(255,140,0,0.7) 0%, transparent 50%)',
-                filter: 'blur(6px)',
-                animation: 'sphereSpin 12s linear infinite reverse'
+                top: '20%', right: '10%', width: '70%', height: '70%',
+                background: 'radial-gradient(ellipse at 60% 40%, rgba(255,140,0,0.4) 0%, transparent 70%)',
+                filter: 'blur(25px)',
+                animation: 'goldFlow2 10s ease-in-out infinite'
               }} />
-              {/* Искры */}
-              {[...Array(6)].map((_, i) => {
-                const angle = (i * 60) + (i % 2 === 0 ? 0 : 30);
-                const distance = 40 + (i % 3) * 10;
-                return (
-                  <div key={`spark-${i}`} style={{
-                    position: 'absolute',
-                    top: `calc(50% + ${Math.sin(angle * Math.PI / 180) * distance}px)`,
-                    left: `calc(50% + ${Math.cos(angle * Math.PI / 180) * distance}px)`,
-                    width: 4 + i % 3,
-                    height: 4 + i % 3,
-                    borderRadius: '50%',
-                    background: i % 2 === 0 ? '#FFD700' : '#FFA500',
-                    boxShadow: `0 0 ${4 + i}px currentColor`,
-                    animation: `sparkOrbit ${4 + i}s linear infinite`
-                  }} />
-                );
-              })}
-              {/* Цифра баланса */}
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: '#FFD700', marginBottom: 4, textShadow: '0 0 8px rgba(255,200,0,0.6)' }}>Баланс</div>
-                <div style={{
-                  fontSize: 36, fontWeight: 700, color: 'transparent',
-                  backgroundImage: 'linear-gradient(180deg, #FFD700, #FFA500)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 12px rgba(255,200,0,0.8))',
-                  marginBottom: 2
-                }}>
-                  {balance}
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 500, color: '#FFD700', textShadow: '0 0 6px rgba(255,200,0,0.5)' }}>{karmikWord}</div>
+              <div style={{
+                position: 'absolute',
+                bottom: '10%', left: '15%', width: '60%', height: '60%',
+                background: 'radial-gradient(ellipse at 40% 70%, rgba(255,255,150,0.3) 0%, transparent 60%)',
+                filter: 'blur(22px)',
+                animation: 'goldFlow3 7s ease-in-out infinite'
+              }} />
+            </div>
+
+            {/* Текст баланса (поверх сияния) */}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', paddingTop: 20, paddingBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#FFD700', marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase', textShadow: '0 0 10px rgba(255,200,0,0.8)' }}>
+                Карма
+              </div>
+              <div style={{
+                fontSize: 48, fontWeight: 700, color: 'transparent',
+                backgroundImage: 'linear-gradient(180deg, #FFD700 20%, #FFA500 80%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 15px rgba(255,200,0,0.9))',
+                marginBottom: 4,
+                lineHeight: 1
+              }}>
+                {balance}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#FFD700', textShadow: '0 0 8px rgba(255,200,0,0.6)', opacity: 0.9 }}>
+                {karmikWord}
               </div>
             </div>
 
             {/* Кнопки */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => router.push('/transfer')} className="action-btn" style={{ flex: 1, padding: '8px 0', fontSize: 12 }}>
                   Перевести
@@ -305,17 +284,19 @@ export default function TestPlanetPage() {
           0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
         }
-        @keyframes sphereGlow {
-          0%, 100% { box-shadow: 0 0 40px rgba(255,180,0,0.6), 0 0 80px rgba(255,100,0,0.3); }
-          50% { box-shadow: 0 0 60px rgba(255,200,0,0.8), 0 0 100px rgba(255,140,0,0.5); }
+        @keyframes goldFlow1 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+          50% { transform: translate(10px, -5px) scale(1.1); opacity: 0.9; }
         }
-        @keyframes sphereSpin {
-          from { transform: translate(-50%, -50%) rotate(0deg); }
-          to { transform: translate(-50%, -50%) rotate(360deg); }
+        @keyframes goldFlow2 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          33% { transform: translate(-8px, 4px) scale(1.05); opacity: 1; }
+          66% { transform: translate(5px, -3px) scale(0.95); opacity: 0.5; }
         }
-        @keyframes sparkOrbit {
-          from { transform: rotate(0deg) translateX(55px) rotate(0deg); }
-          to { transform: rotate(360deg) translateX(55px) rotate(-360deg); }
+        @keyframes goldFlow3 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+          25% { transform: translate(-5px, -8px) scale(1.1); opacity: 0.8; }
+          75% { transform: translate(8px, 5px) scale(0.9); opacity: 0.6; }
         }
       `}</style>
     </>
