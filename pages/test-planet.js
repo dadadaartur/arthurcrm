@@ -80,12 +80,11 @@ export default function TestPlanetPage() {
           })}
         </div>
 
-        {/* Мягкие переливы внизу (добавлены оттенки) */}
+        {/* Мягкие переливы внизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
           <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.4) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
-          {/* Дополнительные мягкие оттенки */}
           <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.3) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
         </div>
 
@@ -157,15 +156,15 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* Блок баланса – исправленный: чёрная дыра, широкий блок, кнопки переставлены */}
+        {/* Блок баланса – финальная версия */}
         <div style={{
           position: 'absolute', left: '4%', top: '4%',
           background: '#0A0A0A', border: '1px solid rgba(249,115,22,0.5)',
-          borderRadius: 24, padding: 20, width: 380,                    // стало чуть шире
+          borderRadius: 24, padding: 20, width: 380,
           boxShadow: '0 0 30px rgba(249,115,22,0.2)', zIndex: 20
         }}>
           <div style={{ position: 'relative', height: 130, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {/* Чёрная дыра баланса (теперь точно видна) */}
+            {/* Чёрная дыра баланса */}
             <div style={{
               position: 'absolute',
               top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
