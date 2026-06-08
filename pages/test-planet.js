@@ -54,14 +54,6 @@ export default function TestPlanetPage() {
 
   const karmikWord = getKarmikWord(balance)
 
-  // Точки-кнопки на концах "усиков" вязи
-  const actionButtons = [
-    { label: 'Перевести', path: '/transfer', color: '#a0e9ff', angle: -60, distance: 110 },
-    { label: 'Операции', path: '/history', color: '#ffb3c6', angle: -20, distance: 120 },
-    { label: 'Покупки', path: '/my-purchases', color: '#ffe29f', angle: 20, distance: 120 },
-    { label: 'Магазин', path: '/shop', color: '#b3f0ff', angle: 60, distance: 110 }
-  ]
-
   return (
     <>
       <Head>
@@ -164,149 +156,94 @@ export default function TestPlanetPage() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА — ГОЛОГРАФИЧЕСКАЯ ВЯЗЬ === */}
+        {/* === БЛОК БАЛАНСА — ЧИСТАЯ ЭЛЕГАНТНОСТЬ === */}
         <div style={{
           position: 'absolute',
           left: '2.5%',
-          top: '1.5%',
+          top: '2%',
           zIndex: 20,
-          width: 320,
-          height: 320,
-          animation: 'driftBalance 30s ease-in-out infinite alternate'
+          animation: 'driftBalance 25s ease-in-out infinite alternate'
         }}>
-          {/* SVG вязи */}
-          <svg width="320" height="320" viewBox="0 0 320 320" style={{ position: 'absolute', top: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="holo1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#a0e9ff" stopOpacity="0.6"/>
-                <stop offset="100%" stopColor="#b3f0ff" stopOpacity="0.1"/>
-              </linearGradient>
-              <linearGradient id="holo2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#ffb3c6" stopOpacity="0.5"/>
-                <stop offset="100%" stopColor="#ffe29f" stopOpacity="0.1"/>
-              </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="1.5" result="blur"/>
-                <feMerge>
-                  <feMergeNode in="blur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            {/* Группа 1 – медленно вращается */}
-            <g style={{ transformOrigin: '160px 160px', animation: 'spinSlow 20s linear infinite' }}>
-              <path d="M160 40 C 100 50, 50 120, 80 180 C 110 240, 200 260, 240 200 C 280 140, 220 30, 160 40 Z" 
-                    fill="none" stroke="url(#holo1)" strokeWidth="1.2" filter="url(#glow)"
-                    strokeDasharray="200 200" style={{ animation: 'dashFlow1 4s ease-in-out infinite alternate' }} />
-              <path d="M160 280 C 220 270, 270 200, 240 140 C 210 80, 120 60, 80 120 C 40 180, 100 290, 160 280 Z" 
-                    fill="none" stroke="url(#holo2)" strokeWidth="1" filter="url(#glow)"
-                    strokeDasharray="180 180" style={{ animation: 'dashFlow2 5s ease-in-out infinite alternate-reverse' }} />
-            </g>
-            {/* Группа 2 – вращается в другую сторону */}
-            <g style={{ transformOrigin: '160px 160px', animation: 'spinSlowRev 25s linear infinite' }}>
-              <path d="M100 100 C 140 60, 200 70, 230 120 C 260 170, 240 240, 190 260 C 140 280, 80 220, 70 160 C 60 100, 90 110, 100 100 Z" 
-                    fill="none" stroke="url(#holo1)" strokeWidth="0.8" filter="url(#glow)"
-                    strokeDasharray="150 150" style={{ animation: 'dashFlow3 6s ease-in-out infinite alternate' }} />
-              <path d="M220 220 C 180 260, 120 250, 90 200 C 60 150, 80 80, 130 60 C 180 40, 240 100, 250 160 C 260 220, 230 210, 220 220 Z" 
-                    fill="none" stroke="url(#holo2)" strokeWidth="0.9" filter="url(#glow)"
-                    strokeDasharray="170 170" style={{ animation: 'dashFlow4 4.5s ease-in-out infinite alternate-reverse' }} />
-            </g>
-          </svg>
-
-          {/* Цифра баланса (неподвижна) */}
+          {/* Цифра */}
           <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            zIndex: 2,
-            pointerEvents: 'none'
+            fontSize: 48,
+            fontWeight: 600,
+            fontFamily: 'Inter, sans-serif',
+            background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
+            backgroundSize: '200% 200%',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
+            animation: 'rainbowShift 4s ease-in-out infinite alternate',
+            lineHeight: 1,
+            marginBottom: 4,
+            textAlign: 'center'
           }}>
-            <div style={{
-              fontSize: 46,
-              fontWeight: 600,
-              fontFamily: 'Inter, sans-serif',
-              background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
-              backgroundSize: '200% 200%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
-              animation: 'rainbowShift 4s ease-in-out infinite alternate',
-              lineHeight: 1,
-              marginBottom: 8
-            }}>
-              {balance}
-            </div>
-            <div style={{
-              fontSize: 12,
-              fontWeight: 300,
-              fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255,255,255,0.9)',
-              textShadow: '0 0 8px rgba(100,200,255,0.8), 0 0 16px rgba(255,150,200,0.6)',
-              letterSpacing: 2,
-              opacity: 0.9
-            }}>
-              {karmikWord}
-            </div>
+            {balance}
           </div>
 
-          {/* Кнопки-точки на концах линий */}
-          {actionButtons.map((btn, idx) => {
-            const rad = (btn.angle * Math.PI) / 180;
-            const cx = 160 + Math.cos(rad) * btn.distance;
-            const cy = 160 + Math.sin(rad) * btn.distance;
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'absolute',
-                  left: cx - 10,
-                  top: cy - 10,
-                  width: 20,
-                  height: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 3
-                }}
-                onMouseEnter={(e) => {
-                  const label = e.currentTarget.querySelector('.point-label');
-                  if (label) label.style.opacity = '1';
-                }}
-                onMouseLeave={(e) => {
-                  const label = e.currentTarget.querySelector('.point-label');
-                  if (label) label.style.opacity = '0.7';
-                }}
-                onClick={() => router.push(btn.path)}
-              >
+          {/* Подпись "кармиков" */}
+          <div style={{
+            fontSize: 13,
+            fontWeight: 300,
+            fontFamily: 'Inter, sans-serif',
+            color: 'rgba(255,255,255,0.85)',
+            textShadow: '0 0 8px rgba(100,200,255,0.7), 0 0 16px rgba(255,150,200,0.5)',
+            letterSpacing: 2,
+            marginBottom: 20,
+            textAlign: 'center'
+          }}>
+            {karmikWord}
+          </div>
+
+          {/* Кнопки — стройный ряд */}
+          <div style={{
+            display: 'flex',
+            gap: 28,
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            {[
+              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
+              { label: 'Операции', path: '/history', color: '#ffb3c6' },
+              { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
+              { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
+            ].map((btn, idx) => (
+              <div key={idx} style={{ textAlign: 'center' }}>
+                <div
+                  onClick={() => router.push(btn.path)}
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: 'rgba(255,255,255,0.6)',
+                    cursor: 'pointer',
+                    textShadow: '0 0 5px rgba(100,200,255,0.4)',
+                    transition: 'all 0.3s ease',
+                    marginBottom: 6
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = btn.color;
+                    e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                    e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)';
+                  }}
+                >
+                  {btn.label}
+                </div>
+                {/* Тонкий разделитель-точка */}
                 <div style={{
-                  width: 8,
-                  height: 8,
+                  width: 3,
+                  height: 3,
                   borderRadius: '50%',
                   background: btn.color,
-                  boxShadow: `0 0 8px ${btn.color}, 0 0 16px ${btn.color}`,
-                  transition: 'transform 0.3s'
+                  margin: '0 auto',
+                  boxShadow: `0 0 6px ${btn.color}`
                 }} />
-                <span className="point-label" style={{
-                  position: 'absolute',
-                  top: 18,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontSize: 11,
-                  fontWeight: 400,
-                  color: btn.color,
-                  textShadow: `0 0 6px ${btn.color}`,
-                  whiteSpace: 'nowrap',
-                  opacity: 0.7,
-                  transition: 'opacity 0.3s'
-                }}>
-                  {btn.label}
-                </span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -358,30 +295,6 @@ export default function TestPlanetPage() {
         @keyframes driftBalance {
           0% { transform: translate(0, 0); }
           100% { transform: translate(5px, -5px); }
-        }
-        @keyframes spinSlow {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes spinSlowRev {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(-360deg); }
-        }
-        @keyframes dashFlow1 {
-          0% { stroke-dashoffset: 0; stroke-dasharray: 200 200; }
-          100% { stroke-dashoffset: -400; stroke-dasharray: 200 200; }
-        }
-        @keyframes dashFlow2 {
-          0% { stroke-dashoffset: 0; stroke-dasharray: 180 180; }
-          100% { stroke-dashoffset: -360; stroke-dasharray: 180 180; }
-        }
-        @keyframes dashFlow3 {
-          0% { stroke-dashoffset: 0; stroke-dasharray: 150 150; }
-          100% { stroke-dashoffset: -300; stroke-dasharray: 150 150; }
-        }
-        @keyframes dashFlow4 {
-          0% { stroke-dashoffset: 0; stroke-dasharray: 170 170; }
-          100% { stroke-dashoffset: -340; stroke-dasharray: 170 170; }
         }
         @keyframes rainbowShift {
           0% { background-position: 0% 50%; }
