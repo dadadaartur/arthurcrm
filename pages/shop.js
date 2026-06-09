@@ -1,4 +1,3 @@
-// pages/shop.js — полный файл с выбором типа покупки
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -14,6 +13,14 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
+const typeLabels = {
+  physical: 'Физический',
+  digital: 'Сертификат',
+  workplace: 'Рабочее место',
+  delivery: 'Доставка',
+  promocode: 'Промокод',
+}
+
 export default function Shop() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -22,7 +29,9 @@ export default function Shop() {
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
   const [selectedReward, setSelectedReward] = useState(null)
-  const [purchaseMode, setPurchaseMode] = useState('now') // 'now' или 'later'
+  const [purchaseMode, setPurchaseMode] = useState(null) // 'now' или 'later'
+  const [activationDate, setActivationDate] = useState('')
+  const [activationComment, setActivationComment] = useState('')
 
   useEffect(() => {
     const init = async () => {
@@ -37,7 +46,7 @@ export default function Shop() {
     init()
   }, [])
 
-  const purchase = async (reward, activateLater = false) => {
+  const purchase = async (reward, activateLater, date, comment) => {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     const accessToken = session?.access_token
@@ -52,7 +61,7 @@ export default function Shop() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({ rewardId: reward.id, activateLater })
+      body: JSON.stringify({ rewardId: reward.id, activateLater, date, comment })
     })
     const result = await res.json()
     if (res.ok) {
@@ -64,12 +73,34 @@ export default function Shop() {
     setLoading(false)
   }
 
-  const openRewardDetail = (reward) => {
+  const openPurchaseModal = (reward) => {
     setSelectedReward(reward)
-    setPurchaseMode('now')
+    setPurchaseMode(null)
+    setActivationDate('')
+    setActivationComment('')
   }
 
-  // стилизованный баланс
+  const handleBuyNow = () => {
+    if (!selectedReward) return
+    if (selectedReward.requires_approval) {
+      if (!activationDate) {
+        setModal({ show: true, message: 'Выберите дату', type: 'error' })
+        return
+      }
+    }
+    purchase(selectedReward, false, activationDate, activationComment)
+    setSelectedReward(null)
+    setPurchaseMode(null)
+  }
+
+  const handleBuyLater = () => {
+    if (!selectedReward) return
+    purchase(selectedReward, true, null, null)
+    setSelectedReward(null)
+    setPurchaseMode(null)
+  }
+
+  // Стилизованный баланс
   const BalanceDisplay = () => (
     <div style={{
       background: 'rgba(255,255,255,0.03)',
@@ -158,7 +189,6 @@ export default function Shop() {
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(255,180,0,0.25)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
-                onClick={() => openRewardDetail(reward)}
                 >
                   <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
@@ -166,9 +196,9 @@ export default function Shop() {
                     ) : (
                       <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />
                     )}
-                    {reward.type === 'digital' && (
-                      <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: '#FFD700', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Сертификат</span>
-                    )}
+                    <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: '#FFD700', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>
+                      {typeLabels[reward.type] || 'Товар'}
+                    </span>
                     {reward.requires_approval && (
                       <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,0,0,0.5)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Требуется согласование</span>
                     )}
@@ -178,67 +208,30 @@ export default function Shop() {
                     <p style={{ fontSize: 14, color: '#aaa', marginBottom: 20, lineHeight: 1.6, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                       <span style={{ fontSize: 18, fontWeight: 600, color: '#FFD700' }}>{reward.cost} {word}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); purchase(reward, false); }}
-                          disabled={loading}
-                          style={{
-                            background: 'rgba(255,255,255,0.06)',
-                            backdropFilter: 'blur(12px)',
-                            border: '1px solid rgba(255,215,0,0.25)',
-                            borderRadius: 14,
-                            padding: '8px 16px',
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: '#fff',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s',
-                            textShadow: '0 0 10px rgba(255,200,0,0.5)',
-                            width: '100%'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                            e.currentTarget.style.borderColor = '#FFD700';
-                            e.currentTarget.style.boxShadow = '0 0 20px rgba(255,200,0,0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                            e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        >
-                          Купить сейчас
-                        </button>
-                        {reward.requires_approval && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); purchase(reward, true); }}
-                            disabled={loading}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              backdropFilter: 'blur(12px)',
-                              border: '1px solid rgba(255,215,0,0.2)',
-                              borderRadius: 14,
-                              padding: '8px 16px',
-                              fontSize: 13,
-                              fontWeight: 500,
-                              color: '#ddd',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s',
-                              width: '100%'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
-                              e.currentTarget.style.borderColor = '#FFD700';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                              e.currentTarget.style.borderColor = 'rgba(255,215,0,0.2)';
-                            }}
-                          >
-                            Активировать позже
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openPurchaseModal(reward); }}
+                        disabled={loading}
+                        style={{
+                          background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                          border: 'none',
+                          borderRadius: 14,
+                          padding: '10px 24px',
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: '#000',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s',
+                          boxShadow: '0 0 15px rgba(255,200,0,0.5)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = '0 0 25px rgba(255,200,0,0.8)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 0 15px rgba(255,200,0,0.5)';
+                        }}
+                      >
+                        Купить
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -248,57 +241,111 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Модалка товара */}
-      {selectedReward && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
-          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 18, marginBottom: 24 }} />}
-            <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} {getKarmikWord(selectedReward.cost)}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Модалка выбора способа покупки */}
+      {selectedReward && purchaseMode === null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setSelectedReward(null); }}>
+          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 450, width: '92%', color: '#fff' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 20, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
+            <p style={{ marginBottom: 30, color: '#ccc' }}>Как вы хотите использовать покупку?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
-                onClick={() => { purchase(selectedReward, false); setSelectedReward(null); }}
-                disabled={loading}
+                onClick={() => setPurchaseMode('now')}
+                style={{
+                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                  border: 'none',
+                  borderRadius: 14,
+                  padding: '14px 24px',
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: '#000',
+                  cursor: 'pointer'
+                }}
+              >
+                Активировать сейчас
+              </button>
+              <button
+                onClick={() => { handleBuyLater(); }}
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   backdropFilter: 'blur(12px)',
                   border: '1px solid rgba(255,215,0,0.25)',
                   borderRadius: 14,
-                  padding: '12px 28px',
-                  fontSize: 15,
+                  padding: '14px 24px',
+                  fontSize: 16,
                   fontWeight: 500,
                   color: '#fff',
-                  cursor: 'pointer',
-                  textShadow: '0 0 10px rgba(255,200,0,0.5)',
-                  width: '100%'
+                  cursor: 'pointer'
                 }}
               >
-                Купить и отправить на согласование
+                Активировать позже
               </button>
-              {selectedReward.requires_approval && (
-                <button
-                  onClick={() => { purchase(selectedReward, true); setSelectedReward(null); }}
-                  disabled={loading}
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,215,0,0.2)',
-                    borderRadius: 14,
-                    padding: '12px 28px',
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: '#ddd',
-                    cursor: 'pointer',
-                    width: '100%'
-                  }}
-                >
-                  Купить, активировать позже
-                </button>
-              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка для немедленной активации (выбор даты) */}
+      {selectedReward && purchaseMode === 'now' && selectedReward.requires_approval && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setSelectedReward(null); setPurchaseMode(null); }}>
+          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 450, width: '92%', color: '#fff' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 22, marginBottom: 20 }}>Активация сертификата</h3>
+            <label style={{ display: 'block', marginBottom: 10, color: '#aaa' }}>Дата действия</label>
+            <input
+              type="date"
+              value={activationDate}
+              onChange={e => setActivationDate(e.target.value)}
+              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 20 }}
+            />
+            <label style={{ display: 'block', marginBottom: 10, color: '#aaa' }}>Комментарий</label>
+            <textarea
+              value={activationComment}
+              onChange={e => setActivationComment(e.target.value)}
+              placeholder="Например, опоздание на 15 минут"
+              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 20, resize: 'vertical' }}
+              rows={2}
+            />
+            <button
+              onClick={handleBuyNow}
+              style={{
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                border: 'none',
+                borderRadius: 14,
+                padding: '14px 24px',
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#000',
+                cursor: 'pointer',
+                width: '100%'
+              }}
+            >
+              Подтвердить
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Если не требуется согласование, просто подтверждение сразу */}
+      {selectedReward && purchaseMode === 'now' && !selectedReward.requires_approval && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setSelectedReward(null); setPurchaseMode(null); }}>
+          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 400, width: '92%', color: '#fff' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 22, marginBottom: 20 }}>Подтверждение покупки</h3>
+            <p style={{ marginBottom: 30 }}>Купить «{selectedReward.name}» за {selectedReward.cost} {getKarmikWord(selectedReward.cost)}?</p>
+            <button
+              onClick={handleBuyNow}
+              style={{
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                border: 'none',
+                borderRadius: 14,
+                padding: '14px 24px',
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#000',
+                cursor: 'pointer',
+                width: '100%'
+              }}
+            >
+              Купить
+            </button>
           </div>
         </div>
       )}
