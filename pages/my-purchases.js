@@ -49,7 +49,6 @@ export default function MyPurchases() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    // Добавляем картинку в каждый элемент
     const enriched = (data || []).map(p => ({
       ...p,
       image_url: p.rewards?.image_url || null
@@ -98,7 +97,7 @@ export default function MyPurchases() {
   const filteredPurchases = filterType === 'all' ? purchases : purchases.filter(p => p.status === filterType)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 20px', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: '#000', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '20px', position: 'relative' }}>
       <Head><title>Мои покупки | Кармический банк</title></Head>
       {/* Звёзды */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
@@ -122,21 +121,28 @@ export default function MyPurchases() {
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
-          <span style={{ fontSize: 18 }}>←</span> Назад
-        </Link>
+      {/* Кнопка Назад в левом верхнем углу */}
+      <Link href="/" style={{
+        position: 'absolute', top: 16, left: 16, zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 14, color: '#aaa', textDecoration: 'none',
+        background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
+        padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <span style={{ fontSize: 16 }}>←</span> Назад
+      </Link>
 
-        <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Мои покупки</h1>
+      <div style={{ position: 'relative', zIndex: 1, margin: '0 auto', paddingTop: 60 }}>
+        <h1 style={{ fontSize: 28, marginBottom: 24, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Мои покупки</h1>
 
         {/* Фильтры */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
           {['all', 'new', 'pending', 'approved', 'rejected'].map(status => (
             <button
               key={status}
               onClick={() => setFilterType(status)}
               style={{
-                padding: '8px 18px',
+                padding: '6px 14px',
                 borderRadius: 20,
                 border: '1px solid rgba(255,215,0,0.3)',
                 background: filterType === status ? 'rgba(255,215,0,0.2)' : 'transparent',
@@ -154,47 +160,53 @@ export default function MyPurchases() {
         {filteredPurchases.length === 0 ? (
           <p style={{ color: '#aaa' }}>Нет покупок</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 20,
+            marginBottom: 40
+          }}>
             {filteredPurchases.map(p => {
               const word = getKarmikWord(p.cost)
               return (
                 <div key={p.id} style={{
                   background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)', borderRadius: 20,
-                  border: '1px solid rgba(255,255,255,0.1)', padding: 24,
-                  display: 'flex', flexDirection: 'column'
+                  border: '1px solid rgba(255,255,255,0.1)', padding: 20,
+                  display: 'flex', flexDirection: 'column',
+                  minHeight: 360 // чтобы карточки были ровными
                 }}>
                   {p.image_url && (
-                    <img src={p.image_url} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12, marginBottom: 16 }} />
+                    <img src={p.image_url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12, marginBottom: 12 }} />
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, color: '#aaa' }}>{new Date(p.created_at).toLocaleDateString('ru')}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, color: '#aaa' }}>{new Date(p.created_at).toLocaleDateString('ru')}</span>
                     <span style={{
-                      padding: '4px 10px', borderRadius: 10, fontSize: 12, fontWeight: 600,
+                      padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
                       background: p.status === 'approved' ? 'rgba(0,200,100,0.2)' : p.status === 'pending' ? 'rgba(255,200,0,0.2)' : p.status === 'rejected' ? 'rgba(255,0,0,0.2)' : 'rgba(100,100,255,0.2)',
                       color: p.status === 'approved' ? '#0f0' : p.status === 'pending' ? '#FFD700' : p.status === 'rejected' ? '#f44' : '#aaf'
                     }}>
                       {statusLabels[p.status] || p.status}
                     </span>
                   </div>
-                  <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>{p.reward_name}</h3>
-                  <p style={{ color: '#ccc', marginBottom: 12 }}>{p.cost} {word}</p>
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>{p.reward_name}</h3>
+                  <p style={{ color: '#ccc', marginBottom: 10, fontSize: 13 }}>{p.cost} {word}</p>
 
                   {p.certificate_data && (
                     <div style={{
                       background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,180,0,0.1))',
-                      border: '1px solid rgba(255,215,0,0.5)', borderRadius: 16, padding: 16, marginTop: 12
+                      border: '1px solid rgba(255,215,0,0.5)', borderRadius: 12, padding: 12, marginTop: 'auto'
                     }}>
-                      <h4 style={{ fontSize: 16, color: '#FFD700', marginBottom: 8 }}>Сертификат</h4>
-                      {p.certificate_data.valid_date && <p style={{ fontSize: 14 }}>Действителен: {p.certificate_data.valid_date === 'any' ? 'Любой день' : new Date(p.certificate_data.valid_date).toLocaleDateString('ru')}</p>}
-                      {p.certificate_data.comment && <p style={{ fontSize: 14, marginTop: 8, color: '#ddd' }}>Комментарий: {p.certificate_data.comment}</p>}
+                      <h4 style={{ fontSize: 14, color: '#FFD700', marginBottom: 4 }}>Сертификат</h4>
+                      {p.certificate_data.valid_date && <p style={{ fontSize: 12 }}>Действителен: {p.certificate_data.valid_date === 'any' ? 'Любой день' : new Date(p.certificate_data.valid_date).toLocaleDateString('ru')}</p>}
+                      {p.certificate_data.comment && <p style={{ fontSize: 12, marginTop: 4, color: '#ddd' }}>Комментарий: {p.certificate_data.comment}</p>}
                     </div>
                   )}
 
                   {p.status === 'new' && (
                     <button onClick={() => setActivationModal({ show: true, purchase: p })} style={{
-                      marginTop: 16, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,215,0,0.25)', borderRadius: 14, padding: '10px 20px',
-                      color: '#fff', cursor: 'pointer', fontSize: 14
+                      marginTop: 12, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255,215,0,0.25)', borderRadius: 14, padding: '8px 0',
+                      color: '#fff', cursor: 'pointer', fontSize: 13, width: '100%'
                     }}>Активировать</button>
                   )}
                 </div>
