@@ -1,6 +1,6 @@
 // pages/test-planet.js
-// Полностью изолированная тестовая страница — не использует Layout,
-// чтобы не было футера и лишних скроллов.
+// Полностью изолированный тест нового дизайна входа – дыра чистая, форма под ней.
+// Не использует Layout, чтобы не было футера и скроллов.
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -175,8 +175,8 @@ export default function TestPlanetPage() {
     )
   }
 
-  // Стиль для обеих кнопок (единый, стеклянный с голограммой)
-  const actionButtonStyle = {
+  // Единый стиль для всех кнопок (стеклянный, как "Купить")
+  const glassButtonStyle = {
     width: '100%',
     padding: '10px 0',
     fontSize: 14,
@@ -189,7 +189,8 @@ export default function TestPlanetPage() {
     backdropFilter: 'blur(12px)',
     transition: 'all 0.3s',
     textShadow: '0 0 10px rgba(255,255,255,0.5)',
-    animation: 'subtleGlow 3s ease-in-out infinite'
+    animation: 'subtleGlow 3s ease-in-out infinite',
+    marginTop: 12
   }
 
   return (
@@ -249,20 +250,30 @@ export default function TestPlanetPage() {
           </div>
         </div>
 
-        {/* Правая часть – форма входа внутри большой чёрной дыры */}
-        <div style={{ flex: '0 0 auto', position: 'relative', width: 480, height: 480, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="black-hole" style={{ width: 460, height: 460, position: 'absolute' }} />
-          <div style={{ position: 'relative', zIndex: 1, width: 320, textAlign: 'center' }}>
-            <h2 style={{ color: '#FFD700', marginBottom: 24, fontSize: 22, fontWeight: 600, letterSpacing: 2 }}>
-              {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход'}
-            </h2>
+        {/* Правая часть – дыра и форма под ней */}
+        <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {/* Чистая чёрная дыра */}
+          <div style={{ position: 'relative', width: 460, height: 460 }}>
+            <div className="black-hole" style={{ width: 460, height: 460, position: 'absolute' }} />
+          </div>
 
+          {/* Панель с формой под дырой */}
+          <div style={{
+            marginTop: 30,
+            width: 340,
+            background: 'rgba(15, 20, 35, 0.6)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: 24,
+            border: '1px solid rgba(255,215,0,0.2)',
+            padding: 24,
+            boxShadow: '0 0 40px rgba(0,0,0,0.5)'
+          }}>
             {step === 'login' && (
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" style={actionButtonStyle} disabled={loading}>
+                <button type="submit" style={glassButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Войти'}
                 </button>
               </form>
@@ -275,7 +286,7 @@ export default function TestPlanetPage() {
                 </p>
                 <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" style={actionButtonStyle} disabled={loading}>
+                <button type="submit" style={glassButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Далее'}
                 </button>
               </form>
@@ -286,16 +297,17 @@ export default function TestPlanetPage() {
                 <p style={{ color: '#aaa', fontSize: 14 }}>Придумайте новый пароль для входа в систему.</p>
                 <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" style={actionButtonStyle} disabled={loading}>
+                <button type="submit" style={glassButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Активировать аккаунт'}
                 </button>
               </form>
             )}
 
+            {/* Кнопка "Зарегистрироваться" только на шаге логина */}
             {step === 'login' && (
               <button
                 onClick={() => router.push('/welcome')}
-                style={{ ...actionButtonStyle, marginTop: 16 }}
+                style={{ ...glassButtonStyle, marginTop: 12 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
@@ -336,5 +348,5 @@ export default function TestPlanetPage() {
   )
 }
 
-// Не показывать макет (Layout) на этой странице — убирает футер и лишний фон
+// Не показывать Layout – избавляемся от футера и лишнего фона
 TestPlanetPage.bypassLayout = true
