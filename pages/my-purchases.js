@@ -45,10 +45,16 @@ export default function MyPurchases() {
   async function loadPurchases(userId) {
     const { data } = await supabase
       .from('purchases')
-      .select('*')
+      .select('*, rewards ( image_url )')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-    setPurchases(data || [])
+
+    // Добавляем картинку в каждый элемент
+    const enriched = (data || []).map(p => ({
+      ...p,
+      image_url: p.rewards?.image_url || null
+    }))
+    setPurchases(enriched)
     setLoading(false)
   }
 
