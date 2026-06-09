@@ -1,3 +1,4 @@
+// pages/shop.js — полный файл с выбором типа покупки
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -21,6 +22,7 @@ export default function Shop() {
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
   const [selectedReward, setSelectedReward] = useState(null)
+  const [purchaseMode, setPurchaseMode] = useState('now') // 'now' или 'later'
 
   useEffect(() => {
     const init = async () => {
@@ -35,7 +37,7 @@ export default function Shop() {
     init()
   }, [])
 
-  const purchase = async (reward) => {
+  const purchase = async (reward, activateLater = false) => {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     const accessToken = session?.access_token
@@ -50,7 +52,7 @@ export default function Shop() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({ rewardId: reward.id })
+      body: JSON.stringify({ rewardId: reward.id, activateLater })
     })
     const result = await res.json()
     if (res.ok) {
@@ -64,9 +66,10 @@ export default function Shop() {
 
   const openRewardDetail = (reward) => {
     setSelectedReward(reward)
+    setPurchaseMode('now')
   }
 
-  // Стилизованный баланс
+  // стилизованный баланс
   const BalanceDisplay = () => (
     <div style={{
       background: 'rgba(255,255,255,0.03)',
@@ -175,35 +178,67 @@ export default function Shop() {
                     <p style={{ fontSize: 14, color: '#aaa', marginBottom: 20, lineHeight: 1.6, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                       <span style={{ fontSize: 18, fontWeight: 600, color: '#FFD700' }}>{reward.cost} {word}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); purchase(reward); }}
-                        disabled={loading}
-                        style={{
-                          background: 'rgba(255,255,255,0.06)',
-                          backdropFilter: 'blur(12px)',
-                          border: '1px solid rgba(255,215,0,0.25)',
-                          borderRadius: 14,
-                          padding: '10px 24px',
-                          fontSize: 14,
-                          fontWeight: 500,
-                          color: '#fff',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s',
-                          textShadow: '0 0 10px rgba(255,200,0,0.5)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                          e.currentTarget.style.borderColor = '#FFD700';
-                          e.currentTarget.style.boxShadow = '0 0 20px rgba(255,200,0,0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                          e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        Купить
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); purchase(reward, false); }}
+                          disabled={loading}
+                          style={{
+                            background: 'rgba(255,255,255,0.06)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255,215,0,0.25)',
+                            borderRadius: 14,
+                            padding: '8px 16px',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            color: '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s',
+                            textShadow: '0 0 10px rgba(255,200,0,0.5)',
+                            width: '100%'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                            e.currentTarget.style.borderColor = '#FFD700';
+                            e.currentTarget.style.boxShadow = '0 0 20px rgba(255,200,0,0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                            e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          Купить сейчас
+                        </button>
+                        {reward.requires_approval && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); purchase(reward, true); }}
+                            disabled={loading}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              backdropFilter: 'blur(12px)',
+                              border: '1px solid rgba(255,215,0,0.2)',
+                              borderRadius: 14,
+                              padding: '8px 16px',
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: '#ddd',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s',
+                              width: '100%'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                              e.currentTarget.style.borderColor = '#FFD700';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                              e.currentTarget.style.borderColor = 'rgba(255,215,0,0.2)';
+                            }}
+                          >
+                            Активировать позже
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -220,10 +255,12 @@ export default function Shop() {
             {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 18, marginBottom: 24 }} />}
             <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} {getKarmikWord(selectedReward.cost)}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button
-                onClick={() => { purchase(selectedReward); setSelectedReward(null); }}
+                onClick={() => { purchase(selectedReward, false); setSelectedReward(null); }}
                 disabled={loading}
                 style={{
                   background: 'rgba(255,255,255,0.06)',
@@ -235,11 +272,32 @@ export default function Shop() {
                   fontWeight: 500,
                   color: '#fff',
                   cursor: 'pointer',
-                  textShadow: '0 0 10px rgba(255,200,0,0.5)'
+                  textShadow: '0 0 10px rgba(255,200,0,0.5)',
+                  width: '100%'
                 }}
               >
-                Купить
+                Купить и отправить на согласование
               </button>
+              {selectedReward.requires_approval && (
+                <button
+                  onClick={() => { purchase(selectedReward, true); setSelectedReward(null); }}
+                  disabled={loading}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,215,0,0.2)',
+                    borderRadius: 14,
+                    padding: '12px 28px',
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: '#ddd',
+                    cursor: 'pointer',
+                    width: '100%'
+                  }}
+                >
+                  Купить, активировать позже
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -258,15 +316,8 @@ export default function Shop() {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
         }
-        /* Скрываем скроллбары для всех элементов, но сохраняем возможность скролла */
-        *::-webkit-scrollbar {
-          width: 0;
-          height: 0;
-        }
-        * {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE 10+ */
-        }
+        *::-webkit-scrollbar { width: 0; height: 0; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
     </div>
   )
