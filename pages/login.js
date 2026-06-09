@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 
@@ -11,13 +11,18 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [initialCheck, setInitialCheck] = useState(!!token)
   const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
+  const [initialCheck, setInitialCheck] = useState(true) // начинаем с проверки
 
   useEffect(() => {
-    if (token) fetchInvite(token)
-  }, [token])
+    if (!router.isReady) return // ждём, пока Next.js загрузит query
+    if (token) {
+      fetchInvite(token)
+    } else {
+      setInitialCheck(false)
+    }
+  }, [token, router.isReady])
 
   async function fetchInvite(t) {
     setInitialCheck(true)
@@ -55,6 +60,7 @@ export default function Login() {
       return
     }
 
+    // Проверяем, есть ли приглашение для этого email
     if (signInError.message.includes('Invalid login credentials')) {
       const { data: inviteData } = await supabase
         .from('invitations')
@@ -71,7 +77,9 @@ export default function Login() {
         return
       }
 
-      window.location.href = '/welcome'
+      // Нет приглашения — просто показываем ошибку
+      setError('Неверный email или пароль')
+      setLoading(false)
       return
     }
 
@@ -118,43 +126,34 @@ export default function Login() {
 
       const user = signUpData?.user
       if (!user) {
-        setError('Не удалось создать аккаунт')
+        setError('Не удалось создать аккаунт. Возможно, требуется подтверждение Email.')
         setLoading(false)
         return
       }
 
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (!existingProfile) {
-        await supabase.from('profiles').insert({
-          user_id: user.id,
-          company_id: invite.company_id,
-          department_id: null,
-          role_id: invite.role_id,
-          display_name: email,
-          email: invite.email,
-          manager_id: invite.created_by,
-        })
-      }
-
-      await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
-
-      await supabase.auth.signOut()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Создаём профиль (если RLS позволяет) и обновляем приглашение
+      const { error: profileError } = await supabase.from('profiles').insert({
+        user_id: user.id,
+        company_id: invite.company_id,
+        department_id: null,
+        role_id: invite.role_id,
+        display_name: invite.email,
         email: invite.email,
-        password: newPassword,
+        manager_id: invite.created_by,
       })
 
-      if (signInError) {
-        setError('Не удалось войти после активации')
-        setLoading(false)
-        return
+      if (profileError) {
+        console.error('Ошибка создания профиля:', profileError)
+        // Не блокируем вход, если не удалось создать профиль
       }
 
+      await supabase
+        .from('invitations')
+        .update({ status: 'accepted', temp_password: null })
+        .eq('id', invite.id)
+
+      // Если подтверждение Email выключено, signUp уже залогинил пользователя.
+      // Просто идём на главную.
       window.location.href = '/'
     } catch (err) {
       setError('Непредвиденная ошибка')
