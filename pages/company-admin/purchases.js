@@ -1,76 +1,52 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabaseClient'
 import PremiumModal from '../../components/PremiumModal'
 
 export default function PurchasesAdmin() {
   const router = useRouter()
-  const [profile, setProfile] = useState(null)
   const [purchases, setPurchases] = useState([])
   const [modal, setModal] = useState({ show: false, purchase: null })
   const [comment, setComment] = useState('')
   const [dateOption, setDateOption] = useState('any')
   const [specificDate, setSpecificDate] = useState('')
+  const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const { data: prof, error } = await supabase
-        .from('profiles')
-        .select('company_id, role_id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (error || !prof || (prof.role_id !== 1 && prof.role_id !== 2)) {
+    (async () => {
+      const res = await fetch('/api/admin/check-admin')
+      if (!res.ok) {
         router.push('/')
         return
       }
-
-      setProfile(prof)
+      const data = await res.json()
+      setProfile(data.profile)
       loadPurchases()
-    }
-    init()
+    })()
   }, [])
 
   const loadPurchases = async () => {
-    const { data, error } = await supabase
-      .from('purchases')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Ошибка загрузки:', error)
-      setPurchases([])
-      return
+    const res = await fetch('/api/admin/get-pending-purchases')
+    if (res.ok) {
+      const data = await res.json()
+      setPurchases(data)
     }
-
-    setPurchases(data || [])
   }
 
   const handleApprove = async () => {
     const { purchase } = modal
     if (!purchase) return
-
-    const updateData = {
-      status: 'approved',
-      approved_comment: comment,
-      certificate_data: {
-        valid_date: dateOption === 'any' ? 'any' : specificDate,
-        comment: comment
-      }
-    }
-
-    const { error } = await supabase.from('purchases').update(updateData).eq('id', purchase.id)
-    if (!error) {
-      await supabase.from('notifications').insert({
-        user_id: purchase.user_id,
-        message: `Ваша покупка "${purchase.reward_name}" одобрена!`,
-        link: '/my-purchases'
+    const res = await fetch('/api/admin/approve-purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purchaseId: purchase.id,
+        comment,
+        dateOption,
+        specificDate
       })
+    })
+    if (res.ok) {
       setModal({ show: false })
       loadPurchases()
     }
@@ -79,18 +55,11 @@ export default function PurchasesAdmin() {
   const handleReject = async () => {
     const { purchase } = modal
     if (!purchase) return
-
-    await supabase.from('purchases').update({
-      status: 'rejected',
-      approved_comment: comment
-    }).eq('id', purchase.id)
-
-    await supabase.from('notifications').insert({
-      user_id: purchase.user_id,
-      message: `Ваша покупка "${purchase.reward_name}" отклонена. Причина: ${comment || 'не указана'}.`,
-      link: '/my-purchases'
+    await fetch('/api/admin/reject-purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purchaseId: purchase.id, comment })
     })
-
     setModal({ show: false })
     loadPurchases()
   }
