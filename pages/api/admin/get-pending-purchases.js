@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // Проверяем авторизацию и роль
+  // Проверяем права (используем тот же check-admin через внутренний вызов)
   const checkRes = await fetch(`${supabaseUrl}/api/admin/check-admin`, {
     headers: { cookie: req.headers.cookie || '' }
   })
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   const { profile } = await checkRes.json()
 
-  // Загружаем все pending-покупки
+  // Загружаем все pending‑покупки
   const { data: allPurchases, error } = await supabaseAdmin
     .from('purchases')
     .select('*')
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
   if (error) return res.status(500).json({ error: error.message })
 
-  // Фильтруем по компании, если админ не суперадмин
+  // Фильтруем по компании, если админ компании (не суперадмин)
   if (profile.role_id === 2) {
     const { data: employees } = await supabaseAdmin
       .from('profiles')
@@ -34,6 +34,6 @@ export default async function handler(req, res) {
     return res.status(200).json(filtered)
   }
 
-  // Суперадмин видит всё
-  return res.status(200).json(allPurchases || [])
+  // Суперадмин видит все
+  res.status(200).json(allPurchases || [])
 }
