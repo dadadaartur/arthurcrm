@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
-import Spinner from '../components/Spinner'
 
 export default function Login() {
   const router = useRouter()
@@ -166,7 +165,7 @@ export default function Login() {
   if (initialCheck) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spinner />
+        <div className="spinner" />
       </div>
     )
   }
@@ -214,7 +213,7 @@ export default function Login() {
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
               <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Войти'}
+                {loading ? <div className="spinner" /> : 'Войти'}
               </button>
             </form>
           )}
@@ -227,7 +226,7 @@ export default function Login() {
               <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
               <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Далее'}
+                {loading ? <div className="spinner" /> : 'Далее'}
               </button>
             </form>
           )}
@@ -238,7 +237,7 @@ export default function Login() {
               <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
               <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Активировать аккаунт'}
+                {loading ? <div className="spinner" /> : 'Активировать аккаунт'}
               </button>
             </form>
           )}
