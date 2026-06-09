@@ -174,7 +174,7 @@ export default function RewardsAdmin() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 16 }}>{reward.name}</div>
                   <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
-                  <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : 'Физический'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
+                  <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : reward.type === 'workplace' ? 'Рабочее место' : reward.type === 'delivery' ? 'Доставка' : reward.type === 'promocode' ? 'Промокод' : 'Физический'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
                 </div>
                 <button onClick={() => handleEdit(reward)} style={{
                   background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
@@ -208,6 +208,9 @@ export default function RewardsAdmin() {
               <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }}>
                 <option value="physical">Физический</option>
                 <option value="digital">Цифровой (сертификат)</option>
+                <option value="workplace">Рабочее место</option>
+                <option value="delivery">Доставка</option>
+                <option value="promocode">Промокод</option>
               </select>
             </div>
             <div style={{ gridColumn: 'span 2' }}>
