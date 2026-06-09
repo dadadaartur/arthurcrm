@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { supabase } from '../../lib/supabaseClient'
 import PremiumModal from '../../components/PremiumModal'
 
 export default function PurchasesAdmin() {
@@ -11,57 +12,88 @@ export default function PurchasesAdmin() {
   const [dateOption, setDateOption] = useState('any')
   const [specificDate, setSpecificDate] = useState('')
   const [profile, setProfile] = useState(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch('/api/admin/check-admin')
-      if (!res.ok) {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('company_id, role_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!prof || (prof.role_id !== 1 && prof.role_id !== 2)) {
         router.push('/')
         return
       }
-      const data = await res.json()
-      setProfile(data.profile)
-      loadPurchases()
-    })()
+
+      setProfile(prof)
+      loadAllPurchases()
+    }
+    init()
   }, [])
 
-  const loadPurchases = async () => {
-    const res = await fetch('/api/admin/get-pending-purchases')
-    if (res.ok) {
-      const data = await res.json()
-      setPurchases(data)
+  const loadAllPurchases = async () => {
+    // Самый простой прямой запрос — без RLS, без фильтров
+    const { data, error } = await supabase
+      .from('purchases')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setErrorMsg('Ошибка загрузки: ' + error.message)
+      setPurchases([])
+      return
     }
+
+    setPurchases(data || [])
+    setErrorMsg('')
   }
 
   const handleApprove = async () => {
     const { purchase } = modal
     if (!purchase) return
-    const res = await fetch('/api/admin/approve-purchase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        purchaseId: purchase.id,
-        comment,
-        dateOption,
-        specificDate
-      })
+
+    await supabase.from('purchases').update({
+      status: 'approved',
+      approved_comment: comment,
+      certificate_data: {
+        valid_date: dateOption === 'any' ? 'any' : specificDate,
+        comment: comment
+      }
+    }).eq('id', purchase.id)
+
+    await supabase.from('notifications').insert({
+      user_id: purchase.user_id,
+      message: `Ваша покупка "${purchase.reward_name}" одобрена!`,
+      link: '/my-purchases'
     })
-    if (res.ok) {
-      setModal({ show: false })
-      loadPurchases()
-    }
+
+    setModal({ show: false })
+    loadAllPurchases()
   }
 
   const handleReject = async () => {
     const { purchase } = modal
     if (!purchase) return
-    await fetch('/api/admin/reject-purchase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ purchaseId: purchase.id, comment })
+
+    await supabase.from('purchases').update({
+      status: 'rejected',
+      approved_comment: comment
+    }).eq('id', purchase.id)
+
+    await supabase.from('notifications').insert({
+      user_id: purchase.user_id,
+      message: `Ваша покупка "${purchase.reward_name}" отклонена. Причина: ${comment || 'не указана'}.`,
+      link: '/my-purchases'
     })
+
     setModal({ show: false })
-    loadPurchases()
+    loadAllPurchases()
   }
 
   if (!profile) return <div style={{ color:'white', textAlign:'center', paddingTop:100 }}>Загрузка...</div>
@@ -94,7 +126,9 @@ export default function PurchasesAdmin() {
 
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Подтверждение сертификатов</h1>
 
-        {purchases.length === 0 ? (
+        {errorMsg && <p style={{ color: '#f44' }}>{errorMsg}</p>}
+
+        {purchases.length === 0 && !errorMsg ? (
           <p style={{ color: '#aaa' }}>Нет запросов</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
