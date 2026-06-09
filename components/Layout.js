@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import Spinner from './Spinner'
+import { useRouter } from 'next/router' // <-- Импортируем роутер Next.js
 
 function StarsBackground() {
   useEffect(() => {
@@ -31,9 +32,13 @@ function StarsBackground() {
 }
 
 export default function Layout({ children }) {
+  const router = useRouter() // <-- Инициализируем роутер
   const { user, profile, loading } = useProfile()
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
+
+  // Проверяем, находится ли пользователь на странице логина
+  const isLoginPage = router.pathname === '/login'
 
   useEffect(() => {
     if (user) {
@@ -56,7 +61,8 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  if (loading || !user) {
+  // ИЗМЕНЕНО: Показываем спиннер блокировки только если это НЕ страница логина
+  if (!isLoginPage && (loading || !user)) {
     return (
       <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Spinner />
@@ -79,40 +85,45 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
       <StarsBackground />
-      <header className="flex justify-between items-center px-6 py-2 relative z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
-            Кармический банк
-          </Link>
-          <nav className="flex gap-2 text-xs font-medium">
-            <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
-            <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
-              CRM Лето
-            </a>
-            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {isCompanyAdmin && (
-              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
-            )}
-          </nav>
-        </div>
+      
+      {/* ИЗМЕНЕНО: Хедер с навигацией рендерим только для авторизованных пользователей (не на странице логина) */}
+      {!isLoginPage && (
+        <header className="flex justify-between items-center px-6 py-2 relative z-10">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+              Кармический банк
+            </Link>
+            <nav className="flex gap-2 text-xs font-medium">
+              <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
+              <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
+              <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
+                CRM Лето
+              </a>
+              {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+              {isCompanyAdmin && (
+                <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+              )}
+            </nav>
+          </div>
 
-        <div className="flex items-center gap-4 text-xs font-medium">
-          {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-          <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold">
-                {getInitials()}
-              </div>
-            )}
-            <span>{profile?.display_name || user.email}</span>
-          </Link>
-          <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
-        </div>
-      </header>
+          <div className="flex items-center gap-4 text-xs font-medium">
+            {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+            <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold">
+                  {getInitials()}
+                </div>
+              )}
+              <span>{profile?.display_name || user?.email}</span>
+            </Link>
+            <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
+          </div>
+        </header>
+      )}
 
+      {/* Страница логина теперь беспрепятственно отрендерится здесь */}
       <main className="flex-grow relative z-10">{children}</main>
 
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
