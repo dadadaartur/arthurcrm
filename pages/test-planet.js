@@ -1,4 +1,4 @@
-// pages/test-planet.js — Галактическое свечение, компактная компоновка
+// pages/test-planet.js — Галактическое свечение, контент на всю ширину
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -212,66 +212,75 @@ export default function TestPlanetPage() {
         })}
       </div>
 
-      {/* Галактические туманности – более яркие и насыщенные */}
+      {/* Галактические туманности – яркие, заполняют края */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
-        {/* Синяя туманность слева */}
         <div style={{
           position: 'absolute',
-          top: '5%', left: '-5%',
-          width: 600, height: 600,
+          top: '0%', left: '0%',
+          width: 700, height: 700,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(80,160,255,0.5) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: 'radial-gradient(circle, rgba(100,180,255,0.6) 0%, transparent 70%)',
+          filter: 'blur(60px)',
           animation: 'nebulaLeft 8s ease-in-out infinite alternate'
         }} />
-        {/* Золотистая туманность справа */}
         <div style={{
           position: 'absolute',
-          top: '15%', right: '-5%',
-          width: 550, height: 550,
+          top: '10%', right: '0%',
+          width: 650, height: 650,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,180,50,0.6) 0%, transparent 70%)',
-          filter: 'blur(45px)',
+          background: 'radial-gradient(circle, rgba(255,180,50,0.7) 0%, transparent 70%)',
+          filter: 'blur(55px)',
           animation: 'nebulaRight 10s ease-in-out infinite alternate'
         }} />
-        {/* Розовая туманность снизу */}
         <div style={{
           position: 'absolute',
-          bottom: '0%', left: '20%',
-          width: 500, height: 500,
+          bottom: '0%', left: '15%',
+          width: 600, height: 600,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,120,180,0.5) 0%, transparent 70%)',
-          filter: 'blur(50px)',
+          background: 'radial-gradient(circle, rgba(255,120,180,0.6) 0%, transparent 70%)',
+          filter: 'blur(60px)',
           animation: 'nebulaBottom 12s ease-in-out infinite alternate'
         }} />
-        {/* Фиолетовая туманность по центру */}
         <div style={{
           position: 'absolute',
-          top: '35%', left: '35%',
-          width: 450, height: 450,
+          top: '30%', left: '30%',
+          width: 500, height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(160,120,255,0.4) 0%, transparent 70%)',
-          filter: 'blur(35px)',
+          background: 'radial-gradient(circle, rgba(160,120,255,0.5) 0%, transparent 70%)',
+          filter: 'blur(45px)',
           animation: 'nebulaCenter 9s ease-in-out infinite alternate'
         }} />
       </div>
 
-      {/* Контент: компактное горизонтальное разделение */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '30px 4%', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 380px', maxWidth: 500, marginRight: 40, marginBottom: 20 }}>
+      {/* Контент: используем всю ширину с минимальными отступами */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        width: '100%', maxWidth: 1400, margin: '0 auto',
+        minHeight: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '40px 40px',
+        flexWrap: 'wrap'
+      }}>
+        {/* Левая часть – информация */}
+        <div style={{
+          flex: '1 1 500px',
+          maxWidth: 600,
+          paddingLeft: 0,
+          marginBottom: 20
+        }}>
           <h1 style={{
-            fontSize: 42, fontWeight: 700, marginBottom: 12,
+            fontSize: 44, fontWeight: 700, marginBottom: 14,
             background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             lineHeight: 1.2
           }}>
             Кармический банк
           </h1>
-          <p style={{ fontSize: 17, color: '#bbb', marginBottom: 30, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 18, color: '#ccc', marginBottom: 36, lineHeight: 1.5 }}>
             Система мотивации и наград для вашей команды
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             {[
               { title: 'Выполняй задания', desc: 'Получай кармики за выполненные поручения и цели' },
               { title: 'Обменивай на призы', desc: 'Трать кармики в магазине: от выходного до доставки на дом' },
@@ -279,15 +288,19 @@ export default function TestPlanetPage() {
               { title: 'Получай сертификаты', desc: 'Цифровые и физические награды с подтверждением' },
             ].map((item, idx) => (
               <div key={idx}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{item.title}</div>
-                <div style={{ fontSize: 14, color: '#999', lineHeight: 1.4 }}>{item.desc}</div>
+                <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{item.title}</div>
+                <div style={{ fontSize: 15, color: '#999', lineHeight: 1.4 }}>{item.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Правая часть – форма */}
-        <div style={{ flex: '0 0 340px', marginBottom: 20 }}>
+        <div style={{
+          flex: '0 0 360px',
+          marginBottom: 20,
+          marginLeft: 40
+        }}>
           <div style={{
             background: 'rgba(15, 20, 35, 0.4)',
             backdropFilter: 'blur(20px)',
@@ -364,20 +377,20 @@ export default function TestPlanetPage() {
           100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
         }
         @keyframes nebulaLeft {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-          100% { transform: translate(30px, -20px) scale(1.1); opacity: 1; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+          100% { transform: translate(40px, -30px) scale(1.1); opacity: 1; }
         }
         @keyframes nebulaRight {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-          100% { transform: translate(-20px, 15px) scale(1.15); opacity: 1; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
+          100% { transform: translate(-30px, 20px) scale(1.15); opacity: 1; }
         }
         @keyframes nebulaBottom {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-          100% { transform: translate(15px, -25px) scale(1.05); opacity: 0.9; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(20px, -35px) scale(1.05); opacity: 0.95; }
         }
         @keyframes nebulaCenter {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-          100% { transform: translate(-15px, 20px) scale(1.1); opacity: 0.8; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+          100% { transform: translate(-20px, 25px) scale(1.1); opacity: 0.85; }
         }
         *::-webkit-scrollbar { width: 0; height: 0; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
