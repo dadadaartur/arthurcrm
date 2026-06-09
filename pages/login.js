@@ -11,18 +11,13 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [initialCheck, setInitialCheck] = useState(!!token)
   const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
-  const [initialCheck, setInitialCheck] = useState(true)
 
   useEffect(() => {
-    if (!router.isReady) return
-    if (token) {
-      fetchInvite(token)
-    } else {
-      setInitialCheck(false)
-    }
-  }, [token, router.isReady])
+    if (token) fetchInvite(token)
+  }, [token])
 
   async function fetchInvite(t) {
     setInitialCheck(true)
@@ -76,8 +71,7 @@ export default function Login() {
         return
       }
 
-      setError('Неверный email или пароль')
-      setLoading(false)
+      window.location.href = '/welcome'
       return
     }
 
@@ -124,29 +118,42 @@ export default function Login() {
 
       const user = signUpData?.user
       if (!user) {
-        setError('Не удалось создать аккаунт. Возможно, требуется подтверждение Email.')
+        setError('Не удалось создать аккаунт')
         setLoading(false)
         return
       }
 
-      const { error: profileError } = await supabase.from('profiles').insert({
-        user_id: user.id,
-        company_id: invite.company_id,
-        department_id: null,
-        role_id: invite.role_id,
-        display_name: invite.email,
-        email: invite.email,
-        manager_id: invite.created_by,
-      })
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-      if (profileError) {
-        console.error('Ошибка создания профиля:', profileError)
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          company_id: invite.company_id,
+          department_id: null,
+          role_id: invite.role_id,
+          display_name: email,
+          email: invite.email,
+          manager_id: invite.created_by,
+        })
       }
 
-      await supabase
-        .from('invitations')
-        .update({ status: 'accepted', temp_password: null })
-        .eq('id', invite.id)
+      await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
+
+      await supabase.auth.signOut()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: invite.email,
+        password: newPassword,
+      })
+
+      if (signInError) {
+        setError('Не удалось войти после активации')
+        setLoading(false)
+        return
+      }
 
       window.location.href = '/'
     } catch (err) {
@@ -208,6 +215,3 @@ export default function Login() {
     </div>
   )
 }
-
-// Флаг, чтобы _app.js не оборачивал эту страницу в Layout
-Login.bypassLayout = true
