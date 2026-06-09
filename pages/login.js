@@ -129,7 +129,6 @@ export default function Login() {
         return
       }
 
-      // Пытаемся создать профиль, но не блокируем вход, если не получилось
       const { error: profileError } = await supabase.from('profiles').insert({
         user_id: user.id,
         company_id: invite.company_id,
@@ -210,5 +209,5 @@ export default function Login() {
   )
 }
 
-// Включаем обход макета
+// Флаг, чтобы _app.js не оборачивал эту страницу в Layout
 Login.bypassLayout = true
