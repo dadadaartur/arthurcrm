@@ -1,6 +1,5 @@
 // pages/test-planet.js
-// Полностью изолированный тест нового дизайна входа – дыра чистая, форма под ней.
-// Не использует Layout, чтобы не было футера и скроллов.
+// Исправлено: дыра и форма больше не обрезаются, добавлен безопасный вертикальный скролл без полос.
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -194,9 +193,9 @@ export default function TestPlanetPage() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#000', overflowY: 'auto', overflowX: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       {/* Звёзды */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
         {Array.from({ length: 150 }).map((_, i) => {
           const size = Math.random() * 2.8 + 0.6
           const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
@@ -215,14 +214,14 @@ export default function TestPlanetPage() {
       </div>
 
       {/* Переливы внизу */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      {/* Контент: горизонтальное разделение */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', padding: '0 8%' }}>
+      {/* Контент: горизонтальное разделение с вертикальным скроллом при необходимости */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '40px 8%', flexWrap: 'wrap' }}>
         {/* Левая часть – информация о проекте */}
-        <div style={{ flex: 1, paddingRight: 60 }}>
+        <div style={{ flex: '1 1 400px', maxWidth: 600, paddingRight: 40, marginBottom: 30 }}>
           <h1 style={{
             fontSize: 42, fontWeight: 700, marginBottom: 16,
             background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
@@ -252,14 +251,14 @@ export default function TestPlanetPage() {
 
         {/* Правая часть – дыра и форма под ней */}
         <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Чистая чёрная дыра */}
-          <div style={{ position: 'relative', width: 460, height: 460 }}>
-            <div className="black-hole" style={{ width: 460, height: 460, position: 'absolute' }} />
+          {/* Чистая чёрная дыра (уменьшена до 360px) */}
+          <div style={{ position: 'relative', width: 360, height: 360 }}>
+            <div className="black-hole" style={{ width: 360, height: 360, position: 'absolute' }} />
           </div>
 
           {/* Панель с формой под дырой */}
           <div style={{
-            marginTop: 30,
+            marginTop: 20,
             width: 340,
             background: 'rgba(15, 20, 35, 0.6)',
             backdropFilter: 'blur(16px)',
