@@ -1,6 +1,4 @@
-// pages/test-planet.js
-// Новая концепция: «Галактическое свечение» без чёрной дыры.
-// Полностью изолированный тест – после утверждения перенесём в login.js.
+// pages/test-planet.js — Галактическое свечение, компактная компоновка
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -175,11 +173,11 @@ export default function TestPlanetPage() {
     )
   }
 
-  // Единый стиль для всех кнопок (стеклянный, как "Купить")
+  // Единый стиль для всех кнопок (стеклянный)
   const glassButtonStyle = {
     width: '100%',
-    padding: '10px 0',
-    fontSize: 14,
+    padding: '12px 0',
+    fontSize: 15,
     fontWeight: 500,
     color: '#fff',
     cursor: 'pointer',
@@ -214,67 +212,66 @@ export default function TestPlanetPage() {
         })}
       </div>
 
-      {/* Галактические туманности (размытые пятна) */}
+      {/* Галактические туманности – более яркие и насыщенные */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         {/* Синяя туманность слева */}
         <div style={{
           position: 'absolute',
-          top: '10%', left: '5%',
-          width: 500, height: 500,
+          top: '5%', left: '-5%',
+          width: 600, height: 600,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(100,180,255,0.3) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(80,160,255,0.5) 0%, transparent 70%)',
           filter: 'blur(40px)',
           animation: 'nebulaLeft 8s ease-in-out infinite alternate'
         }} />
         {/* Золотистая туманность справа */}
         <div style={{
           position: 'absolute',
-          top: '20%', right: '5%',
-          width: 450, height: 450,
+          top: '15%', right: '-5%',
+          width: 550, height: 550,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,200,100,0.4) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255,180,50,0.6) 0%, transparent 70%)',
           filter: 'blur(45px)',
           animation: 'nebulaRight 10s ease-in-out infinite alternate'
         }} />
         {/* Розовая туманность снизу */}
         <div style={{
           position: 'absolute',
-          bottom: '5%', left: '30%',
-          width: 400, height: 400,
+          bottom: '0%', left: '20%',
+          width: 500, height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,150,200,0.3) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(255,120,180,0.5) 0%, transparent 70%)',
           filter: 'blur(50px)',
           animation: 'nebulaBottom 12s ease-in-out infinite alternate'
         }} />
-        {/* Дополнительная фиолетовая туманность по центру */}
+        {/* Фиолетовая туманность по центру */}
         <div style={{
           position: 'absolute',
-          top: '40%', left: '40%',
-          width: 350, height: 350,
+          top: '35%', left: '35%',
+          width: 450, height: 450,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(180,130,255,0.2) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(160,120,255,0.4) 0%, transparent 70%)',
           filter: 'blur(35px)',
           animation: 'nebulaCenter 9s ease-in-out infinite alternate'
         }} />
       </div>
 
-      {/* Контент: горизонтальное разделение */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '40px 5%', flexWrap: 'wrap' }}>
-        {/* Левая часть – информация о проекте */}
-        <div style={{ flex: '1 1 400px', maxWidth: 550, marginRight: 60, marginBottom: 30 }}>
+      {/* Контент: компактное горизонтальное разделение */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '30px 4%', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 380px', maxWidth: 500, marginRight: 40, marginBottom: 20 }}>
           <h1 style={{
-            fontSize: 44, fontWeight: 700, marginBottom: 16,
+            fontSize: 42, fontWeight: 700, marginBottom: 12,
             background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             lineHeight: 1.2
           }}>
             Кармический банк
           </h1>
-          <p style={{ fontSize: 18, color: '#bbb', marginBottom: 40, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 17, color: '#bbb', marginBottom: 30, lineHeight: 1.5 }}>
             Система мотивации и наград для вашей команды
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {[
               { title: 'Выполняй задания', desc: 'Получай кармики за выполненные поручения и цели' },
               { title: 'Обменивай на призы', desc: 'Трать кармики в магазине: от выходного до доставки на дом' },
@@ -282,27 +279,25 @@ export default function TestPlanetPage() {
               { title: 'Получай сертификаты', desc: 'Цифровые и физические награды с подтверждением' },
             ].map((item, idx) => (
               <div key={idx}>
-                <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 15, color: '#999', lineHeight: 1.4 }}>{item.desc}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{item.title}</div>
+                <div style={{ fontSize: 14, color: '#999', lineHeight: 1.4 }}>{item.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Правая часть – форма на фоне золотистой туманности */}
-        <div style={{ flex: '0 0 auto', position: 'relative', width: 380, display: 'flex', justifyContent: 'center' }}>
-          {/* Стеклянная панель входа */}
+        {/* Правая часть – форма */}
+        <div style={{ flex: '0 0 340px', marginBottom: 20 }}>
           <div style={{
-            width: '100%',
-            background: 'rgba(15, 20, 35, 0.5)',
+            background: 'rgba(15, 20, 35, 0.4)',
             backdropFilter: 'blur(20px)',
             borderRadius: 24,
             border: '1px solid rgba(255,215,0,0.2)',
-            padding: 32,
-            boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 80px rgba(255,200,0,0.2)'
+            padding: 28,
+            boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(255,200,0,0.15)'
           }}>
             {step === 'login' && (
-              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
@@ -313,8 +308,8 @@ export default function TestPlanetPage() {
             )}
 
             {step === 'tempPass' && invite && (
-              <form onSubmit={handleTempPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <p style={{ color: '#aaa', fontSize: 14 }}>
+              <form onSubmit={handleTempPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ color: '#aaa', fontSize: 13 }}>
                   Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.
                 </p>
                 <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
@@ -326,8 +321,8 @@ export default function TestPlanetPage() {
             )}
 
             {step === 'setNewPass' && (
-              <form onSubmit={handleSetNewPass} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <p style={{ color: '#aaa', fontSize: 14 }}>Придумайте новый пароль для входа в систему.</p>
+              <form onSubmit={handleSetNewPass} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ color: '#aaa', fontSize: 13 }}>Придумайте новый пароль для входа в систему.</p>
                 <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
                 <button type="submit" style={glassButtonStyle} disabled={loading}>
@@ -336,11 +331,10 @@ export default function TestPlanetPage() {
               </form>
             )}
 
-            {/* Кнопка "Зарегистрироваться" только на шаге логина */}
             {step === 'login' && (
               <button
                 onClick={() => router.push('/welcome')}
-                style={{ ...glassButtonStyle, marginTop: 12 }}
+                style={{ ...glassButtonStyle, marginTop: 10 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
@@ -370,22 +364,21 @@ export default function TestPlanetPage() {
           100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
         }
         @keyframes nebulaLeft {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-          100% { transform: translate(20px, -15px) scale(1.1); opacity: 1; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(30px, -20px) scale(1.1); opacity: 1; }
         }
         @keyframes nebulaRight {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-          100% { transform: translate(-15px, 10px) scale(1.15); opacity: 1; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+          100% { transform: translate(-20px, 15px) scale(1.15); opacity: 1; }
         }
         @keyframes nebulaBottom {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-          100% { transform: translate(10px, -20px) scale(1.05); opacity: 0.9; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+          100% { transform: translate(15px, -25px) scale(1.05); opacity: 0.9; }
         }
         @keyframes nebulaCenter {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-          100% { transform: translate(-10px, 15px) scale(1.1); opacity: 0.8; }
+          0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+          100% { transform: translate(-15px, 20px) scale(1.1); opacity: 0.8; }
         }
-        /* Полностью скрываем скроллбары */
         *::-webkit-scrollbar { width: 0; height: 0; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
@@ -393,5 +386,4 @@ export default function TestPlanetPage() {
   )
 }
 
-// Не показывать Layout – избавляемся от футера и лишнего фона
 TestPlanetPage.bypassLayout = true
