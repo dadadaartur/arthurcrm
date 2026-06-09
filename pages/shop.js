@@ -4,6 +4,15 @@ import Head from 'next/head'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
+function getKarmikWord(n) {
+  const lastDigit = n % 10
+  const lastTwoDigits = n % 100
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
+  if (lastDigit === 1) return 'кармик'
+  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
+  return 'кармиков'
+}
+
 export default function Shop() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -57,6 +66,34 @@ export default function Shop() {
     setSelectedReward(reward)
   }
 
+  // Стилизованный баланс
+  const BalanceDisplay = () => (
+    <div style={{
+      background: 'rgba(255,255,255,0.03)',
+      backdropFilter: 'blur(16px)',
+      borderRadius: 50,
+      padding: '8px 24px',
+      border: '1px solid rgba(255,215,0,0.2)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 10,
+      boxShadow: '0 0 20px rgba(255,200,0,0.1)'
+    }}>
+      <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
+      <span style={{
+        fontSize: 20,
+        fontWeight: 600,
+        background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
+      }}>
+        {balance}
+      </span>
+      <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
+    </div>
+  )
+
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
@@ -86,48 +123,25 @@ export default function Shop() {
       </div>
 
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px' }}>
-        <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px', height: '100vh', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
-            <div style={{
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(16px)',
-              borderRadius: 50,
-              padding: '8px 24px',
-              border: '1px solid rgba(255,215,0,0.2)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              boxShadow: '0 0 20px rgba(255,200,0,0.1)'
-            }}>
-              <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
-              <span style={{
-                fontSize: 20,
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
-              }}>
-                {balance}
-              </span>
-              <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
-            </div>
+            <BalanceDisplay />
           </div>
 
-          {/* Горизонтальный скролл с поддержкой колесика мыши */}
-          <div
-            style={{ overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: 16 }}
-            onWheel={(e) => {
-              e.preventDefault();
-              e.currentTarget.scrollLeft += e.deltaY;
-            }}
-          >
-            <div style={{ display: 'inline-flex', gap: 30 }}>
-              {rewards.map(reward => (
+          {/* Сетка карточек 4 в ряд */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 30,
+            marginTop: 16,
+            paddingBottom: 40
+          }}>
+            {rewards.map(reward => {
+              const word = getKarmikWord(reward.cost)
+              return (
                 <div key={reward.id} style={{
-                  width: 340,
                   background: 'rgba(15, 20, 35, 0.8)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: 24,
@@ -136,16 +150,14 @@ export default function Shop() {
                   boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   cursor: 'pointer',
-                  display: 'inline-flex',
-                  flexDirection: 'column',
-                  whiteSpace: 'normal',
-                  verticalAlign: 'top'
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(255,180,0,0.25)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
                 onClick={() => openRewardDetail(reward)}
                 >
-                  <div style={{ width: '100%', height: 240, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
                       <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
@@ -162,7 +174,7 @@ export default function Shop() {
                     <h3 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{reward.name}</h3>
                     <p style={{ fontSize: 14, color: '#aaa', marginBottom: 20, lineHeight: 1.6, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                      <span style={{ fontSize: 22, fontWeight: 700, color: '#FFD700' }}>{reward.cost} к.</span>
+                      <span style={{ fontSize: 18, fontWeight: 600, color: '#FFD700' }}>{reward.cost} {word}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); purchase(reward); }}
                         disabled={loading}
@@ -195,8 +207,8 @@ export default function Shop() {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -209,7 +221,7 @@ export default function Shop() {
             <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} кармиков</span>
+              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} {getKarmikWord(selectedReward.cost)}</span>
               <button
                 onClick={() => { purchase(selectedReward); setSelectedReward(null); }}
                 disabled={loading}
@@ -245,6 +257,15 @@ export default function Shop() {
         @keyframes breathe1 {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
+        }
+        /* Скрываем скроллбары для всех элементов, но сохраняем возможность скролла */
+        *::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+        }
+        * {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE 10+ */
         }
       `}</style>
     </div>
