@@ -15,13 +15,19 @@ export default async function handler(req, res) {
   const { purchaseId, comment } = req.body
   if (!purchaseId) return res.status(400).json({ error: 'Нет purchaseId' })
 
-  const { error } = await supabaseAdmin.from('purchases').update({
-    status: 'rejected',
-    approved_comment: comment
-  }).eq('id', purchaseId)
+  const { error } = await supabaseAdmin
+    .from('purchases')
+    .update({ status: 'rejected', approved_comment: comment })
+    .eq('id', purchaseId)
+
   if (error) return res.status(500).json({ error: error.message })
 
-  const { data: purchase } = await supabaseAdmin.from('purchases').select('user_id, reward_name').eq('id', purchaseId).single()
+  const { data: purchase } = await supabaseAdmin
+    .from('purchases')
+    .select('user_id, reward_name')
+    .eq('id', purchaseId)
+    .single()
+
   if (purchase) {
     await supabaseAdmin.from('notifications').insert({
       user_id: purchase.user_id,
