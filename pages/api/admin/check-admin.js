@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // Получаем куки из запроса
+  // Достаём токен из кук
   const rawCookie = req.headers.cookie || ''
   const cookies = Object.fromEntries(rawCookie.split('; ').map(c => {
     const idx = c.indexOf('=');
@@ -22,9 +22,11 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Невалидный токен' })
   }
 
+  // Проверяем пользователя
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(accessToken)
   if (userError || !user) return res.status(401).json({ error: 'Пользователь не найден' })
 
+  // Ищем профиль и проверяем роль
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
     .select('company_id, role_id')
