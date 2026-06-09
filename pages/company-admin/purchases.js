@@ -1,4 +1,3 @@
-// pages/company-admin/purchases.js — добавлена вкладка «Архив»
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -10,8 +9,8 @@ export default function PurchasesAdmin() {
   const [profile, setProfile] = useState(null)
   const [pendingPurchases, setPendingPurchases] = useState([])
   const [archivePurchases, setArchivePurchases] = useState([])
-  const [tab, setTab] = useState('pending') // 'pending' или 'archive'
-  const [modal, setModal] = useState({ show: false, purchase: null })
+  const [tab, setTab] = useState('pending')
+  const [modal, setModal] = useState({ show: false, purchase: null, readOnly: false })
   const [comment, setComment] = useState('')
   const [dateOption, setDateOption] = useState('any')
   const [specificDate, setSpecificDate] = useState('')
@@ -61,7 +60,7 @@ export default function PurchasesAdmin() {
     const { purchase } = modal
     if (!purchase) return
 
-    await supabase.from('purchases').update({
+    const { error } = await supabase.from('purchases').update({
       status: 'approved',
       approved_comment: comment,
       certificate_data: {
@@ -70,15 +69,16 @@ export default function PurchasesAdmin() {
       }
     }).eq('id', purchase.id)
 
-    await supabase.from('notifications').insert({
-      user_id: purchase.user_id,
-      message: `Ваша покупка "${purchase.reward_name}" одобрена!`,
-      link: '/my-purchases'
-    })
-
-    setModal({ show: false })
-    loadPending()
-    loadArchive()
+    if (!error) {
+      await supabase.from('notifications').insert({
+        user_id: purchase.user_id,
+        message: `Ваша покупка "${purchase.reward_name}" одобрена!`,
+        link: '/my-purchases'
+      })
+      setModal({ show: false })
+      loadPending()
+      loadArchive()
+    }
   }
 
   const handleReject = async () => {
@@ -133,7 +133,6 @@ export default function PurchasesAdmin() {
 
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Подтверждение сертификатов</h1>
 
-        {/* Переключатель вкладок */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
           <button onClick={() => setTab('pending')} style={{
             padding: '10px 24px', borderRadius: 14, border: '1px solid rgba(255,215,0,0.25)',
@@ -144,11 +143,11 @@ export default function PurchasesAdmin() {
             padding: '10px 24px', borderRadius: 14, border: '1px solid rgba(255,215,0,0.25)',
             background: tab === 'archive' ? 'rgba(255,215,0,0.2)' : 'transparent',
             color: '#fff', cursor: 'pointer', backdropFilter: 'blur(10px)'
-          }}>Архив ({archivePurchases.length})</button>
+          }}>История ({archivePurchases.length})</button>
         </div>
 
         {displayList.length === 0 ? (
-          <p style={{ color: '#aaa' }}>{tab === 'pending' ? 'Нет заявок' : 'Архив пуст'}</p>
+          <p style={{ color: '#aaa' }}>{tab === 'pending' ? 'Нет заявок' : 'История пуста'}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {displayList.map(p => (
@@ -166,11 +165,11 @@ export default function PurchasesAdmin() {
                   </div>
                 </div>
                 {tab === 'pending' ? (
-                  <button onClick={() => { setModal({ show: true, purchase: p }); setComment(''); setDateOption('any'); setSpecificDate(''); }} style={{
+                  <button onClick={() => { setModal({ show: true, purchase: p, readOnly: false }); setComment(''); setDateOption('any'); setSpecificDate(''); }} style={{
                     background: 'linear-gradient(135deg, #f97316, #e65c00)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 10, cursor: 'pointer'
                   }}>Рассмотреть</button>
                 ) : (
-                  <button onClick={() => { setModal({ show: true, purchase: p, readOnly: true }) }} style={{
+                  <button onClick={() => setModal({ show: true, purchase: p, readOnly: true })} style={{
                     background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '10px 20px', borderRadius: 10, cursor: 'pointer'
                   }}>Детали</button>
                 )}
