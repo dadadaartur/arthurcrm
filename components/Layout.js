@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
+import Spinner from './Spinner'
 
 function StarsBackground() {
   useEffect(() => {
@@ -55,33 +56,14 @@ export default function Layout({ children }) {
     window.location.href = '/login'
   }
 
-  // Скелетон на время загрузки профиля
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <header className="flex justify-between items-center px-6 py-2 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="flex gap-2">
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"></div>
-          </div>
-        </header>
-        <main className="flex-grow relative z-10">{children}</main>
+      <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner />
       </div>
     )
   }
 
-  // Приводим role_id к числу для надёжности
   const roleId = Number(profile?.role_id)
   const isSuperAdmin = roleId === 1
   const isCompanyAdmin = roleId === 2 || isSuperAdmin
