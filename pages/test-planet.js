@@ -1,5 +1,6 @@
-// pages/test-planet.js — ТЕСТОВАЯ страница нового дизайна входа
-// После утверждения перенесём в pages/login.js, ни один другой файл не трогаем
+// pages/test-planet.js
+// Полностью изолированная тестовая страница — не использует Layout,
+// чтобы не было футера и лишних скроллов.
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -16,7 +17,7 @@ export default function TestPlanetPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [initialCheck, setInitialCheck] = useState(!!token)
-  const [step, setStep] = useState('login') // 'login', 'tempPass', 'setNewPass'
+  const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
 
   useEffect(() => {
@@ -166,13 +167,29 @@ export default function TestPlanetPage() {
     }
   }
 
-  // Если идёт проверка приглашения – показываем спиннер в центре
   if (initialCheck) {
     return (
       <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Spinner />
       </div>
     )
+  }
+
+  // Стиль для обеих кнопок (единый, стеклянный с голограммой)
+  const actionButtonStyle = {
+    width: '100%',
+    padding: '10px 0',
+    fontSize: 14,
+    fontWeight: 500,
+    color: '#fff',
+    cursor: 'pointer',
+    border: '1px solid rgba(255,255,255,0.3)',
+    borderRadius: 14,
+    background: 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))',
+    backdropFilter: 'blur(12px)',
+    transition: 'all 0.3s',
+    textShadow: '0 0 10px rgba(255,255,255,0.5)',
+    animation: 'subtleGlow 3s ease-in-out infinite'
   }
 
   return (
@@ -196,15 +213,15 @@ export default function TestPlanetPage() {
         })}
       </div>
 
-      {/* Мягкие переливы внизу */}
+      {/* Переливы внизу */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
       {/* Контент: горизонтальное разделение */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', padding: '0 10%' }}>
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', padding: '0 8%' }}>
         {/* Левая часть – информация о проекте */}
-        <div style={{ flex: 1, paddingRight: 80 }}>
+        <div style={{ flex: 1, paddingRight: 60 }}>
           <h1 style={{
             fontSize: 42, fontWeight: 700, marginBottom: 16,
             background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
@@ -217,7 +234,6 @@ export default function TestPlanetPage() {
             Система мотивации и наград для вашей команды
           </p>
 
-          {/* Преимущества – без иконок, только текст */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {[
               { title: 'Выполняй задания', desc: 'Получай кармики за выполненные поручения и цели' },
@@ -233,28 +249,25 @@ export default function TestPlanetPage() {
           </div>
         </div>
 
-        {/* Правая часть – форма входа внутри чёрной дыры */}
-        <div style={{ flex: '0 0 auto', position: 'relative', width: 400, height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Большая чёрная дыра (как на главной) */}
-          <div className="black-hole" style={{ width: 380, height: 380, position: 'absolute' }} />
-          <div style={{ position: 'relative', zIndex: 1, width: 300, textAlign: 'center' }}>
+        {/* Правая часть – форма входа внутри большой чёрной дыры */}
+        <div style={{ flex: '0 0 auto', position: 'relative', width: 480, height: 480, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="black-hole" style={{ width: 460, height: 460, position: 'absolute' }} />
+          <div style={{ position: 'relative', zIndex: 1, width: 320, textAlign: 'center' }}>
             <h2 style={{ color: '#FFD700', marginBottom: 24, fontSize: 22, fontWeight: 600, letterSpacing: 2 }}>
               {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход'}
             </h2>
 
-            {/* Форма входа */}
             {step === 'login' && (
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" className="btn-gold" disabled={loading}>
+                <button type="submit" style={actionButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Войти'}
                 </button>
               </form>
             )}
 
-            {/* Шаг временного пароля */}
             {step === 'tempPass' && invite && (
               <form onSubmit={handleTempPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <p style={{ color: '#aaa', fontSize: 14 }}>
@@ -262,44 +275,27 @@ export default function TestPlanetPage() {
                 </p>
                 <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" className="btn-gold" disabled={loading}>
+                <button type="submit" style={actionButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Далее'}
                 </button>
               </form>
             )}
 
-            {/* Шаг установки нового пароля */}
             {step === 'setNewPass' && (
               <form onSubmit={handleSetNewPass} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <p style={{ color: '#aaa', fontSize: 14 }}>Придумайте новый пароль для входа в систему.</p>
                 <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
                 {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-                <button type="submit" className="btn-gold" disabled={loading}>
+                <button type="submit" style={actionButtonStyle} disabled={loading}>
                   {loading ? <Spinner /> : 'Активировать аккаунт'}
                 </button>
               </form>
             )}
 
-            {/* Кнопка "Зарегистрироваться" только на шаге логина */}
             {step === 'login' && (
               <button
                 onClick={() => router.push('/welcome')}
-                style={{
-                  marginTop: 20,
-                  background: 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: 14,
-                  padding: '10px 0',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  width: '100%',
-                  transition: 'all 0.3s',
-                  textShadow: '0 0 10px rgba(255,255,255,0.5)',
-                  animation: 'subtleGlow 3s ease-in-out infinite'
-                }}
+                style={{ ...actionButtonStyle, marginTop: 16 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
                   e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
@@ -332,7 +328,13 @@ export default function TestPlanetPage() {
           50% { box-shadow: 0 0 12px rgba(0,255,100,0.4); }
           100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
         }
+        /* Полностью скрываем скроллбары */
+        *::-webkit-scrollbar { width: 0; height: 0; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
     </div>
   )
 }
+
+// Не показывать макет (Layout) на этой странице — убирает футер и лишний фон
+TestPlanetPage.bypassLayout = true
