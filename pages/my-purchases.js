@@ -121,19 +121,20 @@ export default function MyPurchases() {
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      {/* Кнопка Назад в левом верхнем углу */}
-      <Link href="/" style={{
-        position: 'absolute', top: 16, left: 16, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 4,
-        fontSize: 14, color: '#aaa', textDecoration: 'none',
-        background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
-        padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        <span style={{ fontSize: 16 }}>←</span> Назад
-      </Link>
-
-      <div style={{ position: 'relative', zIndex: 1, margin: '0 auto', paddingTop: 60 }}>
-        <h1 style={{ fontSize: 28, marginBottom: 24, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Мои покупки</h1>
+      <div style={{ position: 'relative', zIndex: 1, margin: '0 auto' }}>
+        {/* Верхняя строка: Назад + заголовок */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+          <Link href="/" style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 14, color: '#aaa', textDecoration: 'none',
+            transition: 'color 0.2s'
+          }}>
+            <span style={{ fontSize: 18 }}>←</span> Назад
+          </Link>
+          <h1 style={{ fontSize: 28, margin: 0, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Мои покупки
+          </h1>
+        </div>
 
         {/* Фильтры */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -173,7 +174,7 @@ export default function MyPurchases() {
                   background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)', borderRadius: 20,
                   border: '1px solid rgba(255,255,255,0.1)', padding: 20,
                   display: 'flex', flexDirection: 'column',
-                  minHeight: 360 // чтобы карточки были ровными
+                  minHeight: 360
                 }}>
                   {p.image_url && (
                     <img src={p.image_url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12, marginBottom: 12 }} />
