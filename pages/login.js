@@ -28,6 +28,7 @@ export default function Login() {
       .eq('status', 'pending')
       .maybeSingle()
 
+    console.log('[DEBUG] Login - приглашение:', data)
     if (data) {
       setInvite(data)
       setEmail(data.email || '')
@@ -50,6 +51,7 @@ export default function Login() {
       password,
     })
 
+    console.log('[DEBUG] Login - результат входа:', signInError)
     if (!signInError) {
       window.location.href = '/'
       return
@@ -110,6 +112,7 @@ export default function Login() {
         password: newPassword,
       })
 
+      console.log('[DEBUG] Login - регистрация:', signUpData, signUpError)
       if (signUpError) {
         setError(signUpError.message)
         setLoading(false)
@@ -129,7 +132,9 @@ export default function Login() {
         .eq('user_id', user.id)
         .maybeSingle()
 
+      console.log('[DEBUG] Login - существующий профиль:', existingProfile)
       if (!existingProfile) {
+        const insertResult = await supabase.from('profiles').insert({
         await supabase.from('profiles').insert({
           user_id: user.id,
           company_id: invite.company_id,
@@ -139,6 +144,7 @@ export default function Login() {
           email: invite.email,
           manager_id: invite.created_by,
         })
+        console.log('[DEBUG] Login - вставка профиля:', insertResult)
       }
 
       await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
@@ -149,6 +155,7 @@ export default function Login() {
         password: newPassword,
       })
 
+      console.log('[DEBUG] Login - вход после активации:', signInError)
       if (signInError) {
         setError('Не удалось войти после активации')
         setLoading(false)
@@ -157,6 +164,7 @@ export default function Login() {
 
       window.location.href = '/'
     } catch (err) {
+      console.error('[DEBUG] Login - ошибка:', err)
       setError('Непредвиденная ошибка')
       setLoading(false)
     }
