@@ -104,7 +104,7 @@ export default function Shop() {
       </div>
 
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px', height: '100vh', overflowY: 'auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '24px 30px 0', height: '100vh', overflowY: 'auto' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Верхняя строка: стрелка назад + заголовок + баланс */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
@@ -127,7 +127,7 @@ export default function Shop() {
                 ←
               </Link>
               <h1 style={{
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: 600,
                 background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
                 WebkitBackgroundClip: 'text',
