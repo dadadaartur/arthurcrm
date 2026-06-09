@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
-import Spinner from '../components/Spinner'
 
-function getKarmikWord(n) { /* ... склонение ... */ }
+function getKarmikWord(n) {
+  const lastDigit = n % 10
+  const lastTwoDigits = n % 100
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
+  if (lastDigit === 1) return 'кармик'
+  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
+  return 'кармиков'
+}
 
 const statusLabels = {
   new: 'Не активирован',
@@ -22,13 +29,13 @@ export default function MyPurchases() {
   const [activationModal, setActivationModal] = useState({ show: false, purchase: null })
   const [activationDate, setActivationDate] = useState('')
   const [activationComment, setActivationComment] = useState('')
-  const [filterType, setFilterType] = useState('all') // all, new, pending, approved, rejected
+  const [filterType, setFilterType] = useState('all')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
+      if (!user) { router.push('/login'); return }
       setUser(user)
       await loadPurchases(user.id)
     }
@@ -45,16 +52,70 @@ export default function MyPurchases() {
     setLoading(false)
   }
 
-  // ... функции активации ...
+  const handleActivate = async () => {
+    const { purchase } = activationModal
+    if (!purchase || !activationDate) return
 
-  if (loading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner /></div>
+    const { error } = await supabase
+      .from('purchases')
+      .update({
+        status: 'pending',
+        certificate_data: {
+          valid_date: activationDate,
+          comment: activationComment
+        }
+      })
+      .eq('id', purchase.id)
+
+    if (!error) {
+      setNotification({ show: true, message: 'Сертификат отправлен на согласование!' })
+      setActivationModal({ show: false })
+      loadPurchases(user.id)
+
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+      if (profile?.company_id) {
+        const { data: admins } = await supabase.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1,2])
+        if (admins?.length) {
+          const notifs = admins.map(a => ({
+            user_id: a.user_id,
+            message: `Сотрудник хочет активировать "${purchase.reward_name}". Требуется подтверждение.`,
+            link: '/company-admin/purchases'
+          }))
+          await supabase.from('notifications').insert(notifs)
+        }
+      }
+    }
+  }
+
+  if (loading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
 
   const filteredPurchases = filterType === 'all' ? purchases : purchases.filter(p => p.status === filterType)
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 20px', position: 'relative' }}>
       <Head><title>Мои покупки | Кармический банк</title></Head>
-      {/* Звёзды и переливы */}
+      {/* Звёзды */}
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        {Array.from({ length: 80 }).map((_, i) => {
+          const size = Math.random() * 2 + 0.5
+          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
+          const color = colors[Math.floor(Math.random() * colors.length)]
+          return (
+            <div key={i} style={{
+              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
+              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
+              boxShadow: `0 0 ${size * 2}px ${color}`,
+              opacity: Math.random() * 0.5 + 0.3,
+              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
+              animationDelay: Math.random() * 10 + 's'
+            }} />
+          )
+        })}
+      </div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
+      </div>
+
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
         <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>←</span> Назад
@@ -96,7 +157,6 @@ export default function MyPurchases() {
                   border: '1px solid rgba(255,255,255,0.1)', padding: 24,
                   display: 'flex', flexDirection: 'column'
                 }}>
-                  {/* Фото товара */}
                   {p.image_url && (
                     <img src={p.image_url} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12, marginBottom: 16 }} />
                   )}
@@ -137,12 +197,46 @@ export default function MyPurchases() {
           </div>
         )}
       </div>
-      {/* ... модалка активации, уведомления ... */}
+
+      {/* Модалка активации */}
+      {activationModal.show && activationModal.purchase && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setActivationModal({ show: false })}>
+          <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 20, marginBottom: 16 }}>Активация сертификата</h3>
+            <p style={{ marginBottom: 16 }}>{activationModal.purchase.reward_name}</p>
+            <input
+              type="date"
+              value={activationDate}
+              onChange={e => setActivationDate(e.target.value)}
+              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 16 }}
+            />
+            <textarea
+              value={activationComment}
+              onChange={e => setActivationComment(e.target.value)}
+              placeholder="Комментарий для руководителя"
+              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 16 }}
+              rows={2}
+            />
+            <button onClick={handleActivate} style={{
+              background: '#0f0', color: '#000', border: 'none', borderRadius: 10,
+              padding: '12px 24px', width: '100%', cursor: 'pointer', fontWeight: 600
+            }}>Отправить на согласование</button>
+          </div>
+        </div>
+      )}
+
+      <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Уведомление">
+        <p style={{ color: '#fff' }}>{notification.message}</p>
+      </PremiumModal>
       <style jsx global>{`
-        @keyframes twinkle { ... }
-        @keyframes breathe1 { ... }
-        *::-webkit-scrollbar { width: 0; height: 0; }
-        * { scrollbar-width: none; }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.95); }
+          50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        @keyframes breathe1 {
+          0% { opacity: 0.7; transform: scaleY(1); }
+          100% { opacity: 1; transform: scaleY(1.15); }
+        }
       `}</style>
     </div>
   )
