@@ -102,22 +102,23 @@ export default function Shop() {
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      {/* Кнопка Назад в левом верхнем углу */}
-      <Link href="/" style={{
-        position: 'absolute', top: 16, left: 16, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 4,
-        fontSize: 14, color: '#aaa', textDecoration: 'none',
-        background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
-        padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        <span style={{ fontSize: 16 }}>←</span> Назад
-      </Link>
-
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '60px 30px 40px', height: '100vh', overflowY: 'auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px', height: '100vh', overflowY: 'auto' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {/* Верхняя строка: кнопка Назад + заголовок + баланс */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <Link href="/" style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                fontSize: 14, color: '#aaa', textDecoration: 'none',
+                transition: 'color 0.2s'
+              }}>
+                <span style={{ fontSize: 18 }}>←</span> Назад
+              </Link>
+              <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
+                Магазин наград
+              </h1>
+            </div>
             <div style={{
               background: 'rgba(255,255,255,0.03)',
               backdropFilter: 'blur(16px)',
@@ -202,7 +203,8 @@ export default function Shop() {
                           color: '#fff',
                           cursor: 'pointer',
                           transition: 'all 0.3s',
-                          textShadow: '0 0 10px rgba(255,255,255,0.5)'
+                          textShadow: '0 0 10px rgba(255,255,255,0.5)',
+                          animation: 'subtleGlow 3s ease-in-out infinite'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
@@ -238,6 +240,11 @@ export default function Shop() {
         @keyframes breathe1 {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
+        }
+        @keyframes subtleGlow {
+          0% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
+          50% { box-shadow: 0 0 12px rgba(0,255,100,0.4); }
+          100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
         }
         *::-webkit-scrollbar { width: 0; height: 0; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
