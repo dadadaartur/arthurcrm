@@ -1,5 +1,6 @@
 // pages/test-planet.js
-// Исправлено: дыра и форма больше не обрезаются, добавлен безопасный вертикальный скролл без полос.
+// Новая концепция: «Галактическое свечение» без чёрной дыры.
+// Полностью изолированный тест – после утверждения перенесём в login.js.
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
@@ -193,8 +194,8 @@ export default function TestPlanetPage() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000', overflowY: 'auto', overflowX: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-      {/* Звёзды */}
+    <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflowY: 'auto', overflowX: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+      {/* Звёзды (фиксированные) */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
         {Array.from({ length: 150 }).map((_, i) => {
           const size = Math.random() * 2.8 + 0.6
@@ -213,28 +214,67 @@ export default function TestPlanetPage() {
         })}
       </div>
 
-      {/* Переливы внизу */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
-        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
+      {/* Галактические туманности (размытые пятна) */}
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+        {/* Синяя туманность слева */}
+        <div style={{
+          position: 'absolute',
+          top: '10%', left: '5%',
+          width: 500, height: 500,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(100,180,255,0.3) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          animation: 'nebulaLeft 8s ease-in-out infinite alternate'
+        }} />
+        {/* Золотистая туманность справа */}
+        <div style={{
+          position: 'absolute',
+          top: '20%', right: '5%',
+          width: 450, height: 450,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,200,100,0.4) 0%, transparent 70%)',
+          filter: 'blur(45px)',
+          animation: 'nebulaRight 10s ease-in-out infinite alternate'
+        }} />
+        {/* Розовая туманность снизу */}
+        <div style={{
+          position: 'absolute',
+          bottom: '5%', left: '30%',
+          width: 400, height: 400,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,150,200,0.3) 0%, transparent 70%)',
+          filter: 'blur(50px)',
+          animation: 'nebulaBottom 12s ease-in-out infinite alternate'
+        }} />
+        {/* Дополнительная фиолетовая туманность по центру */}
+        <div style={{
+          position: 'absolute',
+          top: '40%', left: '40%',
+          width: 350, height: 350,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(180,130,255,0.2) 0%, transparent 70%)',
+          filter: 'blur(35px)',
+          animation: 'nebulaCenter 9s ease-in-out infinite alternate'
+        }} />
       </div>
 
-      {/* Контент: горизонтальное разделение с вертикальным скроллом при необходимости */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '40px 8%', flexWrap: 'wrap' }}>
+      {/* Контент: горизонтальное разделение */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '40px 5%', flexWrap: 'wrap' }}>
         {/* Левая часть – информация о проекте */}
-        <div style={{ flex: '1 1 400px', maxWidth: 600, paddingRight: 40, marginBottom: 30 }}>
+        <div style={{ flex: '1 1 400px', maxWidth: 550, marginRight: 60, marginBottom: 30 }}>
           <h1 style={{
-            fontSize: 42, fontWeight: 700, marginBottom: 16,
+            fontSize: 44, fontWeight: 700, marginBottom: 16,
             background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             lineHeight: 1.2
           }}>
             Кармический банк
           </h1>
-          <p style={{ fontSize: 18, color: '#aaa', marginBottom: 40, lineHeight: 1.6, maxWidth: 400 }}>
+          <p style={{ fontSize: 18, color: '#bbb', marginBottom: 40, lineHeight: 1.6 }}>
             Система мотивации и наград для вашей команды
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             {[
               { title: 'Выполняй задания', desc: 'Получай кармики за выполненные поручения и цели' },
               { title: 'Обменивай на призы', desc: 'Трать кармики в магазине: от выходного до доставки на дом' },
@@ -242,30 +282,24 @@ export default function TestPlanetPage() {
               { title: 'Получай сертификаты', desc: 'Цифровые и физические награды с подтверждением' },
             ].map((item, idx) => (
               <div key={idx}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{item.title}</div>
-                <div style={{ fontSize: 14, color: '#888', lineHeight: 1.4, maxWidth: 340 }}>{item.desc}</div>
+                <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{item.title}</div>
+                <div style={{ fontSize: 15, color: '#999', lineHeight: 1.4 }}>{item.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Правая часть – дыра и форма под ней */}
-        <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Чистая чёрная дыра (уменьшена до 360px) */}
-          <div style={{ position: 'relative', width: 360, height: 360 }}>
-            <div className="black-hole" style={{ width: 360, height: 360, position: 'absolute' }} />
-          </div>
-
-          {/* Панель с формой под дырой */}
+        {/* Правая часть – форма на фоне золотистой туманности */}
+        <div style={{ flex: '0 0 auto', position: 'relative', width: 380, display: 'flex', justifyContent: 'center' }}>
+          {/* Стеклянная панель входа */}
           <div style={{
-            marginTop: 20,
-            width: 340,
-            background: 'rgba(15, 20, 35, 0.6)',
-            backdropFilter: 'blur(16px)',
+            width: '100%',
+            background: 'rgba(15, 20, 35, 0.5)',
+            backdropFilter: 'blur(20px)',
             borderRadius: 24,
             border: '1px solid rgba(255,215,0,0.2)',
-            padding: 24,
-            boxShadow: '0 0 40px rgba(0,0,0,0.5)'
+            padding: 32,
+            boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 80px rgba(255,200,0,0.2)'
           }}>
             {step === 'login' && (
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -330,14 +364,26 @@ export default function TestPlanetPage() {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
           50% { opacity: 0.7; transform: scale(1.05); }
         }
-        @keyframes breathe1 {
-          0% { opacity: 0.7; transform: scaleY(1); }
-          100% { opacity: 1; transform: scaleY(1.15); }
-        }
         @keyframes subtleGlow {
           0% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
           50% { box-shadow: 0 0 12px rgba(0,255,100,0.4); }
           100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
+        }
+        @keyframes nebulaLeft {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+          100% { transform: translate(20px, -15px) scale(1.1); opacity: 1; }
+        }
+        @keyframes nebulaRight {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+          100% { transform: translate(-15px, 10px) scale(1.15); opacity: 1; }
+        }
+        @keyframes nebulaBottom {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+          100% { transform: translate(10px, -20px) scale(1.05); opacity: 0.9; }
+        }
+        @keyframes nebulaCenter {
+          0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+          100% { transform: translate(-10px, 15px) scale(1.1); opacity: 0.8; }
         }
         /* Полностью скрываем скроллбары */
         *::-webkit-scrollbar { width: 0; height: 0; }
