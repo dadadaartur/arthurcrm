@@ -12,16 +12,17 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [initialCheck, setInitialCheck] = useState(!!token)
   const [step, setStep] = useState('login')
   const [invite, setInvite] = useState(null)
 
   useEffect(() => {
-    if (token) fetchInvite(token)
+    if (token) {
+      fetchInvite(token)
+    }
   }, [token])
 
   async function fetchInvite(t) {
-    setInitialCheck(true)
+    setLoading(true)
     const { data } = await supabase
       .from('invitations')
       .select('*, companies(name), roles(name)')
@@ -36,7 +37,7 @@ export default function Login() {
     } else {
       setError('Приглашение не найдено или уже использовано')
     }
-    setInitialCheck(false)
+    setLoading(false)
   }
 
   async function handleLogin(e) {
@@ -163,14 +164,7 @@ export default function Login() {
     }
   }
 
-  if (initialCheck) {
-    return (
-      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spinner />
-      </div>
-    )
-  }
-
+  // Красивый фон с чёрной дырой и звездами (как на главной)
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       {/* Звёзды */}
@@ -192,7 +186,7 @@ export default function Login() {
         })}
       </div>
 
-      {/* Мягкие переливы внизу */}
+      {/* Переливы */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
@@ -203,43 +197,43 @@ export default function Login() {
         width: 400, height: 400, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
         <div className="black-hole" style={{ width: 360, height: 360, position: 'absolute' }} />
-        <div style={{ position: 'relative', zIndex: 1, width: 320, textAlign: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 1, width: 300, textAlign: 'center' }}>
           <h2 style={{ color: '#FFD700', marginBottom: 24, fontSize: 24, fontWeight: 600, letterSpacing: 2 }}>
             {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход'}
           </h2>
 
-          {step === 'login' && (
+          {loading && (
+            <div style={{ marginBottom: 20 }}>
+              <Spinner />
+            </div>
+          )}
+
+          {step === 'login' && !loading && (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-              <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Войти'}
-              </button>
+              <button type="submit" className="btn-gold">Войти</button>
             </form>
           )}
 
-          {step === 'tempPass' && invite && (
+          {step === 'tempPass' && invite && !loading && (
             <form onSubmit={handleTempPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: '#aaa', fontSize: 14 }}>
                 Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.
               </p>
               <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-              <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Далее'}
-              </button>
+              <button type="submit" className="btn-gold">Далее</button>
             </form>
           )}
 
-          {step === 'setNewPass' && (
+          {step === 'setNewPass' && !loading && (
             <form onSubmit={handleSetNewPass} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: '#aaa', fontSize: 14 }}>Придумайте новый пароль для входа в систему.</p>
               <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
               {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-              <button type="submit" className="btn-gold" disabled={loading}>
-                {loading ? <Spinner /> : 'Активировать аккаунт'}
-              </button>
+              <button type="submit" className="btn-gold">Активировать аккаунт</button>
             </form>
           )}
         </div>
