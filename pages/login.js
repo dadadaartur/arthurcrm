@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import Spinner from '../components/Spinner'
@@ -8,7 +8,18 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // начинаем с загрузки, чтобы проверить сессию
+
+  useEffect(() => {
+    // Проверяем, не авторизован ли уже пользователь
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace('/')
+      } else {
+        setLoading(false) // показываем форму
+      }
+    })
+  }, [])
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -27,7 +38,7 @@ export default function Login() {
       return
     }
 
-    // Проверка: возможно, есть активное приглашение?
+    // Если ошибка входа, проверяем приглашение
     const { data: inviteData } = await supabase
       .from('invitations')
       .select('id')
@@ -36,7 +47,6 @@ export default function Login() {
       .maybeSingle()
 
     if (inviteData) {
-      // Перекидываем на страницу активации приглашения
       router.push(`/invite?email=${encodeURIComponent(normalizedEmail)}`)
       return
     }
@@ -45,6 +55,16 @@ export default function Login() {
     setLoading(false)
   }
 
+  // Пока идёт проверка сессии, показываем чёрную дыру
+  if (loading) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner />
+      </div>
+    )
+  }
+
+  // Основной экран входа
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       {/* Звёзды */}
@@ -82,16 +102,12 @@ export default function Login() {
             Вход
           </h2>
 
-          {loading ? (
-            <Spinner />
-          ) : (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
-              {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
-              <button type="submit" className="btn-gold">Войти</button>
-            </form>
-          )}
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
+            {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
+            <button type="submit" className="btn-gold">Войти</button>
+          </form>
         </div>
       </div>
 
