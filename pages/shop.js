@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 import Spinner from '../components/Spinner'
@@ -101,8 +102,19 @@ export default function Shop() {
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
+      {/* Кнопка Назад в левом верхнем углу */}
+      <Link href="/" style={{
+        position: 'absolute', top: 16, left: 16, zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 14, color: '#aaa', textDecoration: 'none',
+        background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
+        padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <span style={{ fontSize: 16 }}>←</span> Назад
+      </Link>
+
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px', height: '100vh', overflowY: 'auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '60px 30px 40px', height: '100vh', overflowY: 'auto' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
@@ -180,26 +192,26 @@ export default function Shop() {
                         onClick={(e) => { e.stopPropagation(); purchase(reward); }}
                         disabled={loading}
                         style={{
-                          background: 'rgba(255,255,255,0.06)',
+                          background: 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))',
                           backdropFilter: 'blur(12px)',
-                          border: '1px solid rgba(255,215,0,0.25)',
+                          border: '1px solid rgba(255,255,255,0.3)',
                           borderRadius: 14,
                           padding: '10px 24px',
                           fontSize: 14,
                           fontWeight: 500,
-                          color: '#FFD700',
+                          color: '#fff',
                           cursor: 'pointer',
                           transition: 'all 0.3s',
-                          textShadow: '0 0 10px rgba(255,200,0,0.5)'
+                          textShadow: '0 0 10px rgba(255,255,255,0.5)'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                          e.currentTarget.style.borderColor = '#FFD700';
-                          e.currentTarget.style.boxShadow = '0 0 20px rgba(255,200,0,0.3)';
+                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
+                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
+                          e.currentTarget.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                          e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
+                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))';
+                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
                           e.currentTarget.style.boxShadow = 'none';
                         }}
                       >
