@@ -29,7 +29,7 @@ export default function Shop() {
   const [rewards, setRewards] = useState([])
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
-  const [selectedReward, setSelectedReward] = useState(null) // для полноэкранного просмотра
+  const [selectedReward, setSelectedReward] = useState(null)
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
@@ -75,24 +75,6 @@ export default function Shop() {
 
   if (initialLoading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner /></div>
 
-  // Единый стиль для кнопок
-  const glassButtonStyle = {
-    width: '100%',
-    padding: '12px 0',
-    fontSize: 16,
-    fontWeight: 500,
-    color: '#fff',
-    cursor: 'pointer',
-    border: '1px solid rgba(255,255,255,0.3)',
-    borderRadius: 14,
-    background: 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))',
-    backdropFilter: 'blur(12px)',
-    transition: 'all 0.3s',
-    textShadow: '0 0 10px rgba(255,255,255,0.5)',
-    animation: 'subtleGlow 3s ease-in-out infinite',
-    marginTop: 16
-  }
-
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
@@ -121,22 +103,40 @@ export default function Shop() {
         <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
-      {/* Кнопка Назад */}
-      <Link href="/" style={{
-        position: 'absolute', top: 20, left: 20, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 4,
-        fontSize: 14, color: '#aaa', textDecoration: 'none',
-        background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
-        padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        <span style={{ fontSize: 16 }}>←</span> Назад
-      </Link>
-
       {/* Контент */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '60px 30px 40px', height: '100vh', overflowY: 'auto' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 30px', height: '100vh', overflowY: 'auto' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {/* Верхняя строка: стрелка назад + заголовок + баланс */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {/* Маленькая градиентная стрелка */}
+              <Link href="/" style={{
+                fontSize: 28,
+                fontWeight: 400,
+                background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textDecoration: 'none',
+                lineHeight: 1,
+                transition: 'opacity 0.2s',
+                opacity: 0.8
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+              >
+                ←
+              </Link>
+              <h1 style={{
+                fontSize: 28,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                Магазин
+              </h1>
+            </div>
             <div style={{
               background: 'rgba(255,255,255,0.03)',
               backdropFilter: 'blur(16px)',
@@ -188,7 +188,7 @@ export default function Shop() {
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(255,180,0,0.25)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
-                onClick={() => setSelectedReward(reward)} // открываем на весь экран
+                onClick={() => setSelectedReward(reward)}
                 >
                   <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
