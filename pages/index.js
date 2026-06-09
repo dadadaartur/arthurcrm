@@ -19,7 +19,7 @@ export default function Home() {
   const [stats, setStats] = useState({ active: 0, completed: 0, earned: 0 })
   const [loading, setLoading] = useState(true)
 
-  // Скрываем скролл на этой странице
+  // Скрываем скролл на главной
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -186,7 +186,7 @@ export default function Home() {
           )
         })}
 
-        {/* === НОВЫЙ БЛОК БАЛАНСА (без кнопки "Задания") === */}
+        {/* === НОВЫЙ БЛОК БАЛАНСА === */}
         <div style={{
           position: 'absolute',
           left: '2.5%',
@@ -329,6 +329,15 @@ export default function Home() {
         @keyframes rainbowShift {
           0% { background-position: 0% 50%; }
           100% { background-position: 100% 50%; }
+        }
+        /* Скрытие скроллбаров */
+        *::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+        }
+        * {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
       `}</style>
     </>
