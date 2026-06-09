@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
+import Spinner from '../components/Spinner'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -13,6 +14,13 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
+const typeLabels = {
+  digital: 'Сертификат',
+  workplace: 'Рабочее место',
+  delivery: 'Доставка домой',
+  promocode: 'Промокод',
+}
+
 export default function Shop() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -20,7 +28,7 @@ export default function Shop() {
   const [rewards, setRewards] = useState([])
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
-  const [selectedReward, setSelectedReward] = useState(null)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     const init = async () => {
@@ -31,6 +39,7 @@ export default function Shop() {
       if (bal) setBalance(bal.balance)
       const { data: rewardsData } = await supabase.from('rewards').select('*').order('cost')
       setRewards(rewardsData || [])
+      setInitialLoading(false)
     }
     init()
   }, [])
@@ -62,37 +71,7 @@ export default function Shop() {
     setLoading(false)
   }
 
-  const openRewardDetail = (reward) => {
-    setSelectedReward(reward)
-  }
-
-  // Стилизованный баланс
-  const BalanceDisplay = () => (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      backdropFilter: 'blur(16px)',
-      borderRadius: 50,
-      padding: '8px 24px',
-      border: '1px solid rgba(255,215,0,0.2)',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 10,
-      boxShadow: '0 0 20px rgba(255,200,0,0.1)'
-    }}>
-      <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
-      <span style={{
-        fontSize: 20,
-        fontWeight: 600,
-        background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
-      }}>
-        {balance}
-      </span>
-      <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
-    </div>
-  )
+  if (initialLoading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner /></div>
 
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
@@ -127,10 +106,33 @@ export default function Shop() {
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <h1 style={{ fontSize: 28, fontWeight: 600, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Магазин наград</h1>
-            <BalanceDisplay />
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: 50,
+              padding: '8px 24px',
+              border: '1px solid rgba(255,215,0,0.2)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 0 20px rgba(255,200,0,0.1)'
+            }}>
+              <span style={{ fontSize: 14, color: '#aaa', fontWeight: 400 }}>Баланс</span>
+              <span style={{
+                fontSize: 20,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.5))'
+              }}>
+                {balance}
+              </span>
+              <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 400 }}>кармиков</span>
+            </div>
           </div>
 
-          {/* Сетка карточек 4 в ряд */}
+          {/* Сетка карточек */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -155,7 +157,6 @@ export default function Shop() {
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(255,180,0,0.25)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
-                onClick={() => openRewardDetail(reward)}
                 >
                   <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
@@ -163,9 +164,9 @@ export default function Shop() {
                     ) : (
                       <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />
                     )}
-                    {reward.type === 'digital' && (
-                      <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: '#FFD700', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Сертификат</span>
-                    )}
+                    <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', color: '#FFD700', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>
+                      {typeLabels[reward.type] || 'Товар'}
+                    </span>
                     {reward.requires_approval && (
                       <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,0,0,0.5)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Требуется согласование</span>
                     )}
@@ -186,7 +187,7 @@ export default function Shop() {
                           padding: '10px 24px',
                           fontSize: 14,
                           fontWeight: 500,
-                          color: '#fff',
+                          color: '#FFD700',
                           cursor: 'pointer',
                           transition: 'all 0.3s',
                           textShadow: '0 0 10px rgba(255,200,0,0.5)'
@@ -213,38 +214,6 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Модалка товара */}
-      {selectedReward && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setSelectedReward(null)}>
-          <div style={{ background: 'rgba(12,12,25,0.95)', backdropFilter: 'blur(14px)', borderRadius: 28, border: '1px solid rgba(255,215,0,0.15)', padding: 36, maxWidth: 520, width: '92%', color: '#fff', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            {selectedReward.image_url && <img src={selectedReward.image_url} alt="" style={{ width: '100%', borderRadius: 18, marginBottom: 24 }} />}
-            <h2 style={{ fontSize: 26, fontWeight: 600, marginBottom: 14, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{selectedReward.name}</h2>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: '#bbb', marginBottom: 24 }}>{selectedReward.description}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: '#FFD700' }}>{selectedReward.cost} {getKarmikWord(selectedReward.cost)}</span>
-              <button
-                onClick={() => { purchase(selectedReward); setSelectedReward(null); }}
-                disabled={loading}
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,215,0,0.25)',
-                  borderRadius: 14,
-                  padding: '12px 28px',
-                  fontSize: 15,
-                  fontWeight: 500,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  textShadow: '0 0 10px rgba(255,200,0,0.5)'
-                }}
-              >
-                Купить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <PremiumModal isOpen={modal.show} onClose={() => setModal({ ...modal, show: false })} title={modal.type === 'success' ? 'Успешно' : 'Ошибка'}>
         <p style={{ color: '#fff' }}>{modal.message}</p>
       </PremiumModal>
@@ -258,15 +227,8 @@ export default function Shop() {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
         }
-        /* Скрываем скроллбары для всех элементов, но сохраняем возможность скролла */
-        *::-webkit-scrollbar {
-          width: 0;
-          height: 0;
-        }
-        * {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE 10+ */
-        }
+        *::-webkit-scrollbar { width: 0; height: 0; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
     </div>
   )
