@@ -1,9 +1,8 @@
-// pages/api/purchase.js — поддержка отложенной активации
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-  const { rewardId, activateLater } = req.body
+  const { rewardId, activateLater, date, comment } = req.body
   if (!rewardId) return res.status(400).json({ error: 'Нет rewardId' })
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -51,10 +50,23 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Недостаточно кармиков' })
   }
 
-  // Определяем статус
-  let newStatus = 'approved' // без согласования
+  // Определяем статус и данные сертификата
+  let newStatus = 'approved'
+  let certificateData = null
   if (reward.requires_approval) {
-    newStatus = activateLater ? 'new' : 'pending'
+    if (activateLater) {
+      newStatus = 'new'
+    } else {
+      newStatus = 'pending'
+      if (date) {
+        certificateData = { valid_date: date, comment: comment || '' }
+      }
+    }
+  } else {
+    // Без согласования, можно сохранить дату если указана
+    if (date) {
+      certificateData = { valid_date: date, comment: comment || '' }
+    }
   }
 
   const { error: deductError } = await supabaseAdmin.from('karma_balance').update({ balance: userBalance.balance - reward.cost }).eq('user_id', userId)
@@ -65,7 +77,8 @@ export default async function handler(req, res) {
     reward_name: reward.name,
     reward_id: reward.id,
     cost: reward.cost,
-    status: newStatus
+    status: newStatus,
+    certificate_data: certificateData
   })
   if (purchaseError) {
     await supabaseAdmin.from('karma_balance').update({ balance: userBalance.balance }).eq('user_id', userId)
