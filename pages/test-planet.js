@@ -1,248 +1,319 @@
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import Head from 'next/head'
-import { supabase } from '../lib/supabaseClient'
+// pages/test-planet.js — ТЕСТОВАЯ страница нового дизайна входа
+// После утверждения перенесём в pages/login.js, ни один другой файл не трогаем
 
-function getKarmikWord(n) {
-  const lastDigit = n % 10
-  const lastTwoDigits = n % 100
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'кармиков'
-  if (lastDigit === 1) return 'кармик'
-  if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
-  return 'кармиков'
-}
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
+import Spinner from '../components/Spinner'
 
 export default function TestPlanetPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
-  const [balance, setBalance] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const { token } = router.query
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [tempPassword, setTempPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [initialCheck, setInitialCheck] = useState(!!token)
+  const [step, setStep] = useState('login') // 'login', 'tempPass', 'setNewPass'
+  const [invite, setInvite] = useState(null)
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      setUser(user)
-      const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
-      if (bal) setBalance(bal.balance)
+    if (token) fetchInvite(token)
+  }, [token])
+
+  async function fetchInvite(t) {
+    setInitialCheck(true)
+    const { data } = await supabase
+      .from('invitations')
+      .select('*, companies(name), roles(name)')
+      .eq('token', t)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (data) {
+      setInvite(data)
+      setEmail(data.email || '')
+      setStep('tempPass')
+    } else {
+      setError('Приглашение не найдено или уже использовано')
+    }
+    setInitialCheck(false)
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault()
+    if (!email || !password) return
+    setLoading(true)
+    setError('')
+
+    const normalizedEmail = email.trim().toLowerCase()
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    })
+
+    if (!signInError) {
+      window.location.href = '/'
+      return
+    }
+
+    if (signInError.message.includes('Invalid login credentials')) {
+      const { data: inviteData } = await supabase
+        .from('invitations')
+        .select('*, companies(name), roles(name)')
+        .eq('email', normalizedEmail)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      if (inviteData) {
+        setInvite(inviteData)
+        setEmail(inviteData.email)
+        setStep('tempPass')
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/welcome'
+      return
+    }
+
+    setError('Неверный email или пароль')
+    setLoading(false)
+  }
+
+  async function handleTempPassSubmit(e) {
+    e.preventDefault()
+    if (!tempPassword) return
+    setLoading(true)
+    setError('')
+
+    if (tempPassword !== invite.temp_password) {
+      setError('Неверный временный пароль')
+      setLoading(false)
+      return
+    }
+
+    setStep('setNewPass')
+    setLoading(false)
+  }
+
+  async function handleSetNewPass(e) {
+    e.preventDefault()
+    if (!newPassword || newPassword.length < 6) {
+      setError('Пароль должен быть не менее 6 символов')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: invite.email,
+        password: newPassword,
+      })
+
+      if (signUpError) {
+        setError(signUpError.message)
+        setLoading(false)
+        return
+      }
+
+      const user = signUpData?.user
+      if (!user) {
+        setError('Не удалось создать аккаунт')
+        setLoading(false)
+        return
+      }
+
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          user_id: user.id,
+          company_id: invite.company_id,
+          department_id: null,
+          role_id: invite.role_id,
+          display_name: email,
+          email: invite.email,
+          manager_id: invite.created_by,
+        })
+      }
+
+      await supabase.from('invitations').update({ status: 'accepted', temp_password: null }).eq('id', invite.id)
+
+      await supabase.auth.signOut()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: invite.email,
+        password: newPassword,
+      })
+
+      if (signInError) {
+        setError('Не удалось войти после активации')
+        setLoading(false)
+        return
+      }
+
+      window.location.href = '/'
+    } catch (err) {
+      setError('Непредвиденная ошибка')
       setLoading(false)
     }
-    init()
-  }, [])
+  }
 
-  const centerX = 58
-  const centerY = 40
-
-  const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз',       sub: 'проверь себя', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Битва',      sub: 'отделов',      left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
-  ]
-
-  const beams = blocks.map(block => {
-    const dx = block.left - centerX
-    const dy = block.top - centerY
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI)
-    const length = Math.sqrt(dx * dx + dy * dy) * 0.5
-    return { angle, length }
-  })
-
-  if (loading) return <div style={{ color:'white', textAlign:'center', paddingTop:100 }}>Загрузка...</div>
-
-  const karmikWord = getKarmikWord(balance)
+  // Если идёт проверка приглашения – показываем спиннер в центре
+  if (initialCheck) {
+    return (
+      <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner />
+      </div>
+    )
+  }
 
   return (
-    <>
-      <Head>
-        <title>Вид с МКС | Кармический банк</title>
-      </Head>
-
-      <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
-        {/* Звёзды */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-          {Array.from({ length: 150 }).map((_, i) => {
-            const size = Math.random() * 2.8 + 0.6
-            const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-            const color = colors[Math.floor(Math.random() * colors.length)]
-            return (
-              <div key={i} style={{
-                position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-                width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-                boxShadow: `0 0 ${size * 2}px ${color}`,
-                opacity: Math.random() * 0.5 + 0.3,
-                animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
-                animationDelay: Math.random() * 10 + 's'
-              }} />
-            )
-          })}
-        </div>
-
-        {/* Мягкие переливы внизу */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
-          <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.25) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 70% 100%, rgba(130,100,255,0.4) 0%, transparent 70%)', filter: 'blur(10px)', animation: 'breathe3 20s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.2) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
-        </div>
-
-        {/* Чёрная дыра (центр притяжения) */}
-        <div style={{
-          position: 'absolute', left: `${centerX}%`, top: `${centerY}%`,
-          transform: 'translate(-50%, -50%)', width: '80px', height: '80px', zIndex: 5
-        }}>
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
-            filter: 'blur(14px)', animation: 'orbitSpin 10s linear infinite'
-          }} />
-          <div style={{
-            position: 'absolute', top: '-5%', left: '-5%', width: '110%', height: '110%', borderRadius: '50%',
-            background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
-            filter: 'blur(10px)', animation: 'orbitSpin 8s linear infinite reverse'
-          }} />
-          <div style={{
-            position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%',
-            background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)',
-            boxShadow: '0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2)',
-            filter: 'blur(2px)', animation: 'blackHoleBreath 6s ease-in-out infinite'
-          }} />
-        </div>
-
-        {/* Лучи-рукава */}
-        {beams.map((beam, idx) => (
-          <div key={`beam-${idx}`} style={{
-            position: 'absolute', left: `${centerX}%`, top: `${centerY}%`,
-            width: `${beam.length}%`, height: '1px',
-            background: `linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.2) 30%, rgba(255,140,0,0.35) 60%, transparent 100%)`,
-            transform: `rotate(${beam.angle}deg)`, transformOrigin: '0 0',
-            filter: 'blur(3px)', animation: `beamPulse ${4 + idx % 3}s ease-in-out infinite alternate ${idx * 0.3}s`,
-            pointerEvents: 'none', zIndex: 6
-          }} />
-        ))}
-
-        {/* Парящие кнопки меню */}
-        {blocks.map((block, idx) => {
-          const [c1, c2] = block.colors
+    <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+      {/* Звёзды */}
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        {Array.from({ length: 150 }).map((_, i) => {
+          const size = Math.random() * 2.8 + 0.6
+          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
+          const color = colors[Math.floor(Math.random() * colors.length)]
           return (
-            <div key={idx} style={{
-              position: 'absolute', left: `${block.left}%`, top: `${block.top}%`,
-              transform: 'translate(-50%, -50%)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              cursor: 'pointer', zIndex: 10,
-              animation: `drift${idx % 3} ${8 + idx * 2}s ease-in-out infinite alternate`,
-              transition: 'transform 0.3s'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.08)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; }}
-            >
-              <div style={{
-                fontSize: '16px', fontWeight: 600, lineHeight: 1.2, marginBottom: '4px',
-                background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.6))', textAlign: 'center'
-              }}>
-                {block.title}
-              </div>
-              <div style={{
-                fontSize: '13px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center'
-              }}>
-                {block.sub}
-              </div>
-            </div>
+            <div key={i} style={{
+              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
+              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
+              boxShadow: `0 0 ${size * 2}px ${color}`,
+              opacity: Math.random() * 0.5 + 0.3,
+              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
+              animationDelay: Math.random() * 10 + 's'
+            }} />
           )
         })}
+      </div>
 
-        {/* === БЛОК БАЛАНСА — ЧИСТАЯ ЭЛЕГАНТНОСТЬ === */}
-        <div style={{
-          position: 'absolute',
-          left: '2.5%',
-          top: '2%',
-          zIndex: 20,
-          animation: 'driftBalance 25s ease-in-out infinite alternate'
-        }}>
-          {/* Цифра */}
-          <div style={{
-            fontSize: 48,
-            fontWeight: 600,
-            fontFamily: 'Inter, sans-serif',
-            background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))',
-            animation: 'rainbowShift 4s ease-in-out infinite alternate',
-            lineHeight: 1,
-            marginBottom: 4,
-            textAlign: 'center'
-          }}>
-            {balance}
-          </div>
+      {/* Мягкие переливы внизу */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
+      </div>
 
-          {/* Подпись "кармиков" */}
-          <div style={{
-            fontSize: 13,
-            fontWeight: 300,
-            fontFamily: 'Inter, sans-serif',
-            color: 'rgba(255,255,255,0.85)',
-            textShadow: '0 0 8px rgba(100,200,255,0.7), 0 0 16px rgba(255,150,200,0.5)',
-            letterSpacing: 2,
-            marginBottom: 20,
-            textAlign: 'center'
+      {/* Контент: горизонтальное разделение */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', padding: '0 10%' }}>
+        {/* Левая часть – информация о проекте */}
+        <div style={{ flex: 1, paddingRight: 80 }}>
+          <h1 style={{
+            fontSize: 42, fontWeight: 700, marginBottom: 16,
+            background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            lineHeight: 1.2
           }}>
-            {karmikWord}
-          </div>
+            Кармический банк
+          </h1>
+          <p style={{ fontSize: 18, color: '#aaa', marginBottom: 40, lineHeight: 1.6, maxWidth: 400 }}>
+            Система мотивации и наград для вашей команды
+          </p>
 
-          {/* Кнопки — стройный ряд */}
-          <div style={{
-            display: 'flex',
-            gap: 28,
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
+          {/* Преимущества – без иконок, только текст */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {[
-              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
-              { label: 'Операции', path: '/history', color: '#ffb3c6' },
-              { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
-              { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
-            ].map((btn, idx) => (
-              <div key={idx} style={{ textAlign: 'center' }}>
-                <div
-                  onClick={() => router.push(btn.path)}
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 400,
-                    color: 'rgba(255,255,255,0.6)',
-                    cursor: 'pointer',
-                    textShadow: '0 0 5px rgba(100,200,255,0.4)',
-                    transition: 'all 0.3s ease',
-                    marginBottom: 6
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = btn.color;
-                    e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
-                    e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)';
-                  }}
-                >
-                  {btn.label}
-                </div>
-                {/* Тонкий разделитель-точка */}
-                <div style={{
-                  width: 3,
-                  height: 3,
-                  borderRadius: '50%',
-                  background: btn.color,
-                  margin: '0 auto',
-                  boxShadow: `0 0 6px ${btn.color}`
-                }} />
+              { title: 'Выполняй задания', desc: 'Получай кармики за выполненные поручения и цели' },
+              { title: 'Обменивай на призы', desc: 'Трать кармики в магазине: от выходного до доставки на дом' },
+              { title: 'Соревнуйся', desc: 'Участвуй в чемпионатах и зарабатывай больше кармиков' },
+              { title: 'Получай сертификаты', desc: 'Цифровые и физические награды с подтверждением' },
+            ].map((item, idx) => (
+              <div key={idx}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{item.title}</div>
+                <div style={{ fontSize: 14, color: '#888', lineHeight: 1.4, maxWidth: 340 }}>{item.desc}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Правая часть – форма входа внутри чёрной дыры */}
+        <div style={{ flex: '0 0 auto', position: 'relative', width: 400, height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Большая чёрная дыра (как на главной) */}
+          <div className="black-hole" style={{ width: 380, height: 380, position: 'absolute' }} />
+          <div style={{ position: 'relative', zIndex: 1, width: 300, textAlign: 'center' }}>
+            <h2 style={{ color: '#FFD700', marginBottom: 24, fontSize: 22, fontWeight: 600, letterSpacing: 2 }}>
+              {step === 'tempPass' || step === 'setNewPass' ? 'Активация аккаунта' : 'Вход'}
+            </h2>
+
+            {/* Форма входа */}
+            {step === 'login' && (
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
+                {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
+                <button type="submit" className="btn-gold" disabled={loading}>
+                  {loading ? <Spinner /> : 'Войти'}
+                </button>
+              </form>
+            )}
+
+            {/* Шаг временного пароля */}
+            {step === 'tempPass' && invite && (
+              <form onSubmit={handleTempPassSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ color: '#aaa', fontSize: 14 }}>
+                  Для {invite.email} требуется активация. Введите временный пароль, полученный от администратора.
+                </p>
+                <input type="text" value={tempPassword} onChange={e => setTempPassword(e.target.value)} placeholder="Временный пароль" className="input-field" required />
+                {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
+                <button type="submit" className="btn-gold" disabled={loading}>
+                  {loading ? <Spinner /> : 'Далее'}
+                </button>
+              </form>
+            )}
+
+            {/* Шаг установки нового пароля */}
+            {step === 'setNewPass' && (
+              <form onSubmit={handleSetNewPass} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ color: '#aaa', fontSize: 14 }}>Придумайте новый пароль для входа в систему.</p>
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Новый пароль (минимум 6 символов)" className="input-field" required />
+                {error && <p style={{ color: '#f44', fontSize: 14 }}>{error}</p>}
+                <button type="submit" className="btn-gold" disabled={loading}>
+                  {loading ? <Spinner /> : 'Активировать аккаунт'}
+                </button>
+              </form>
+            )}
+
+            {/* Кнопка "Зарегистрироваться" только на шаге логина */}
+            {step === 'login' && (
+              <button
+                onClick={() => router.push('/welcome')}
+                style={{
+                  marginTop: 20,
+                  background: 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: 14,
+                  padding: '10px 0',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#fff',
+                  cursor: 'pointer',
+                  width: '100%',
+                  transition: 'all 0.3s',
+                  textShadow: '0 0 10px rgba(255,255,255,0.5)',
+                  animation: 'subtleGlow 3s ease-in-out infinite'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.4), rgba(255,179,198,0.4), rgba(255,226,159,0.4))';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(160,233,255,0.2), rgba(255,179,198,0.2), rgba(255,226,159,0.2))';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Зарегистрироваться
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -256,51 +327,12 @@ export default function TestPlanetPage() {
           0% { opacity: 0.7; transform: scaleY(1); }
           100% { opacity: 1; transform: scaleY(1.15); }
         }
-        @keyframes breathe2 {
-          0% { opacity: 0.5; transform: scaleY(1.05) translateX(-2%); }
-          100% { opacity: 0.9; transform: scaleY(1.25) translateX(2%); }
-        }
-        @keyframes breathe3 {
-          0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
-          100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
-        }
-        @keyframes breathe4 {
-          0% { opacity: 0.3; transform: scale(1); }
-          100% { opacity: 0.6; transform: scale(1.1); }
-        }
-        @keyframes orbitSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes blackHoleBreath {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2); }
-          50% { transform: scale(1.1); box-shadow: 0 0 50px rgba(255,215,0,0.6), 0 0 90px rgba(255,180,0,0.35); }
-        }
-        @keyframes beamPulse {
-          0% { opacity: 0.2; }
-          100% { opacity: 0.55; }
-        }
-        @keyframes drift0 {
-          0% { transform: translate(-50%, -50%) translateX(-8px) translateY(4px); }
-          100% { transform: translate(-50%, -50%) translateX(8px) translateY(-4px); }
-        }
-        @keyframes drift1 {
-          0% { transform: translate(-50%, -50%) translateX(6px) translateY(-6px); }
-          100% { transform: translate(-50%, -50%) translateX(-6px) translateY(6px); }
-        }
-        @keyframes drift2 {
-          0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
-          100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
-        }
-        @keyframes driftBalance {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(5px, -5px); }
-        }
-        @keyframes rainbowShift {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 100% 50%; }
+        @keyframes subtleGlow {
+          0% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
+          50% { box-shadow: 0 0 12px rgba(0,255,100,0.4); }
+          100% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
         }
       `}</style>
-    </>
+    </div>
   )
 }
