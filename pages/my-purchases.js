@@ -1,5 +1,5 @@
-// pages/my-purchases.js — обновлённая история с сертификатами
 import { useEffect, useState } from 'react'
+import Head from 'next/head'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
 
@@ -10,6 +10,13 @@ function getKarmikWord(n) {
   if (lastDigit === 1) return 'кармик'
   if (lastDigit >= 2 && lastDigit <= 4) return 'кармика'
   return 'кармиков'
+}
+
+const statusLabels = {
+  new: 'Не активирован',
+  pending: 'На согласовании',
+  approved: 'Одобрен',
+  rejected: 'Отклонён'
 }
 
 export default function MyPurchases() {
@@ -43,7 +50,6 @@ export default function MyPurchases() {
     const { purchase } = activationModal
     if (!purchase || !activationDate) return
 
-    // Активация: меняем статус на pending, добавляем данные активации
     const { error } = await supabase
       .from('purchases')
       .update({
@@ -60,7 +66,6 @@ export default function MyPurchases() {
       setActivationModal({ show: false })
       loadPurchases(user.id)
 
-      // Уведомление админам
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
       if (profile?.company_id) {
         const { data: admins } = await supabase.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1,2])
@@ -78,16 +83,10 @@ export default function MyPurchases() {
 
   if (!user) return null
 
-  const statusLabels = {
-    new: 'Не активирован',
-    pending: 'На согласовании',
-    approved: 'Одобрен',
-    rejected: 'Отклонён'
-  }
-
   return (
     <div style={{ minHeight: '100vh', background: '#000', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '40px 20px', position: 'relative' }}>
       <Head><title>Мои покупки | Кармический банк</title></Head>
+      {/* Звёзды и переливы как в магазине */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
         {Array.from({ length: 80 }).map((_, i) => {
           const size = Math.random() * 2 + 0.5
@@ -104,6 +103,9 @@ export default function MyPurchases() {
             }} />
           )
         })}
+      </div>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
@@ -150,18 +152,6 @@ export default function MyPurchases() {
                     color: '#fff', cursor: 'pointer', fontSize: 14
                   }}>Активировать</button>
                 )}
-
-                {p.status === 'approved' && !p.rating && (
-                  <button onClick={() => setRatingModal({ show: true, purchaseId: p.id })} style={{
-                    marginTop: 16, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
-                    borderRadius: 14, padding: '10px 20px', color: '#fff', cursor: 'pointer'
-                  }}>Оценить</button>
-                )}
-                {p.rating && (
-                  <div style={{ marginTop: 16, color: '#FFD700' }}>
-                    {'★'.repeat(p.rating)}{'☆'.repeat(5 - p.rating)}
-                  </div>
-                )}
               </div>
             )
           })}
@@ -202,6 +192,10 @@ export default function MyPurchases() {
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
           50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        @keyframes breathe1 {
+          0% { opacity: 0.7; transform: scaleY(1); }
+          100% { opacity: 1; transform: scaleY(1.15); }
         }
         *::-webkit-scrollbar { width: 0; height: 0; }
         * { scrollbar-width: none; }
