@@ -1,8 +1,9 @@
+// pages/api/purchase.js — поддержка отложенной активации
 import { createClient } from '@supabase/supabase-js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-  const { rewardId } = req.body
+  const { rewardId, activateLater } = req.body
   if (!rewardId) return res.status(400).json({ error: 'Нет rewardId' })
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -50,7 +51,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Недостаточно кармиков' })
   }
 
-  const newStatus = reward.requires_approval ? 'pending' : 'approved'
+  // Определяем статус
+  let newStatus = 'approved' // без согласования
+  if (reward.requires_approval) {
+    newStatus = activateLater ? 'new' : 'pending'
+  }
+
   const { error: deductError } = await supabaseAdmin.from('karma_balance').update({ balance: userBalance.balance - reward.cost }).eq('user_id', userId)
   if (deductError) return res.status(500).json({ error: 'Ошибка списания' })
 
@@ -67,20 +73,23 @@ export default async function handler(req, res) {
   }
 
   let message = `Вы приобрели "${reward.name}" за ${reward.cost} кармиков.`
-  if (reward.requires_approval) {
-    message += ' Покупка требует подтверждения руководителем.'
+  if (newStatus === 'new') {
+    message += ' Сертификат можно активировать позже в разделе "Мои покупки".'
+  } else if (newStatus === 'pending') {
+    message += ' Заявка отправлена на согласование руководителю.'
   }
+
   await supabaseAdmin.from('notifications').insert({
     user_id: userId,
     message,
     link: '/my-purchases'
   })
 
-  if (reward.requires_approval) {
+  if (newStatus === 'pending') {
     const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
     if (profile?.company_id) {
       const { data: admins } = await supabaseAdmin.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1,2])
-      if (admins && admins.length > 0) {
+      if (admins?.length) {
         const notifs = admins.map(a => ({
           user_id: a.user_id,
           message: `Сотрудник хочет приобрести "${reward.name}". Требуется подтверждение.`,
