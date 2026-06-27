@@ -3,8 +3,9 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import { withAuth } from '../../components/withAuth'
 
-export default function GoalsPage() {
+function GoalsPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [goals, setGoals] = useState([])
@@ -17,7 +18,7 @@ export default function GoalsPage() {
     user_ids: [],
     goal_type: 'calls',
     target_value: 10,
-    period_type: 'day',    // 'day', 'week', 'month', 'manual'
+    period_type: 'day',
     manual_days: 30,
     reward_mode: 'none',
     reward_rubles: 0,
@@ -30,20 +31,17 @@ export default function GoalsPage() {
       if (!user) { router.push('/login'); return }
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('company_id, role_id')
+        .select('company_id')
         .eq('user_id', user.id)
         .single()
-      if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
-        router.push('/')
-        return
-      }
+      if (!profileData) { router.push('/'); return }
       const compId = profileData.company_id
       setCompanyId(compId)
       await loadData(compId)
       setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   const loadData = async (compId) => {
     const [goalsRes, empRes] = await Promise.all([
@@ -70,21 +68,8 @@ export default function GoalsPage() {
       return
     }
 
-    // Определяем список user_id
     const targetUserIds = form.assign_to_all ? employees.map(e => e.user_id) : form.user_ids
 
-    // Собираем название типа цели
-    let goalTitle = ''
-    switch (form.goal_type) {
-      case 'calls': goalTitle = 'Звонки'; break
-      case 'emails': goalTitle = 'Письма'; break
-      case 'deals': goalTitle = 'Изменения статусов сделок'; break
-      case 'comments': goalTitle = 'Комментарии в сделке'; break
-      case 'chats': goalTitle = 'Чаты'; break
-      default: goalTitle = form.goal_type
-    }
-
-    // Вычисляем deadline
     let deadline = null
     if (form.period_type === 'manual') {
       const d = new Date()
@@ -103,19 +88,15 @@ export default function GoalsPage() {
       }
     }
 
-    const rewardRubles = (form.reward_mode === 'rubles' || form.reward_mode === 'combo') ? form.reward_rubles : 0
-    const rewardKarma = (form.reward_mode === 'karma' || form.reward_mode === 'combo') ? form.reward_karma : 0
-
-    // Вставляем цели для каждого сотрудника
     const inserts = targetUserIds.map(userId => ({
       company_id: companyId,
       user_id: userId,
       goal_type: form.goal_type,
-      title: goalTitle,
+      title: form.goal_type,
       target_value: form.target_value,
       period: form.period_type === 'manual' ? 'custom' : form.period_type,
-      reward_rubles: rewardRubles,
-      reward_karma: rewardKarma,
+      reward_rubles: form.reward_mode === 'rubles' || form.reward_mode === 'combo' ? form.reward_rubles : 0,
+      reward_karma: form.reward_mode === 'karma' || form.reward_mode === 'combo' ? form.reward_karma : 0,
       deadline,
       is_active: true,
       created_by: null
@@ -128,15 +109,9 @@ export default function GoalsPage() {
     }
 
     setForm({
-      assign_to_all: true,
-      user_ids: [],
-      goal_type: 'calls',
-      target_value: 10,
-      period_type: 'day',
-      manual_days: 30,
-      reward_mode: 'none',
-      reward_rubles: 0,
-      reward_karma: 0
+      assign_to_all: true, user_ids: [], goal_type: 'calls', target_value: 10,
+      period_type: 'day', manual_days: 30, reward_mode: 'none',
+      reward_rubles: 0, reward_karma: 0
     })
     showNotification(`Цели созданы (${targetUserIds.length} шт.)`)
     loadData(companyId)
@@ -154,11 +129,9 @@ export default function GoalsPage() {
       <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление целями</h1>
 
-      {/* Форма создания (широкая) */}
       <div className="pastel-card mb-8">
         <h3 className="text-lg font-semibold mb-4">Новая цель</h3>
         <form onSubmit={handleCreateGoal} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Левая колонка */}
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-400">Тип цели</label>
@@ -176,7 +149,6 @@ export default function GoalsPage() {
             </div>
           </div>
 
-          {/* Средняя колонка */}
           <div className="space-y-4">
             <div>
               <label className="text-sm text-gray-400">Период</label>
@@ -209,7 +181,6 @@ export default function GoalsPage() {
             </div>
           </div>
 
-          {/* Правая колонка */}
           <div className="space-y-4">
             <label className="flex items-center gap-2 text-gray-400 text-sm">
               <input type="checkbox" checked={form.assign_to_all} onChange={e => setForm({...form, assign_to_all: e.target.checked})} />
@@ -231,7 +202,6 @@ export default function GoalsPage() {
         </form>
       </div>
 
-      {/* Таблица целей */}
       <div className="pastel-card overflow-auto" style={{ maxHeight: '60vh' }}>
         {goals.length === 0 ? (
           <p className="text-gray-400">Нет активных целей</p>
@@ -269,7 +239,6 @@ export default function GoalsPage() {
         )}
       </div>
 
-      {/* Уведомление (без кнопки «Понятно», само исчезает) */}
       {notification.show && (
         <div className="fixed top-6 right-6 z-50 bg-gray-800 border border-gray-600 text-white px-6 py-4 rounded-xl shadow-lg animate-fade-in">
           {notification.message}
@@ -278,3 +247,5 @@ export default function GoalsPage() {
     </div>
   )
 }
+
+export default withAuth(GoalsPage, [1, 2])
