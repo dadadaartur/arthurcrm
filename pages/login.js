@@ -71,7 +71,8 @@ export default function Login() {
         return
       }
 
-      window.location.href = '/welcome'
+      setError('Неверный email или пароль')
+      setLoading(false)
       return
     }
 
@@ -211,7 +212,19 @@ export default function Login() {
             </button>
           </form>
         )}
+
+        {step === 'login' && (
+          <div className="mt-6 text-center text-sm text-gray-400">
+            Нет аккаунта?{' '}
+            <a href="/create-company" className="text-gold hover:underline">
+              Создать компанию
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
+// Флаг для _app.js
+Login.bypassLayout = true
