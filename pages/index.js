@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 
@@ -13,9 +14,10 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// ============ Обновлённый лендинг для неавторизованных ============
+// ============ Обновлённый лендинг ============
 function CorporateLanding() {
   const router = useRouter()
+  const { user } = useProfile()
 
   return (
     <div className="landing-wrapper min-h-screen bg-black text-white overflow-x-hidden">
@@ -33,49 +35,45 @@ function CorporateLanding() {
         <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
           Кармический банк
         </div>
-        <button
-          onClick={() => router.push('/login')}
-          className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm"
-        >
-          Войти
-        </button>
+        {user ? (
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm"
+          >
+            Вернуться в систему
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push('/login')}
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm"
+          >
+            Войти
+          </button>
+        )}
       </header>
 
       {/* HERO SECTION */}
       <section className="relative pt-32 pb-20 flex flex-col items-center text-center px-4">
-        {/* Улучшенная чёрная дыра */}
-        <div className="hero-black-hole mb-12" style={{ position: 'relative', width: 200, height: 200 }}>
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 220, height: 220,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, transparent 70%)',
-            filter: 'blur(20px)',
-            animation: 'blackHoleGlow 3s ease-in-out infinite alternate'
-          }} />
+        {/* Чёрная дыра как на главной */}
+        <div className="hero-black-hole mb-12" style={{ position: 'relative', width: 180, height: 180 }}>
           <div style={{
             position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
             width: 180, height: 180,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,120,0,0.3) 0%, transparent 70%)',
-            filter: 'blur(15px)',
-            animation: 'blackHoleGlow 3s ease-in-out infinite alternate-reverse'
+            background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)',
+            filter: 'blur(14px)',
+            animation: 'orbitSpin 10s linear infinite'
+          }} />
+          <div style={{
+            position: 'absolute', top: '-5%', left: '-5%',
+            width: '110%', height: '110%',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.5) 0%, rgba(200,100,255,0.2) 40%, transparent 70%)',
+            filter: 'blur(10px)',
+            animation: 'orbitSpin 8s linear infinite reverse'
           }} />
           <div className="black-hole" style={{ width: 180, height: 180, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-          {[...Array(6)].map((_, i) => (
-            <div key={`spark-${i}`} style={{
-              position: 'absolute',
-              top: `${50 + 35 * Math.sin((i * 60 * Math.PI) / 180)}%`,
-              left: `${50 + 35 * Math.cos((i * 60 * Math.PI) / 180)}%`,
-              width: 4, height: 4,
-              borderRadius: '50%',
-              background: '#FFD700',
-              boxShadow: '0 0 6px #FFD700',
-              animation: `sparkFloat 2s ease-in-out ${i * 0.3}s infinite alternate`
-            }} />
-          ))}
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tighter leading-tight">
@@ -91,7 +89,7 @@ function CorporateLanding() {
 
         <div className="flex gap-6">
           <button onClick={() => router.push('/create-company')} className="btn-gold !text-lg !py-4 !px-12 animate-pulse">
-            Зарегистрировать Компанию
+            Создать компанию
           </button>
         </div>
       </section>
@@ -128,26 +126,12 @@ function CorporateLanding() {
                 </p>
               </div>
               <div className="flex-1 w-full h-64 pastel-card flex items-center justify-center relative overflow-hidden">
-                <div style={{
-                  width: 100, height: 100,
-                  position: 'relative',
-                  animation: 'spinSlow 12s linear infinite'
-                }}>
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                    background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
-                    filter: 'blur(8px)',
-                    opacity: 0.8
-                  }} />
-                  <div style={{
-                    position: 'absolute', top: '20%', left: '20%', right: '20%', bottom: '20%',
-                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                    background: 'linear-gradient(45deg, #ffe29f, #b3f0ff)',
-                    filter: 'blur(4px)',
-                    opacity: 0.6
-                  }} />
-                </div>
+                {/* Заглушка для картинки "Кристалл" */}
+                <img
+                  src="/images/landing-crystal.png"
+                  alt="Кристаллизация"
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
               </div>
             </div>
 
@@ -160,30 +144,12 @@ function CorporateLanding() {
                 </p>
               </div>
               <div className="flex-1 w-full h-64 dash-card flex items-center justify-center relative overflow-hidden">
-                <div style={{
-                  width: 80, height: 80,
-                  position: 'relative',
-                  animation: 'floatBox 4s ease-in-out infinite'
-                }}>
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: '10%', right: '10%', height: '60%',
-                    background: 'linear-gradient(135deg, rgba(255,215,0,0.8), rgba(255,140,0,0.5))',
-                    borderRadius: '0 0 12px 12px',
-                    boxShadow: '0 0 20px rgba(255,200,0,0.4)'
-                  }} />
-                  <div style={{
-                    position: 'absolute', top: '20%', left: 0, right: 0, height: '40%',
-                    background: 'linear-gradient(135deg, rgba(255,215,0,0.6), rgba(255,140,0,0.3))',
-                    borderRadius: '12px 12px 0 0',
-                    boxShadow: '0 0 10px rgba(255,200,0,0.3)'
-                  }} />
-                  <div style={{
-                    position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                    width: 4, height: 20,
-                    background: '#FFD700',
-                    boxShadow: '0 0 8px #FFD700'
-                  }} />
-                </div>
+                {/* Заглушка для картинки "Подарок" */}
+                <img
+                  src="/images/landing-gift.png"
+                  alt="Магазин наград"
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
               </div>
             </div>
           </div>
@@ -195,7 +161,7 @@ function CorporateLanding() {
         <h2 className="text-4xl font-bold mb-8 text-center px-6">Ваша компания готова к квантовому скачку?</h2>
         <p className="text-gray-400 mb-12">Регистрация займет 2 минуты. Удивление команды — всю оставшуюся жизнь.</p>
         <button onClick={() => router.push('/create-company')} className="wide-btn !w-auto !px-20 !py-6 text-xl">
-          Стать Адмиралом Своей Компании
+          Стать частью экосистемы
         </button>
       </section>
 
@@ -220,21 +186,9 @@ function CorporateLanding() {
         .landing-wrapper {
           scroll-behavior: smooth;
         }
-        @keyframes blackHoleGlow {
-          0% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-          100% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        @keyframes sparkFloat {
-          0% { transform: translateY(0); opacity: 0.4; }
-          100% { transform: translateY(-6px); opacity: 1; }
-        }
-        @keyframes spinSlow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes floatBox {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+        @keyframes orbitSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>
@@ -407,6 +361,11 @@ export default function Home() {
           zIndex: 20,
           animation: 'driftBalance 25s ease-in-out infinite alternate'
         }}>
+          {/* Ссылка на главную */}
+          <Link href="/" style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 10, textDecoration: 'none' }}>
+            На главную
+          </Link>
+
           <div style={{
             fontSize: 48,
             fontWeight: 600,
