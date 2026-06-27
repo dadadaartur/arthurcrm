@@ -26,7 +26,7 @@ export function withAuth(Component, allowedRoles = []) {
     }
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(profile.role_id)) {
-      return null // редирект произойдёт в useEffect, пока ничего не рендерим
+      return null
     }
 
     return <Component {...props} />
