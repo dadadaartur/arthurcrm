@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
+import { withAuth } from '../../components/withAuth'
 
-export default function TasksPage() {
+function TasksPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [tasks, setTasks] = useState([])
@@ -35,14 +36,11 @@ export default function TasksPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('company_id, role_id')
+        .select('company_id')
         .eq('user_id', user.id)
         .single()
 
-      if (!profileData || (profileData.role_id !== 1 && profileData.role_id !== 2)) {
-        router.push('/')
-        return
-      }
+      if (!profileData) { router.push('/'); return }
 
       const compId = profileData.company_id
       setCompanyId(compId)
@@ -50,7 +48,7 @@ export default function TasksPage() {
       setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   const loadData = async (compId) => {
     const { data } = await supabase
@@ -269,3 +267,5 @@ export default function TasksPage() {
     </div>
   )
 }
+
+export default withAuth(TasksPage, [1, 2])
