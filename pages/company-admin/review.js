@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
+import { withAuth } from '../../components/withAuth'
 
-export default function ReviewPage() {
+function ReviewPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [pendingReviews, setPendingReviews] = useState([])
@@ -18,16 +19,16 @@ export default function ReviewPage() {
       if (!user) { router.push('/login'); return }
       const { data } = await supabase
         .from('profiles')
-        .select('company_id, role_id')
+        .select('company_id')
         .eq('user_id', user.id)
         .single()
-      if (!data || (data.role_id !== 1 && data.role_id !== 2)) { router.push('/'); return }
+      if (!data) { router.push('/'); return }
       setCompanyId(data.company_id)
       await fetchPendingReviews(data.company_id)
       setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   const fetchPendingReviews = async (compId) => {
     const { data, error } = await supabase
@@ -95,3 +96,5 @@ export default function ReviewPage() {
     </div>
   )
 }
+
+export default withAuth(ReviewPage, [1, 2])
