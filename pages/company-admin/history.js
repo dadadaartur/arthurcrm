@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import { withAuth } from '../../components/withAuth'
 
-export default function HistoryPage() {
+function HistoryPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [history, setHistory] = useState([])
@@ -17,17 +18,17 @@ export default function HistoryPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('company_id, role_id')
+        .select('company_id')
         .eq('user_id', user.id)
         .single()
-      if (!data || (data.role_id !== 1 && data.role_id !== 2)) { router.push('/'); return }
-      setCompanyId(data.company_id)
+      if (!profile) { router.push('/'); return }
+      setCompanyId(profile.company_id)
       setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (companyId) fetchHistory()
@@ -36,7 +37,12 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     let query = supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, task_id, user_id, tasks( id, title, reward_karma )')
+      .select(`
+        id, status, comment, completed_at,
+        user_id,
+        profiles:user_id (email, display_name),
+        tasks:task_id (title, reward_karma, company_id)
+      `)
       .eq('tasks.company_id', companyId)
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
@@ -48,14 +54,20 @@ export default function HistoryPage() {
 
     const { data, error } = await query
     if (!error && data) {
-      const enriched = await Promise.all(data.map(async (item) => {
-        const { data: profileData } = await supabase.from('profiles').select('email, display_name').eq('user_id', item.user_id).single()
-        return { ...item, employee_email: profileData?.email || '', employee_name: profileData?.display_name || '' }
-      }))
-      let filtered = enriched
-      if (filter.employee) filtered = filtered.filter(h => h.employee_email === filter.employee || h.employee_name === filter.employee)
-      setHistory(filtered)
-    } else setHistory([])
+      const enriched = data.map(item => ({
+        ...item,
+        employee_email: item.profiles?.email || '',
+        employee_name: item.profiles?.display_name || ''
+      })).filter(item => {
+        if (filter.employee) {
+          return item.employee_email.includes(filter.employee) || item.employee_name.includes(filter.employee)
+        }
+        return true
+      })
+      setHistory(enriched)
+    } else {
+      setHistory([])
+    }
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
@@ -83,13 +95,13 @@ export default function HistoryPage() {
             history.map(h => (
               <div key={h.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
                 <div>
-                  <span className="text-white">{h.tasks.title}</span>
+                  <span className="text-white">{h.tasks?.title}</span>
                   <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
                   <span className="text-gray-500 ml-2">{h.employee_email}</span>
                   {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
                   <span className="text-xs text-gray-500 ml-2">{new Date(h.completed_at).toLocaleString('ru')}</span>
                 </div>
-                <span className="text-sm text-yellow-400">+ {h.tasks.reward_karma} кармиков</span>
+                <span className="text-sm text-yellow-400">+ {h.tasks?.reward_karma} кармиков</span>
               </div>
             ))
           )}
@@ -102,3 +114,5 @@ export default function HistoryPage() {
     </div>
   )
 }
+
+export default withAuth(HistoryPage, [1, 2])
