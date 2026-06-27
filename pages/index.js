@@ -14,7 +14,7 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// ============ Обновлённый лендинг ============
+// ============ ОБНОВЛЁННЫЙ ЛЕНДИНГ (без эмодзи) ============
 function CorporateLanding() {
   const router = useRouter()
   const { user } = useProfile()
@@ -52,9 +52,8 @@ function CorporateLanding() {
         )}
       </header>
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <section className="relative pt-32 pb-20 flex flex-col items-center text-center px-4">
-        {/* Чёрная дыра как на главной */}
         <div className="hero-black-hole mb-12" style={{ position: 'relative', width: 180, height: 180 }}>
           <div style={{
             position: 'absolute', top: '50%', left: '50%',
@@ -77,14 +76,15 @@ function CorporateLanding() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tighter leading-tight">
-          Превратите KPI в <br />
+          Управляйте не людьми, <br />
           <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">
-            энергию созидания
+            а энергией их достижений
           </span>
         </h1>
 
         <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-10">
-          Первая в мире галактическая экосистема лояльности, где каждый звонок, сделка и идея превращаются в реальную валюту внутри вашей компании.
+          Традиционные премии — это прошлое. «Кармический Банк» — это операционная система для мотивации,
+          которая превращает ежедневную рутину в азартную гонку за результатом.
         </p>
 
         <div className="flex gap-6">
@@ -94,72 +94,125 @@ function CorporateLanding() {
         </div>
       </section>
 
-      {/* ЦИФРЫ / АРГУМЕНТЫ ДЛЯ ДИРЕКТОРА */}
-      <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-6 py-20 relative z-10">
-        <div className="dash-card">
-          <h3 className="!text-3xl text-gold">+40%</h3>
-          <p className="text-sm text-gray-300">К вовлеченности сотрудников за счет мгновенной геймификации достижений.</p>
-        </div>
-        <div className="dash-card">
-          <h3 className="!text-3xl text-gold">0%</h3>
-          <p className="text-sm text-gray-300">Текучки кадров. Ваши таланты не уходят — они развивают свои кармические профили.</p>
-        </div>
-        <div className="dash-card">
-          <h3 className="!text-3xl text-gold">Авто</h3>
-          <p className="text-sm text-gray-300">Интеграция с вашей CRM. Система сама начислит награду за закрытую сделку.</p>
+      {/* ПОЧЕМУ ЭТО НУЖНО БИЗНЕСУ */}
+      <section className="max-w-6xl mx-auto px-6 py-20 relative z-10">
+        <h2 className="text-4xl font-bold mb-16 text-center">Бизнесу больше не нужна скучная мотивация</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="dash-card">
+            <h3 className="!text-2xl text-gold mb-4">Тихое увольнение</h3>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Сотрудники делают ровно столько, чтобы их не уволили.
+              <br /><br />
+              <strong className="text-white">Решение:</strong> Каждое микро‑действие приносит «кармики».
+              Позвонил лишний раз — получил балл. Предложил идею — ещё один.
+              Это дофаминовая петля, которая привязывает к результату, а не к графику с 9 до 18.
+            </p>
+          </div>
+          <div className="dash-card">
+            <h3 className="!text-2xl text-gold mb-4">Выгорание</h3>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              60% сотрудников уходят, потому что чувствуют себя «винтиками».
+              <br /><br />
+              <strong className="text-white">Решение:</strong> В системе есть история. Менеджер — Адмирал своей компании.
+              Его статус растёт в реальном времени. Это социальный капитал, который невозможно променять
+              на чуть большую зарплату в скучной компании‑конкуренте.
+            </p>
+          </div>
+          <div className="dash-card">
+            <h3 className="!text-2xl text-gold mb-4">Пропасть между CRM и реальностью</h3>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Данные в CRM часто мёртвы, их заполняют «из‑под палки».
+              <br /><br />
+              <strong className="text-white">Решение:</strong> Кармический банк «вдыхает жизнь» в цифры.
+              Закрыта сделка? Система устраивает мини‑триумф. Профит становится ощутимым здесь и сейчас.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* "ПУТЬ К СОВЕРШЕНСТВУ" — УНИКАЛЬНЫЙ LORE */}
+      {/* ТРИ КИТА ГАЛАКТИКИ */}
       <section className="py-20 bg-gray-900/30 backdrop-blur-xl border-y border-orange-500/20">
         <div className="max-w-6xl mx-auto px-10">
-          <h2 className="text-4xl font-bold mb-16 text-center">Как работает Галактика?</h2>
+          <h2 className="text-4xl font-bold mb-16 text-center">Три кита Галактики</h2>
 
-          <div className="space-y-24">
-            <div className="flex flex-col md:flex-row items-center gap-20">
-              <div className="flex-1">
-                <div className="text-gold text-sm uppercase tracking-widest mb-4">Этап I: Кристаллизация</div>
-                <h4 className="text-3xl font-bold mb-6">Создайте правила своей Вселенной</h4>
-                <p className="text-gray-400 leading-relaxed">
-                  Назначайте кармическую награду за любые действия: от идеального звонка до помощи коллеге.
-                  Ваша компания больше не просто офис — это игровая площадка для профессионалов.
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 border border-white/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-sm" />
               </div>
-              <div className="flex-1 w-full h-64 pastel-card flex items-center justify-center relative overflow-hidden">
-                {/* Заглушка для картинки "Кристалл" */}
-                <img
-                  src="/images/landing-crystal.png"
-                  alt="Кристаллизация"
-                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                />
-              </div>
+              <h3 className="text-2xl font-bold mb-4">Автоматизированная меритократия</h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Директор больше не решает, кто «хороший», а кто «плохой». Система объективна.
+                У кого выше баланс — тот объективный лидер. Прозрачность на 100% исключает обиды и кумовство.
+              </p>
             </div>
-
-            <div className="flex flex-col md:flex-row-reverse items-center gap-20">
-              <div className="flex-1 text-right">
-                <div className="text-gold text-sm uppercase tracking-widest mb-4">Этап II: Магазин Наград</div>
-                <h4 className="text-3xl font-bold mb-6">Дайте им то, чего они реально хотят</h4>
-                <p className="text-gray-400 leading-relaxed">
-                  Забудьте о скучных премиях раз в год. Менеджер копит «кармики» и тут же тратит их на ужин в ресторане, мерч, день отдыха или обед с директором.
-                </p>
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-400/20 to-orange-400/20 border border-white/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 blur-sm" />
               </div>
-              <div className="flex-1 w-full h-64 dash-card flex items-center justify-center relative overflow-hidden">
-                {/* Заглушка для картинки "Подарок" */}
-                <img
-                  src="/images/landing-gift.png"
-                  alt="Магазин наград"
-                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                />
+              <h3 className="text-2xl font-bold mb-4">Виртуальный бюджет с реальным весом</h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Вы не тратите лишних денег. «Кармики» — это ваша внутренняя валюта.
+                Наполняйте Магазин тем, что у вас и так есть: лучшее место в паркинге, день удалённой работы,
+                ужин с директором. Сотрудник работает ради «кармиков», компания повышает прибыль.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400/20 to-teal-400/20 border border-white/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-500 blur-sm" />
               </div>
+              <h3 className="text-2xl font-bold mb-4">Инвестиция в HR‑бренд</h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Люди будут искать способ попасть в вашу «Галактику».
+                На рынке труда «Кармический банк» станет вашим ядерным преимуществом.
+                Вы — компания, которая играет по правилам 2026 года, а не 1996‑го.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER CALL TO ACTION */}
+      {/* ОТВЕТЫ НА ВОЗРАЖЕНИЯ */}
+      <section className="max-w-4xl mx-auto px-6 py-20 relative z-10">
+        <h2 className="text-4xl font-bold mb-16 text-center">Что думают скептики?</h2>
+
+        <div className="space-y-12">
+          <div>
+            <h3 className="text-xl font-bold text-gold mb-2">«Это будет отвлекать от работы?»</h3>
+            <p className="text-gray-400">
+              Напротив. Система геймифицирует именно целевые действия. Нельзя получить кармики просто за нахождение в офисе.
+              Их дают за звонки, счета и закрытые сделки. Это лучший ускоритель KPI.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gold mb-2">«Это сложно внедрять?»</h3>
+            <p className="text-gray-400">
+              Вы регистрируете компанию, заносите сотрудников — и всё. Остальное делает наше «ядро».
+              Это облачное решение, которое масштабируется от отдела из 5 человек до корпорации из 5000.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gold mb-2">«А если они будут друг другу накручивать баллы?»</h3>
+            <p className="text-gray-400">
+              Система логов и подтверждений позволяет модераторам и админам держать всё под контролем.
+              Любой подозрительный всплеск «энергии» виден на вашем дашборде.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ФИНАЛЬНЫЙ CTA */}
       <section className="py-32 flex flex-col items-center">
-        <h2 className="text-4xl font-bold mb-8 text-center px-6">Ваша компания готова к квантовому скачку?</h2>
-        <p className="text-gray-400 mb-12">Регистрация займет 2 минуты. Удивление команды — всю оставшуюся жизнь.</p>
+        <h2 className="text-4xl font-bold mb-8 text-center px-6">
+          Перестаньте платить только за время.
+          <br />
+          Начните инвестировать в вовлечённость.
+        </h2>
+        <p className="text-gray-400 mb-12 text-center max-w-2xl">
+          Ваша компания — это живой организм. Кармический банк — это его нервная система.
+          Давайте запустим первый импульс уже сегодня.
+        </p>
         <button onClick={() => router.push('/create-company')} className="wide-btn !w-auto !px-20 !py-6 text-xl">
           Стать частью экосистемы
         </button>
@@ -195,7 +248,7 @@ function CorporateLanding() {
   )
 }
 
-// ============ Главный компонент ============
+// ============ Главный компонент (без изменений) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
