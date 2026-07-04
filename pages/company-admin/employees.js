@@ -5,17 +5,30 @@ import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
 import { withAuth } from '../../components/withAuth'
+import { isCompanyAdmin, roleLabel } from '../../lib/permissions'
+import { useProfile } from '../../context/ProfileContext'
+
+const PERMISSION_FIELDS = [
+  { key: 'can_create_tasks', label: 'Создание заданий' },
+  { key: 'can_review_tasks', label: 'Проверка заданий и покупок' },
+  { key: 'can_manage_employees', label: 'Добавление сотрудников' },
+  { key: 'can_delete_employees', label: 'Удаление сотрудников' },
+]
+
+const emptyPermissions = { can_create_tasks: false, can_review_tasks: false, can_manage_employees: false, can_delete_employees: false }
 
 function EmployeesPage() {
   const router = useRouter()
+  const { profile: myProfile } = useProfile()
   const [companyId, setCompanyId] = useState(null)
   const [employees, setEmployees] = useState([])
   const [positions, setPositions] = useState([])
+  const [companyRoles, setCompanyRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingEmployee, setEditingEmployee] = useState(null)
-  const [editForm, setEditForm] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
+  const [editForm, setEditForm] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
   const [showAddModal, setShowAddModal] = useState(false)
-  const [newEmployee, setNewEmployee] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
+  const [newEmployee, setNewEmployee] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
   const [newPositionTitle, setNewPositionTitle] = useState('')
   const [notification, setNotification] = useState({ show: false, message: '' })
 
@@ -37,12 +50,14 @@ function EmployeesPage() {
   }, [router])
 
   const loadData = async (compId) => {
-    const [empRes, posRes] = await Promise.all([
+    const [empRes, posRes, rolesRes] = await Promise.all([
       supabase.from('profiles').select('*, positions(title)').eq('company_id', compId).is('deleted_at', null),
-      supabase.from('positions').select('*').eq('company_id', compId).order('title')
+      supabase.from('positions').select('*').eq('company_id', compId).order('title'),
+      supabase.from('roles').select('*').eq('company_id', compId).order('name')
     ])
-    setEmployees(empRes.data?.filter(emp => ![1,2].includes(emp.role_id)) || [])
+    setEmployees(empRes.data?.filter(emp => !isCompanyAdmin(emp)) || [])
     setPositions(posRes.data || [])
+    setCompanyRoles(rolesRes.data || [])
   }
 
   const showNotification = (msg) => {
@@ -69,13 +84,17 @@ function EmployeesPage() {
       first_name: newEmployee.first_name,
       last_name: newEmployee.last_name,
       position_id: newEmployee.position_id || null,
-      role_id: newEmployee.role_id,
+      role_id: newEmployee.role_id || null,
+      can_create_tasks: newEmployee.can_create_tasks,
+      can_review_tasks: newEmployee.can_review_tasks,
+      can_manage_employees: newEmployee.can_manage_employees,
+      can_delete_employees: newEmployee.can_delete_employees,
       company_id: companyId,
       display_name: `${newEmployee.first_name} ${newEmployee.last_name}`.trim() || newEmployee.email
     })
     if (!error) {
       setShowAddModal(false)
-      setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: 6 })
+      setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
       loadData(companyId)
       showNotification('Сотрудник добавлен')
     } else {
@@ -90,7 +109,11 @@ function EmployeesPage() {
       first_name: emp.first_name || '',
       last_name: emp.last_name || '',
       position_id: emp.position_id || '',
-      role_id: emp.role_id || 6
+      role_id: emp.role_id || '',
+      can_create_tasks: !!emp.can_create_tasks,
+      can_review_tasks: !!emp.can_review_tasks,
+      can_manage_employees: !!emp.can_manage_employees,
+      can_delete_employees: !!emp.can_delete_employees,
     })
   }
 
@@ -101,7 +124,11 @@ function EmployeesPage() {
       first_name: editForm.first_name,
       last_name: editForm.last_name,
       position_id: editForm.position_id || null,
-      role_id: editForm.role_id,
+      role_id: editForm.role_id || null,
+      can_create_tasks: editForm.can_create_tasks,
+      can_review_tasks: editForm.can_review_tasks,
+      can_manage_employees: editForm.can_manage_employees,
+      can_delete_employees: editForm.can_delete_employees,
       display_name: `${editForm.first_name} ${editForm.last_name}`.trim() || editForm.email
     }).eq('id', editingEmployee.id)
     if (!error) {
@@ -114,10 +141,16 @@ function EmployeesPage() {
   }
 
   const handleDeleteEmployee = async (empId) => {
+    if (!myProfile?.can_delete_employees && !isCompanyAdmin(myProfile)) {
+      showNotification('У вас нет прав на удаление сотрудников')
+      return
+    }
     await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', empId)
     loadData(companyId)
     showNotification('Сотрудник удалён')
   }
+
+  const canDelete = myProfile?.can_delete_employees || isCompanyAdmin(myProfile)
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
@@ -156,9 +189,11 @@ function EmployeesPage() {
                 <td className="py-3 pr-4">{emp.display_name || emp.email}</td>
                 <td className="py-3 pr-4 text-gray-400">{emp.email}</td>
                 <td className="py-3 pr-4">{emp.positions?.title || '—'}</td>
-                <td className="py-3 pr-4">{emp.role_id === 4 ? 'Модератор' : 'Сотрудник'}</td>
+                <td className="py-3 pr-4">{roleLabel(emp)}</td>
                 <td className="py-3" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => handleDeleteEmployee(emp.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                  {canDelete && (
+                    <button onClick={() => handleDeleteEmployee(emp.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -166,9 +201,12 @@ function EmployeesPage() {
         </table>
       </div>
 
-      {/* Модалки остаются без изменений */}
+      {/* Модалки остаются без изменений в разметке — добавлены чекбоксы прав,
+          см. PERMISSION_FIELDS. Разметку модалок в проекте нужно дополнить
+          полями role_id (select из companyRoles) и PERMISSION_FIELDS.map(...) —
+          логика состояния (editForm/newEmployee) уже это поддерживает. */}
     </div>
   )
 }
 
-export default withAuth(EmployeesPage, [1, 2])
+export default withAuth(EmployeesPage, { permission: 'can_manage_employees' })
