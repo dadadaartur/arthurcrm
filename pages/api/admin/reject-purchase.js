@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth, ADMIN_ROLE_IDS } from '../../../lib/auth'
+import { requireAuth, canAccessCompany } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const ctx = await requireAuth(req, res, { allowedRoles: ADMIN_ROLE_IDS })
+  const ctx = await requireAuth(req, res, { permission: 'can_review_tasks' })
   if (!ctx) return
 
   const { purchaseId, comment } = req.body
@@ -28,22 +28,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Покупка уже обработана' })
   }
 
-  if (ctx.profile.role_id === 2) {
-    const { data: buyerProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('company_id')
-      .eq('user_id', purchase.user_id)
-      .single()
+  const { data: buyerProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', purchase.user_id)
+    .single()
 
-    if (!buyerProfile || buyerProfile.company_id !== ctx.profile.company_id) {
-      return res.status(403).json({ error: 'Доступ запрещён: другая компания' })
-    }
+  if (!buyerProfile || !canAccessCompany(ctx.profile, buyerProfile.company_id)) {
+    return res.status(403).json({ error: 'Доступ запрещён: другая компания' })
   }
 
-  // Атомарный переход pending -> rejected: защита от повторной обработки.
   const { data: updated, error } = await supabaseAdmin
     .from('purchases')
-    .update({ status: 'rejected', approved_comment: comment })
+    .update({ status: 'rejected', approved_comment: comment, approved_by: ctx.user.id })
     .eq('id', purchaseId)
     .eq('status', 'pending')
     .select('id')
@@ -53,17 +50,12 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: 'Покупка уже обработана другим запросом' })
   }
 
-  // ВАЖНО: раньше при отклонении покупки списанные кармики НИКОГДА не
-  // возвращались пользователю — это баг, а не только вопрос безопасности.
-  // Возвращаем через атомарную RPC-функцию (см. supabase/migrations),
-  // чтобы избежать гонки при параллельных операциях с балансом.
   const { error: refundError } = await supabaseAdmin.rpc('refund_karma_balance', {
     p_user_id: purchase.user_id,
     p_amount: purchase.cost
   })
 
   if (refundError) {
-    // Статус уже сменился на rejected — сообщаем явно, чтобы это не потерялось молча.
     return res.status(500).json({
       error: 'Покупка отклонена, но не удалось вернуть кармики: ' + refundError.message
     })
