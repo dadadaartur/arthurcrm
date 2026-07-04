@@ -16,11 +16,6 @@ export default async function handler(req, res) {
 
   const userId = ctx.user.id
 
-  // Раньше баланс проверялся (SELECT) и списывался (UPDATE) двумя отдельными
-  // запросами — при параллельных покупках это гонка (TOCTOU), позволяющая
-  // уйти в отрицательный баланс или обойти лимит покупки. Теперь вся
-  // проверка+списание+создание покупки происходит атомарно в БД, с
-  // блокировкой строки баланса (см. supabase/migrations/20260702_atomic_karma_operations.sql).
   const { data, error: purchaseError } = await supabaseAdmin.rpc('purchase_reward', {
     p_user_id: userId,
     p_reward_id: rewardId,
