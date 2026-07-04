@@ -21,7 +21,11 @@ export function ProfileProvider({ children }) {
         if (user) {
           const { data } = await supabase
             .from('profiles')
-            .select('display_name, role_id, company_id, avatar_url, first_name, last_name')
+            .select(`
+              display_name, role_id, company_id, avatar_url, first_name, last_name,
+              is_company_admin, can_create_tasks, can_review_tasks,
+              can_manage_employees, can_delete_employees
+            `)
             .eq('user_id', user.id)
             .maybeSingle()
 
