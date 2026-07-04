@@ -52,11 +52,24 @@ export default async function handler(req, res) {
 
   if (newStatus === 'pending') {
     const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
+
     if (profile?.company_id) {
-      const { data: admins } = await supabaseAdmin.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1, 2])
-      if (admins?.length) {
-        const notifs = admins.map(a => ({
-          user_id: a.user_id,
+      // Раньше здесь было .in('role_id', [1, 2]) — тот же ошибочный хардкод,
+      // что и в остальных файлах. Теперь уведомляем всех, у кого реально
+      // есть право проверять покупки: админа компании (is_company_admin)
+      // и модераторов с явным правом can_review_tasks.
+      const { data: reviewers } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id')
+        .eq('company_id', profile.company_id)
+        .or('is_company_admin.eq.true,can_review_tasks.eq.true')
+
+      // Супер-админов Кармического банка (role_id=1, company_id=null)
+      // этот запрос не найдёт, т.к. они не привязаны к company_id.
+      // Если нужно уведомлять и их — добавьте отдельный запрос по role_id=1.
+      if (reviewers?.length) {
+        const notifs = reviewers.map(r => ({
+          user_id: r.user_id,
           message: `Сотрудник хочет приобрести "${rewardName}". Требуется подтверждение.`,
           link: '/company-admin/purchases'
         }))
