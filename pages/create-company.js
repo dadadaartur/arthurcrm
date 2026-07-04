@@ -93,11 +93,32 @@ export default function CreateCompany() {
       return
     }
 
-    // Привязываем пользователя к компании как администратора (роль 2)
+    // Раньше здесь стоял хардкод role_id: 2 — но role_id ссылается на
+    // roles.id, а роли привязаны к конкретной компании (roles.company_id).
+    // Для новой компании role_id=2 может принадлежать вообще другой
+    // компании (в проде так и оказалось: role_id=2 — это роль "РОП"
+    // компании №1). Поэтому создаём отдельную роль "Администратор" для
+    // именно этой новой компании...
+    const { data: adminRole, error: roleError } = await supabase.from('roles').insert({
+      name: 'Администратор',
+      company_id: company.id,
+      is_system: false
+    }).select().single()
+
+    if (roleError) {
+      setError('Ошибка создания роли администратора: ' + roleError.message)
+      setSaving(false)
+      return
+    }
+
+    // ...и главное — права определяются флагом is_company_admin, а не
+    // конкретным role_id (см. lib/auth.js). role_id здесь используется
+    // только для отображения названия роли в интерфейсе.
     const { error: updateError } = await supabase.from('profiles').upsert({
       user_id: userId,
       company_id: company.id,
-      role_id: 2,
+      role_id: adminRole.id,
+      is_company_admin: true,
       email: user?.email || email,
       display_name: user?.email || email
     }, { onConflict: 'user_id' })
