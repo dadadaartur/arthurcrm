@@ -1,13 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth, ADMIN_ROLE_IDS, ROLES } from '../../../lib/auth'
+import { requireAuth, canAccessCompany } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // КРИТИЧЕСКИЙ ФИКС: раньше этот эндпоинт не проверял вообще НИЧЕГО —
-  // любой (даже неавторизованный) запрос мог одобрить любое задание
-  // и начислить кармики. Теперь требуем роль админа.
-  const ctx = await requireAuth(req, res, { allowedRoles: ADMIN_ROLE_IDS })
+  const ctx = await requireAuth(req, res, { permission: 'can_review_tasks' })
   if (!ctx) return
 
   const { assignmentId, action } = req.body
@@ -22,7 +19,6 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  // Получаем назначение, задание и компанию задания.
   const { data: assignment, error: fetchError } = await supabaseAdmin
     .from('task_assignments')
     .select('id, user_id, task_id, status, tasks( id, title, reward_karma, company_id )')
@@ -37,23 +33,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Задание уже обработано' })
   }
 
-  // Админ компании (role_id 2) может проверять только задания своей компании.
-  // Супер-админ (role_id 1) — любые.
-  if (ctx.profile.role_id === ROLES.COMPANY_ADMIN && assignment.tasks?.company_id !== ctx.profile.company_id) {
+  if (!canAccessCompany(ctx.profile, assignment.tasks?.company_id)) {
     return res.status(403).json({ error: 'Доступ запрещён: другая компания' })
   }
 
   const newStatus = action === 'approve' ? 'completed' : 'in_progress'
 
-  // Атомарный переход: .eq('status', 'pending_review') в самом UPDATE +
-  // .select() с проверкой длины результата защищает от гонки, когда два
-  // запроса одновременно пытаются обработать одно и то же назначение
-  // (иначе оба могли бы пройти проверку выше и начислить карму дважды).
   const { data: updatedRows, error: updateError } = await supabaseAdmin
     .from('task_assignments')
     .update({
       status: newStatus,
-      reviewed_at: new Date().toISOString()
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: ctx.user.id
     })
     .eq('id', numericId)
     .eq('status', 'pending_review')
@@ -66,7 +57,6 @@ export default async function handler(req, res) {
     return res.status(409).json({ error: 'Задание уже обработано другим запросом' })
   }
 
-  // Начисляем кармики при одобрении
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
 
@@ -90,7 +80,6 @@ export default async function handler(req, res) {
     })
   }
 
-  // Логирование в аудит — теперь пишем настоящего проверяющего, а не сотрудника.
   await supabaseAdmin.from('audit_logs').insert({
     user_id: ctx.user.id,
     action: action === 'approve' ? 'task_approved' : 'task_rejected',
