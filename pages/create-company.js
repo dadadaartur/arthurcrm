@@ -14,6 +14,7 @@ export default function CreateCompany() {
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [signUpPending, setSignUpPending] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -51,6 +52,8 @@ export default function CreateCompany() {
     setError('')
 
     let userId = user?.id
+    let userEmail = user?.email || email
+    let hasSession = !!user
 
     // Если пользователь не авторизован, регистрируем его прямо здесь
     if (!userId) {
@@ -74,66 +77,78 @@ export default function CreateCompany() {
         setSaving(false)
         return
       }
+      userEmail = email.trim().toLowerCase()
+      // Если в проекте включено подтверждение email, signUp не выдаёт
+      // сессию — supabase.auth.getSession() вернёт null, пока пользователь
+      // не подтвердит почту. Создание компании ниже идёт через серверный
+      // API с service-role ключом, поэтому от наличия сессии не зависит —
+      // но она нужна нам, чтобы понять, можно ли сразу пускать на /company-admin
+      // или показать "проверьте почту".
+      const { data: sessionData } = await supabase.auth.getSession()
+      hasSession = !!sessionData?.session
     }
 
     // Загружаем логотип, если есть
     let logoUrl = null
     if (logoFile) logoUrl = await uploadLogo(logoFile)
 
-    // Создаём компанию
-    const { data: company, error: compError } = await supabase.from('companies').insert({
-      name: name.trim(),
-      description: description.trim(),
-      logo_url: logoUrl
-    }).select().single()
-
-    if (compError) {
-      setError('Ошибка создания компании: ' + compError.message)
+    // Компанию, роль администратора и профиль создаём одним серверным
+    // вызовом через service-role ключ — так это работает независимо от
+    // того, есть ли у пользователя активная сессия (см. lib/auth.js и
+    // pages/api/create-company.js).
+    let apiResult
+    try {
+      const res = await fetch('/api/create-company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          name: name.trim(),
+          description: description.trim(),
+          logoUrl,
+          email: userEmail
+        })
+      })
+      apiResult = await res.json()
+      if (!res.ok) {
+        setError(apiResult.error || 'Ошибка создания компании')
+        setSaving(false)
+        return
+      }
+    } catch (err) {
+      setError('Внутренняя ошибка сервера')
       setSaving(false)
       return
     }
 
-    // Раньше здесь стоял хардкод role_id: 2 — но role_id ссылается на
-    // roles.id, а роли привязаны к конкретной компании (roles.company_id).
-    // Для новой компании role_id=2 может принадлежать вообще другой
-    // компании (в проде так и оказалось: role_id=2 — это роль "РОП"
-    // компании №1). Поэтому создаём отдельную роль "Администратор" для
-    // именно этой новой компании...
-    const { data: adminRole, error: roleError } = await supabase.from('roles').insert({
-      name: 'Администратор',
-      company_id: company.id,
-      is_system: false
-    }).select().single()
-
-    if (roleError) {
-      setError('Ошибка создания роли администратора: ' + roleError.message)
+    if (hasSession) {
+      // Пользователь уже авторизован (или email confirmation отключён,
+      // и signUp сразу выдал сессию) — можно сразу вести в кабинет.
+      window.location.href = '/company-admin'
+    } else {
+      // Аккаунт и компания созданы, но подтверждение почты ещё не
+      // пройдено — сессии нет. Просим подтвердить email и войти.
       setSaving(false)
-      return
+      setSignUpPending(true)
     }
-
-    // ...и главное — права определяются флагом is_company_admin, а не
-    // конкретным role_id (см. lib/auth.js). role_id здесь используется
-    // только для отображения названия роли в интерфейсе.
-    const { error: updateError } = await supabase.from('profiles').upsert({
-      user_id: userId,
-      company_id: company.id,
-      role_id: adminRole.id,
-      is_company_admin: true,
-      email: user?.email || email,
-      display_name: user?.email || email
-    }, { onConflict: 'user_id' })
-
-    if (updateError) {
-      setError('Ошибка привязки: ' + updateError.message)
-      setSaving(false)
-      return
-    }
-
-    // Всё готово – насильно перезагружаем страницу, чтобы контекст обновился
-    window.location.href = '/company-admin'
   }
 
   if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+
+  if (signUpPending) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12">
+        <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
+          <h1 className="text-2xl font-bold text-white mb-4">Почти готово</h1>
+          <p className="text-gray-400 text-sm mb-4">
+            Аккаунт и компания «{name.trim()}» созданы. Мы отправили письмо с подтверждением на {email.trim().toLowerCase()}.
+            Подтвердите почту по ссылке из письма, а затем войдите — компания уже будет вас ждать.
+          </p>
+          <a href="/login" className="btn-gold w-full inline-block text-center">Перейти ко входу</a>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
