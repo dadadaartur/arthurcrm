@@ -67,7 +67,11 @@ export default function CreateCompany() {
         password
       })
       if (signUpError) {
-        setError('Ошибка регистрации: ' + signUpError.message)
+        if (signUpError.message?.includes('already registered')) {
+          setError('Этот email уже зарегистрирован. Если это ваш аккаунт — войдите и создайте компанию из личного кабинета. Если регистрация ранее прервалась с ошибкой — попробуйте другой email или обратитесь в поддержку.')
+        } else {
+          setError('Ошибка регистрации: ' + signUpError.message)
+        }
         setSaving(false)
         return
       }
