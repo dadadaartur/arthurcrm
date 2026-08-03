@@ -1,222 +1,166 @@
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import { createClient } from '@supabase/supabase-js'
 
-export default function CreateCompany() {
-  const router = useRouter()
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [logoFile, setLogoFile] = useState(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [signUpPending, setSignUpPending] = useState(false)
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        // Пользователь уже авторизован
-        const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-        if (profile?.company_id) {
-          // У него уже есть компания – идём на главную
-          router.push('/')
-          return
-        }
-        // Нет компании – пусть создаёт
-        setUser(user)
-      }
-      setLoading(false)
-    }
-    init()
-  }, [router])
-
-  const uploadLogo = async (file) => {
-    if (!file) return null
-    const fileExt = file.name.split('.').pop()
-    const fileName = `logo-${Date.now()}.${fileExt}`
-    const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, file, { upsert: true })
-    if (error) return null
-    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
-    return publicUrl.publicUrl
+function extractAccessToken(req) {
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.split(' ')[1]
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    setSaving(true)
-    setError('')
+  const rawCookie = req.headers.cookie || ''
+  if (!rawCookie) return null
 
-    let userId = user?.id
-    let userEmail = user?.email || email
-    let hasSession = !!user
-
-    // Если пользователь не авторизован, регистрируем его прямо здесь
-    if (!userId) {
-      if (!email || !password) {
-        setError('Введите email и пароль для регистрации')
-        setSaving(false)
-        return
-      }
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password
-      })
-      if (signUpError) {
-        if (signUpError.message?.includes('already registered')) {
-          setError('Этот email уже зарегистрирован. Войдите в аккаунт и создайте компанию из личного кабинета. Если вы не помните пароль — воспользуйтесь восстановлением доступа.')
-        } else {
-          setError('Ошибка регистрации: ' + signUpError.message)
-        }
-        setSaving(false)
-        return
-      }
-      userId = signUpData?.user?.id || signUpData?.session?.user?.id
-      if (!userId) {
-        setError('Не удалось создать аккаунт. Проверьте настройки подтверждения email.')
-        setSaving(false)
-        return
-      }
-      userEmail = email.trim().toLowerCase()
-      // Если в проекте включено подтверждение email, signUp не выдаёт
-      // сессию — supabase.auth.getSession() вернёт null, пока пользователь
-      // не подтвердит почту. Создание компании ниже идёт через серверный
-      // API с service-role ключом, поэтому от наличия сессии не зависит —
-      // но она нужна нам, чтобы понять, можно ли сразу пускать на /company-admin
-      // или показать "проверьте почту".
-      const { data: sessionData } = await supabase.auth.getSession()
-      hasSession = !!sessionData?.session
-    }
-
-    // Загружаем логотип, если есть
-    let logoUrl = null
-    if (logoFile) logoUrl = await uploadLogo(logoFile)
-
-    // Компанию, роль администратора и профиль создаём одним серверным
-    // вызовом через service-role ключ — так это работает независимо от
-    // того, есть ли у пользователя активная сессия (см. lib/auth.js и
-    // pages/api/create-company.js).
-    let apiResult
-    try {
-      const headers = { 'Content-Type': 'application/json' }
-      const sessionData = await supabase.auth.getSession()
-      if (sessionData?.data?.session?.access_token) {
-        headers.Authorization = `Bearer ${sessionData.data.session.access_token}`
-      }
-
-      const res = await fetch('/api/create-company', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          userId,
-          name: name.trim(),
-          description: description.trim(),
-          logoUrl,
-          email: userEmail
-        })
-      })
-      apiResult = await res.json()
-      if (!res.ok) {
-        setError(apiResult.error || 'Ошибка создания компании')
-        setSaving(false)
-        return
-      }
-    } catch (err) {
-      setError('Внутренняя ошибка сервера')
-      setSaving(false)
-      return
-    }
-
-    if (hasSession) {
-      // Пользователь уже авторизован (или email confirmation отключён,
-      // и signUp сразу выдал сессию) — можно сразу вести в кабинет.
-      window.location.href = '/company-admin'
-    } else {
-      // Аккаунт и компания созданы, но подтверждение почты ещё не
-      // пройдено — сессии нет. Просим подтвердить email и войти.
-      setSaving(false)
-      setSignUpPending(true)
-    }
-  }
-
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
-
-  if (signUpPending) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-12">
-        <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
-          <h1 className="text-2xl font-bold text-white mb-4">Почти готово</h1>
-          <p className="text-gray-400 text-sm mb-4">
-            Аккаунт и компания «{name.trim()}» созданы. Мы отправили письмо с подтверждением на {email.trim().toLowerCase()}.
-            Подтвердите почту по ссылке из письма, а затем войдите — компания уже будет вас ждать.
-          </p>
-          <a href="/login" className="btn-gold w-full inline-block text-center">Перейти ко входу</a>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-lg mx-auto px-4 py-12">
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }}>
-        <h1 className="text-2xl font-bold text-white mb-6">Создание компании</h1>
-        <p className="text-gray-400 text-sm mb-6">
-          Добро пожаловать! Для начала работы создайте компанию.
-          {!user && ' Вам необходимо будет указать email и пароль для входа.'}
-        </p>
-
-        {error && (
-          <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-4">
-            <div>{error}</div>
-            {!user && (
-              <a href="/login" className="btn-outline inline-block mt-3">
-                Войти в аккаунт
-              </a>
-            )}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm text-gray-400">Название компании *</label>
-            <input type="text" className="input-field" value={name} onChange={e => setName(e.target.value)} required />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Описание</label>
-            <textarea className="input-field" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
-
-          {!user && (
-            <>
-              <div>
-                <label className="text-sm text-gray-400">Email для входа *</label>
-                <input type="email" className="input-field" value={email} onChange={e => setEmail(e.target.value)} required />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400">Пароль *</label>
-                <input type="password" className="input-field" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                <p className="text-xs text-gray-500 mt-1">Минимум 6 символов</p>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="text-sm text-gray-400">Логотип</label>
-            <input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} className="mt-2 text-sm text-gray-400" />
-          </div>
-          <button type="submit" disabled={saving} className="btn-gold w-full">
-            {saving ? 'Создание...' : 'Создать компанию'}
-          </button>
-        </form>
-      </div>
-    </div>
+  const cookies = Object.fromEntries(
+    rawCookie.split('; ').map(c => {
+      const idx = c.indexOf('=')
+      if (idx === -1) return [c.trim(), '']
+      return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
+    })
   )
+
+  const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+  if (!authKey) return null
+
+  try {
+    return JSON.parse(cookies[authKey]).access_token || null
+  } catch (e) {
+    return null
+  }
 }
 
-// Этот флаг заставляет _app.js не оборачивать страницу в Layout,
-// чтобы неавторизованные пользователи могли создавать компанию
-CreateCompany.bypassLayout = true
+async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessToken) {
+  if (accessToken && anonClient) {
+    const { data: { user: tokenUser }, error: tokenError } = await anonClient.auth.getUser(accessToken)
+    if (!tokenError && tokenUser) return tokenUser
+  }
+
+  if (userId) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId)
+      if (!error && user) return user
+      if (attempt < 2) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+      }
+    }
+  }
+
+  if (email) {
+    const normalizedEmail = email.toLowerCase().trim()
+    const { data: { users = [] }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    if (!listError) {
+      const match = users.find(u => (u.email || '').toLowerCase() === normalizedEmail)
+      if (match) return match
+    }
+  }
+
+  return null
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).end()
+
+  const { userId, name, description, logoUrl, email } = req.body
+
+  if (!userId || !name || !name.trim()) {
+    return res.status(400).json({ error: 'Нет обязательных полей (userId, name)' })
+  }
+  if (!email) {
+    return res.status(400).json({ error: 'Нет email пользователя' })
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceKey || !supabaseAnonKey) {
+    return res.status(500).json({ error: 'Server configuration error' })
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+  const accessToken = extractAccessToken(req)
+  const anonClient = createClient(supabaseUrl, supabaseAnonKey)
+
+  const authUser = await resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessToken)
+  if (!authUser) {
+    return res.status(400).json({ error: 'Пользователь не найден' })
+  }
+
+  if (accessToken) {
+    const { data: { user: tokenUser }, error: tokenError } = await anonClient.auth.getUser(accessToken)
+    if (tokenError || !tokenUser) {
+      return res.status(401).json({ error: 'Не авторизован' })
+    }
+    if (tokenUser.id !== authUser.id) {
+      return res.status(403).json({ error: 'Доступ запрещён: userId не совпадает с сессией' })
+    }
+  } else {
+    const realEmail = (authUser.email || '').toLowerCase().trim()
+    if (realEmail !== email.toLowerCase().trim()) {
+      return res.status(403).json({ error: 'Доступ запрещён: email не совпадает с аккаунтом' })
+    }
+    if (authUser.email_confirmed_at) {
+      return res.status(403).json({ error: 'Требуется авторизация: подтвердите email и войдите, затем создайте компанию из личного кабинета' })
+    }
+    const createdAt = new Date(authUser.created_at).getTime()
+    const FIFTEEN_MIN = 15 * 60 * 1000
+    if (!createdAt || Date.now() - createdAt > FIFTEEN_MIN) {
+      return res.status(403).json({ error: 'Требуется авторизация: пройдите вход заново' })
+    }
+  }
+
+  const { data: existingProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('company_id')
+    .eq('user_id', authUser.id)
+    .maybeSingle()
+
+  if (existingProfile?.company_id) {
+    return res.status(409).json({ error: 'У пользователя уже есть компания' })
+  }
+
+  const { data: company, error: compError } = await supabaseAdmin
+    .from('companies')
+    .insert({
+      name: name.trim(),
+      description: (description || '').trim(),
+      logo_url: logoUrl || null
+    })
+    .select()
+    .single()
+
+  if (compError) {
+    return res.status(500).json({ error: 'Ошибка создания компании: ' + compError.message })
+  }
+
+  const { data: adminRole, error: roleError } = await supabaseAdmin
+    .from('roles')
+    .insert({
+      name: 'Администратор',
+      company_id: company.id,
+      is_system: false
+    })
+    .select()
+    .single()
+
+  if (roleError) {
+    await supabaseAdmin.from('companies').delete().eq('id', company.id)
+    return res.status(500).json({ error: 'Ошибка создания роли администратора: ' + roleError.message })
+  }
+
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .upsert({
+      user_id: authUser.id,
+      company_id: company.id,
+      role_id: adminRole.id,
+      is_company_admin: true,
+      email: email.toLowerCase().trim(),
+      display_name: email
+    }, { onConflict: 'user_id' })
+
+  if (profileError) {
+    await supabaseAdmin.from('roles').delete().eq('id', adminRole.id)
+    await supabaseAdmin.from('companies').delete().eq('id', company.id)
+    return res.status(500).json({ error: 'Ошибка привязки профиля: ' + profileError.message })
+  }
+
+  res.status(200).json({ companyId: company.id })
+}
