@@ -68,14 +68,14 @@ export default function CreateCompany() {
       })
       if (signUpError) {
         if (signUpError.message?.includes('already registered')) {
-          setError('Этот email уже зарегистрирован. Если это ваш аккаунт — войдите и создайте компанию из личного кабинета. Если регистрация ранее прервалась с ошибкой — попробуйте другой email или обратитесь в поддержку.')
+          setError('Этот email уже зарегистрирован. Войдите в аккаунт и создайте компанию из личного кабинета. Если вы не помните пароль — воспользуйтесь восстановлением доступа.')
         } else {
           setError('Ошибка регистрации: ' + signUpError.message)
         }
         setSaving(false)
         return
       }
-      userId = signUpData?.user?.id
+      userId = signUpData?.user?.id || signUpData?.session?.user?.id
       if (!userId) {
         setError('Не удалось создать аккаунт. Проверьте настройки подтверждения email.')
         setSaving(false)
@@ -102,9 +102,15 @@ export default function CreateCompany() {
     // pages/api/create-company.js).
     let apiResult
     try {
+      const headers = { 'Content-Type': 'application/json' }
+      const sessionData = await supabase.auth.getSession()
+      if (sessionData?.data?.session?.access_token) {
+        headers.Authorization = `Bearer ${sessionData.data.session.access_token}`
+      }
+
       const res = await fetch('/api/create-company', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           userId,
           name: name.trim(),
@@ -163,7 +169,16 @@ export default function CreateCompany() {
           {!user && ' Вам необходимо будет указать email и пароль для входа.'}
         </p>
 
-        {error && <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-4">{error}</div>}
+        {error && (
+          <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-4">
+            <div>{error}</div>
+            {!user && (
+              <a href="/login" className="btn-outline inline-block mt-3">
+                Войти в аккаунт
+              </a>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

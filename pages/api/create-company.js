@@ -36,6 +36,34 @@ function extractAccessToken(req) {
   }
 }
 
+async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessToken) {
+  if (accessToken && anonClient) {
+    const { data: { user: tokenUser }, error: tokenError } = await anonClient.auth.getUser(accessToken)
+    if (!tokenError && tokenUser) return tokenUser
+  }
+
+  if (userId) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId)
+      if (!error && user) return user
+      if (attempt < 2) {
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+      }
+    }
+  }
+
+  if (email) {
+    const normalizedEmail = email.toLowerCase().trim()
+    const { data: { users = [] }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    if (!listError) {
+      const match = users.find(u => (u.email || '').toLowerCase() === normalizedEmail)
+      if (match) return match
+    }
+  }
+
+  return null
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -56,11 +84,11 @@ export default async function handler(req, res) {
   }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+  const accessToken = extractAccessToken(req)
+  const anonClient = createClient(supabaseUrl, supabaseAnonKey)
 
-  // Пользователь с таким userId должен существовать в auth.users
-  // (его создаёт supabase.auth.signUp на клиенте перед вызовом этого API).
-  const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId)
-  if (authUserError || !authUser?.user) {
+  const authUser = await resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessToken)
+  if (!authUser) {
     return res.status(400).json({ error: 'Пользователь не найден' })
   }
 
@@ -68,18 +96,15 @@ export default async function handler(req, res) {
   // доверял userId/email из тела запроса без всякой проверки, и любой аноним
   // мог подставить чужой userId, чтобы создать компанию и назначить
   // администратором чужой аккаунт). ---
-  const accessToken = extractAccessToken(req)
-
   if (accessToken) {
     // Есть токен (пользователь уже вошёл в систему, email confirmation
     // отключён и signUp сразу выдал сессию, либо это уже существующий
     // залогиненный пользователь) — он ОБЯЗАН совпадать с userId из тела.
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
     const { data: { user: tokenUser }, error: tokenError } = await anonClient.auth.getUser(accessToken)
     if (tokenError || !tokenUser) {
       return res.status(401).json({ error: 'Не авторизован' })
     }
-    if (tokenUser.id !== userId) {
+    if (tokenUser.id !== authUser.id) {
       return res.status(403).json({ error: 'Доступ запрещён: userId не совпадает с сессией' })
     }
   } else {
@@ -93,14 +118,14 @@ export default async function handler(req, res) {
     //     signUp", а попытка угона чужого давно существующего аккаунта);
     //  3) аккаунт создан только что (защита от угона старых "осиротевших"
     //     пользователей без профиля).
-    const realEmail = (authUser.user.email || '').toLowerCase().trim()
+    const realEmail = (authUser.email || '').toLowerCase().trim()
     if (realEmail !== email.toLowerCase().trim()) {
       return res.status(403).json({ error: 'Доступ запрещён: email не совпадает с аккаунтом' })
     }
-    if (authUser.user.email_confirmed_at) {
+    if (authUser.email_confirmed_at) {
       return res.status(403).json({ error: 'Требуется авторизация: подтвердите email и войдите, затем создайте компанию из личного кабинета' })
     }
-    const createdAt = new Date(authUser.user.created_at).getTime()
+    const createdAt = new Date(authUser.created_at).getTime()
     const FIFTEEN_MIN = 15 * 60 * 1000
     if (!createdAt || Date.now() - createdAt > FIFTEEN_MIN) {
       return res.status(403).json({ error: 'Требуется авторизация: пройдите вход заново' })
@@ -111,7 +136,7 @@ export default async function handler(req, res) {
   const { data: existingProfile } = await supabaseAdmin
     .from('profiles')
     .select('company_id')
-    .eq('user_id', userId)
+    .eq('user_id', authUser.id)
     .maybeSingle()
 
   if (existingProfile?.company_id) {
@@ -157,7 +182,7 @@ export default async function handler(req, res) {
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .upsert({
-      user_id: userId,
+      user_id: authUser.id,
       company_id: company.id,
       role_id: adminRole.id,
       is_company_admin: true,
