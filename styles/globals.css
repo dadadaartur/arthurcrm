@@ -1,0 +1,338 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  cursor: default !important;
+  user-select: none;
+}
+
+a, button, .clickable, .action-btn, .wide-btn {
+  cursor: pointer !important;
+}
+
+*:focus { outline: none !important; }
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #0a1628 !important;
+  color: #eaf0fb;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Звёздный фон (контейнер) */
+.stars-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Медленное мерцание настоящих звёзд */
+@keyframes realTwinkle {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* АНИМАЦИЯ РАМОК BORDERSHINE */
+@keyframes borderShine {
+  0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
+  50% { border-color: rgba(192,132,252,0.8); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
+  100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+
+/* БАЛАНС-КАРТОЧКА */
+.balance-card {
+  background: #0A0A0A;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 28px;
+  padding: 24px 32px;
+  box-shadow: 0 0 30px rgba(249,115,22,0.2);
+  animation: borderShine 4s infinite;
+  width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ЧЁРНАЯ ДЫРА – только чёрный круг и внешнее кольцо */
+.black-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: #000;
+  box-shadow:
+    0 0 20px rgba(249,115,22,0.3),
+    0 0 40px rgba(249,115,22,0.15);
+  animation: blackHolePulse 3s infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.black-hole::before,
+.black-hole::after {
+  display: none;
+}
+
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
+  100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+}
+
+/* КНОПКИ ДЕЙСТВИЙ */
+.action-btn {
+  flex: 1 1 0;
+  font-size: 14px;
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  color: rgba(255,255,255,0.82);
+  transition: all 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  animation: borderShine 4s infinite;
+}
+.action-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
+}
+
+.wide-btn {
+  flex-basis: 100%;
+  margin-top: 4px;
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  color: rgba(255,255,255,0.82);
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.25s;
+  animation: borderShine 4s infinite;
+}
+.wide-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
+}
+
+/* КАРТОЧКИ РАЗДЕЛОВ */
+.dash-card {
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 20px;
+  padding: 32px;
+  animation: borderShine 4s infinite;
+  transition: all 0.3s;
+}
+.dash-card:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
+}
+.dash-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #f97316, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА */
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.9) 50%, transparent 65%);
+  box-shadow: 0 0 10px rgba(249,115,22,0.4);
+  animation: spin 1s linear infinite, blackHolePulse 2s infinite;
+  position: relative;
+}
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(249,115,22,0.6);
+  animation: diskRotate 2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Разрешаем выделение текста в стикерах */
+.sticker-text {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+/* Остальные общие стили */
+.premium-card {
+  background: #152238;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f97316, #e65c00);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+}
+
+.btn-outline {
+  border: 1px solid #f97316;
+  color: #f97316;
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.input-field {
+  background: #0f1f35;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 14px;
+  color: #eaf0fb;
+}
+.input-field:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: linear-gradient(145deg, #1a2f4a 0%, #0f1f35 100%);
+  border: 1px solid #f97316;
+  border-radius: 28px;
+  padding: 36px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(249,115,22,0.6);
+}
+
+.filter-pill {
+  border: 1px solid rgba(249,115,22,0.3);
+  background: transparent;
+  color: #9aa9c1;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 110px;
+  text-align: center;
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #f97316, #c084fc);
+  color: white;
+}
+
+/* ===== ПАСТЕЛЬНЫЕ КАРТОЧКИ ДЛЯ РАЗДЕЛОВ АДМИНКИ ===== */
+.pastel-card {
+  background: linear-gradient(145deg, rgba(199, 181, 175, 0.12) 0%, rgba(168, 179, 190, 0.06) 100%);
+  border: 1px solid rgba(199, 181, 175, 0.35);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+}
+.pastel-card h3 {
+  background: linear-gradient(135deg, #c7b5af, #a8b3be);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* Календарь – светлая иконка на тёмном фоне */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #eaf0fb;
+}
+
+/* Кнопка загрузки – аккуратная обводка с небольшим отступом */
+.file-upload-btn {
+  display: inline-block;
+  background: rgba(199, 181, 175, 0.08);
+  border: 1px dashed rgba(199, 181, 175, 0.5);
+  border-radius: 14px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: #c7b5af;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.file-upload-btn:hover {
+  background: rgba(199, 181, 175, 0.15);
+  border-color: #a8b3be;
+}
+
+/* Убираем стрелки в input[type=number] */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield !important;
+}
+
+/* Убираем системную стрелку у всех select и добавляем красивую */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%239aa9c1'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 36px !important;
+}
