@@ -24,13 +24,15 @@ export function ProfileProvider({ children }) {
             .select(`
               display_name, role_id, company_id, avatar_url, first_name, last_name,
               is_company_admin, can_create_tasks, can_review_tasks,
-              can_manage_employees, can_delete_employees,
+              can_manage_employees, can_delete_employees, deleted_at,
               companies(status, status_reason, name)
             `)
             .eq('user_id', user.id)
             .maybeSingle()
 
-          setProfile(data)
+          // Мягко удалённый (deleted_at != null) сотрудник — для остального
+          // приложения это то же самое, что и отсутствие профиля.
+          setProfile(data && !data.deleted_at ? data : null)
         }
       } catch (err) {
         console.error('Profile loading error:', err)

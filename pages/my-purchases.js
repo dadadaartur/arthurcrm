@@ -36,6 +36,14 @@ export default function MyPurchases() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id, deleted_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!profile?.company_id || profile.deleted_at) { router.push('/welcome'); return }
+
       setUser(user)
       await loadPurchases(user.id)
     }
@@ -79,7 +87,14 @@ export default function MyPurchases() {
 
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
       if (profile?.company_id) {
-        const { data: admins } = await supabase.from('profiles').select('user_id').eq('company_id', profile.company_id).in('role_id', [1,2])
+        // role_id — per-company значение, хардкодить [1,2] небезопасно и
+        // некорректно (см. lib/auth.js). Уведомляем реальных ревьюеров:
+        // админа компании и модераторов с правом can_review_tasks.
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('company_id', profile.company_id)
+          .or('is_company_admin.eq.true,can_review_tasks.eq.true')
         if (admins?.length) {
           const notifs = admins.map(a => ({
             user_id: a.user_id,

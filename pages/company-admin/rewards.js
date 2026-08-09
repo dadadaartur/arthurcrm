@@ -29,17 +29,31 @@ export default function RewardsAdmin() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('company_id, role_id').eq('user_id', user.id).single()
-      if (!prof || (prof.role_id !== 1 && prof.role_id !== 2)) { router.push('/'); return }
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('company_id, role_id, is_company_admin, deleted_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      // legacy-хардкод role_id IN (1,2) убран — company_id тут вообще
+      // не per-company понятие для сравнения ролей. Управлять магазином
+      // может админ своей компании либо супер-админ платформы.
+      if (!prof || prof.deleted_at || !(prof.is_company_admin || prof.role_id === 1)) {
+        router.push('/')
+        return
+      }
       setProfile(prof)
-      await loadRewards()
+      await loadRewards(prof)
       setLoading(false)
     }
     init()
   }, [])
 
-  const loadRewards = async () => {
-    const { data } = await supabase.from('rewards').select('*').order('created_at', { ascending: false })
+  const loadRewards = async (prof) => {
+    const { data } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('company_id', prof.company_id)
+      .order('created_at', { ascending: false })
     setRewards(data || [])
   }
 
@@ -71,7 +85,8 @@ export default function RewardsAdmin() {
       type: form.type,
       requires_approval: form.requires_approval,
       limit_per_user: form.limit_per_user ? parseInt(form.limit_per_user) : null,
-      image_url: imageUrl
+      image_url: imageUrl,
+      company_id: profile.company_id
     }
 
     const { error } = editingId
@@ -87,7 +102,7 @@ export default function RewardsAdmin() {
 
     setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
     setEditingId(null)
-    loadRewards()
+    loadRewards(profile)
   }
 
   const handleEdit = (reward) => {
@@ -118,7 +133,7 @@ export default function RewardsAdmin() {
       setNotification({ show: true, message: 'Ошибка удаления: ' + error.message })
     } else {
       setNotification({ show: true, message: 'Товар удалён' })
-      loadRewards()
+      loadRewards(profile)
     }
     setDeleteModal({ show: false, rewardId: null, rewardName: '' })
   }

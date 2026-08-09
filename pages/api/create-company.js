@@ -121,7 +121,12 @@ export default async function handler(req, res) {
     .insert({
       name: name.trim(),
       description: (description || '').trim(),
-      logo_url: logoUrl || null
+      logo_url: logoUrl || null,
+      // Самостоятельно созданная компания не должна получать доступ сразу —
+      // сначала модерация супер-админом (см. platform-admin/set-company-status.js).
+      // Раньше поле не передавалось и компания уходила в дефолт 'active' —
+      // модерация фактически не работала.
+      status: 'pending'
     })
     .select()
     .single()

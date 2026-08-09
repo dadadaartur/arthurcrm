@@ -25,7 +25,7 @@ function CompanyAdminDashboard() {
       const compId = profile.company_id
       const [tasksRes, employeesRes, goalsRes] = await Promise.all([
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('company_id', compId).eq('is_active', true),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('company_id', compId).is('deleted_at', null).not('role_id', 'in', '(1,2)'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('company_id', compId).is('deleted_at', null).eq('is_company_admin', false),
         supabase.from('goals').select('id', { count: 'exact', head: true }).eq('company_id', compId).eq('is_active', true)
       ])
 
@@ -104,4 +104,7 @@ function CompanyAdminDashboard() {
   )
 }
 
-export default withAuth(CompanyAdminDashboard, [1, 2])
+// Дашборд-хаб для любого модератора компании (не только полного
+// админа) — конкретные разделы (задачи/цели/покупки/ревью) уже
+// гейтятся своими правами ниже по каждому файлу.
+export default withAuth(CompanyAdminDashboard, { anyStaff: true })

@@ -144,6 +144,7 @@ export default function Layout({ children }) {
   const companyStatus = profile?.companies?.status
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
+  const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
 
   if (isBlockedByModeration) {
     return (
@@ -154,6 +155,26 @@ export default function Layout({ children }) {
           </h1>
           <p className="text-gray-400 mb-4">
             {profile.companies.status_reason || 'Обратитесь в поддержку Кармического банка для уточнения деталей.'}
+          </p>
+          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
+        </div>
+      </div>
+    )
+  }
+
+  // Компания создана самостоятельно (create-company.js) и ждёт проверки
+  // супер-админом (platform-admin/set-company-status.js). До перевода в
+  // 'active' сотрудники этой компании не должны видеть рабочий интерфейс —
+  // иначе смысл модерации теряется. Супер-админ/платформенный стафф видят
+  // интерфейс как обычно (им нужно попасть в platform-admin, чтобы одобрить).
+  if (isPendingModeration) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
+        <div className="premium-card max-w-md text-center">
+          <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
+          <p className="text-gray-400 mb-4">
+            Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
+            Обычно это занимает немного времени — как только заявку одобрят, здесь появится полный доступ.
           </p>
           <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
         </div>

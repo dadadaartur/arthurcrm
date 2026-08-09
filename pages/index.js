@@ -261,6 +261,13 @@ export default function Home() {
       setPageLoading(false)
       return
     }
+    // Есть сессия, но нет строки в profiles (например, профиль удалён или
+    // ещё не создан) — нельзя показывать дашборд, баланс и задания:
+    // неизвестно, к какой компании относится пользователь.
+    if (!loading && !profile) {
+      router.push('/welcome')
+      return
+    }
     const loadData = async () => {
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
@@ -282,7 +289,7 @@ export default function Home() {
       setPageLoading(false)
     }
     loadData()
-  }, [user])
+  }, [user, loading, profile])
 
   // Если загрузка профиля ещё идёт, ничего не показываем
   if (loading || pageLoading) return null

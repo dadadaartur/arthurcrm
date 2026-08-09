@@ -97,4 +97,4 @@ function ReviewPage() {
   )
 }
 
-export default withAuth(ReviewPage, [1, 2])
+export default withAuth(ReviewPage, { permission: 'can_review_tasks' })

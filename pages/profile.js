@@ -33,7 +33,8 @@ export default function Profile() {
       if (!user) { router.push('/login'); return }
       setUser(user)
 
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('user_id', user.id).single()
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle()
+      if (!profileData || profileData.deleted_at) { router.push('/welcome'); return }
       if (profileData) {
         setProfile(profileData)
         setForm({

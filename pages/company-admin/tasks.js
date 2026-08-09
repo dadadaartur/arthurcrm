@@ -120,7 +120,7 @@ function TasksPage() {
       .from('profiles')
       .select('user_id')
       .eq('company_id', companyId)
-      .not('role_id', 'in', '(1,2)')
+      .eq('is_company_admin', false)
       .is('deleted_at', null)
 
     if (employeesList && employeesList.length > 0) {
@@ -268,4 +268,4 @@ function TasksPage() {
   )
 }
 
-export default withAuth(TasksPage, [1, 2])
+export default withAuth(TasksPage, { permission: 'can_create_tasks' })

@@ -36,10 +36,33 @@ export default function Shop() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      // Профиль обязателен: без него неизвестно, к какой компании
+      // принадлежит пользователь, и показывать магазин нельзя (утечка
+      // товаров между компаниями). Если профиля нет — уводим на /welcome,
+      // где есть корректная обработка (ожидание приглашения/сообщение админу).
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id, deleted_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!profile?.company_id || profile.deleted_at) {
+        router.push('/welcome')
+        return
+      }
+
       setUser(user)
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
-      const { data: rewardsData } = await supabase.from('rewards').select('*').order('cost')
+
+      // rewards теперь корректно скопированы по company_id (миграция и
+      // RLS-политика "Company members can view own rewards" применены).
+      const { data: rewardsData } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('cost')
       setRewards(rewardsData || [])
       setInitialLoading(false)
     }

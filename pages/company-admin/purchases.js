@@ -154,4 +154,4 @@ function PurchasesAdmin() {
   )
 }
 
-export default withAuth(PurchasesAdmin, [1, 2])
+export default withAuth(PurchasesAdmin, { permission: 'can_review_tasks' })

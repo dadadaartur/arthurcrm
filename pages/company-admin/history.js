@@ -115,4 +115,4 @@ function HistoryPage() {
   )
 }
 
-export default withAuth(HistoryPage, [1, 2])
+export default withAuth(HistoryPage, { permission: 'can_review_tasks' })

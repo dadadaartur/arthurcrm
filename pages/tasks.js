@@ -20,6 +20,17 @@ export default function TasksPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      // Без профиля неизвестна компания пользователя — доступ к чужим/
+      // ничьим заданиям быть не должно. Уводим на /welcome (там уже есть
+      // обработка "нет компании / ждите приглашение").
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id, deleted_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!profile?.company_id || profile.deleted_at) { router.push('/welcome'); return }
+
       setUser(user)
       setLoading(false)
     }

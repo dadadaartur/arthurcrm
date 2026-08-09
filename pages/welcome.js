@@ -19,13 +19,21 @@ export default function Welcome() {
       // Проверяем, есть ли профиль
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, company_id')
+        .select('user_id, company_id, deleted_at')
         .eq('user_id', user.id)
         .maybeSingle()
 
-      if (profile?.company_id) {
-        // Уже привязан к компании — на главную
+      if (profile?.company_id && !profile.deleted_at) {
+        // Уже привязан к компании и активен — на главную
         router.push('/')
+        return
+      }
+
+      if (profile?.deleted_at) {
+        // Профиль мягко удалён (сотрудник уволен/деактивирован) — доступа
+        // в личный кабинет больше нет. НЕ пытаемся принять старые
+        // приглашения повторно, просто показываем сообщение.
+        setLoading(false)
         return
       }
 

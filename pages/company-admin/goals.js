@@ -46,7 +46,7 @@ function GoalsPage() {
   const loadData = async (compId) => {
     const [goalsRes, empRes] = await Promise.all([
       supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).not('role_id', 'in', '(1,2)').is('deleted_at', null)
+      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).eq('is_company_admin', false).is('deleted_at', null)
     ])
     setGoals(goalsRes.data || [])
     setEmployees(empRes.data || [])
@@ -248,4 +248,4 @@ function GoalsPage() {
   )
 }
 
-export default withAuth(GoalsPage, [1, 2])
+export default withAuth(GoalsPage, { permission: 'can_review_tasks' })

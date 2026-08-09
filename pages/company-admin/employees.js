@@ -174,7 +174,7 @@ function EmployeesPage() {
       can_manage_employees: editForm.can_manage_employees,
       can_delete_employees: editForm.can_delete_employees,
       display_name: `${editForm.first_name} ${editForm.last_name}`.trim() || editForm.email
-    }).eq('id', editingEmployee.id)
+    }).eq('user_id', editingEmployee.user_id)
     if (!error) {
       setEditingEmployee(null)
       loadData(companyId)
@@ -184,12 +184,23 @@ function EmployeesPage() {
     }
   }
 
-  const handleDeleteEmployee = async (empId) => {
+  const handleDeleteEmployee = async (empUserId) => {
     if (!myProfile?.can_delete_employees && !isCompanyAdmin(myProfile)) {
       showNotification('У вас нет прав на удаление сотрудников')
       return
     }
-    await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', empId)
+    // В profiles нет колонки id — первичный идентификатор это user_id.
+    // Раньше здесь было .eq('id', empId), которое всегда падало с ошибкой
+    // "column profiles.id does not exist" и молча ничего не удаляло —
+    // при этом уведомление "Сотрудник удалён" показывалось в любом случае.
+    const { error } = await supabase
+      .from('profiles')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('user_id', empUserId)
+    if (error) {
+      showNotification('Ошибка удаления: ' + error.message)
+      return
+    }
     loadData(companyId)
     showNotification('Сотрудник удалён')
   }
@@ -229,14 +240,14 @@ function EmployeesPage() {
           </thead>
           <tbody>
             {employees.map(emp => (
-              <tr key={emp.id} className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
+              <tr key={emp.user_id} className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
                 <td className="py-3 pr-4">{emp.display_name || emp.email}</td>
                 <td className="py-3 pr-4 text-gray-400">{emp.email}</td>
                 <td className="py-3 pr-4">{emp.positions?.title || '—'}</td>
                 <td className="py-3 pr-4">{roleLabel(emp)}</td>
                 <td className="py-3" onClick={e => e.stopPropagation()}>
                   {canDelete && (
-                    <button onClick={() => handleDeleteEmployee(emp.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                    <button onClick={() => handleDeleteEmployee(emp.user_id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
                   )}
                 </td>
               </tr>
