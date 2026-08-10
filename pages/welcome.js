@@ -19,9 +19,17 @@ export default function Welcome() {
       // Проверяем, есть ли профиль
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, company_id, deleted_at')
+        .select('user_id, company_id, role_id, deleted_at')
         .eq('user_id', user.id)
         .maybeSingle()
+
+      // Супер-админ платформы (role_id=1 AND company_id=null) — это не
+      // "нет компании", а осознанный инвариант, см. lib/auth.js. Не гоняем
+      // его через проверку приглашений, сразу на главную.
+      if (profile && !profile.deleted_at && profile.role_id === 1 && profile.company_id == null) {
+        router.push('/')
+        return
+      }
 
       if (profile?.company_id && !profile.deleted_at) {
         // Уже привязан к компании и активен — на главную

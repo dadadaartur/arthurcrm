@@ -4,6 +4,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
+import { isSuperAdmin } from '../lib/permissions'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -265,10 +266,14 @@ export default function Home() {
     // ИЛИ профиль есть, но без company_id (обычный сценарий для только что
     // зарегистрированного пользователя — handle_new_user() создаёт голый
     // профиль сразу при signUp, ДО того как он попадёт в компанию через
-    // create-company/invite). Раньше здесь проверялось только !profile,
-    // что почти никогда не срабатывает, поэтому пустой дашборд показывался
-    // вместо экрана /welcome.
-    if (!loading && (!profile || !profile.company_id)) {
+    // create-company/invite). ИСКЛЮЧЕНИЕ: у супер-админа платформы
+    // company_id ВСЕГДА null — это часть инварианта (role_id=1 AND
+    // company_id IS NULL, см. lib/auth.js), а не "нет компании". Без этой
+    // проверки супер-админ попадал в бесконечный редирект-цикл:
+    // index.js → /welcome (нет company_id) → check-and-accept находит
+    // существующий профиль (already_member) → router.push('/') → снова
+    // index.js видит !company_id → /welcome → ...
+    if (!loading && !isSuperAdmin(profile) && (!profile || !profile.company_id)) {
       router.push('/welcome')
       return
     }

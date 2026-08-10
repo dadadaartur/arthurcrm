@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 
 // ВАЖНО: раньше по этому пути (pages/create-company.js — сама СТРАНИЦА)
@@ -20,7 +19,6 @@ import { supabase } from '../lib/supabaseClient'
 //  - компания создаётся со статусом 'pending' и ждёт модерации
 //    супер-админом в /platform-admin — это отдельный экран в Layout.js.
 export default function CreateCompany() {
-  const router = useRouter()
   const [step, setStep] = useState('form') // 'form' | 'success'
   const [form, setForm] = useState({
     email: '',
@@ -102,10 +100,14 @@ export default function CreateCompany() {
       }
 
       if (hasSession) {
-        // Подтверждение email не требуется — пользователь уже вошёл,
-        // сразу на главную (там его встретит экран "заявка на модерации",
-        // пока супер-админ не одобрит компанию).
-        router.push('/')
+        // Подтверждение email не требуется — пользователь уже вошёл.
+        // ВАЖНО: обычный router.push('/') тут не годится — это клиентская
+        // навигация без перезагрузки, а ProfileContext ещё не успевает
+        // подхватить только что созданную сессию (гонка состояний), из-за
+        // чего на секунду мелькает публичный лендинг вместо личного
+        // кабинета. window.location.href делает полную перезагрузку,
+        // ProfileContext инициализируется заново уже с готовой сессией.
+        window.location.href = '/'
         return
       }
 
