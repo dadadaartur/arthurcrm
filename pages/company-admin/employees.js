@@ -211,6 +211,14 @@ function EmployeesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      {notification.show && (
+        <div
+          className="fixed top-4 right-4 z-[1100] px-4 py-3 rounded-lg text-sm"
+          style={{ background: 'rgba(10,10,15,0.9)', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700' }}
+        >
+          {notification.message}
+        </div>
+      )}
       <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление командой</h1>
 
@@ -280,10 +288,131 @@ function EmployeesPage() {
         </div>
       )}
 
-      {/* Модалки остаются без изменений в разметке — добавлены чекбоксы прав,
-          см. PERMISSION_FIELDS. Разметку модалок в проекте нужно дополнить
-          полями role_id (select из companyRoles) и PERMISSION_FIELDS.map(...) —
-          логика состояния (editForm/newEmployee) уже это поддерживает. */}
+      {/* Добавление сотрудника — раньше состояние (showAddModal, newEmployee)
+          существовало и обновлялось по клику, но JSX самой модалки не было
+          дописано, поэтому кнопка "Добавить сотрудника" ничего не показывала. */}
+      <PremiumModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Добавить сотрудника" showCloseButton={false}>
+        <div className="space-y-3 text-left">
+          <input
+            type="email"
+            className="input-field w-full"
+            placeholder="Email сотрудника"
+            value={newEmployee.email}
+            onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })}
+          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="input-field w-full"
+              placeholder="Имя"
+              value={newEmployee.first_name}
+              onChange={e => setNewEmployee({ ...newEmployee, first_name: e.target.value })}
+            />
+            <input
+              type="text"
+              className="input-field w-full"
+              placeholder="Фамилия"
+              value={newEmployee.last_name}
+              onChange={e => setNewEmployee({ ...newEmployee, last_name: e.target.value })}
+            />
+          </div>
+          <select
+            className="input-field w-full"
+            value={newEmployee.position_id}
+            onChange={e => setNewEmployee({ ...newEmployee, position_id: e.target.value })}
+          >
+            <option value="">Без должности</option>
+            {positions.map(pos => (
+              <option key={pos.id} value={pos.id}>{pos.title}</option>
+            ))}
+          </select>
+          <select
+            className="input-field w-full"
+            value={newEmployee.role_id}
+            onChange={e => setNewEmployee({ ...newEmployee, role_id: e.target.value })}
+          >
+            <option value="">Без роли</option>
+            {companyRoles.map(role => (
+              <option key={role.id} value={role.id}>{role.name}</option>
+            ))}
+          </select>
+          <div className="space-y-1 pt-1">
+            {PERMISSION_FIELDS.map(field => (
+              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={!!newEmployee[field.key]}
+                  onChange={e => setNewEmployee({ ...newEmployee, [field.key]: e.target.checked })}
+                />
+                {field.label}
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={() => setShowAddModal(false)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
+            <button onClick={handleAddEmployee} className="btn-gold text-sm px-4 py-2 flex-1">Пригласить</button>
+          </div>
+        </div>
+      </PremiumModal>
+
+      {/* Редактирование сотрудника — та же ситуация: состояние (editingEmployee,
+          editForm) уже было готово, модалки не было. */}
+      <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника" showCloseButton={false}>
+        <div className="space-y-3 text-left">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="input-field w-full"
+              placeholder="Имя"
+              value={editForm.first_name}
+              onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
+            />
+            <input
+              type="text"
+              className="input-field w-full"
+              placeholder="Фамилия"
+              value={editForm.last_name}
+              onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
+            />
+          </div>
+          <select
+            className="input-field w-full"
+            value={editForm.position_id}
+            onChange={e => setEditForm({ ...editForm, position_id: e.target.value })}
+          >
+            <option value="">Без должности</option>
+            {positions.map(pos => (
+              <option key={pos.id} value={pos.id}>{pos.title}</option>
+            ))}
+          </select>
+          <select
+            className="input-field w-full"
+            value={editForm.role_id}
+            onChange={e => setEditForm({ ...editForm, role_id: e.target.value })}
+          >
+            <option value="">Без роли</option>
+            {companyRoles.map(role => (
+              <option key={role.id} value={role.id}>{role.name}</option>
+            ))}
+          </select>
+          <div className="space-y-1 pt-1">
+            {PERMISSION_FIELDS.map(field => (
+              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={!!editForm[field.key]}
+                  onChange={e => setEditForm({ ...editForm, [field.key]: e.target.checked })}
+                />
+                {field.label}
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={() => setEditingEmployee(null)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
+            <button onClick={handleSaveEdit} className="btn-gold text-sm px-4 py-2 flex-1">Сохранить</button>
+          </div>
+        </div>
+      </PremiumModal>
     </div>
   )
 }
