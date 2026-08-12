@@ -4,32 +4,6 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
 
-function StarsBackground() {
-  useEffect(() => {
-    const container = document.getElementById('real-stars')
-    if (!container || container.children.length > 0) return
-
-    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
-    for (let i = 0; i < 40; i++) {
-      const star = document.createElement('div')
-      const size = Math.random() * 4 + 1.5
-      star.style.width = size + 'px'
-      star.style.height = size + 'px'
-      star.style.borderRadius = '50%'
-      star.style.background = colors[Math.floor(Math.random() * colors.length)]
-      star.style.position = 'absolute'
-      star.style.left = Math.random() * 100 + '%'
-      star.style.top = Math.random() * 100 + '%'
-      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
-      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
-      star.style.animationDelay = Math.random() * 5 + 's'
-      star.style.opacity = '0'
-      container.appendChild(star)
-    }
-  }, [])
-  return <div id="real-stars" className="stars-bg" />
-}
-
 export default function Layout({ children }) {
   const { user, profile, loading } = useProfile()
   const [companyName, setCompanyName] = useState('')
@@ -94,22 +68,21 @@ export default function Layout({ children }) {
   // Скелетон на время загрузки профиля
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <header className="flex justify-between items-center px-6 py-2 relative z-10">
+      <div className="lumen-shell min-h-screen flex flex-col">
+        <header className="flex justify-between items-center px-6 py-4 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-32 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
             <div className="flex gap-2">
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
+              <div className="h-6 w-16 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
+              <div className="h-6 w-16 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
+              <div className="h-6 w-14 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
+              <div className="h-6 w-14 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-20 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
+            <div className="h-6 w-6 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
+            <div className="h-6 w-12 rounded-full animate-pulse" style={{ background: 'var(--lumen-line)' }}></div>
           </div>
         </header>
         <main className="flex-grow relative z-10">{children}</main>
@@ -148,15 +121,15 @@ export default function Layout({ children }) {
 
   if (isBlockedByModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
+      <div className="lumen-shell min-h-screen flex items-center justify-center px-4">
         <div className="premium-card max-w-md text-center">
-          <h1 className="text-xl font-bold text-red-400 mb-3">
+          <h1 className="text-xl font-semibold mb-3" style={{ color: 'var(--lumen-red)', fontFamily: 'var(--lumen-font-display)' }}>
             {companyStatus === 'suspended' ? 'Компания заблокирована' : 'Заявка компании отклонена'}
           </h1>
-          <p className="text-gray-400 mb-4">
+          <p className="mb-5" style={{ color: 'var(--lumen-ink-soft)' }}>
             {profile.companies.status_reason || 'Обратитесь в поддержку Кармического банка для уточнения деталей.'}
           </p>
-          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
+          <button onClick={handleLogout} className="btn-lumen-outline text-sm">Выйти</button>
         </div>
       </div>
     )
@@ -169,14 +142,14 @@ export default function Layout({ children }) {
   // интерфейс как обычно (им нужно попасть в platform-admin, чтобы одобрить).
   if (isPendingModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
+      <div className="lumen-shell min-h-screen flex items-center justify-center px-4">
         <div className="premium-card max-w-md text-center">
-          <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
-          <p className="text-gray-400 mb-4">
+          <h1 className="text-xl font-semibold mb-3" style={{ color: 'var(--lumen-gold-strong)', fontFamily: 'var(--lumen-font-display)' }}>Заявка на модерации</h1>
+          <p className="mb-5" style={{ color: 'var(--lumen-ink-soft)' }}>
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
             Обычно это занимает немного времени — как только заявку одобрят, здесь появится полный доступ.
           </p>
-          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
+          <button onClick={handleLogout} className="btn-lumen-outline text-sm">Выйти</button>
         </div>
       </div>
     )
@@ -191,14 +164,21 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
-      <StarsBackground />
-      <header className="flex justify-between items-center px-6 py-2 relative z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+    <div className="lumen-shell min-h-screen flex flex-col">
+      <header
+        className="flex justify-between items-center px-6 py-3 relative z-10"
+        style={{ borderBottom: '1px solid var(--lumen-line)', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0 }}
+      >
+        <div className="flex items-center gap-5">
+          <Link
+            href="/"
+            className="text-base font-semibold"
+            style={{ fontFamily: 'var(--lumen-font-display)', color: 'var(--lumen-ink)' }}
+          >
             Кармический банк
           </Link>
-          <nav className="flex gap-2 text-xs font-medium">
+          <div className="lumen-hairline" style={{ width: 1, height: 20, background: 'var(--lumen-line)', animation: 'none', opacity: 1 }} />
+          <nav className="flex gap-2 text-xs font-medium flex-wrap">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
@@ -215,12 +195,15 @@ export default function Layout({ children }) {
         </div>
 
         <div className="flex items-center gap-4 text-xs font-medium">
-          {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-          <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
+          {companyName && <span style={{ color: 'var(--lumen-ink-faint)' }}>{companyName}</span>}
+          <Link href="/profile" className="flex items-center gap-2 transition-colors" style={{ color: 'var(--lumen-ink)' }}>
             {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+              <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" style={{ border: '1px solid var(--lumen-line)' }} />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
+                style={{ background: 'var(--lumen-surface-2)', border: '1px solid var(--lumen-line)', color: 'var(--lumen-ink-soft)' }}
+              >
                 {getInitials()}
               </div>
             )}
@@ -232,7 +215,7 @@ export default function Layout({ children }) {
 
       <main className="flex-grow relative z-10">{children}</main>
 
-      <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
+      <footer className="text-center py-5 text-xs relative z-10" style={{ color: 'var(--lumen-ink-faint)' }}>
         © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>

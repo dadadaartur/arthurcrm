@@ -35,7 +35,7 @@ export function withAuth(Component, options = {}) {
 
     if (loading || !profile) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="min-h-screen flex items-center justify-center lumen-shell">
           <Spinner />
         </div>
       )

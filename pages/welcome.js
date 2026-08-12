@@ -73,7 +73,7 @@ export default function Welcome() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Проверка данных...</div>
+        <div className="text-[var(--lumen-ink-soft)]">Проверка данных...</div>
       </div>
     )
   }
@@ -82,10 +82,10 @@ export default function Welcome() {
     <div className="max-w-2xl mx-auto px-6 py-12 text-center">
       <div className="premium-card">
         <h1 className="text-3xl font-bold text-deep-blue mb-4">Добро пожаловать в экосистему</h1>
-        <p className="text-gray-400 mb-6">
+        <p className="text-[var(--lumen-ink-soft)] mb-6">
           Ваш аккаунт ещё не привязан к компании. Обратитесь к администратору для получения приглашения.
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-[var(--lumen-ink-faint)]">
           Если вы уже получили приглашение, перейдите по ссылке из письма ещё раз.
         </p>
       </div>

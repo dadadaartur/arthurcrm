@@ -120,13 +120,13 @@ export default function TasksPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1" title="На главную">
+        <button onClick={() => router.push('/')} className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] transition-colors p-1" title="На главную">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </button>
-        <h1 className="text-2xl font-bold text-white">Мои задания</h1>
-        <div className="ml-auto text-sm text-gray-400">{user?.email}</div>
+        <h1 className="text-2xl font-bold text-[var(--lumen-ink)]">Мои задания</h1>
+        <div className="ml-auto text-sm text-[var(--lumen-ink-soft)]">{user?.email}</div>
       </div>
 
       <div className="flex gap-4 mb-6">
@@ -144,7 +144,7 @@ export default function TasksPage() {
 
       {activeTab !== 'history' && (
         filteredTasks.length === 0 ? (
-          <p className="text-gray-400">Нет заданий</p>
+          <p className="text-[var(--lumen-ink-soft)]">Нет заданий</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredTasks.map(assignment => {
@@ -161,24 +161,24 @@ export default function TasksPage() {
                     <div className="flex items-start gap-3 mb-2">
                       {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
                       <div className="flex-1">
-                        <h3 className="text-white font-semibold">
+                        <h3 className="text-[var(--lumen-ink)] font-semibold">
                           {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
                         </h3>
                         <span className={`px-2 py-0.5 rounded text-xs ${
                           assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
-                          assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-gray-700 text-gray-300'
+                          assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-[var(--lumen-surface-2)] text-[var(--lumen-ink-soft)]'
                         }`}>
                           {assignment.status === 'assigned' ? 'Новое' : assignment.status === 'in_progress' ? 'В работе' : 'На проверке'}
                         </span>
                       </div>
                     </div>
-                    <p className="text-gray-400 text-sm mb-2">
+                    <p className="text-[var(--lumen-ink-soft)] text-sm mb-2">
                       {t ? t.description : 'Описание недоступно'}
                     </p>
                     <div className="flex justify-between items-center text-xs mb-3">
                       <span className="text-yellow-400">+ {t?.reward_karma ?? '?'} кармиков</span>
                       {assignment.deadline_at && (
-                        <span className="text-gray-500 font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+                        <span className="text-[var(--lumen-ink-faint)] font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -208,20 +208,20 @@ export default function TasksPage() {
 
       {activeTab === 'history' && (
         history.length === 0 ? (
-          <p className="text-gray-400">Нет завершённых заданий</p>
+          <p className="text-[var(--lumen-ink-soft)]">Нет завершённых заданий</p>
         ) : (
           <div className="max-h-96 overflow-y-auto space-y-2">
             {history.map(h => {
               const t = h.tasks
               if (!t) return null
               return (
-                <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
+                <div key={h.id} className="flex justify-between items-center p-3 rounded bg-[var(--lumen-surface-2)]">
                   <div>
-                    <span className="text-white">{t.title}</span>
+                    <span className="text-[var(--lumen-ink)]">{t.title}</span>
                     <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
                       {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
                     </span>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
+                    <p className="text-xs text-[var(--lumen-ink-faint)] mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
                   </div>
                   <span className="text-yellow-400 text-sm">+ {t.reward_karma} кармиков</span>
                 </div>
@@ -245,7 +245,7 @@ export default function TasksPage() {
             />
             <div className="flex justify-end gap-3 mt-4">
               <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
-              <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
+              <button onClick={handleSubmit} disabled={submitting} className="btn-lumen">
                 {submitting ? 'Отправка...' : 'Отправить'}
               </button>
             </div>
@@ -259,7 +259,7 @@ export default function TasksPage() {
         onClose={() => setNotification({ show: false, message: '' })}
         title="Информация"
       >
-        <p className="text-white">{notification.message}</p>
+        <p className="text-[var(--lumen-ink)]">{notification.message}</p>
       </PremiumModal>
     </div>
   )

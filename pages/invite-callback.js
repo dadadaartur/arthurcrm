@@ -73,18 +73,18 @@ export default function InviteCallback() {
       <div className="premium-card">
         <h1 className="text-2xl font-bold text-deep-blue mb-4">Активация приглашения</h1>
 
-        {status === 'checking' && <p className="text-gray-400">Проверяем ссылку...</p>}
+        {status === 'checking' && <p className="text-[var(--lumen-ink-soft)]">Проверяем ссылку...</p>}
 
         {status === 'error' && (
           <>
             <p className="text-red-600 text-sm mb-4">{error}</p>
-            <a href="/login" className="btn-gold w-full inline-block text-center">На страницу входа</a>
+            <a href="/login" className="btn-lumen w-full inline-block text-center">На страницу входа</a>
           </>
         )}
 
         {status === 'need_password' && (
           <form onSubmit={finishSetup} className="space-y-4">
-            <p className="text-sm text-gray-400">Придумайте пароль для входа в систему.</p>
+            <p className="text-sm text-[var(--lumen-ink-soft)]">Придумайте пароль для входа в систему.</p>
             <input
               type="password"
               value={newPassword}
@@ -95,7 +95,7 @@ export default function InviteCallback() {
               autoComplete="new-password"
             />
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={saving}>
+            <button type="submit" className="btn-lumen w-full" disabled={saving}>
               {saving ? 'Активация...' : 'Войти в систему'}
             </button>
           </form>
