@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
 import { requireAuth } from '../../../lib/auth'
 
 // Новый, безопасный флоу приглашения сотрудника.
@@ -133,6 +134,12 @@ export default async function handler(req, res) {
       company_id: ctx.profile.company_id,
       role_id: effectiveRoleId,
       status: 'pending',
+      // token — реликт старой схемы приглашений по ссылке (до перехода на
+      // supabase.auth.admin.inviteUserByEmail, который сам генерирует
+      // безопасную одноразовую ссылку). Нигде в коде не читается, но
+      // колонка в БД NOT NULL без дефолта — подставляем случайное
+      // значение просто чтобы удовлетворить схему.
+      token: randomUUID(),
       permissions: { ...safePermissions, first_name: firstName || null, last_name: lastName || null, position_id: positionId || null },
       created_by: ctx.user.id,
       invited_user_id: inviteResult?.user?.id || null
