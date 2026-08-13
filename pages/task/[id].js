@@ -65,35 +65,35 @@ export default function TaskDetail() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <button onClick={() => router.push('/tasks')} className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] mb-6 text-sm">← Назад к заданиям</button>
+      <button onClick={() => router.push('/tasks')} className="text-gray-400 hover:text-white mb-6 text-sm">← Назад к заданиям</button>
 
       <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139, 92, 246, 0.3)' }}>
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">{t.icon || '📋'}</span>
-          <h1 className="text-2xl font-bold text-[var(--lumen-ink)]">{t.title}</h1>
+          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
         </div>
 
-        <p className="text-[var(--lumen-ink-soft)] mb-4">{t.description}</p>
+        <p className="text-gray-400 mb-4">{t.description}</p>
 
         <div className="flex flex-wrap gap-4 text-sm mb-6">
           <div className="flex items-center gap-1">
-            <span className="text-[var(--lumen-ink-soft)]">Награда:</span>
+            <span className="text-gray-400">Награда:</span>
             <span className="text-yellow-400 font-semibold">+{t.reward_karma} кармиков</span>
           </div>
           {assignment.deadline_at && (
             <div className="flex items-center gap-1">
-              <span className="text-[var(--lumen-ink-soft)]">Дедлайн:</span>
-              <span className="text-[var(--lumen-ink)]">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+              <span className="text-gray-400">Дедлайн:</span>
+              <span className="text-white">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <span className="text-sm text-[var(--lumen-ink-soft)]">Статус:</span>
+          <span className="text-sm text-gray-400">Статус:</span>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
             assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
             assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' :
-            'bg-[var(--lumen-surface-2)] text-[var(--lumen-ink-soft)]'
+            'bg-gray-800 text-gray-400'
           }`}>
             {assignment.status === 'assigned' && 'Новое'}
             {assignment.status === 'in_progress' && 'В работе'}
@@ -104,11 +104,11 @@ export default function TaskDetail() {
         </div>
 
         {assignment.status === 'assigned' && (
-          <button onClick={handleStart} className="btn-lumen w-full">Начать задание</button>
+          <button onClick={handleStart} className="btn-gold w-full">Начать задание</button>
         )}
 
         {assignment.status === 'in_progress' && (
-          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-lumen w-full">
+          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold w-full">
             Отправить на проверку
           </button>
         )}
@@ -120,7 +120,7 @@ export default function TaskDetail() {
         {(assignment.status === 'completed' || assignment.status === 'rejected') && (
           <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
             {assignment.status === 'completed' ? '✅ Задание выполнено' : '❌ Задание отклонено'}
-            {assignment.comment && <p className="text-sm mt-1 text-[var(--lumen-ink-soft)]">Комментарий: {assignment.comment}</p>}
+            {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
           </div>
         )}
       </div>
@@ -140,7 +140,7 @@ export default function TaskDetail() {
         />
         <div className="flex justify-end gap-3 mt-4">
           <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
-          <button onClick={handleSubmit} disabled={submitting} className="btn-lumen">
+          <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
             {submitting ? 'Отправка...' : 'Отправить'}
           </button>
         </div>

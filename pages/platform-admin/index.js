@@ -116,7 +116,7 @@ export default function PlatformAdmin() {
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <div className="premium-card">
           <h1 className="text-xl font-bold mb-2">Нет доступа</h1>
-          <p className="text-[var(--lumen-ink-soft)]">Этот раздел доступен только сотрудникам Кармического банка.</p>
+          <p className="text-gray-400">Этот раздел доступен только сотрудникам Кармического банка.</p>
         </div>
       </div>
     )
@@ -125,21 +125,21 @@ export default function PlatformAdmin() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <h1 className="text-2xl font-bold mb-2" style={{ color: '#d4af37' }}>Кабинет модератора площадки</h1>
-      <p className="text-sm text-[var(--lumen-ink-soft)] mb-8">
+      <p className="text-sm text-gray-400 mb-8">
         {me?.isSuperAdmin ? 'Супер-админ' : `Модератор · права: ${me?.permissions?.join(', ') || '—'}`}
       </p>
 
-      <div className="flex gap-4 mb-6 border-b border-[var(--lumen-line-strong)]">
+      <div className="flex gap-4 mb-6 border-b border-gray-700">
         <button
           onClick={() => setTab('companies')}
-          className={`pb-2 text-sm ${tab === 'companies' ? 'text-gold border-b-2 border-gold' : 'text-[var(--lumen-ink-soft)]'}`}
+          className={`pb-2 text-sm ${tab === 'companies' ? 'text-gold border-b-2 border-gold' : 'text-gray-400'}`}
         >
           Компании
         </button>
         {me?.isSuperAdmin && (
           <button
             onClick={() => setTab('moderators')}
-            className={`pb-2 text-sm ${tab === 'moderators' ? 'text-gold border-b-2 border-gold' : 'text-[var(--lumen-ink-soft)]'}`}
+            className={`pb-2 text-sm ${tab === 'moderators' ? 'text-gold border-b-2 border-gold' : 'text-gray-400'}`}
           >
             Модераторы
           </button>
@@ -150,7 +150,7 @@ export default function PlatformAdmin() {
         <div>
           <div className="pastel-card p-4 mb-6">
             <h3 className="font-bold mb-3">Назначить модератора</h3>
-            <p className="text-xs text-[var(--lumen-ink-faint)] mb-3">
+            <p className="text-xs text-gray-500 mb-3">
               Пользователь должен уже иметь аккаунт в системе (зарегистрироваться самостоятельно) — здесь мы только
               выдаём ему права модератора площадки, без доступа к какой-либо конкретной компании.
             </p>
@@ -166,19 +166,19 @@ export default function PlatformAdmin() {
                 </label>
               ))}
             </div>
-            <button onClick={addModerator} className="btn-lumen text-sm px-4 py-2">Назначить</button>
+            <button onClick={addModerator} className="btn-gold text-sm px-4 py-2">Назначить</button>
           </div>
 
           <div className="pastel-card overflow-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-[var(--lumen-ink-soft)] border-b border-[var(--lumen-line-strong)]">
+              <thead className="text-gray-400 border-b border-gray-700">
                 <tr><th className="py-2 pr-4">Имя</th><th className="py-2 pr-4">Права</th><th className="py-2 pr-4">Статус</th><th className="py-2">Действия</th></tr>
               </thead>
               <tbody>
                 {moderators.map(m => (
-                  <tr key={m.id} className="border-b border-[var(--lumen-line)]">
+                  <tr key={m.id} className="border-b border-gray-800">
                     <td className="py-2 pr-4">{m.display_name}</td>
-                    <td className="py-2 pr-4 text-xs text-[var(--lumen-ink-soft)]">{(m.permissions || []).join(', ') || '—'}</td>
+                    <td className="py-2 pr-4 text-xs text-gray-400">{(m.permissions || []).join(', ') || '—'}</td>
                     <td className="py-2 pr-4">{m.active ? 'активен' : 'отключён'}</td>
                     <td className="py-2">
                       {m.active && (
@@ -187,7 +187,7 @@ export default function PlatformAdmin() {
                     </td>
                   </tr>
                 ))}
-                {moderators.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-[var(--lumen-ink-faint)]">Модераторов пока нет</td></tr>}
+                {moderators.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-gray-500">Модераторов пока нет</td></tr>}
               </tbody>
             </table>
           </div>
@@ -220,7 +220,7 @@ export default function PlatformAdmin() {
       ) : (
         <div className="pastel-card overflow-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-[var(--lumen-ink-soft)] border-b border-[var(--lumen-line-strong)]">
+            <thead className="text-gray-400 border-b border-gray-700">
               <tr>
                 <th className="py-2 pr-4">Компания</th>
                 <th className="py-2 pr-4">Сотрудников</th>
@@ -231,19 +231,19 @@ export default function PlatformAdmin() {
             </thead>
             <tbody>
               {companies.map(c => (
-                <tr key={c.id} className="border-b border-[var(--lumen-line)]">
+                <tr key={c.id} className="border-b border-gray-800">
                   <td className="py-3 pr-4">
                     <div className="font-medium">{c.name}</div>
-                    {c.description && <div className="text-xs text-[var(--lumen-ink-faint)] max-w-xs truncate">{c.description}</div>}
+                    {c.description && <div className="text-xs text-gray-500 max-w-xs truncate">{c.description}</div>}
                   </td>
                   <td className="py-3 pr-4">{c.employeeCount}</td>
                   <td className="py-3 pr-4">
                     <span style={{ color: STATUS_LABELS[c.status]?.color || '#999' }}>
                       {STATUS_LABELS[c.status]?.label || c.status}
                     </span>
-                    {c.status_reason && <div className="text-xs text-[var(--lumen-ink-faint)]">{c.status_reason}</div>}
+                    {c.status_reason && <div className="text-xs text-gray-500">{c.status_reason}</div>}
                   </td>
-                  <td className="py-3 pr-4 text-[var(--lumen-ink-soft)]">{new Date(c.created_at).toLocaleDateString('ru')}</td>
+                  <td className="py-3 pr-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ru')}</td>
                   <td className="py-3">
                     <div className="flex gap-2 flex-wrap">
                       {c.status !== 'active' && (
@@ -253,14 +253,14 @@ export default function PlatformAdmin() {
                         <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'suspended' })} className="text-xs text-red-400 hover:text-red-300">Заблокировать</button>
                       )}
                       {c.status === 'pending' && (
-                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'rejected' })} className="text-xs text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink-soft)]">Отклонить</button>
+                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'rejected' })} className="text-xs text-gray-400 hover:text-gray-400">Отклонить</button>
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
               {companies.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-[var(--lumen-ink-faint)]">Нет компаний по заданному фильтру</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-gray-500">Нет компаний по заданному фильтру</td></tr>
               )}
             </tbody>
           </table>
@@ -285,7 +285,7 @@ export default function PlatformAdmin() {
               <button onClick={() => { setReasonModal(null); setReason('') }} className="btn-outline text-sm px-4 py-2">Отмена</button>
               <button
                 onClick={() => applyStatus(reasonModal.companyId, reasonModal.targetStatus, reason)}
-                className="btn-lumen text-sm px-4 py-2"
+                className="btn-gold text-sm px-4 py-2"
               >
                 Подтвердить
               </button>

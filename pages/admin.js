@@ -138,11 +138,11 @@ export default function Admin() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Левая колонка */}
           <div className="w-full lg:w-1/3">
-            <div className="card-lumen mb-6">
+            <div className="dash-card mb-6">
               <h3>Дашборд</h3>
               {/* ... */}
             </div>
-            <div className="card-lumen mb-6">
+            <div className="dash-card mb-6">
               <h3>Фильтры</h3>
               <div className="flex flex-wrap gap-2 mt-4">
                 {Object.entries(COLORS).map(([key, val]) => (
@@ -158,7 +158,7 @@ export default function Admin() {
           {/* Правая колонка (стикеры) */}
           <div className="flex-1">
             {/* Форма создания */}
-            <div className="card-lumen mb-6">
+            <div className="dash-card mb-6">
               <h3>Новый стикер</h3>
               <form onSubmit={createSticker} className="space-y-4 mt-4">
                 <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Опишите задачу или идею..." className="input-field" rows={3} required />
@@ -169,7 +169,7 @@ export default function Admin() {
                     <option value="green">🟢 Идея на будущее</option>
                     <option value="blue">🔵 Путь проекта</option>
                   </select>
-                  <button type="submit" className="btn-lumen">Создать</button>
+                  <button type="submit" className="btn-gold">Создать</button>
                 </div>
               </form>
             </div>
@@ -200,7 +200,7 @@ export default function Admin() {
       {tab === 'knowledge' && (
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-1/3">
-            <div className="card-lumen mb-6">
+            <div className="dash-card mb-6">
               <h3>Фильтры по тегам</h3>
               <div className="flex flex-wrap gap-2 mt-4">
                 {KB_TAGS.map(tag => (
@@ -213,7 +213,7 @@ export default function Admin() {
             </div>
           </div>
           <div className="flex-1">
-            <div className="card-lumen mb-6">
+            <div className="dash-card mb-6">
               <h3>Новая запись в базу знаний</h3>
               <form onSubmit={createKbEntry} className="space-y-4 mt-4">
                 <textarea value={kbContent} onChange={e => setKbContent(e.target.value)} placeholder="Описание технического решения, заглушки или идеи..." className="input-field" rows={4} required />
@@ -225,7 +225,7 @@ export default function Admin() {
                     </button>
                   ))}
                 </div>
-                <button type="submit" className="btn-lumen">Добавить в базу</button>
+                <button type="submit" className="btn-gold">Добавить в базу</button>
               </form>
             </div>
             <div className="space-y-4">
@@ -236,7 +236,7 @@ export default function Admin() {
                   <div key={entry.id} className="premium-card relative flex flex-col" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.4)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)', color: '#FFFFFF' }}>
                     <div className="flex flex-wrap gap-1 mb-2">
                       {tags.map(tag => (
-                        <span key={tag} className="text-xs bg-[var(--lumen-surface-2)] px-2 py-0.5 rounded-full text-[var(--lumen-ink-soft)]">{tag}</span>
+                        <span key={tag} className="text-xs bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">{tag}</span>
                       ))}
                     </div>
                     <p className="text-sm whitespace-pre-wrap">{contentWithoutTags}</p>

@@ -81,21 +81,21 @@ export default function Events() {
             />
             <span className="text-sm">Значимое событие (требует подтверждения)</span>
           </label>
-          <button type="submit" className="btn-lumen">Записать событие</button>
+          <button type="submit" className="btn-gold">Записать событие</button>
         </form>
       </div>
 
       <div className="premium-card">
         <h2 className="text-xl font-semibold mb-4">Мои события</h2>
         {events.length === 0 ? (
-          <p className="text-[var(--lumen-ink-faint)]">Нет событий</p>
+          <p className="text-gray-500">Нет событий</p>
         ) : (
           <ul className="space-y-3">
             {events.map(event => (
               <li key={event.id} className="flex justify-between items-center border-b pb-2">
                 <div>
                   <p className="font-medium">{event.description}</p>
-                  <p className="text-xs text-[var(--lumen-ink-soft)]">
+                  <p className="text-xs text-gray-400">
                     Статус: {event.status === 'auto_approved' ? 'Автоматически одобрено' :
                              event.status === 'pending' ? 'Ожидает подтверждения' :
                              event.status === 'approved' ? 'Подтверждено' : 'Отклонено'}

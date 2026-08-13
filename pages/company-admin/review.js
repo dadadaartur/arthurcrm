@@ -65,23 +65,23 @@ function ReviewPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] text-sm mb-6 inline-block">← Назад</Link>
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Задания на проверке</h1>
-      <div className="card-lumen">
+      <div className="dash-card">
         {pendingReviews.length === 0 ? (
-          <p className="text-[var(--lumen-ink-soft)]">Нет заданий, ожидающих проверки</p>
+          <p className="text-gray-400">Нет заданий, ожидающих проверки</p>
         ) : (
           <div className="space-y-4">
             {pendingReviews.map(item => (
               <div key={item.id} className="premium-card flex justify-between items-center">
                 <div>
-                  <h4 className="text-[var(--lumen-ink)] font-semibold">{item.tasks.title}</h4>
-                  <p className="text-sm text-[var(--lumen-ink-soft)]">Сотрудник: {item.employee_name || item.employee_email}</p>
+                  <h4 className="text-white font-semibold">{item.tasks.title}</h4>
+                  <p className="text-sm text-gray-400">Сотрудник: {item.employee_name || item.employee_email}</p>
                   <p className="text-sm text-yellow-400">Награда: + {item.tasks.reward_karma} кармиков</p>
-                  {item.comment && <p className="text-sm text-[var(--lumen-ink-soft)] mt-1">Комментарий: {item.comment}</p>}
+                  {item.comment && <p className="text-sm text-gray-400 mt-1">Комментарий: {item.comment}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleReview(item.id, 'approve')} className="btn-lumen text-xs px-3 py-1.5">Одобрить</button>
+                  <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
                   <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
                 </div>
               </div>
@@ -91,7 +91,7 @@ function ReviewPage() {
       </div>
 
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
-        <p className="text-[var(--lumen-ink)]">{successModal.message}</p>
+        <p className="text-white">{successModal.message}</p>
       </PremiumModal>
     </div>
   )

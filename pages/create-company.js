@@ -124,10 +124,10 @@ export default function CreateCompany() {
       <div className="max-w-md mx-auto px-4 py-12">
         <div className="premium-card text-center">
           <h1 className="text-2xl font-bold text-deep-blue mb-4">Почти готово</h1>
-          <p className="text-[var(--lumen-ink-soft)] mb-2">
+          <p className="text-gray-400 mb-2">
             Мы отправили письмо для подтверждения на <b>{form.email.trim().toLowerCase()}</b>.
           </p>
-          <p className="text-[var(--lumen-ink-soft)]">
+          <p className="text-gray-400">
             Подтвердите email, затем войдите — компания «{form.name.trim()}» уже создана
             и отправлена на модерацию администратору Кармического банка.
           </p>
@@ -141,7 +141,7 @@ export default function CreateCompany() {
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
         <h1 className="text-2xl font-bold text-deep-blue mb-2">Регистрация компании</h1>
-        <p className="text-sm text-[var(--lumen-ink-soft)] mb-4">
+        <p className="text-sm text-gray-400 mb-4">
           Эта форма — для руководителя, который заводит компанию с нуля.
           Если вас пригласили как сотрудника — используйте ссылку из письма-приглашения, а не эту форму.
         </p>
@@ -187,12 +187,12 @@ export default function CreateCompany() {
             required
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button type="submit" className="btn-lumen w-full" disabled={loading}>
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? 'Создаём...' : 'Создать компанию'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-[var(--lumen-ink-soft)]">
+        <div className="mt-6 text-center text-sm text-gray-400">
           Уже есть аккаунт?{' '}
           <a href="/login" className="text-gold hover:underline">Войти</a>
         </div>

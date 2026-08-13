@@ -74,9 +74,9 @@ function HistoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] text-sm mb-6 inline-block">← Назад</Link>
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>История заданий</h1>
-      <div className="card-lumen">
+      <div className="dash-card">
         <div className="flex flex-wrap gap-4 mb-4">
           <select className="input-field w-auto" value={filter.status} onChange={e => setFilter({...filter, status: e.target.value})}>
             <option value="">Все статусы</option>
@@ -86,20 +86,20 @@ function HistoryPage() {
           <input type="text" placeholder="Сотрудник (email)" className="input-field w-auto" value={filter.employee} onChange={e => setFilter({...filter, employee: e.target.value})} />
           <input type="date" className="input-field w-auto" value={filter.dateFrom} onChange={e => setFilter({...filter, dateFrom: e.target.value})} />
           <input type="date" className="input-field w-auto" value={filter.dateTo} onChange={e => setFilter({...filter, dateTo: e.target.value})} />
-          <button onClick={() => { setPage(0); fetchHistory(); }} className="btn-lumen text-xs px-4">Применить</button>
+          <button onClick={() => { setPage(0); fetchHistory(); }} className="btn-gold text-xs px-4">Применить</button>
         </div>
         <div className="max-h-80 overflow-y-auto space-y-2">
           {history.length === 0 ? (
-            <p className="text-[var(--lumen-ink-soft)]">Нет записей</p>
+            <p className="text-gray-400">Нет записей</p>
           ) : (
             history.map(h => (
-              <div key={h.id} className="flex justify-between items-center p-2 rounded bg-[var(--lumen-surface-2)]">
+              <div key={h.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
                 <div>
-                  <span className="text-[var(--lumen-ink)]">{h.tasks?.title}</span>
+                  <span className="text-white">{h.tasks?.title}</span>
                   <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
-                  <span className="text-[var(--lumen-ink-faint)] ml-2">{h.employee_email}</span>
-                  {h.comment && <span className="text-[var(--lumen-ink-faint)] ml-2">— {h.comment}</span>}
-                  <span className="text-xs text-[var(--lumen-ink-faint)] ml-2">{new Date(h.completed_at).toLocaleString('ru')}</span>
+                  <span className="text-gray-500 ml-2">{h.employee_email}</span>
+                  {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
+                  <span className="text-xs text-gray-500 ml-2">{new Date(h.completed_at).toLocaleString('ru')}</span>
                 </div>
                 <span className="text-sm text-yellow-400">+ {h.tasks?.reward_karma} кармиков</span>
               </div>

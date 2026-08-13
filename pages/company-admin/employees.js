@@ -219,7 +219,7 @@ function EmployeesPage() {
           {notification.message}
         </div>
       )}
-      <Link href="/company-admin" className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] text-sm mb-6 inline-block">← Назад</Link>
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление командой</h1>
 
       <div className="flex items-center gap-2 mb-4">
@@ -232,12 +232,12 @@ function EmployeesPage() {
           onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
         />
         <button onClick={handleAddPosition} className="btn-outline text-sm px-3 py-2">Добавить должность</button>
-        <button onClick={() => setShowAddModal(true)} className="btn-lumen text-sm px-4 py-2 ml-auto">Добавить сотрудника</button>
+        <button onClick={() => setShowAddModal(true)} className="btn-gold text-sm px-4 py-2 ml-auto">Добавить сотрудника</button>
       </div>
 
       <div className="pastel-card overflow-auto max-h-[70vh]">
         <table className="w-full text-left text-sm">
-          <thead className="text-[var(--lumen-ink-soft)] border-b border-[var(--lumen-line-strong)]">
+          <thead className="text-gray-400 border-b border-gray-700">
             <tr>
               <th className="py-2 pr-4">Имя</th>
               <th className="py-2 pr-4">Email</th>
@@ -248,9 +248,9 @@ function EmployeesPage() {
           </thead>
           <tbody>
             {employees.map(emp => (
-              <tr key={emp.user_id} className="border-b border-[var(--lumen-line)] hover:bg-[var(--lumen-surface-2)]/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
+              <tr key={emp.user_id} className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
                 <td className="py-3 pr-4">{emp.display_name || emp.email}</td>
-                <td className="py-3 pr-4 text-[var(--lumen-ink-soft)]">{emp.email}</td>
+                <td className="py-3 pr-4 text-gray-400">{emp.email}</td>
                 <td className="py-3 pr-4">{emp.positions?.title || '—'}</td>
                 <td className="py-3 pr-4">{roleLabel(emp)}</td>
                 <td className="py-3" onClick={e => e.stopPropagation()}>
@@ -266,13 +266,13 @@ function EmployeesPage() {
 
       {pendingInvites.length > 0 && (
         <div className="pastel-card mt-6 p-4">
-          <h3 className="text-sm text-[var(--lumen-ink-soft)] mb-3">Ожидают активации ({pendingInvites.length})</h3>
+          <h3 className="text-sm text-gray-400 mb-3">Ожидают активации ({pendingInvites.length})</h3>
           <ul className="space-y-2">
             {pendingInvites.map(inv => (
-              <li key={inv.id} className="flex justify-between items-center text-sm text-[var(--lumen-ink-soft)]">
+              <li key={inv.id} className="flex justify-between items-center text-sm text-gray-400">
                 <span>{inv.email}</span>
                 <span className="flex items-center gap-3">
-                  <span className="text-xs text-[var(--lumen-ink-faint)]">
+                  <span className="text-xs text-gray-500">
                     приглашён {new Date(inv.created_at).toLocaleDateString('ru')}
                   </span>
                   <button
@@ -338,7 +338,7 @@ function EmployeesPage() {
           </select>
           <div className="space-y-1 pt-1">
             {PERMISSION_FIELDS.map(field => (
-              <label key={field.key} className="flex items-center gap-2 text-sm text-[var(--lumen-ink-soft)]">
+              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-400">
                 <input
                   type="checkbox"
                   checked={!!newEmployee[field.key]}
@@ -350,7 +350,7 @@ function EmployeesPage() {
           </div>
           <div className="flex gap-2 pt-2">
             <button onClick={() => setShowAddModal(false)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
-            <button onClick={handleAddEmployee} className="btn-lumen text-sm px-4 py-2 flex-1">Пригласить</button>
+            <button onClick={handleAddEmployee} className="btn-gold text-sm px-4 py-2 flex-1">Пригласить</button>
           </div>
         </div>
       </PremiumModal>
@@ -397,7 +397,7 @@ function EmployeesPage() {
           </select>
           <div className="space-y-1 pt-1">
             {PERMISSION_FIELDS.map(field => (
-              <label key={field.key} className="flex items-center gap-2 text-sm text-[var(--lumen-ink-soft)]">
+              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-400">
                 <input
                   type="checkbox"
                   checked={!!editForm[field.key]}
@@ -409,7 +409,7 @@ function EmployeesPage() {
           </div>
           <div className="flex gap-2 pt-2">
             <button onClick={() => setEditingEmployee(null)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
-            <button onClick={handleSaveEdit} className="btn-lumen text-sm px-4 py-2 flex-1">Сохранить</button>
+            <button onClick={handleSaveEdit} className="btn-gold text-sm px-4 py-2 flex-1">Сохранить</button>
           </div>
         </div>
       </PremiumModal>

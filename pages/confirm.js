@@ -58,7 +58,7 @@ export default function Confirm() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-deep-blue mb-6">Подтверждение событий</h1>
-        <p className="text-[var(--lumen-ink-soft)]">У вас нет прав для подтверждения событий.</p>
+        <p className="text-gray-400">У вас нет прав для подтверждения событий.</p>
       </div>
     )
   }
@@ -67,13 +67,13 @@ export default function Confirm() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-deep-blue mb-6">Подтверждение значимых событий</h1>
       {pendingEvents.length === 0 ? (
-        <p className="text-[var(--lumen-ink-faint)]">Нет событий, ожидающих подтверждения</p>
+        <p className="text-gray-500">Нет событий, ожидающих подтверждения</p>
       ) : (
         <ul className="space-y-4">
           {pendingEvents.map(event => (
             <li key={event.id} className="premium-card">
               <p className="font-medium">{event.description}</p>
-              <p className="text-sm text-[var(--lumen-ink-faint)]">Сумма: {event.amount}</p>
+              <p className="text-sm text-gray-500">Сумма: {event.amount}</p>
               <div className="mt-3 flex gap-3">
                 <button onClick={() => handleConfirm(event.id, 'manager')} className="btn-outline text-xs">Подтвердить как руководитель</button>
                 <button onClick={() => handleConfirm(event.id, 'hr')} className="btn-outline text-xs">Подтвердить как HR</button>

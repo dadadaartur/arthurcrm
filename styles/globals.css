@@ -2,39 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* =========================================================================
-   ДИЗАЙН-СИСТЕМА "LUMEN" — светлая премиальная тема для всех страниц,
-   КРОМЕ главной (pages/index.js), у которой своя тёмная "инсталляция"
-   (звёзды/чёрная дыра/orbit). Классы ниже с суффиксом/префиксом lumen,
-   а также переопределённые premium-card/input-field/modal, pastel-card/
-   filter-pill/spinner/action-btn/btn-outline/file-upload-btn — НЕ
-   используются на главной, поэтому их можно спокойно менять.
-   btn-gold/wide-btn/dash-card/black-hole/balance-card/stars-bg и все
-   keyframes ниже (borderShine/blackHolePulse/spin/diskRotate/realTwinkle)
-   используются на главной — оставлены как есть, не трогать.
-   ========================================================================= */
-
-:root {
-  --lumen-bg: #F7F5F0;
-  --lumen-surface: #FFFFFF;
-  --lumen-surface-2: #FBFAF6;
-  --lumen-ink: #14161C;
-  --lumen-ink-soft: #63687A;
-  --lumen-ink-faint: #9A9FAE;
-  --lumen-line: rgba(20, 22, 30, 0.09);
-  --lumen-line-strong: rgba(20, 22, 30, 0.16);
-  --lumen-gold: #B8934C;
-  --lumen-gold-strong: #9C7B3D;
-  --lumen-gold-glow: rgba(184, 147, 76, 0.35);
-  --lumen-violet: #6E62E5;
-  --lumen-violet-glow: rgba(110, 98, 229, 0.30);
-  --lumen-red: #C24B4B;
-  --lumen-green: #3E8A63;
-  --lumen-font-display: 'Fraunces', Georgia, serif;
-  --lumen-font-body: 'Inter', system-ui, sans-serif;
-  --lumen-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-}
-
 * {
   cursor: default !important;
   user-select: none;
@@ -45,10 +12,6 @@ a, button, .clickable, .action-btn, .wide-btn {
 }
 
 *:focus { outline: none !important; }
-*:focus-visible {
-  outline: 2px solid var(--lumen-violet) !important;
-  outline-offset: 2px;
-}
 
 html, body {
   margin: 0 !important;
@@ -60,307 +23,25 @@ html, body {
   position: relative;
 }
 
-/* Тонкий кастомный скроллбар без "стрелок" на концах — нативные стрелки
-   браузера (особенно заметны в Chrome/Windows) визуально портили вид на
-   длинных страницах (главная и остальные). Сам скролл работает как раньше,
-   меняется только внешний вид полосы. */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-button {
-  display: none;
-  width: 0;
-  height: 0;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Тонкий скроллбар без "стрелок" на концах — нативные стрелки браузера
+   (особенно заметны в Chrome/Windows) портили вид на длинных страницах.
+   Сам скролл работает как раньше, меняется только внешний вид полосы. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(184, 147, 76, 0.35);
+  background: rgba(249,115,22,0.35);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(184, 147, 76, 0.55);
+  background: rgba(249,115,22,0.55);
   background-clip: padding-box;
 }
-html {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(184, 147, 76, 0.4) transparent;
-}
+html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent; }
 
-/* Обёртка для всех "обычных" (не главной) страниц — задаётся в Layout.js.
-   Светлый жемчужный фон, дышащие отступы. */
-.lumen-shell {
-  background: var(--lumen-bg);
-  color: var(--lumen-ink);
-  min-height: 100vh;
-}
-.lumen-shell h1, .lumen-shell h2, .lumen-shell h3 {
-  font-family: var(--lumen-font-display);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-/* Фирменная тонкая градиентная линия — сигнатурный элемент системы:
-   золото → фиолетовый → прозрачный, еле заметное дыхание. Использовать
-   точечно (под заголовками разделов), не на каждом элементе. */
-.lumen-hairline {
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(90deg, var(--lumen-gold) 0%, var(--lumen-violet) 45%, transparent 85%);
-  opacity: 0.55;
-  animation: lumenShimmer 6s ease-in-out infinite;
-}
-@keyframes lumenShimmer {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.65; }
-}
-
-/* ===== Кнопки ===== */
-.btn-lumen {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--lumen-ink);
-  color: #FBFAF6;
-  border: 1px solid var(--lumen-ink);
-  border-radius: 999px;
-  padding: 11px 26px;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: box-shadow 0.25s ease, transform 0.25s ease, background 0.25s ease;
-  box-shadow: 0 1px 2px rgba(20,22,30,0.06);
-}
-.btn-lumen:hover {
-  background: #24272F;
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow), 0 6px 18px rgba(20,22,30,0.12);
-  transform: translateY(-1px);
-}
-.btn-lumen:disabled {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-  transform: none;
-}
-
-.btn-lumen-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: transparent;
-  color: var(--lumen-ink);
-  border: 1px solid var(--lumen-line-strong);
-  border-radius: 999px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.25s ease;
-}
-.btn-lumen-outline:hover {
-  border-color: var(--lumen-gold);
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow);
-  transform: translateY(-1px);
-}
-
-.btn-lumen-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: rgba(20,22,30,0.03);
-  color: var(--lumen-ink-soft);
-  border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 7px 16px;
-  font-size: 12.5px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-.btn-lumen-ghost:hover {
-  color: var(--lumen-ink);
-  background: rgba(20,22,30,0.06);
-  border-color: var(--lumen-line);
-}
-.btn-lumen-ghost.is-active {
-  color: var(--lumen-ink);
-  background: var(--lumen-surface);
-  border-color: var(--lumen-gold);
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow);
-}
-
-/* ===== Карточки ===== */
-.card-lumen {
-  background: var(--lumen-surface);
-  border: 1px solid var(--lumen-line);
-  border-radius: 22px;
-  padding: 28px;
-  box-shadow: 0 1px 2px rgba(20,22,30,0.04), 0 12px 32px -20px rgba(20,22,30,0.18);
-  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-}
-.card-lumen:hover {
-  border-color: var(--lumen-gold-glow);
-  box-shadow: 0 0 0 1px var(--lumen-gold-glow), 0 20px 40px -24px rgba(20,22,30,0.22);
-  transform: translateY(-2px);
-}
-
-/* premium-card / pastel-card не используются на главной — переопределяем
-   в новом светлом стиле напрямую, без переименования (меньше правок в
-   каждом файле). */
-.premium-card {
-  background: var(--lumen-surface);
-  border: 1px solid var(--lumen-line);
-  border-radius: 22px;
-  padding: 28px 32px;
-  box-shadow: 0 1px 2px rgba(20,22,30,0.04), 0 16px 36px -22px rgba(20,22,30,0.2);
-}
-
-.pastel-card {
-  background: var(--lumen-surface);
-  border: 1px solid var(--lumen-line);
-  border-radius: 22px;
-  padding: 28px;
-  box-shadow: 0 1px 2px rgba(20,22,30,0.04), 0 12px 30px -20px rgba(20,22,30,0.16);
-}
-.pastel-card h3 {
-  font-family: var(--lumen-font-display);
-  color: var(--lumen-ink);
-  font-weight: 600;
-}
-
-/* ===== Поля ввода ===== */
-.input-field {
-  background: var(--lumen-surface);
-  border: 1px solid var(--lumen-line-strong);
-  border-radius: 12px;
-  padding: 11px 16px;
-  width: 100%;
-  font-size: 14px;
-  color: var(--lumen-ink);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.input-field::placeholder { color: var(--lumen-ink-faint); }
-.input-field:focus {
-  border-color: var(--lumen-gold);
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow);
-}
-
-/* ===== Модалки ===== */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(20, 22, 30, 0.45);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-content {
-  background: var(--lumen-surface);
-  border: 1px solid var(--lumen-line);
-  border-radius: 24px;
-  padding: 36px;
-  max-width: 440px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 0 0 1px var(--lumen-gold-glow), 0 30px 60px -20px rgba(20,22,30,0.3);
-}
-
-/* ===== Фильтры-пилюли ===== */
-.filter-pill {
-  border: 1px solid var(--lumen-line-strong);
-  background: transparent;
-  color: var(--lumen-ink-soft);
-  padding: 7px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  cursor: pointer;
-  min-width: 110px;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-.filter-pill:hover {
-  border-color: var(--lumen-gold);
-  color: var(--lumen-ink);
-}
-.filter-pill.active {
-  background: var(--lumen-ink);
-  border-color: var(--lumen-ink);
-  color: #FBFAF6;
-}
-
-/* ===== Действия в шапке (Layout.js) — не используется на главной ===== */
-.action-btn {
-  flex: 1 1 0;
-  font-size: 13px;
-  background: transparent;
-  border: 1px solid var(--lumen-line-strong);
-  border-radius: 999px;
-  padding: 9px 18px;
-  cursor: pointer;
-  color: var(--lumen-ink-soft);
-  transition: all 0.22s ease;
-  text-align: center;
-  white-space: nowrap;
-}
-.action-btn:hover {
-  border-color: var(--lumen-gold);
-  color: var(--lumen-ink);
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow);
-  transform: translateY(-1px);
-}
-
-.btn-outline {
-  border: 1px solid var(--lumen-line-strong);
-  color: var(--lumen-ink);
-  background: transparent;
-  padding: 8px 20px;
-  border-radius: 999px;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.22s ease;
-}
-.btn-outline:hover {
-  border-color: var(--lumen-gold);
-  box-shadow: 0 0 0 3px var(--lumen-gold-glow);
-}
-
-/* ===== Спиннер (не используется на главной — своя "чёрная дыра" там своя) ===== */
-.spinner {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid var(--lumen-line);
-  border-top-color: var(--lumen-gold);
-  animation: lumenSpin 0.8s linear infinite;
-}
-@keyframes lumenSpin {
-  to { transform: rotate(360deg); }
-}
-
-.file-upload-btn {
-  display: inline-block;
-  background: var(--lumen-surface-2);
-  border: 1px dashed var(--lumen-line-strong);
-  border-radius: 14px;
-  padding: 8px 18px;
-  font-size: 13px;
-  color: var(--lumen-ink-soft);
-  cursor: pointer;
-  transition: all 0.22s ease;
-}
-.file-upload-btn:hover {
-  border-color: var(--lumen-gold);
-  color: var(--lumen-ink);
-}
-
-/* Звёздный фон (контейнер) — используется на главной (index.js) */
+/* Звёздный фон (контейнер) */
 .stars-bg {
   position: fixed;
   inset: 0;
@@ -368,22 +49,20 @@ html {
   pointer-events: none;
 }
 
-/* Медленное мерцание настоящих звёзд — используется на главной */
+/* Медленное мерцание настоящих звёзд */
 @keyframes realTwinkle {
   0% { opacity: 0.2; transform: scale(1); }
   100% { opacity: 1; transform: scale(1.1); }
 }
 
-/* АНИМАЦИЯ РАМОК BORDERSHINE — используется в balance-card/action-btn(старом)/
-   wide-btn/dash-card на главной */
+/* АНИМАЦИЯ РАМОК BORDERSHINE */
 @keyframes borderShine {
   0% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0.2); }
   50% { border-color: rgba(192,132,252,0.8); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
   100% { border-color: rgba(249,115,22,0.4); box-shadow: 0 0 0 0 rgba(249,115,22,0); }
 }
 
-/* БАЛАНС-КАРТОЧКА — не встретилась в реальном использовании, оставлена
-   как есть на случай, если где-то подключается динамически */
+/* БАЛАНС-КАРТОЧКА */
 .balance-card {
   background: #0A0A0A;
   border: 1px solid rgba(249,115,22,0.5);
@@ -396,7 +75,7 @@ html {
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА — используется на главной */
+/* ЧЁРНАЯ ДЫРА – только чёрный круг и внешнее кольцо */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -425,7 +104,27 @@ html {
   100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
 }
 
-/* Кнопки на главной — используется в index.js (CorporateLanding) */
+/* КНОПКИ ДЕЙСТВИЙ */
+.action-btn {
+  flex: 1 1 0;
+  font-size: 14px;
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  color: rgba(255,255,255,0.82);
+  transition: all 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  animation: borderShine 4s infinite;
+}
+.action-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.4);
+  transform: translateY(-2px);
+}
+
 .wide-btn {
   flex-basis: 100%;
   margin-top: 4px;
@@ -446,7 +145,7 @@ html {
   transform: translateY(-2px);
 }
 
-/* КАРТОЧКИ РАЗДЕЛОВ ГЛАВНОЙ — используется в index.js */
+/* КАРТОЧКИ РАЗДЕЛОВ */
 .dash-card {
   background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
   border: 1px solid rgba(249,115,22,0.5);
@@ -470,6 +169,49 @@ html {
   color: transparent;
 }
 
+/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА */
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.9) 50%, transparent 65%);
+  box-shadow: 0 0 10px rgba(249,115,22,0.4);
+  animation: spin 1s linear infinite, blackHolePulse 2s infinite;
+  position: relative;
+}
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(249,115,22,0.6);
+  animation: diskRotate 2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Разрешаем выделение текста в стикерах */
+.sticker-text {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+/* Остальные общие стили */
+.premium-card {
+  background: #152238;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
 .btn-gold {
   background: linear-gradient(135deg, #f97316, #e65c00);
   border: none;
@@ -480,21 +222,116 @@ html {
   font-size: 14px;
 }
 
-/* Разрешаем выделение текста в стикерах */
-.sticker-text {
-  user-select: text !important;
-  cursor: text !important;
+.btn-outline {
+  border: 1px solid #f97316;
+  color: #f97316;
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 14px;
 }
 
-/* Календарь – иконка адаптируется под тёмную/светлую страницу через невысокий invert */
+.input-field {
+  background: #0f1f35;
+  border: 1px solid rgba(249,115,22,0.5);
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 14px;
+  color: #eaf0fb;
+}
+.input-field:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: linear-gradient(145deg, #1a2f4a 0%, #0f1f35 100%);
+  border: 1px solid #f97316;
+  border-radius: 28px;
+  padding: 36px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(249,115,22,0.6);
+}
+
+.filter-pill {
+  border: 1px solid rgba(249,115,22,0.3);
+  background: transparent;
+  color: #9aa9c1;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 110px;
+  text-align: center;
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #f97316, #c084fc);
+  color: white;
+}
+
+/* ===== ПАСТЕЛЬНЫЕ КАРТОЧКИ ДЛЯ РАЗДЕЛОВ АДМИНКИ ===== */
+.pastel-card {
+  background: linear-gradient(145deg, rgba(199, 181, 175, 0.12) 0%, rgba(168, 179, 190, 0.06) 100%);
+  border: 1px solid rgba(199, 181, 175, 0.35);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+}
+.pastel-card h3 {
+  background: linear-gradient(135deg, #c7b5af, #a8b3be);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* Календарь – светлая иконка на тёмном фоне */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  opacity: 0.7;
+  filter: invert(1);
+  opacity: 0.8;
   cursor: pointer;
 }
-.lumen-shell input[type="date"]::-webkit-datetime-edit,
-.lumen-shell input[type="datetime-local"]::-webkit-datetime-edit {
-  color: var(--lumen-ink);
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #eaf0fb;
+}
+
+/* Кнопка загрузки – аккуратная обводка с небольшим отступом */
+.file-upload-btn {
+  display: inline-block;
+  background: rgba(199, 181, 175, 0.08);
+  border: 1px dashed rgba(199, 181, 175, 0.5);
+  border-radius: 14px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: #c7b5af;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.file-upload-btn:hover {
+  background: rgba(199, 181, 175, 0.15);
+  border-color: #a8b3be;
 }
 
 /* Убираем стрелки в input[type=number] */
@@ -507,7 +344,7 @@ input[type=number] {
   -moz-appearance: textfield !important;
 }
 
-/* Убираем системную стрелку у select и добавляем тонкую свою (тёмный вариант, дефолт) */
+/* Убираем системную стрелку у всех select и добавляем красивую */
 select {
   appearance: none !important;
   -webkit-appearance: none !important;
@@ -517,8 +354,3 @@ select {
   background-position: right 12px center !important;
   padding-right: 36px !important;
 }
-/* Внутри светлой обёртки — тёмная стрелка селекта вместо светлой */
-.lumen-shell select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%2363687A'/%3E%3C/svg%3E") !important;
-}
-

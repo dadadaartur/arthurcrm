@@ -23,92 +23,107 @@ import { requireAuth } from '../../../lib/auth'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const ctx = await requireAuth(req, res, { permission: 'can_manage_employees' })
-  if (!ctx) return
+  try {
+    const ctx = await requireAuth(req, res, { permission: 'can_manage_employees' })
+    if (!ctx) return
 
-  const { email, firstName, lastName, positionId, roleId, permissions } = req.body
-  if (!email || !email.trim()) {
-    return res.status(400).json({ error: 'Нет email' })
-  }
-  if (!ctx.profile.company_id) {
-    return res.status(400).json({ error: 'У вас нет компании' })
-  }
+    const { email, firstName, lastName, positionId, roleId, permissions } = req.body
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Нет email' })
+    }
+    if (!ctx.profile.company_id) {
+      return res.status(400).json({ error: 'У вас нет компании' })
+    }
 
-  const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = email.trim().toLowerCase()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceKey) {
+      console.error('[invite-employee] отсутствуют переменные окружения', { hasUrl: !!supabaseUrl, hasService: !!serviceKey })
+      return res.status(500).json({ error: 'Server configuration error' })
+    }
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-  // Не приглашаем повторно, если уже есть активный сотрудник с этим email
-  // в этой же компании.
-  const { data: existingProfile } = await supabaseAdmin
-    .from('profiles')
-    .select('user_id, company_id')
-    .eq('email', normalizedEmail)
-    .maybeSingle()
+    // Не приглашаем повторно, если уже есть активный сотрудник с этим email
+    // в этой же компании.
+    const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id, company_id')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
 
-  if (existingProfile?.company_id) {
-    return res.status(409).json({
-      error: existingProfile.company_id === ctx.profile.company_id
-        ? 'Этот сотрудник уже есть в вашей компании'
-        : 'Этот email уже привязан к другой компании'
-    })
-  }
+    if (existingProfileError) {
+      console.error('[invite-employee] ошибка select profiles', existingProfileError)
+      return res.status(500).json({ error: 'Ошибка проверки email: ' + existingProfileError.message })
+    }
 
-  // Закрываем предыдущие незавершённые приглашения на этот email в этой
-  // компании, чтобы не плодить дубли.
-  await supabaseAdmin
-    .from('invitations')
-    .update({ status: 'superseded' })
-    .eq('email', normalizedEmail)
-    .eq('company_id', ctx.profile.company_id)
-    .eq('status', 'pending')
+    if (existingProfile?.company_id) {
+      return res.status(409).json({
+        error: existingProfile.company_id === ctx.profile.company_id
+          ? 'Этот сотрудник уже есть в вашей компании'
+          : 'Этот email уже привязан к другой компании'
+      })
+    }
 
-  const allowedPermissionFlags = ['can_create_tasks', 'can_review_tasks', 'can_manage_employees', 'can_delete_employees']
-  const safePermissions = {}
-  for (const flag of allowedPermissionFlags) {
-    safePermissions[flag] = !!(permissions && permissions[flag])
-  }
+    // Закрываем предыдущие незавершённые приглашения на этот email в этой
+    // компании, чтобы не плодить дубли.
+    const { error: supersedeError } = await supabaseAdmin
+      .from('invitations')
+      .update({ status: 'superseded' })
+      .eq('email', normalizedEmail)
+      .eq('company_id', ctx.profile.company_id)
+      .eq('status', 'pending')
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`
+    if (supersedeError) {
+      console.error('[invite-employee] ошибка update invitations (supersede)', supersedeError)
+      // Не блокируем процесс из-за этого — не критично, продолжаем
+    }
 
-  const { data: inviteResult, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-    normalizedEmail,
-    {
-      redirectTo: `${siteUrl}/invite-callback`,
-      data: {
-        invited_by: ctx.user.id,
-        company_id: ctx.profile.company_id
+    const allowedPermissionFlags = ['can_create_tasks', 'can_review_tasks', 'can_manage_employees', 'can_delete_employees']
+    const safePermissions = {}
+    for (const flag of allowedPermissionFlags) {
+      safePermissions[flag] = !!(permissions && permissions[flag])
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`
+
+    const { data: inviteResult, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      normalizedEmail,
+      {
+        redirectTo: `${siteUrl}/invite-callback`,
+        data: {
+          invited_by: ctx.user.id,
+          company_id: ctx.profile.company_id
+        }
+      }
+    )
+
+    if (inviteError) {
+      if (!/already registered|already exists/i.test(inviteError.message || '')) {
+        console.error('[invite-employee] ошибка inviteUserByEmail', inviteError)
+        return res.status(500).json({ error: 'Ошибка приглашения: ' + inviteError.message })
       }
     }
-  )
 
-  if (inviteError) {
-    // Пользователь уже существует в auth.users, но без профиля/компании —
-    // это нормальный случай (например, ранее ушёл из другой компании).
-    // inviteUserByEmail в этом случае вернёт ошибку "already registered" —
-    // для таких пользователей просто заводим bookkeeping-запись, они
-    // смогут войти обычным логином/восстановлением пароля, и accept.js
-    // подхватит приглашение по email при следующем входе.
-    if (!/already registered|already exists/i.test(inviteError.message || '')) {
-      return res.status(500).json({ error: 'Ошибка приглашения: ' + inviteError.message })
+    const { error: insertError } = await supabaseAdmin.from('invitations').insert({
+      email: normalizedEmail,
+      company_id: ctx.profile.company_id,
+      role_id: roleId || null,
+      status: 'pending',
+      permissions: { ...safePermissions, first_name: firstName || null, last_name: lastName || null, position_id: positionId || null },
+      created_by: ctx.user.id,
+      invited_user_id: inviteResult?.user?.id || null
+    })
+
+    if (insertError) {
+      console.error('[invite-employee] ошибка insert invitations', insertError)
+      return res.status(500).json({ error: 'Ошибка сохранения приглашения: ' + insertError.message })
     }
+
+    res.status(200).json({ success: true })
+  } catch (e) {
+    console.error('[invite-employee] необработанная ошибка', e)
+    res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + (e?.message || String(e)) })
   }
-
-  const { error: insertError } = await supabaseAdmin.from('invitations').insert({
-    email: normalizedEmail,
-    company_id: ctx.profile.company_id,
-    role_id: roleId || null,
-    status: 'pending',
-    permissions: { ...safePermissions, first_name: firstName || null, last_name: lastName || null, position_id: positionId || null },
-    created_by: ctx.user.id,
-    invited_user_id: inviteResult?.user?.id || null
-  })
-
-  if (insertError) {
-    return res.status(500).json({ error: 'Ошибка сохранения приглашения: ' + insertError.message })
-  }
-
-  res.status(200).json({ success: true })
 }

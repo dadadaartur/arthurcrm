@@ -82,8 +82,8 @@ export default function Transfer() {
   return (
     <div className="max-w-md mx-auto px-4 py-10">
       <div className="premium-card">
-        <h2 className="text-2xl font-bold text-[var(--lumen-ink)] mb-6">Перевод кармиков</h2>
-        <div className="text-sm text-[var(--lumen-ink-soft)] mb-4">
+        <h2 className="text-2xl font-bold text-white mb-6">Перевод кармиков</h2>
+        <div className="text-sm text-gray-400 mb-4">
           Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
         </div>
         <form onSubmit={handleTransfer} className="space-y-4">
@@ -112,13 +112,13 @@ export default function Transfer() {
             className="input-field"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button type="submit" className="btn-lumen w-full" disabled={loading}>
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? 'Отправка...' : 'Отправить'}
           </button>
         </form>
       </div>
       <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Перевод выполнен!">
-        <p className="text-[var(--lumen-ink)]">Операция записана в историю.</p>
+        <p className="text-white">Операция записана в историю.</p>
       </PremiumModal>
     </div>
   )

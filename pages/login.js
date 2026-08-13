@@ -66,16 +66,16 @@ export default function Login() {
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
           {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button type="submit" className="btn-lumen w-full" disabled={loading}>
+          <button type="submit" className="btn-gold w-full" disabled={loading}>
             {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
 
-        <button onClick={handleForgotPassword} className="mt-4 text-xs text-[var(--lumen-ink-soft)] hover:text-gold underline">
+        <button onClick={handleForgotPassword} className="mt-4 text-xs text-gray-400 hover:text-gold underline">
           Забыли пароль?
         </button>
 
-        <div className="mt-6 text-center text-sm text-[var(--lumen-ink-soft)]">
+        <div className="mt-6 text-center text-sm text-gray-400">
           Нет аккаунта?{' '}
           <a href="/create-company" className="text-gold hover:underline">
             Создать компанию

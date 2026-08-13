@@ -126,7 +126,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold text-[var(--lumen-ink)] mb-8">Мой профиль</h1>
+      <h1 className="text-2xl font-bold text-white mb-8">Мой профиль</h1>
 
       {message.text && (
         <div className={`mb-4 p-3 rounded-lg ${message.type === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
@@ -136,11 +136,11 @@ export default function Profile() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-[var(--lumen-surface-2)]">
+          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-800">
             {form.preview_url ? (
               <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-[var(--lumen-ink-faint)] text-2xl font-semibold">{initials}</div>
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-semibold">{initials}</div>
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -158,27 +158,27 @@ export default function Profile() {
 
         {/* Остальные поля без изменений */}
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm text-[var(--lumen-ink-soft)]">Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
-          <div><label className="text-sm text-[var(--lumen-ink-soft)]">Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
+          <div><label className="text-sm text-gray-400">Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+          <div><label className="text-sm text-gray-400">Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
         </div>
-        <div><label className="text-sm text-[var(--lumen-ink-soft)]">Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-        <div><label className="text-sm text-[var(--lumen-ink-soft)]">Дата трудоустройства</label><input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
-        <div><label className="text-sm text-[var(--lumen-ink-soft)]">Отдел</label>
+        <div><label className="text-sm text-gray-400">Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+        <div><label className="text-sm text-gray-400">Дата трудоустройства</label><input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
+        <div><label className="text-sm text-gray-400">Отдел</label>
           <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
             <option value="">Не выбран</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-sm text-[var(--lumen-ink-soft)]">Должность</label>
+          <label className="text-sm text-gray-400">Должность</label>
           <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
             <option value="">Не выбрана</option>
             {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
-          {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-[var(--lumen-ink-faint)] mt-1">Должность может изменить только администратор</p>}
+          {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1">Должность может изменить только администратор</p>}
         </div>
 
-        <button type="submit" disabled={saving} className="btn-lumen w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+        <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
       </form>
     </div>
   )

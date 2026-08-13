@@ -158,7 +158,7 @@ function TasksPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-[var(--lumen-ink-soft)] hover:text-[var(--lumen-ink)] text-sm mb-6 inline-block">← Назад</Link>
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
       <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Управление заданиями</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -166,20 +166,20 @@ function TasksPage() {
           <h3 className="text-lg font-semibold mb-4">Новое задание</h3>
           <form onSubmit={handleCreateTask} className="space-y-4">
             <div>
-              <label className="text-sm text-[var(--lumen-ink-soft)]">Название</label>
+              <label className="text-sm text-gray-400">Название</label>
               <input type="text" className="input-field" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
             </div>
             <div>
-              <label className="text-sm text-[var(--lumen-ink-soft)]">Описание</label>
+              <label className="text-sm text-gray-400">Описание</label>
               <textarea className="input-field" rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} required />
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-sm text-[var(--lumen-ink-soft)]">Награда (кармики)</label>
+                <label className="text-sm text-gray-400">Награда (кармики)</label>
                 <input type="number" className="input-field" value={form.reward_karma} onChange={e => setForm({...form, reward_karma: parseInt(e.target.value) || 0})} min="1" />
               </div>
               <div className="flex-1">
-                <label className="text-sm text-[var(--lumen-ink-soft)]">Тип задания</label>
+                <label className="text-sm text-gray-400">Тип задания</label>
                 <select className="input-field" value={form.task_type} onChange={e => setForm({...form, task_type: e.target.value})}>
                   <option value="one_time">Разовое</option>
                   <option value="recurring">Регулярное</option>
@@ -189,7 +189,7 @@ function TasksPage() {
             </div>
             {form.task_type === 'recurring' && (
               <div>
-                <label className="text-sm text-[var(--lumen-ink-soft)]">Периодичность</label>
+                <label className="text-sm text-gray-400">Периодичность</label>
                 <select className="input-field" value={form.frequency} onChange={e => setForm({...form, frequency: e.target.value})}>
                   <option value="daily">Ежедневно</option>
                   <option value="weekly">Еженедельно</option>
@@ -198,15 +198,15 @@ function TasksPage() {
               </div>
             )}
             <div>
-              <label className="text-sm text-[var(--lumen-ink-soft)]">Дедлайн</label>
+              <label className="text-sm text-gray-400">Дедлайн</label>
               <input type="datetime-local" className="input-field" value={form.deadline_datetime} onChange={e => setForm({...form, deadline_datetime: e.target.value})} />
             </div>
             <div className="flex gap-4 items-center flex-wrap">
-              <label className="flex items-center gap-2 text-[var(--lumen-ink-soft)]">
+              <label className="flex items-center gap-2 text-gray-400">
                 <input type="checkbox" checked={form.requires_review} onChange={e => setForm({...form, requires_review: e.target.checked})} />
                 Требуется проверка
               </label>
-              <label className="flex items-center gap-2 text-[var(--lumen-ink-soft)]">
+              <label className="flex items-center gap-2 text-gray-400">
                 <input type="checkbox" checked={form.is_auto} onChange={e => setForm({...form, is_auto: e.target.checked})} />
                 Авто из CRM
               </label>
@@ -218,24 +218,24 @@ function TasksPage() {
               )}
             </div>
             <div>
-              <label className="text-sm text-[var(--lumen-ink-soft)]">Аватар задания</label>
+              <label className="text-sm text-gray-400">Аватар задания</label>
               <div className="flex items-center gap-3 mt-2">
                 <label className="file-upload-btn cursor-pointer inline-block">
                   Загрузить изображение
                   <input type="file" accept="image/*" onChange={e => setForm({...form, image_file: e.target.files[0]})} className="hidden" />
                 </label>
-                {form.image_file && <span className="text-xs text-[var(--lumen-ink-soft)]">{form.image_file.name}</span>}
+                {form.image_file && <span className="text-xs text-gray-400">{form.image_file.name}</span>}
               </div>
             </div>
             <div>
-              <label className="text-sm text-[var(--lumen-ink-soft)]">Для кого</label>
+              <label className="text-sm text-gray-400">Для кого</label>
               <select className="input-field mt-1" value={form.target_role} onChange={e => setForm({...form, target_role: e.target.value})}>
                 <option value="all">Все МОП</option>
                 <option value="new">Только новые (&lt; 1 мес.)</option>
                 <option value="experienced">Опытные (&gt; 1 мес.)</option>
               </select>
             </div>
-            <button type="submit" className="btn-lumen w-full">Создать задание</button>
+            <button type="submit" className="btn-gold w-full">Создать задание</button>
           </form>
         </div>
 
@@ -247,8 +247,8 @@ function TasksPage() {
                 <div className="flex items-center gap-3">
                   {task.image_url && <img src={task.image_url} alt="" className="w-8 h-8 rounded-full object-cover" />}
                   <div>
-                    <h4 className="text-[var(--lumen-ink)] font-medium">{task.title}</h4>
-                    <p className="text-xs text-[var(--lumen-ink-soft)]">{task.description?.slice(0, 60)}</p>
+                    <h4 className="text-white font-medium">{task.title}</h4>
+                    <p className="text-xs text-gray-400">{task.description?.slice(0, 60)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ function TasksPage() {
       </div>
 
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
-        <p className="text-[var(--lumen-ink)]">{successModal.message}</p>
+        <p className="text-white">{successModal.message}</p>
       </PremiumModal>
     </div>
   )

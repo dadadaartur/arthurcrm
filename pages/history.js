@@ -53,7 +53,7 @@ export default function History() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-6">
-        <h1 className="text-2xl font-bold text-[var(--lumen-ink)] mb-4">История операций</h1>
+        <h1 className="text-2xl font-bold text-white mb-4">История операций</h1>
         <div className="flex gap-2 flex-wrap">
           {['all', 'income', 'expense', 'transfer'].map(f => (
             <button key={f} onClick={() => { setFilter(f); setPage(0) }} className={`filter-pill ${filter === f ? 'active' : ''}`}>
@@ -67,7 +67,7 @@ export default function History() {
         {paginated.map(op => (
           <div key={op.id + op.type} className="premium-card flex justify-between items-center">
             <div>
-              <p className="font-medium text-[var(--lumen-ink)]">
+              <p className="font-medium text-white">
                 {op.type === 'transfer' ? (
                   op.from_user_id === user.id ? 'Исходящий перевод' : 'Входящий перевод'
                 ) : op.type === 'purchase' ? (
@@ -76,7 +76,7 @@ export default function History() {
                   op.description
                 )}
               </p>
-              <p className="text-sm text-[var(--lumen-ink-soft)]">{new Date(op.created_at).toLocaleString('ru')}</p>
+              <p className="text-sm text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
             </div>
             <span className={`font-semibold ${(op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id) ? 'text-green-400' : 'text-red-400'}`}>
               {op.type === 'transaction' ? (op.amount > 0 ? '+' : '') + op.amount :
