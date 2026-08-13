@@ -86,6 +86,28 @@ export default async function handler(req, res) {
       safePermissions[flag] = !!(permissions && permissions[flag])
     }
 
+    // role_id в invitations обязателен (NOT NULL), а в форме можно было
+    // оставить "Без роли" — раньше это приводило к сырой ошибке БД вместо
+    // понятного сообщения. Подставляем разумный дефолт: сначала пробуем
+    // роль "Сотрудник" этой компании (её создаёт create-company.js для
+    // новых компаний), иначе — любую не-админскую роль компании, и только
+    // если вообще ни одной роли нет — просим админа сначала завести роль.
+    let effectiveRoleId = roleId || null
+    if (!effectiveRoleId) {
+      const { data: fallbackRole } = await supabaseAdmin
+        .from('roles')
+        .select('id, name')
+        .eq('company_id', ctx.profile.company_id)
+        .order('name', { ascending: true })
+        .limit(20)
+
+      const preferred = fallbackRole?.find(r => r.name === 'Сотрудник') || fallbackRole?.[0]
+      if (!preferred) {
+        return res.status(400).json({ error: 'В компании ещё нет ни одной роли — создайте роль перед приглашением сотрудника' })
+      }
+      effectiveRoleId = preferred.id
+    }
+
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`
 
     const { data: inviteResult, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
@@ -109,7 +131,7 @@ export default async function handler(req, res) {
     const { error: insertError } = await supabaseAdmin.from('invitations').insert({
       email: normalizedEmail,
       company_id: ctx.profile.company_id,
-      role_id: roleId || null,
+      role_id: effectiveRoleId,
       status: 'pending',
       permissions: { ...safePermissions, first_name: firstName || null, last_name: lastName || null, position_id: positionId || null },
       created_by: ctx.user.id,

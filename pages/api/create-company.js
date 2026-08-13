@@ -158,6 +158,27 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Ошибка создания роли администратора: ' + roleError.message })
     }
 
+    // Базовая роль для обычных сотрудников. Без неё при первом приглашении
+    // сотрудника в новой компании выбирать в форме было физически нечего
+    // (единственная существующая роль — "Администратор"), а role_id в
+    // invitations обязателен (NOT NULL) — приглашение падало с ошибкой
+    // прямо на уровне БД. is_company_admin/can_* флаги всё равно управляют
+    // правами отдельно от role_id — эта роль нужна как разумный дефолт
+    // для отображения, а не как источник прав.
+    const { error: employeeRoleError } = await supabaseAdmin
+      .from('roles')
+      .insert({
+        name: 'Сотрудник',
+        company_id: company.id,
+        is_system: false
+      })
+
+    if (employeeRoleError) {
+      // Не блокируем создание компании из-за этого — админ сможет создать
+      // роль вручную позже, если понадобится. Логируем на всякий случай.
+      console.error('[create-company] не удалось создать базовую роль "Сотрудник"', employeeRoleError)
+    }
+
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({
