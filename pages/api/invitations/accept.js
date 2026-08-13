@@ -29,14 +29,22 @@ export default async function handler(req, res) {
 
   const email = (user.email || '').toLowerCase().trim()
 
-  // Профиль уже есть — ничего делать не нужно, просто сообщаем куда идти.
+  // ВАЖНО: handle_new_user() — триггер на auth.users — автоматически
+  // создаёт ПУСТУЮ строку в profiles (company_id = null) для ЛЮБОГО
+  // нового пользователя, включая тех, кого создаёт inviteUserByEmail.
+  // То есть к моменту, когда приглашённый сотрудник доходит досюда,
+  // "пустой" профиль уже существует — раньше код проверял просто
+  // `if (existingProfile)` и считал его уже привязанным участником,
+  // возвращая company_id: null и никогда не доводя приглашение до конца
+  // (человек зависал на /welcome по кругу). Проверяем именно company_id,
+  // а не сам факт существования строки.
   const { data: existingProfile } = await supabaseAdmin
     .from('profiles')
     .select('company_id')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (existingProfile) {
+  if (existingProfile?.company_id) {
     return res.status(200).json({ status: 'already_member', companyId: existingProfile.company_id })
   }
 
@@ -55,8 +63,11 @@ export default async function handler(req, res) {
 
   const perms = invite.permissions || {}
 
-  const { error: profileError } = await supabaseAdmin.from('profiles').insert({
-    user_id: user.id,
+  // profiles.user_id — PRIMARY KEY. Если пустая строка от триггера уже
+  // существует (existingProfile не null, просто без company_id) — нужно
+  // ОБНОВИТЬ её, а не вставлять новую (иначе — ошибка дублирования
+  // первичного ключа). Если строки нет вовсе — вставляем.
+  const profileData = {
     company_id: invite.company_id,
     role_id: invite.role_id,
     email,
@@ -70,7 +81,11 @@ export default async function handler(req, res) {
     can_manage_employees: !!perms.can_manage_employees,
     can_delete_employees: !!perms.can_delete_employees,
     manager_id: invite.created_by
-  })
+  }
+
+  const { error: profileError } = existingProfile
+    ? await supabaseAdmin.from('profiles').update(profileData).eq('user_id', user.id)
+    : await supabaseAdmin.from('profiles').insert({ user_id: user.id, ...profileData })
 
   if (profileError) {
     return res.status(500).json({ error: 'Ошибка создания профиля: ' + profileError.message })

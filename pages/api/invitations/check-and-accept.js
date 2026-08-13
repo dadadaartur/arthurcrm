@@ -25,13 +25,16 @@ export default async function handler(req, res) {
 
   const email = (user.email || '').toLowerCase().trim()
 
+  // См. подробный комментарий в pages/api/invitations/accept.js —
+  // handle_new_user() уже создал пустую строку в profiles к этому моменту,
+  // поэтому проверяем именно company_id, а не сам факт наличия строки.
   const { data: existingProfile } = await supabaseAdmin
     .from('profiles')
     .select('company_id')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (existingProfile) {
+  if (existingProfile?.company_id) {
     return res.status(200).json({ status: 'already_member', companyId: existingProfile.company_id })
   }
 
@@ -48,8 +51,7 @@ export default async function handler(req, res) {
 
   const perms = invite.permissions || {}
 
-  const { error: profileError } = await supabaseAdmin.from('profiles').insert({
-    user_id: user.id,
+  const profileData = {
     company_id: invite.company_id,
     role_id: invite.role_id,
     email,
@@ -63,7 +65,11 @@ export default async function handler(req, res) {
     can_manage_employees: !!perms.can_manage_employees,
     can_delete_employees: !!perms.can_delete_employees,
     manager_id: invite.created_by
-  })
+  }
+
+  const { error: profileError } = existingProfile
+    ? await supabaseAdmin.from('profiles').update(profileData).eq('user_id', user.id)
+    : await supabaseAdmin.from('profiles').insert({ user_id: user.id, ...profileData })
 
   if (profileError) {
     return res.status(500).json({ error: 'Ошибка создания профиля: ' + profileError.message })
