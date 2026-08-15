@@ -12,7 +12,6 @@ function TasksPage() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [successModal, setSuccessModal] = useState({ show: false, message: '' })
-
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -33,15 +32,12 @@ function TasksPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)
         .single()
-
       if (!profileData) { router.push('/'); return }
-
       const compId = profileData.company_id
       setCompanyId(compId)
       await loadData(compId)
@@ -136,6 +132,31 @@ function TasksPage() {
         setSuccessModal({ show: true, message: 'Ошибка назначения: ' + assignError.message })
         return
       }
+
+      // НОВОЕ: уведомляем сотрудников о новом задании через серверный роут.
+      // Напрямую из браузера вставлять notifications нельзя (RLS),
+      // поэтому идём через /api/notifications/send.
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          await fetch('/api/notifications/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              recipients: employeesList.map(emp => emp.user_id),
+              type: 'task_new',
+              message: `Вам назначено задание "${task.title}". Награда: +${form.reward_karma} кармиков.`,
+              link: '/tasks'
+            })
+          })
+        }
+      } catch (notifyError) {
+        console.error('[tasks] не удалось отправить уведомления', notifyError)
+      }
+
       setSuccessModal({ show: true, message: `Задание создано и назначено ${employeesList.length} сотрудникам.` })
     } else {
       setSuccessModal({ show: true, message: 'Задание создано, но в компании нет сотрудников для назначения.' })
