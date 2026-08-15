@@ -4,26 +4,38 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
 
-// ЕДИНЫЙ КОСМИЧЕСКИЙ ФОН для всей платформы.
-// Туманности (сильное размытие, как на реальных снимках) + плотное поле
-// звёзд разного размера/цвета со свечением. Рисуется один раз (useMemo),
-// чтобы звёзды не "прыгали" при каждом рендере.
+// ЕДИНЫЙ КОСМИЧЕСКИЙ ФОН. Чистое звёздное поле без размытых цветных
+// пятен (они читались как "прыщи"). Звёзды — крошечные острые точки,
+// как на реальных снимках: основная масса мелочь, редко яркие. Ореол
+// только у крупных звёзд и очень плотный, не размазанный.
 function StarsBackground() {
   const stars = useMemo(() => {
-    const colors = ['#ffffff', '#fdf6e3', '#ffe9c4', '#cfe0ff', '#aac6ff', '#ffd9a0', '#ffb3c6', '#e0f0ff']
     const arr = []
-    for (let i = 0; i < 170; i++) {
-      const size = Math.random() * 2.4 + 0.4
+    const count = 300
+    for (let i = 0; i < count; i++) {
+      const roll = Math.random()
+      // Распределение размеров: 70% мелочь, 22% средние, 8% яркие
+      let size
+      if (roll < 0.70) size = Math.random() * 0.7 + 0.5       // 0.5–1.2px
+      else if (roll < 0.92) size = Math.random() * 0.8 + 1.2  // 1.2–2.0px
+      else size = Math.random() * 0.8 + 2.0                    // 2.0–2.8px
+      // Цвета: в основном белые/холодные, реже тёплые и золотистые
+      const c = Math.random()
+      let color
+      if (c < 0.52) color = '#ffffff'
+      else if (c < 0.74) color = '#e3eeff'
+      else if (c < 0.89) color = '#fff7e6'
+      else if (c < 0.97) color = '#ffeccd'
+      else color = '#ffd9a3'
       arr.push({
         id: i,
         left: Math.random() * 100,
         top: Math.random() * 100,
         size,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        opacity: Math.random() * 0.55 + 0.25,
-        glow: size * (Math.random() * 4 + 3),
-        dur: Math.random() * 9 + 7,
-        delay: Math.random() * 9,
+        color,
+        opacity: roll >= 0.92 ? Math.random() * 0.4 + 0.6 : Math.random() * 0.45 + 0.3,
+        dur: Math.random() * 7 + 5,
+        delay: Math.random() * 7,
       })
     }
     return arr
@@ -31,14 +43,6 @@ function StarsBackground() {
 
   return (
     <div id="real-stars" className="stars-bg">
-      {/* Туманности — размытые цветные облака */}
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-10%', left: '12%', width: '55%', height: '55%', background: 'radial-gradient(circle, rgba(88,28,135,0.30) 0%, rgba(88,28,135,0.12) 40%, transparent 70%)', filter: 'blur(60px)' }} />
-        <div style={{ position: 'absolute', bottom: '-15%', right: '5%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(30,58,138,0.32) 0%, rgba(30,58,138,0.13) 45%, transparent 70%)', filter: 'blur(70px)' }} />
-        <div style={{ position: 'absolute', top: '28%', right: '18%', width: '42%', height: '42%', background: 'radial-gradient(circle, rgba(192,132,252,0.17) 0%, transparent 65%)', filter: 'blur(50px)' }} />
-        <div style={{ position: 'absolute', bottom: '18%', left: '-6%', width: '46%', height: '46%', background: 'radial-gradient(circle, rgba(249,115,22,0.11) 0%, transparent 60%)', filter: 'blur(55px)' }} />
-      </div>
-      {/* Звёзды */}
       {stars.map(s => (
         <div key={s.id} style={{
           position: 'absolute',
@@ -48,7 +52,8 @@ function StarsBackground() {
           height: s.size + 'px',
           borderRadius: '50%',
           background: s.color,
-          boxShadow: `0 0 ${s.glow}px ${s.glow / 2}px ${s.color}55, 0 0 ${s.glow / 2}px ${s.color}`,
+          // Ореол только у ярких звёзд, плотный и короткий — не размытое пятно
+          boxShadow: s.size >= 2 ? `0 0 ${Math.round(s.size * 2)}px 0 ${s.color}` : 'none',
           opacity: s.opacity,
           animation: `realTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite alternate`,
         }} />
