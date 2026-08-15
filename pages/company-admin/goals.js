@@ -3,249 +3,217 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import PremiumModal from '../../components/PremiumModal'
 import { withAuth } from '../../components/withAuth'
 
-function GoalsPage() {
+const CATEGORY_LABELS = { strategic: 'Стратегическая', tactical: 'Тактическая', operational: 'Операционная' }
+const KIND_LABELS = { individual: 'Индивидуальная', group: 'Групповая', company: 'Вся компания' }
+const STATUS_LABELS = { draft: 'Черновик', active: 'Активна', paused: 'Пауза', completed: 'Завершена', failed: 'Не достигнута' }
+
+function GoalsAdmin() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
   const [goals, setGoals] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' })
-
-  const [form, setForm] = useState({
-    assign_to_all: true,
-    user_ids: [],
-    goal_type: 'calls',
-    target_value: 10,
-    period_type: 'day',
-    manual_days: 30,
-    reward_mode: 'none',
-    reward_rubles: 0,
-    reward_karma: 0
-  })
+  const [showForm, setShowForm] = useState(false)
+  const [expanded, setExpanded] = useState(null)
+  const [form, setForm] = useState({ title: '', description: '', goal_kind: 'individual', category: 'tactical', start_date: '', end_date: '', priority: 3 })
+  const [indicatorForm, setIndicatorForm] = useState({ name: '', unit: '', target_min: '', target_max: '', weight: 1 })
+  const [assigneeId, setAssigneeId] = useState('')
+  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single()
+      const { data: profileData } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
       if (!profileData) { router.push('/'); return }
-      const compId = profileData.company_id
-      setCompanyId(compId)
-      await loadData(compId)
+      setCompanyId(profileData.company_id)
+      await Promise.all([loadGoals(profileData.company_id), loadEmployees(profileData.company_id)])
       setLoading(false)
     }
     init()
   }, [router])
 
-  const loadData = async (compId) => {
-    const [goalsRes, empRes] = await Promise.all([
-      supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).eq('is_company_admin', false).is('deleted_at', null)
-    ])
-    setGoals(goalsRes.data || [])
-    setEmployees(empRes.data || [])
+  const loadGoals = async (compId) => {
+    const { data } = await supabase.from('goals')
+      .select('*, goal_indicators(*), goal_assignments(user_id)')
+      .eq('company_id', compId).order('created_at', { ascending: false })
+    setGoals(data || [])
   }
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({ show: true, message, type })
-    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000)
+  const loadEmployees = async (compId) => {
+    const { data } = await supabase.from('profiles')
+      .select('user_id, display_name, email').eq('company_id', compId).is('deleted_at', null)
+    setEmployees(data || [])
   }
+  const notify = (message) => { setNotification({ show: true, message }); setTimeout(() => setNotification({ show: false, message: '' }), 3000) }
 
-  const handleCreateGoal = async (e) => {
+  const createGoal = async (e) => {
     e.preventDefault()
-    if (!form.assign_to_all && form.user_ids.length === 0) {
-      showNotification('Выберите хотя бы одного сотрудника', 'error')
-      return
-    }
-    if (!form.target_value || form.target_value < 1) {
-      showNotification('Укажите количество больше 0', 'error')
-      return
-    }
+    if (!form.title.trim()) return notify('Введите название цели')
+    const { data: goal, error } = await supabase.from('goals').insert({
+      company_id: companyId, title: form.title, description: form.description,
+      goal_kind: form.goal_kind, category: form.category,
+      start_date: form.start_date || null, end_date: form.end_date || null,
+      priority: parseInt(form.priority) || 3, status: 'draft', progress: 0, created_by: null
+    }).select().single()
+    if (error) return notify('Ошибка создания цели')
+    setShowForm(false)
+    setForm({ title: '', description: '', goal_kind: 'individual', category: 'tactical', start_date: '', end_date: '', priority: 3 })
+    await loadGoals(companyId)
+    setExpanded(goal.id)
+    notify('Цель создана. Добавьте индикаторы и назначьте сотрудников.')
+  }
 
-    const targetUserIds = form.assign_to_all ? employees.map(e => e.user_id) : form.user_ids
-
-    let deadline = null
-    if (form.period_type === 'manual') {
-      const d = new Date()
-      d.setDate(d.getDate() + (form.manual_days || 30))
-      deadline = d.toISOString()
-    } else {
-      const now = new Date()
-      if (form.period_type === 'day') {
-        deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
-      } else if (form.period_type === 'week') {
-        const nextWeek = new Date(now)
-        nextWeek.setDate(now.getDate() + (7 - now.getDay()))
-        deadline = nextWeek.toISOString()
-      } else if (form.period_type === 'month') {
-        deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
-      }
-    }
-
-    const inserts = targetUserIds.map(userId => ({
-      company_id: companyId,
-      user_id: userId,
-      goal_type: form.goal_type,
-      title: form.goal_type,
-      target_value: form.target_value,
-      period: form.period_type === 'manual' ? 'custom' : form.period_type,
-      reward_rubles: form.reward_mode === 'rubles' || form.reward_mode === 'combo' ? form.reward_rubles : 0,
-      reward_karma: form.reward_mode === 'karma' || form.reward_mode === 'combo' ? form.reward_karma : 0,
-      deadline,
-      is_active: true,
-      created_by: null
-    }))
-
-    const { error } = await supabase.from('goals').insert(inserts)
-    if (error) {
-      showNotification('Ошибка создания целей: ' + error.message, 'error')
-      return
-    }
-
-    setForm({
-      assign_to_all: true, user_ids: [], goal_type: 'calls', target_value: 10,
-      period_type: 'day', manual_days: 30, reward_mode: 'none',
-      reward_rubles: 0, reward_karma: 0
+  const addIndicator = async (goalId) => {
+    if (!indicatorForm.name.trim()) return notify('Введите название индикатора')
+    const { error } = await supabase.from('goal_indicators').insert({
+      goal_id: goalId, name: indicatorForm.name, unit: indicatorForm.unit || null,
+      target_min: indicatorForm.target_min ? parseFloat(indicatorForm.target_min) : null,
+      target_max: indicatorForm.target_max ? parseFloat(indicatorForm.target_max) : null,
+      weight: parseFloat(indicatorForm.weight) || 1, data_source: 'manual'
     })
-    showNotification(`Цели созданы (${targetUserIds.length} шт.)`)
-    loadData(companyId)
+    if (error) return notify('Ошибка добавления индикатора')
+    setIndicatorForm({ name: '', unit: '', target_min: '', target_max: '', weight: 1 })
+    await loadGoals(companyId)
   }
 
-  const handleDeleteGoal = async (goalId) => {
-    await supabase.from('goals').update({ is_active: false }).eq('id', goalId)
-    loadData(companyId)
+  const assignEmployee = async (goalId) => {
+    if (!assigneeId) return notify('Выберите сотрудника')
+    const { error } = await supabase.from('goal_assignments').insert({ goal_id: goalId, user_id: assigneeId })
+    if (error) return notify('Ошибка назначения')
+    setAssigneeId('')
+    await loadGoals(companyId)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  const setStatus = async (goalId, status) => {
+    await supabase.from('goals').update({ status }).eq('id', goalId)
+    await loadGoals(companyId)
+    notify(status === 'active' ? 'Цель активирована' : 'Статус обновлён')
+  }
+
+  if (loading) return <div className="flex justify-center items-center py-24"><Spinner size={52} /></div>
 
   return (
-    <div className="max-w-full mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление целями</h1>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="transition-transform group-hover:-translate-x-1">
+            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
+            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Управление целями</h1>
+        <button onClick={() => setShowForm(true)} className="btn-glass text-sm px-4 py-2 ml-auto">Создать цель</button>
+      </div>
 
-      <div className="pastel-card mb-8">
-        <h3 className="text-lg font-semibold mb-4">Новая цель</h3>
-        <form onSubmit={handleCreateGoal} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400">Тип цели</label>
-              <select className="input-field" value={form.goal_type} onChange={e => setForm({...form, goal_type: e.target.value})}>
-                <option value="calls">Звонки</option>
-                <option value="emails">Письма</option>
-                <option value="deals">Изменения статусов сделок</option>
-                <option value="comments">Комментарии в сделке</option>
-                <option value="chats">Чаты</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm text-gray-400">Количество</label>
-              <input type="number" className="input-field" value={form.target_value} onChange={e => setForm({...form, target_value: parseInt(e.target.value) || 0})} min="1" />
-            </div>
-          </div>
+      {goals.length === 0 && <div className="premium-card"><p className="text-gray-400">Целей пока нет. Создайте первую цель.</p></div>}
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400">Период</label>
-              <select className="input-field" value={form.period_type} onChange={e => setForm({...form, period_type: e.target.value})}>
-                <option value="day">День</option>
-                <option value="week">Неделя</option>
-                <option value="month">Месяц</option>
-                <option value="manual">Ручной (дней)</option>
-              </select>
-              {form.period_type === 'manual' && (
-                <input type="number" className="input-field mt-2" placeholder="Количество дней" value={form.manual_days} onChange={e => setForm({...form, manual_days: parseInt(e.target.value) || 30})} min="1" />
-              )}
-            </div>
-            <div>
-              <label className="text-sm text-gray-400">Награда</label>
-              <select className="input-field" value={form.reward_mode} onChange={e => setForm({...form, reward_mode: e.target.value})}>
-                <option value="none">Без награды</option>
-                <option value="rubles">Только рубли</option>
-                <option value="karma">Только кармики</option>
-                <option value="combo">Комбо</option>
-              </select>
-              <div className="flex gap-2 mt-2">
-                {(form.reward_mode === 'rubles' || form.reward_mode === 'combo') && (
-                  <input type="number" className="input-field" placeholder="Рубли" value={form.reward_rubles} onChange={e => setForm({...form, reward_rubles: parseInt(e.target.value) || 0})} min="0" />
-                )}
-                {(form.reward_mode === 'karma' || form.reward_mode === 'combo') && (
-                  <input type="number" className="input-field" placeholder="Кармики" value={form.reward_karma} onChange={e => setForm({...form, reward_karma: parseInt(e.target.value) || 0})} min="0" />
-                )}
+      <div className="space-y-4">
+        {goals.map(goal => (
+          <div key={goal.id} className="premium-card">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-semibold">{goal.title}</h3>
+                <p className="text-sm text-gray-400 mt-1">{goal.description}</p>
+                <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-blue-900 text-blue-300">{KIND_LABELS[goal.goal_kind]}</span>
+                  <span className="px-2 py-0.5 rounded bg-purple-900 text-purple-300">{CATEGORY_LABELS[goal.category]}</span>
+                  <span className={`px-2 py-0.5 rounded ${goal.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-400'}`}>{STATUS_LABELS[goal.status]}</span>
+                  <span className="px-2 py-0.5 rounded bg-gray-800 text-gray-400">Приоритет: {goal.priority}</span>
+                </div>
               </div>
+              <button onClick={() => setExpanded(expanded === goal.id ? null : goal.id)} className="btn-outline text-xs px-3 py-1.5 ml-4 flex-shrink-0">
+                {expanded === goal.id ? 'Свернуть' : 'Настроить'}
+              </button>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <label className="flex items-center gap-2 text-gray-400 text-sm">
-              <input type="checkbox" checked={form.assign_to_all} onChange={e => setForm({...form, assign_to_all: e.target.checked})} />
-              Назначить всем сотрудникам
-            </label>
-            {!form.assign_to_all && (
-              <div>
-                <label className="text-sm text-gray-400">Выберите сотрудников</label>
-                <select multiple className="input-field h-32" value={form.user_ids} onChange={e => setForm({...form, user_ids: Array.from(e.target.selectedOptions, option => option.value)})}>
-                  {employees.map(emp => (
-                    <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
+            {expanded === goal.id && (
+              <div className="mt-6 pt-6 border-t border-gray-700 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Индикаторы */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-3">Индикаторы</h4>
+                  {(goal.goal_indicators || []).length === 0 && <p className="text-xs text-gray-500 mb-3">Индикаторов пока нет</p>}
+                  {(goal.goal_indicators || []).map(ind => (
+                    <div key={ind.id} className="flex justify-between items-center p-2 mb-2 rounded bg-gray-800 text-sm">
+                      <span className="text-white">{ind.name} {ind.unit && <span className="text-gray-500">({ind.unit})</span>}</span>
+                      <span className="text-gray-400">план: {ind.target_max ?? ind.target_min ?? '—'}</span>
+                    </div>
                   ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl/Cmd для выбора нескольких</p>
+                  <div className="space-y-2 mt-3">
+                    <input className="input-field" placeholder="Название (Выручка, Конверсия)" value={indicatorForm.name} onChange={e => setIndicatorForm({ ...indicatorForm, name: e.target.value })} />
+                    <div className="flex gap-2">
+                      <input className="input-field" placeholder="Ед." value={indicatorForm.unit} onChange={e => setIndicatorForm({ ...indicatorForm, unit: e.target.value })} />
+                      <input className="input-field" type="number" placeholder="План" value={indicatorForm.target_max} onChange={e => setIndicatorForm({ ...indicatorForm, target_max: e.target.value })} />
+                    </div>
+                    <button onClick={() => addIndicator(goal.id)} className="btn-glass text-xs px-3 py-1.5 w-full">Добавить индикатор</button>
+                  </div>
+                </div>
+                {/* Назначение */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-3">Назначено</h4>
+                  {(goal.goal_assignments || []).length === 0 && <p className="text-xs text-gray-500 mb-3">Никого не назначено</p>}
+                  {(goal.goal_assignments || []).map(ga => {
+                    const emp = employees.find(e => e.user_id === ga.user_id)
+                    return <div key={ga.user_id} className="p-2 mb-2 rounded bg-gray-800 text-sm text-white">{emp?.display_name || emp?.email || ga.user_id}</div>
+                  })}
+                  {goal.goal_kind !== 'company' && (
+                    <div className="space-y-2 mt-3">
+                      <select className="input-field" value={assigneeId} onChange={e => setAssigneeId(e.target.value)}>
+                        <option value="">Выберите сотрудника</option>
+                        {employees.map(emp => <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>)}
+                      </select>
+                      <button onClick={() => assignEmployee(goal.id)} className="btn-glass text-xs px-3 py-1.5 w-full">Назначить</button>
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-4">
+                    {goal.status !== 'active' && <button onClick={() => setStatus(goal.id, 'active')} className="btn-glass btn-glass-green text-xs px-3 py-1.5 flex-1">Активировать</button>}
+                    {goal.status === 'active' && <button onClick={() => setStatus(goal.id, 'completed')} className="btn-glass text-xs px-3 py-1.5 flex-1">Завершить</button>}
+                  </div>
+                </div>
               </div>
             )}
-            <button type="submit" className="btn-gold w-full mt-4">Создать</button>
           </div>
-        </form>
+        ))}
       </div>
 
-      <div className="pastel-card overflow-auto" style={{ maxHeight: '60vh' }}>
-        {goals.length === 0 ? (
-          <p className="text-gray-400">Нет активных целей</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="text-gray-400 border-b border-gray-700">
-              <tr>
-                <th className="py-2 pr-4">Сотрудник</th>
-                <th className="py-2 pr-4">Цель</th>
-                <th className="py-2 pr-4">Тип</th>
-                <th className="py-2 pr-4">Прогресс</th>
-                <th className="py-2 pr-4">Награда</th>
-                <th className="py-2">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {goals.map(goal => (
-                <tr key={goal.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="py-3 pr-4">{goal.profiles?.display_name || goal.profiles?.email}</td>
-                  <td className="py-3 pr-4">{goal.title}</td>
-                  <td className="py-3 pr-4 capitalize">{goal.goal_type}</td>
-                  <td className="py-3 pr-4">{goal.current_value} / {goal.target_value}</td>
-                  <td className="py-3 pr-4">
-                    {goal.reward_karma > 0 && `+${goal.reward_karma} к.`}
-                    {goal.reward_rubles > 0 && ` +${goal.reward_rubles} ₽`}
-                    {!goal.reward_karma && !goal.reward_rubles && '—'}
-                  </td>
-                  <td className="py-3">
-                    <button onClick={() => handleDeleteGoal(goal.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Модалка создания цели */}
+      {showForm && (
+        <div className="modal-overlay" onClick={() => setShowForm(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, textAlign: 'left' }}>
+            <h3 className="text-xl font-bold text-white mb-4">Новая цель</h3>
+            <form onSubmit={createGoal} className="space-y-3">
+              <input className="input-field" placeholder="Название (Продать на 1 млн)" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+              <textarea className="input-field" rows={2} placeholder="Описание" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              <div className="flex gap-2">
+                <select className="input-field" value={form.goal_kind} onChange={e => setForm({ ...form, goal_kind: e.target.value })}>
+                  <option value="individual">Индивидуальная</option><option value="group">Групповая</option><option value="company">Вся компания</option>
+                </select>
+                <select className="input-field" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                  <option value="strategic">Стратегическая</option><option value="tactical">Тактическая</option><option value="operational">Операционная</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1"><label className="text-xs text-gray-400">Начало</label><input type="date" className="input-field" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
+                <div className="flex-1"><label className="text-xs text-gray-400">Окончание</label><input type="date" className="input-field" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
+                <div className="flex-1"><label className="text-xs text-gray-400">Приоритет 1–5</label><input type="number" min="1" max="5" className="input-field" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} /></div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setShowForm(false)} className="btn-outline flex-1">Отмена</button>
+                <button type="submit" className="btn-glass btn-glass-green flex-1">Создать</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {notification.show && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-800 border border-gray-700 text-white px-6 py-4 rounded-xl shadow-lg animate-fade-in">
+        <div className="fixed top-4 right-4 z-[1100] px-4 py-3 rounded-lg text-sm" style={{ background: 'rgba(10,10,15,0.9)', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700' }}>
           {notification.message}
         </div>
       )}
     </div>
   )
 }
-
-export default withAuth(GoalsPage, { permission: 'can_review_tasks' })
+export default withAuth(GoalsAdmin, { permission: 'can_create_tasks' })
