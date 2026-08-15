@@ -5,21 +5,18 @@ function extractAccessToken(req) {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.split(' ')[1]
   }
-
   const rawCookie = req.headers.cookie || ''
   if (!rawCookie) return null
-
   const cookies = Object.fromEntries(
     rawCookie.split('; ').map(c => {
       const idx = c.indexOf('=')
+      if (idx === -11) return [c.trim(), '']
       if (idx === -1) return [c.trim(), '']
       return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
     })
   )
-
   const authKey = Object.keys(cookies).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
   if (!authKey) return null
-
   try {
     return JSON.parse(cookies[authKey]).access_token || null
   } catch (e) {
@@ -32,7 +29,6 @@ async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessT
     const { data: { user: tokenUser }, error: tokenError } = await anonClient.auth.getUser(accessToken)
     if (!tokenError && tokenUser) return tokenUser
   }
-
   if (userId) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId)
@@ -42,7 +38,6 @@ async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessT
       }
     }
   }
-
   if (email) {
     const normalizedEmail = email.toLowerCase().trim()
     const { data: { users = [] }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 })
@@ -51,7 +46,6 @@ async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessT
       if (match) return match
     }
   }
-
   return null
 }
 
@@ -60,7 +54,6 @@ export default async function handler(req, res) {
 
   try {
     const { userId, name, description, logoUrl, email } = req.body
-
     if (!userId || !name || !name.trim()) {
       return res.status(400).json({ error: 'Нет обязательных полей (userId, name)' })
     }
@@ -122,6 +115,24 @@ export default async function handler(req, res) {
       return res.status(409).json({ error: 'У пользователя уже есть компания' })
     }
 
+    // НОВОЕ: название компании уникально на уровне БД (индекс idx_companies_name).
+    // Проверяем заранее, чтобы показать человеку понятное сообщение вместо
+    // сырой технической ошибки базы. ilike — без учёта регистра:
+    // "Ромашка" и "ромашка" считаются одним именем.
+    const { data: sameName, error: sameNameError } = await supabaseAdmin
+      .from('companies')
+      .select('id')
+      .ilike('name', name.trim())
+      .maybeSingle()
+
+    if (sameNameError) {
+      console.error('[create-company] ошибка проверки названия', sameNameError)
+      return res.status(500).json({ error: 'Ошибка проверки названия компании' })
+    }
+    if (sameName) {
+      return res.status(409).json({ error: 'Компания с таким названием уже существует — придумайте другое название' })
+    }
+
     const { data: company, error: compError } = await supabaseAdmin
       .from('companies')
       .insert({
@@ -130,14 +141,17 @@ export default async function handler(req, res) {
         logo_url: logoUrl || null,
         // Самостоятельно созданная компания не должна получать доступ сразу —
         // сначала модерация супер-админом (см. platform-admin/set-company-status.js).
-        // Раньше поле не передавалось и компания уходила в дефолт 'active' —
-        // модерация фактически не работала.
         status: 'pending'
       })
       .select()
       .single()
 
     if (compError) {
+      // НОВОЕ: 23505 — нарушение уникальности. Пока мы проверяли название,
+      // его успели занять параллельным запросом. Отвечаем по-человечески.
+      if (compError.code === '23505') {
+        return res.status(409).json({ error: 'Компания с таким названием уже существует — придумайте другое название' })
+      }
       console.error('[create-company] ошибка insert companies', compError)
       return res.status(500).json({ error: 'Ошибка создания компании: ' + compError.message })
     }
@@ -158,13 +172,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Ошибка создания роли администратора: ' + roleError.message })
     }
 
-    // Базовая роль для обычных сотрудников. Без неё при первом приглашении
-    // сотрудника в новой компании выбирать в форме было физически нечего
-    // (единственная существующая роль — "Администратор"), а role_id в
-    // invitations обязателен (NOT NULL) — приглашение падало с ошибкой
-    // прямо на уровне БД. is_company_admin/can_* флаги всё равно управляют
-    // правами отдельно от role_id — эта роль нужна как разумный дефолт
-    // для отображения, а не как источник прав.
+    // Базовая роль для обычных сотрудников — разумный дефолт для приглашений.
     const { error: employeeRoleError } = await supabaseAdmin
       .from('roles')
       .insert({
@@ -174,8 +182,6 @@ export default async function handler(req, res) {
       })
 
     if (employeeRoleError) {
-      // Не блокируем создание компании из-за этого — админ сможет создать
-      // роль вручную позже, если понадобится. Логируем на всякий случай.
       console.error('[create-company] не удалось создать базовую роль "Сотрудник"', employeeRoleError)
     }
 
@@ -199,10 +205,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ companyId: company.id })
   } catch (e) {
-    // Раньше внешнего try/catch не было вообще — необработанное исключение
-    // (например, если supabase-js бросает синхронно при неверном ключе)
-    // приводило к голому 500 без тела ответа: на клиенте это выглядело как
-    // невнятная сетевая ошибка, а в логах Vercel — вообще без деталей.
     console.error('[create-company] необработанная ошибка', e)
     res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + (e?.message || String(e)) })
   }
