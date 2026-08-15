@@ -1,33 +1,60 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
-import NotificationsBell from './NotificationsBell'
 
+// ЕДИНЫЙ КОСМИЧЕСКИЙ ФОН для всей платформы.
+// Туманности (сильное размытие, как на реальных снимках) + плотное поле
+// звёзд разного размера/цвета со свечением. Рисуется один раз (useMemo),
+// чтобы звёзды не "прыгали" при каждом рендере.
 function StarsBackground() {
-  useEffect(() => {
-    const container = document.getElementById('real-stars')
-    if (!container || container.children.length > 0) return
-    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
-    for (let i = 0; i < 40; i++) {
-      const star = document.createElement('div')
-      const size = Math.random() * 4 + 1.5
-      star.style.width = size + 'px'
-      star.style.height = size + 'px'
-      star.style.borderRadius = '50%'
-      star.style.background = colors[Math.floor(Math.random() * colors.length)]
-      star.style.position = 'absolute'
-      star.style.left = Math.random() * 100 + '%'
-      star.style.top = Math.random() * 100 + '%'
-      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
-      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
-      star.style.animationDelay = Math.random() * 5 + 's'
-      star.style.opacity = '0'
-      container.appendChild(star)
+  const stars = useMemo(() => {
+    const colors = ['#ffffff', '#fdf6e3', '#ffe9c4', '#cfe0ff', '#aac6ff', '#ffd9a0', '#ffb3c6', '#e0f0ff']
+    const arr = []
+    for (let i = 0; i < 170; i++) {
+      const size = Math.random() * 2.4 + 0.4
+      arr.push({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        opacity: Math.random() * 0.55 + 0.25,
+        glow: size * (Math.random() * 4 + 3),
+        dur: Math.random() * 9 + 7,
+        delay: Math.random() * 9,
+      })
     }
+    return arr
   }, [])
-  return <div id="real-stars" className="stars-bg" />
+
+  return (
+    <div id="real-stars" className="stars-bg">
+      {/* Туманности — размытые цветные облака */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-10%', left: '12%', width: '55%', height: '55%', background: 'radial-gradient(circle, rgba(88,28,135,0.30) 0%, rgba(88,28,135,0.12) 40%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: '-15%', right: '5%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(30,58,138,0.32) 0%, rgba(30,58,138,0.13) 45%, transparent 70%)', filter: 'blur(70px)' }} />
+        <div style={{ position: 'absolute', top: '28%', right: '18%', width: '42%', height: '42%', background: 'radial-gradient(circle, rgba(192,132,252,0.17) 0%, transparent 65%)', filter: 'blur(50px)' }} />
+        <div style={{ position: 'absolute', bottom: '18%', left: '-6%', width: '46%', height: '46%', background: 'radial-gradient(circle, rgba(249,115,22,0.11) 0%, transparent 60%)', filter: 'blur(55px)' }} />
+      </div>
+      {/* Звёзды */}
+      {stars.map(s => (
+        <div key={s.id} style={{
+          position: 'absolute',
+          left: s.left + '%',
+          top: s.top + '%',
+          width: s.size + 'px',
+          height: s.size + 'px',
+          borderRadius: '50%',
+          background: s.color,
+          boxShadow: `0 0 ${s.glow}px ${s.glow / 2}px ${s.color}55, 0 0 ${s.glow / 2}px ${s.color}`,
+          opacity: s.opacity,
+          animation: `realTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite alternate`,
+        }} />
+      ))}
+    </div>
+  )
 }
 
 export default function Layout({ children }) {
@@ -117,7 +144,8 @@ export default function Layout({ children }) {
   if (isBlockedByModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
-        <div className="premium-card max-w-md text-center">
+        <StarsBackground />
+        <div className="premium-card max-w-md text-center relative z-10">
           <h1 className="text-xl font-bold text-red-400 mb-3">
             {companyStatus === 'suspended' ? 'Компания заблокирована' : 'Заявка компании отклонена'}
           </h1>
@@ -133,7 +161,8 @@ export default function Layout({ children }) {
   if (isPendingModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
-        <div className="premium-card max-w-md text-center">
+        <StarsBackground />
+        <div className="premium-card max-w-md text-center relative z-10">
           <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
           <p className="text-gray-400 mb-4">
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
@@ -176,13 +205,8 @@ export default function Layout({ children }) {
             )}
           </nav>
         </div>
-
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-
-          {/* Колокольчик уведомлений возле ника */}
-          <NotificationsBell userId={user.id} />
-
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
