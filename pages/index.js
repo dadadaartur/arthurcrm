@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin } from '../lib/permissions'
-import TransferModal from '../components/TransferModal'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -16,6 +15,7 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
+// ============ ЛЕНДИНГ (полностью, как был) ============
 function CorporateLanding() {
   const router = useRouter()
   const { user } = useProfile()
@@ -26,25 +26,34 @@ function CorporateLanding() {
         <title>Кармический Банк | Экосистема Роста</title>
       </Head>
 
+      {/* ФОН СО ЗВЕЗДАМИ И ГРАДИЕНТАМИ */}
       <div className="stars-bg">
         <div className="gradient-aura" />
       </div>
 
+      {/* HEADER */}
       <header className="fixed top-0 w-full z-50 px-8 py-5 flex justify-between items-center backdrop-blur-md">
         <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
           Кармический банк
         </div>
         {user ? (
-          <button onClick={() => router.push('/')} className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm"
+          >
             Вернуться в систему
           </button>
         ) : (
-          <button onClick={() => router.push('/login')} className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">
+          <button
+            onClick={() => router.push('/login')}
+            className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm"
+          >
             Войти
           </button>
         )}
       </header>
 
+      {/* HERO */}
       <section className="relative pt-32 pb-20 flex flex-col items-center text-center px-4">
         <div className="hero-black-hole mb-12" style={{ position: 'relative', width: 180, height: 180 }}>
           <div style={{
@@ -86,6 +95,7 @@ function CorporateLanding() {
         </div>
       </section>
 
+      {/* ПОЧЕМУ ЭТО НУЖНО БИЗНЕСУ */}
       <section className="max-w-6xl mx-auto px-6 py-20 relative z-10">
         <h2 className="text-4xl font-bold mb-16 text-center">Бизнесу больше не нужна скучная мотивация</h2>
 
@@ -122,6 +132,7 @@ function CorporateLanding() {
         </div>
       </section>
 
+      {/* ТРИ КИТА ГАЛАКТИКИ */}
       <section className="py-20 bg-gray-900/30 backdrop-blur-xl border-y border-orange-500/20">
         <div className="max-w-6xl mx-auto px-10">
           <h2 className="text-4xl font-bold mb-16 text-center">Три кита Галактики</h2>
@@ -163,6 +174,7 @@ function CorporateLanding() {
         </div>
       </section>
 
+      {/* ОТВЕТЫ НА ВОЗРАЖЕНИЯ */}
       <section className="max-w-4xl mx-auto px-6 py-20 relative z-10">
         <h2 className="text-4xl font-bold mb-16 text-center">Что думают скептики?</h2>
 
@@ -191,6 +203,7 @@ function CorporateLanding() {
         </div>
       </section>
 
+      {/* ФИНАЛЬНЫЙ CTA */}
       <section className="py-32 flex flex-col items-center">
         <h2 className="text-4xl font-bold mb-8 text-center px-6">
           Перестаньте платить только за время.
@@ -211,22 +224,38 @@ function CorporateLanding() {
       </footer>
 
       <style jsx>{`
-        .hero-black-hole { position: relative; display: flex; justify-content: center; align-items: center; }
-        .gradient-aura { position: absolute; bottom: 0; width: 100%; height: 50%; background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%); }
-        .landing-wrapper { scroll-behavior: smooth; }
-        @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hero-black-hole {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .gradient-aura {
+          position: absolute;
+          bottom: 0;
+          width: 100%;
+          height: 50%;
+          background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+        }
+        .landing-wrapper {
+          scroll-behavior: smooth;
+        }
+        @keyframes orbitSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
     </div>
   )
 }
 
+// ============ Главный компонент (полностью, как был) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
   const [balance, setBalance] = useState(0)
   const [stats, setStats] = useState({ active: 0, completed: 0, earned: 0 })
   const [pageLoading, setPageLoading] = useState(true)
-  const [transferOpen, setTransferOpen] = useState(false) // <-- НОВОЕ: открывает модалку перевода
 
   useEffect(() => {
     if (!user) {
@@ -269,13 +298,16 @@ export default function Home() {
   const karmikWord = getKarmikWord(balance)
   const centerX = 58
   const centerY = 40
+
+  // ОБНОВЛЁННЫЕ БЛОКИ: ИИ-питомец -> Цели, Квиз -> План адаптации,
+  // Гороскоп профессий -> Моя компания, Журнал ПРО -> База знаний.
   const blocks = [
     { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Гороскоп',   sub: 'профессий',  left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
-    { title: 'Журнал ПРО', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'Квиз',       sub: 'проверь себя', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'ИИ‑питомец', sub: 'учи и развивай', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Задания',    sub: '',             left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
+    { title: 'Моя компания', sub: 'данные и новости', left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
+    { title: 'База знаний', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'План адаптации', sub: 'твой путь', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'Цели', sub: 'твои победы', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
+    { title: 'Задания', sub: '', left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] }
   ]
 
   const beams = blocks.map(block => {
@@ -285,6 +317,16 @@ export default function Home() {
     const length = Math.sqrt(dx * dx + dy * dy) * 0.5
     return { angle, length }
   })
+
+  // Навигация по клику на блок
+  const routes = {
+    'Чемпионат': '/leaderboard',
+    'Моя компания': '/company',
+    'База знаний': '/knowledge',
+    'План адаптации': '/onboarding',
+    'Цели': '/goals',
+    'Задания': '/tasks'
+  }
 
   return (
     <>
@@ -312,6 +354,7 @@ export default function Home() {
           })}
         </div>
 
+        {/* Мягкие переливы внизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
           <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: 0, left: '-10%', width: '120%', height: '100%', background: 'radial-gradient(ellipse at 30% 100%, rgba(255,100,150,0.25) 0%, transparent 70%)', filter: 'blur(8px)', animation: 'breathe2 16s ease-in-out infinite alternate' }} />
@@ -319,7 +362,7 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,100,0.2) 0%, transparent 60%)', filter: 'blur(12px)', animation: 'breathe4 15s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Чёрная дыра */}
+        {/* Чёрная дыра (центр притяжения) */}
         <div style={{
           position: 'absolute', left: `${centerX}%`, top: `${centerY}%`,
           transform: 'translate(-50%, -50%)', width: '80px', height: '80px', zIndex: 5
@@ -345,7 +388,8 @@ export default function Home() {
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           const handleClick = () => {
-            if (block.title === 'Задания') router.push('/tasks')
+            const path = routes[block.title]
+            if (path) router.push(path)
           }
           return (
             <div key={idx} style={{
@@ -368,12 +412,14 @@ export default function Home() {
               }}>
                 {block.title}
               </div>
-              <div style={{
-                fontSize: '13px', fontWeight: 400, color: '#eaf0fb',
-                filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center'
-              }}>
-                {block.sub}
-              </div>
+              {block.sub && (
+                <div style={{
+                  fontSize: '13px', fontWeight: 400, color: '#eaf0fb',
+                  filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center'
+                }}>
+                  {block.sub}
+                </div>
+              )}
             </div>
           )
         })}
@@ -427,14 +473,14 @@ export default function Home() {
             flexWrap: 'wrap'
           }}>
             {[
-              { label: 'Перевести', action: () => setTransferOpen(true), color: '#a0e9ff' },
+              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
               { label: 'Операции', path: '/history', color: '#ffb3c6' },
               { label: 'Покупки', path: '/my-purchases', color: '#ffe29f' },
               { label: 'Магазин', path: '/shop', color: '#b3f0ff' }
             ].map((btn, idx) => (
               <div key={idx} style={{ textAlign: 'center' }}>
                 <div
-                  onClick={() => btn.action ? btn.action() : router.push(btn.path)}
+                  onClick={() => router.push(btn.path)}
                   style={{
                     fontSize: 13,
                     fontWeight: 400,
@@ -469,24 +515,39 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Модалка перевода с фирменной анимацией */}
-      <TransferModal isOpen={transferOpen} onClose={() => setTransferOpen(false)} />
-
       <style jsx global>{`
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
           50% { opacity: 0.7; transform: scale(1.05); }
         }
-        @keyframes breathe1 { 0% { opacity: 0.7; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.15); } }
-        @keyframes breathe2 { 0% { opacity: 0.5; transform: scaleY(1.05) translateX(-2%); } 100% { opacity: 0.9; transform: scaleY(1.25) translateX(2%); } }
-        @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); } 100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); } }
-        @keyframes breathe4 { 0% { opacity: 0.3; transform: scale(1); } 100% { opacity: 0.6; transform: scale(1.1); } }
-        @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes breathe1 {
+          0% { opacity: 0.7; transform: scaleY(1); }
+          100% { opacity: 1; transform: scaleY(1.15); }
+        }
+        @keyframes breathe2 {
+          0% { opacity: 0.5; transform: scaleY(1.05) translateX(-2%); }
+          100% { opacity: 0.9; transform: scaleY(1.25) translateX(2%); }
+        }
+        @keyframes breathe3 {
+          0% { opacity: 0.4; transform: scaleY(1.1) translateX(2%); }
+          100% { opacity: 0.8; transform: scaleY(1.3) translateX(-2%); }
+        }
+        @keyframes breathe4 {
+          0% { opacity: 0.3; transform: scale(1); }
+          100% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes orbitSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
         @keyframes blackHoleBreath {
           0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,180,0,0.2); }
           50% { transform: scale(1.1); box-shadow: 0 0 50px rgba(255,215,0,0.6), 0 0 90px rgba(255,180,0,0.35); }
         }
-        @keyframes beamPulse { 0% { opacity: 0.2; } 100% { opacity: 0.55; } }
+        @keyframes beamPulse {
+          0% { opacity: 0.2; }
+          100% { opacity: 0.55; }
+        }
         @keyframes drift0 {
           0% { transform: translate(-50%, -50%) translateX(-8px) translateY(4px); }
           100% { transform: translate(-50%, -50%) translateX(8px) translateY(-4px); }
@@ -499,8 +560,14 @@ export default function Home() {
           0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); }
           100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); }
         }
-        @keyframes driftBalance { 0% { transform: translate(0, 0); } 100% { transform: translate(5px, -5px); } }
-        @keyframes rainbowShift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+        @keyframes driftBalance {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(5px, -5px); }
+        }
+        @keyframes rainbowShift {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
       `}</style>
     </>
   )
