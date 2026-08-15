@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-// Фирменная анимация успешной операции Кармического банка — версия 2.
-// В центре: вращающаяся гексаграмма (два треугольника) + 12 точек-кармиков
-// по орбите + 6 радиальных лучей + пульсирующее ядро. Несколько слоёв
-// вращения с разными скоростями дают глубину. Орбиты вокруг (золото и
-// фиолет) символизируют поток кармы между отправителем и получателем.
+// Фирменная анимация успешного перевода — версия 3.
+// Две тонкие голографные стрелки летят навстречу друг другу по орбите,
+// оставляя светящийся шлейф. В момент встречи в центре появляется
+// галочка (stroke-анимация самопрорисовки). Ударная волна, искры,
+// счётчик суммы. Без стандартных иконок и эмодзи.
 export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
   const [visible, setVisible] = useState(false)
   const [counter, setCounter] = useState(0)
+  const [checkVisible, setCheckVisible] = useState(false)
 
   useEffect(() => {
     if (!show) return
     setVisible(true)
     setCounter(0)
+    setCheckVisible(false)
 
     const target = Math.max(0, parseInt(amount, 10) || 0)
     const started = Date.now()
@@ -23,95 +25,73 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
       if (p >= 1) clearInterval(tick)
     }, 30)
 
+    // Галочка появляется через 1.2 сек (когда стрелки встретились)
+    const checkTimer = setTimeout(() => setCheckVisible(true), 1200)
+
     const hide = setTimeout(() => {
       setVisible(false)
       setTimeout(() => onClose?.(), 450)
-    }, 4800)
+    }, 5200)
 
-    return () => { clearInterval(tick); clearTimeout(hide) }
+    return () => { clearInterval(tick); clearTimeout(hide); clearTimeout(checkTimer) }
   }, [show, amount])
-
-  // Искры, разлетающиеся от центра
-  const sparks = useMemo(() =>
-    Array.from({ length: 14 }, (_, i) => {
-      const angle = ((i * 360) / 14 + (i % 3) * 9) * (Math.PI / 180)
-      const dist = 78 + (i % 5) * 22
-      return {
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-        delay: 0.35 + (i % 7) * 0.12,
-        dur: 1.4 + (i % 4) * 0.25,
-        size: 2.5 + (i % 3) * 1.5,
-        gold: i % 3 !== 0,
-      }
-    }), [])
-
-  // 12 точек-кармиков по орбите (средний слой)
-  const orbitDots = useMemo(() =>
-    Array.from({ length: 12 }, (_, i) => {
-      const angle = (i * 30 - 90) * (Math.PI / 180)
-      return {
-        x: 110 + Math.cos(angle) * 62,
-        y: 110 + Math.sin(angle) * 62,
-        size: i % 3 === 0 ? 3 : 2,
-        color: i % 4 === 0 ? '#c084fc' : '#FFD700',
-        delay: i * 0.08,
-      }
-    }), [])
-
-  // 6 радиальных лучей из центра
-  const rays = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const angle = i * 60
-      return {
-        x1: 110 + Math.cos((angle - 90) * Math.PI / 180) * 18,
-        y1: 110 + Math.sin((angle - 90) * Math.PI / 180) * 18,
-        x2: 110 + Math.cos((angle - 90) * Math.PI / 180) * 38,
-        y2: 110 + Math.sin((angle - 90) * Math.PI / 180) * 38,
-      }
-    }), [])
 
   if (!show && !visible) return null
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none px-4">
       <style>{`
-        @keyframes kb-pulse {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(212,175,55,.55)); }
-          50% { transform: scale(1.15); filter: drop-shadow(0 0 26px rgba(212,175,55,.85)); }
+        @keyframes ks-wave {
+          0% { transform: scale(.3); opacity: .7; }
+          100% { transform: scale(2.2); opacity: 0; }
         }
-        @keyframes kb-draw { to { stroke-dashoffset: 0; } }
-        @keyframes kb-wave {
-          0% { transform: scale(.35); opacity: .8; }
-          100% { transform: scale(1.9); opacity: 0; }
-        }
-        @keyframes kb-spark {
+        @keyframes ks-spark {
           0% { transform: translate(0,0) scale(1); opacity: 0; }
-          12% { opacity: 1; }
-          100% { transform: translate(var(--kx), var(--ky)) scale(.3); opacity: 0; }
+          15% { opacity: 1; }
+          100% { transform: translate(var(--kx), var(--ky)) scale(.2); opacity: 0; }
         }
-        @keyframes kb-rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes ks-check-draw {
+          to { stroke-dashoffset: 0; }
         }
-        @keyframes kb-rotate-rev {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(-360deg); }
+        @keyframes ks-check-glow {
+          0%, 100% { filter: drop-shadow(0 0 8px rgba(212,175,55,.6)); }
+          50% { filter: drop-shadow(0 0 20px rgba(212,175,55,1)); }
         }
-        @keyframes kb-ray-pulse {
-          0%, 100% { opacity: 0.35; }
-          50% { opacity: 0.85; }
+        @keyframes ks-arrow-orbit {
+          0% { offset-distance: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { offset-distance: 100%; opacity: 0; }
         }
-        .kb-wave { animation: kb-wave 1.6s ease-out forwards; }
-        .kb-wave-2 { opacity: 0; animation: kb-wave 1.6s ease-out .5s forwards; }
-        .kb-spark { position: absolute; left: 50%; top: 50%; border-radius: 9999px; opacity: 0; animation: kb-spark var(--kd) ease-out var(--kl) forwards; }
-        .kb-hexagram { transform-origin: 110px 110px; animation: kb-rotate 14s linear infinite; }
-        .kb-hexagram-inner { transform-origin: 110px 110px; animation: kb-rotate-rev 20s linear infinite; }
-        .kb-orbit-dots { transform-origin: 110px 110px; animation: kb-rotate 18s linear infinite; }
-        .kb-rays { transform-origin: 110px 110px; animation: kb-ray-pulse 2.4s ease-in-out infinite; }
-        .kb-core { transform-origin: 110px 110px; animation: kb-pulse 2.2s ease-in-out infinite; }
-        .kb-arc { stroke-dasharray: 520; stroke-dashoffset: 520; animation: kb-draw 1.1s ease-out forwards; }
-        .kb-arc-2 { animation-delay: .25s; }
+        @keyframes ks-trail-fade {
+          0% { opacity: .6; }
+          100% { opacity: 0; }
+        }
+        @keyframes ks-pulse-ring {
+          0%, 100% { transform: scale(1); opacity: .3; }
+          50% { transform: scale(1.08); opacity: .6; }
+        }
+        .ks-wave { animation: ks-wave 1.8s ease-out forwards; }
+        .ks-wave-2 { opacity: 0; animation: ks-wave 1.8s ease-out .4s forwards; }
+        .ks-spark {
+          position: absolute; left: 50%; top: 50%;
+          border-radius: 9999px; opacity: 0;
+          animation: ks-spark var(--kd) ease-out var(--kl) forwards;
+        }
+        .ks-check-path {
+          stroke-dasharray: 60;
+          stroke-dashoffset: 60;
+          animation: ks-check-draw .6s ease-out forwards, ks-check-glow 2s ease-in-out .6s infinite;
+        }
+        .ks-arrow-gold {
+          offset-path: path('M 30,110 A 80,80 0 0,1 190,110');
+          animation: ks-arrow-orbit 1.2s ease-in-out forwards;
+        }
+        .ks-arrow-violet {
+          offset-path: path('M 190,110 A 80,80 0 0,1 30,110');
+          animation: ks-arrow-orbit 1.2s ease-in-out .15s forwards;
+        }
+        .ks-ring { animation: ks-pulse-ring 3s ease-in-out infinite; transform-origin: 110px 110px; }
       `}</style>
 
       <div
@@ -126,124 +106,87 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
       >
         <div className="relative mx-auto" style={{ width: 220, height: 220 }}>
           {/* Ударные волны */}
-          <div className="kb-wave absolute rounded-full" style={{ inset: 30, border: '1px solid rgba(212,175,55,.5)' }} />
-          <div className="kb-wave-2 absolute rounded-full" style={{ inset: 30, border: '1px solid rgba(192,132,252,.4)' }} />
+          <div className="ks-wave absolute rounded-full" style={{ inset: 20, border: '1px solid rgba(212,175,55,.4)' }} />
+          <div className="ks-wave-2 absolute rounded-full" style={{ inset: 20, border: '1px solid rgba(192,132,252,.3)' }} />
 
           {/* Искры */}
-          {sparks.map((s, i) => (
-            <span
-              key={i}
-              className="kb-spark"
-              style={{
-                width: s.size,
-                height: s.size,
-                background: s.gold ? '#D4AF37' : '#c084fc',
-                boxShadow: `0 0 ${s.size * 3}px ${s.gold ? 'rgba(212,175,55,.9)' : 'rgba(192,132,252,.9)'}`,
-                '--kx': `${s.x}px`,
-                '--ky': `${s.y}px`,
-                '--kd': `${s.dur}s`,
-                '--kl': `${s.delay}s`,
-              }}
-            />
-          ))}
+          {Array.from({ length: 16 }, (_, i) => {
+            const angle = ((i * 360) / 16 + (i % 3) * 7) * (Math.PI / 180)
+            const dist = 70 + (i % 5) * 24
+            const gold = i % 3 !== 0
+            return (
+              <span
+                key={i}
+                className="ks-spark"
+                style={{
+                  width: 2 + (i % 3) * 1.5,
+                  height: 2 + (i % 3) * 1.5,
+                  background: gold ? '#D4AF37' : '#c084fc',
+                  boxShadow: `0 0 ${(2 + (i % 3) * 1.5) * 3}px ${gold ? 'rgba(212,175,55,.9)' : 'rgba(192,132,252,.9)'}`,
+                  '--kx': `${Math.cos(angle) * dist}px`,
+                  '--ky': `${Math.sin(angle) * dist}px`,
+                  '--kd': `${1.3 + (i % 4) * 0.2}s`,
+                  '--kl': `${1.1 + (i % 7) * 0.1}s`,
+                }}
+              />
+            )
+          })}
 
           <svg viewBox="0 0 220 220" width="220" height="220" className="absolute inset-0">
             <defs>
-              <linearGradient id="kb-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFD700" />
+              <linearGradient id="ks-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#FFD700" stopOpacity="0" />
+                <stop offset="30%" stopColor="#FFD700" />
                 <stop offset="100%" stopColor="#f97316" />
               </linearGradient>
-              <linearGradient id="kb-violet" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#c084fc" />
+              <linearGradient id="ks-violet" x1="100%" y1="0%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#c084fc" stopOpacity="0" />
+                <stop offset="30%" stopColor="#c084fc" />
                 <stop offset="100%" stopColor="#f97316" />
               </linearGradient>
-              <linearGradient id="kb-star-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFD700" />
-                <stop offset="50%" stopColor="#f97316" />
-                <stop offset="100%" stopColor="#c084fc" />
-              </linearGradient>
-              <radialGradient id="kb-core-g" cx="50%" cy="42%" r="60%">
-                <stop offset="0%" stopColor="#FFF7D6" />
-                <stop offset="45%" stopColor="#D4AF37" />
-                <stop offset="100%" stopColor="#8a6d1f" />
-              </radialGradient>
+              <filter id="ks-glow">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
 
-            {/* ВНЕШНИЙ СЛОЙ: две встречные орбиты с частицами */}
-            <path id="kb-o1" className="kb-arc" d="M 110 28 A 82 82 0 1 1 109.9 28" fill="none" stroke="url(#kb-gold)" strokeWidth="1.2" opacity="0.6" />
-            <path id="kb-o2" className="kb-arc kb-arc-2" d="M 110 192 A 82 82 0 1 1 110.1 192" fill="none" stroke="url(#kb-violet)" strokeWidth="1.2" opacity="0.6" />
-            <circle r="4.5" fill="#FFD700" opacity="0.95">
-              <animateMotion dur="2.8s" repeatCount="indefinite" begin="0.9s">
-                <mpath href="#kb-o1" />
-              </animateMotion>
-            </circle>
-            <circle r="3.5" fill="#c084fc" opacity="0.9">
-              <animateMotion dur="3.6s" repeatCount="indefinite" begin="1.2s">
-                <mpath href="#kb-o2" />
-              </animateMotion>
-            </circle>
+            {/* Тонкое пульсирующее кольцо-орбита */}
+            <circle className="ks-ring" cx="110" cy="110" r="80" fill="none"
+              stroke="rgba(212,175,55,.15)" strokeWidth="0.8" />
 
-            {/* СРЕДНИЙ СЛОЙ: 12 точек-кармиков по орбите (вращаются) */}
-            <g className="kb-orbit-dots">
-              {orbitDots.map((d, i) => (
-                <g key={i}>
-                  <circle
-                    cx={d.x}
-                    cy={d.y}
-                    r={d.size + 4}
-                    fill={d.color}
-                    opacity="0.15"
-                  />
-                  <circle
-                    cx={d.x}
-                    cy={d.y}
-                    r={d.size}
-                    fill={d.color}
-                    opacity="0.95"
-                  />
-                </g>
-              ))}
+            {/* Голографная золотая стрелка (летит слева направо по верхней дуге) */}
+            <g className="ks-arrow-gold" filter="url(#ks-glow)">
+              <polygon points="0,-5 14,0 0,5" fill="url(#ks-gold)" />
+              <line x1="-18" y1="0" x2="-2" y2="0" stroke="url(#ks-gold)" strokeWidth="1.5" opacity="0.7" />
+              <line x1="-30" y1="0" x2="-18" y2="0" stroke="url(#ks-gold)" strokeWidth="1" opacity="0.35" />
             </g>
 
-            {/* СРЕДНИЙ СЛОЙ: гексаграмма (два треугольника, вращаются в разные стороны) */}
-            <g className="kb-hexagram">
-              <polygon
-                points="110,50 150,120 70,120"
-                fill="none"
-                stroke="url(#kb-star-grad)"
-                strokeWidth="1.2"
-                opacity="0.75"
-              />
-            </g>
-            <g className="kb-hexagram-inner">
-              <polygon
-                points="110,170 150,100 70,100"
-                fill="none"
-                stroke="url(#kb-star-grad)"
-                strokeWidth="1.2"
-                opacity="0.75"
-              />
+            {/* Голографная фиолетовая стрелка (летит справа налево по нижней дуге) */}
+            <g className="ks-arrow-violet" filter="url(#ks-glow)">
+              <polygon points="0,-5 14,0 0,5" fill="url(#ks-violet)" />
+              <line x1="-18" y1="0" x2="-2" y2="0" stroke="url(#ks-violet)" strokeWidth="1.5" opacity="0.7" />
+              <line x1="-30" y1="0" x2="-18" y2="0" stroke="url(#ks-violet)" strokeWidth="1" opacity="0.35" />
             </g>
 
-            {/* ВНУТРЕННИЙ СЛОЙ: 6 радиальных лучей (пульсируют) */}
-            <g className="kb-rays">
-              {rays.map((r, i) => (
-                <line
-                  key={i}
-                  x1={r.x1}
-                  y1={r.y1}
-                  x2={r.x2}
-                  y2={r.y2}
-                  stroke="url(#kb-star-grad)"
-                  strokeWidth="1"
-                  opacity="0.7"
+            {/* Галочка в центре (появляется после встречи стрелок) */}
+            {checkVisible && (
+              <g filter="url(#ks-glow)">
+                <circle cx="110" cy="110" r="28" fill="rgba(212,175,55,.08)"
+                  stroke="rgba(212,175,55,.4)" strokeWidth="1" />
+                <path
+                  className="ks-check-path"
+                  d="M 95,110 L 106,122 L 128,98"
+                  fill="none"
+                  stroke="#FFD700"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
-              ))}
-            </g>
-
-            {/* ЦЕНТР: пульсирующее ядро */}
-            <circle className="kb-core" cx="110" cy="110" r="9" fill="url(#kb-core-g)" />
-            <circle cx="110" cy="110" r="14" fill="none" stroke="url(#kb-star-grad)" strokeWidth="0.8" opacity="0.4" />
+              </g>
+            )}
           </svg>
         </div>
 
