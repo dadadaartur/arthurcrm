@@ -3,7 +3,6 @@ import { requireAuth } from '../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-
   const ctx = await requireAuth(req, res)
   if (!ctx) return
 
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
   const userId = ctx.user.id
-
   const { data, error: purchaseError } = await supabaseAdmin.rpc('purchase_reward', {
     p_user_id: userId,
     p_reward_id: rewardId,
@@ -46,30 +44,24 @@ export default async function handler(req, res) {
 
   await supabaseAdmin.from('notifications').insert({
     user_id: userId,
+    type: 'purchase',
     message,
     link: '/my-purchases'
   })
 
   if (newStatus === 'pending') {
     const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
-
     if (profile?.company_id) {
-      // Раньше здесь было .in('role_id', [1, 2]) — тот же ошибочный хардкод,
-      // что и в остальных файлах. Теперь уведомляем всех, у кого реально
-      // есть право проверять покупки: админа компании (is_company_admin)
-      // и модераторов с явным правом can_review_tasks.
       const { data: reviewers } = await supabaseAdmin
         .from('profiles')
         .select('user_id')
         .eq('company_id', profile.company_id)
         .or('is_company_admin.eq.true,can_review_tasks.eq.true')
 
-      // Супер-админов Кармического банка (role_id=1, company_id=null)
-      // этот запрос не найдёт, т.к. они не привязаны к company_id.
-      // Если нужно уведомлять и их — добавьте отдельный запрос по role_id=1.
       if (reviewers?.length) {
         const notifs = reviewers.map(r => ({
           user_id: r.user_id,
+          type: 'purchase_review',
           message: `Сотрудник хочет приобрести "${rewardName}". Требуется подтверждение.`,
           link: '/company-admin/purchases'
         }))
