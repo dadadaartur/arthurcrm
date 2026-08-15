@@ -9,7 +9,6 @@ export default async function handler(req, res) {
 
   const { assignmentId, action } = req.body
   const numericId = parseInt(assignmentId, 10)
-
   if (!numericId || !['approve', 'reject'].includes(action)) {
     return res.status(400).json({ error: 'Неверные параметры' })
   }
@@ -28,11 +27,9 @@ export default async function handler(req, res) {
   if (fetchError || !assignment) {
     return res.status(404).json({ error: 'Назначение не найдено' })
   }
-
   if (assignment.status !== 'pending_review') {
     return res.status(400).json({ error: 'Задание уже обработано' })
   }
-
   if (!canAccessCompany(ctx.profile, assignment.tasks?.company_id)) {
     return res.status(403).json({ error: 'Доступ запрещён: другая компания' })
   }
@@ -59,7 +56,6 @@ export default async function handler(req, res) {
 
   if (action === 'approve' && assignment.tasks.reward_karma > 0) {
     const reward = assignment.tasks.reward_karma
-
     const { error: transactionError } = await supabaseAdmin
       .from('karma_transactions')
       .insert({
@@ -75,7 +71,8 @@ export default async function handler(req, res) {
 
     await supabaseAdmin.from('notifications').insert({
       user_id: assignment.user_id,
-      message: `Вам начислено ${reward} кармиков за выполнение задания "${assignment.tasks.title}"`,
+      type: 'task_done',
+      message: `Задание "${assignment.tasks.title}" одобрено руководителем. Начислено ${reward} кармиков.`,
       link: '/tasks'
     })
   }
