@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import PremiumModal from '../../components/PremiumModal'
 import DatePicker from '../../components/DatePicker'
+import TimePicker from '../../components/TimePicker'
 import { withAuth } from '../../components/withAuth'
 
 const TASK_TYPE_LABELS = { one_time: 'Разовое', recurring: 'Регулярное', auto_crm: 'Авто из CRM' }
@@ -100,7 +101,7 @@ function TasksPage() {
       if (!imageUrl) return
     }
 
-    // Дедлайн: фирменный календарь (дата) + время
+    // Дедлайн: фирменный календарь (дата) + фирменный выбор времени
     const deadlineAt = form.deadline_date
       ? new Date(`${form.deadline_date}T${form.deadline_time || '23:59'}`).toISOString()
       : null
@@ -230,14 +231,13 @@ function TasksPage() {
 
   const filteredTasks = typeFilter === 'all' ? tasks : tasks.filter(t => t.task_type === typeFilter)
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner text="Загружаем задания…" /></div>
+  if (loading) return <div className="flex justify-center items-center py-24"><Spinner size={52} /></div>
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"
-            className="transition-transform group-hover:-translate-x-1">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="transition-transform group-hover:-translate-x-1">
             <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
             <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -283,7 +283,7 @@ function TasksPage() {
               </div>
             )}
 
-            {/* Дедлайн: фирменный календарь + время */}
+            {/* Дедлайн: фирменный календарь + фирменный выбор времени */}
             <div>
               <label className="text-sm text-gray-400">Дедлайн</label>
               <div className="flex gap-2 mt-1">
@@ -294,9 +294,13 @@ function TasksPage() {
                     placeholder="Дата (необязательно)"
                   />
                 </div>
-                <input type="time" className="input-field" style={{ maxWidth: 130 }}
-                  value={form.deadline_time}
-                  onChange={e => setForm({ ...form, deadline_time: e.target.value })} />
+                <div style={{ maxWidth: 150 }}>
+                  <TimePicker
+                    value={form.deadline_time}
+                    onChange={v => setForm({ ...form, deadline_time: v })}
+                    placeholder="Время"
+                  />
+                </div>
               </div>
             </div>
 
