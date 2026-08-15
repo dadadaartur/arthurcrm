@@ -1,37 +1,30 @@
-// Единая фирменная анимация загрузки Кармического банка.
-// Использовать: <Spinner /> или <Spinner text="Загружаем…" />
-export default function Spinner({ size = 48, text = null }) {
+import { useId } from 'react'
+
+// Единый премиальный спиннер проекта: две тонкие золотые стрелки,
+// бегущие по кругу. Никаких "системных" крутилок.
+export default function Spinner({ size = 44 }) {
+  const raw = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const grad = `spng-${raw}`
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 12 }}>
-      <style>{`
-        @keyframes kbs-rotate { to { transform: rotate(360deg); } }
-        @keyframes kbs-pulse {
-          0%, 100% { transform: scale(1); opacity: .9; }
-          50% { transform: scale(1.14); opacity: 1; }
-        }
-        .kbs-core { animation: kbs-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-        .kbs-ring { animation: kbs-rotate 1.5s linear infinite; transform-box: fill-box; transform-origin: center; }
-        .kbs-ring2 { animation: kbs-rotate 2.6s linear infinite reverse; transform-box: fill-box; transform-origin: center; }
-      `}</style>
-      <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+    <span style={{ display: 'inline-flex', width: size, height: size }}>
+      <svg width={size} height={size} viewBox="0 0 50 50" fill="none">
         <defs>
-          <linearGradient id="kbs-g" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stopColor="#FFD700" />
-            <stop offset="1" stopColor="#c084fc" />
+          <linearGradient id={grad} x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#FFE9A0" />
+            <stop offset="0.5" stopColor="#D4AF37" />
+            <stop offset="1" stopColor="#B8860B" />
           </linearGradient>
         </defs>
-        <circle cx="24" cy="24" r="15" stroke="rgba(212,175,55,.25)" strokeWidth="1" strokeDasharray="2 5" />
-        <circle className="kbs-core" cx="24" cy="24" r="6.5" fill="url(#kbs-g)" />
-        <g className="kbs-ring">
-          <path d="M24 5 a19 19 0 0 1 19 19" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" opacity="0.85" />
+        <g style={{ transformOrigin: '25px 25px', animation: 'kbspin 1.1s linear infinite' }}>
+          {/* Стрелка 1: дуга сверху вправо */}
+          <path d="M25 7 A18 18 0 0 1 43 25" stroke={`url(#${grad})`} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M43 25 L46.4 20.1 M43 25 L39.6 20.1" stroke={`url(#${grad})`} strokeWidth="2.2" strokeLinecap="round" />
+          {/* Стрелка 2: дуга снизу влево */}
+          <path d="M25 43 A18 18 0 0 1 7 25" stroke={`url(#${grad})`} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M7 25 L10.4 29.9 M7 25 L3.6 29.9" stroke={`url(#${grad})`} strokeWidth="2.2" strokeLinecap="round" />
         </g>
-        <g className="kbs-ring2">
-          <path d="M24 43 a19 19 0 0 1 -19 -19" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-        </g>
+        <style>{`@keyframes kbspin { to { transform: rotate(360deg); } }`}</style>
       </svg>
-      {text && (
-        <span style={{ color: '#9aa9c1', fontSize: 12, letterSpacing: 1.5 }}>{text}</span>
-      )}
-    </div>
+    </span>
   )
 }
