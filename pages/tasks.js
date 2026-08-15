@@ -12,9 +12,6 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
 
-  // При загрузке: если есть задания "в работе" — показываем их первыми,
-  // так как пользователь скорее всего уже нажал "Начать" и ему важно продолжить.
-  // Новые задания остаются доступны на своей вкладке, но не подавляют "в работе".
   useEffect(() => {
     if (activeTasks.length > 0) {
       const inProgress = activeTasks.filter(t => t.status === 'in_progress')
@@ -30,17 +27,12 @@ export default function TasksPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
-      // Без профиля неизвестна компания пользователя — доступ к чужим/
-      // ничьим заданиям быть не должно. Уводим на /welcome (там уже есть
-      // обработка "нет компании / ждите приглашение").
       const { data: profile } = await supabase
         .from('profiles')
         .select('company_id, deleted_at')
         .eq('user_id', user.id)
         .maybeSingle()
       if (!profile?.company_id || profile.deleted_at) { router.push('/welcome'); return }
-
       setUser(user)
       setLoading(false)
     }
@@ -59,7 +51,6 @@ export default function TasksPage() {
       .eq('user_id', userId)
       .in('status', ['assigned', 'in_progress', 'pending_review'])
       .limit(50)
-
     const { data: completed } = await supabase
       .from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
@@ -67,7 +58,6 @@ export default function TasksPage() {
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
       .limit(50)
-
     setActiveTasks(active || [])
     setHistory(completed || [])
   }
@@ -77,7 +67,6 @@ export default function TasksPage() {
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
-
     if (!error) {
       setNotification({ show: true, message: 'Задание принято в работу' })
       loadTasks(user.id)
@@ -88,25 +77,31 @@ export default function TasksPage() {
 
   const openSubmitModal = (assignmentId) => setSubmitModal({ show: true, assignmentId, comment: '' })
 
+  // Отправка на проверку через серверный роут: он атомарно меняет статус
+  // и уведомляет админов/модераторов компании (тип task_review).
   const handleSubmit = async () => {
     if (!user || !submitModal.assignmentId) return
     setSubmitting(true)
-    const { error } = await supabase
-      .from('task_assignments')
-      .update({
-        status: 'pending_review',
-        comment: submitModal.comment,
-        completed_at: new Date().toISOString()
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/tasks/submit-review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+        },
+        body: JSON.stringify({ assignmentId: submitModal.assignmentId, comment: submitModal.comment })
       })
-      .eq('id', submitModal.assignmentId)
-      .eq('user_id', user.id)
-
-    if (!error) {
-      setSubmitModal({ show: false, assignmentId: null, comment: '' })
-      setNotification({ show: true, message: 'Задание отправлено на проверку' })
-      loadTasks(user.id)
-    } else {
-      setNotification({ show: true, message: 'Ошибка отправки' })
+      const result = await res.json()
+      if (!res.ok) {
+        setNotification({ show: true, message: result.error || 'Ошибка отправки' })
+      } else {
+        setSubmitModal({ show: false, assignmentId: null, comment: '' })
+        setNotification({ show: true, message: 'Задание отправлено на проверку' })
+        loadTasks(user.id)
+      }
+    } catch {
+      setNotification({ show: true, message: 'Сетевая ошибка — попробуйте ещё раз' })
     }
     setSubmitting(false)
   }
@@ -125,21 +120,22 @@ export default function TasksPage() {
     filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <div className="flex justify-center items-center py-24"><Spinner text="Загружаем задания…" /></div>
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1" title="На главную">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
+            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <h1 className="text-2xl font-bold text-white">Мои задания</h1>
         <div className="ml-auto text-sm text-gray-400">{user?.email}</div>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-6 flex-wrap">
         {[
           { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
           { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress').length },
@@ -207,12 +203,12 @@ export default function TasksPage() {
                     </div>
                     <div className="flex gap-2">
                       {assignment.status === 'assigned' && (
-                        <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                        <button onClick={() => handleStart(assignment.id)} className="btn-glass w-full text-xs py-1.5">
                           Начать
                         </button>
                       )}
                       {assignment.status === 'in_progress' && (
-                        <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                        <button onClick={() => openSubmitModal(assignment.id)} className="btn-glass w-full text-xs py-1.5">
                           Отправить на проверку
                         </button>
                       )}
@@ -255,7 +251,6 @@ export default function TasksPage() {
         )
       )}
 
-      {/* Модальное окно для комментария при отправке */}
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -268,16 +263,15 @@ export default function TasksPage() {
               rows={3}
             />
             <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setSubmitModal({ show: false })} className="btn-outline">Отмена</button>
-              <button onClick={handleSubmit} disabled={submitting} className="btn-gold">
-                {submitting ? 'Отправка...' : 'Отправить'}
+              <button onClick={() => setSubmitModal({ show: false })} className="btn-glass">Отмена</button>
+              <button onClick={handleSubmit} disabled={submitting} className="btn-glass">
+                {submitting ? 'Отправка…' : 'Отправить'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Уведомления вместо alert */}
       <PremiumModal
         isOpen={notification.show}
         onClose={() => setNotification({ show: false, message: '' })}
