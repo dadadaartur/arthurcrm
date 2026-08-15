@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
+import DateRangePicker from '../components/DateRangePicker'
 
-// Премиальные SVG-иконки для типов операций — тонкие линии, стиль банка.
-// Никаких эмодзи и стандартных библиотек.
+// Премиальные SVG-иконки типов операций — тонкие линии, стиль банка.
 function OpIcon({ type, direction }) {
   const s = { width: 28, height: 28, viewBox: '0 0 28 28', fill: 'none' }
   if (type === 'transfer') {
     const color = direction === 'in' ? '#4ade80' : '#f87171'
     const d = direction === 'in'
-      ? 'M6 14h16M16 8l6 6-6 6'   // стрелка вправо (входящий)
-      : 'M22 14H6M12 8l-6 6 6 6'   // стрелка влево (исходящий)
+      ? 'M6 14h16M16 8l6 6-6 6'
+      : 'M22 14H6M12 8l-6 6 6 6'
     return (
       <svg {...s}>
         <circle cx="14" cy="14" r="13" stroke={color} strokeWidth="0.8" opacity="0.3" />
@@ -29,7 +29,6 @@ function OpIcon({ type, direction }) {
       </svg>
     )
   }
-  // transaction (начисление / списание)
   const isPlus = direction === 'in'
   const color = isPlus ? '#4ade80' : '#f87171'
   return (
@@ -145,43 +144,33 @@ export default function History() {
       </div>
 
       <div className="premium-card mb-6">
-        {/* Фильтры по типу */}
-        <div className="flex gap-2 flex-wrap mb-4">
-          {['all', 'income', 'expense', 'transfer'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`filter-pill ${filter === f ? 'active' : ''}`}
-            >
-              {f === 'all' ? 'Все' : f === 'income' ? 'Начисления' : f === 'expense' ? 'Списания' : 'Переводы'}
-            </button>
-          ))}
-        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Фильтры по типу */}
+          <div className="flex gap-2 flex-wrap">
+            {['all', 'income', 'expense', 'transfer'].map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`filter-pill ${filter === f ? 'active' : ''}`}
+              >
+                {f === 'all' ? 'Все' : f === 'income' ? 'Начисления' : f === 'expense' ? 'Списания' : 'Переводы'}
+              </button>
+            ))}
+          </div>
 
-        {/* Фильтры по дате */}
-        <div className="flex gap-3 flex-wrap items-end">
-          <div>
-            <label className="text-xs text-gray-400 mb-1 block">С даты</label>
-            <input type="date" className="input-field" style={{ width: 160 }}
-              value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-1 block">По дату</label>
-            <input type="date" className="input-field" style={{ width: 160 }}
-              value={dateTo} onChange={e => setDateTo(e.target.value)} />
-          </div>
-          {(dateFrom || dateTo) && (
-            <button onClick={() => { setDateFrom(''); setDateTo('') }}
-              className="text-xs text-gray-400 hover:text-white underline mb-1">
-              сбросить даты
-            </button>
-          )}
+          {/* Премиальный календарь диапазона дат */}
+          <DateRangePicker
+            from={dateFrom}
+            to={dateTo}
+            onChange={({ from, to }) => { setDateFrom(from); setDateTo(to) }}
+          />
         </div>
       </div>
 
-      <div className="space-y-3">
+      {/* Строки истории: по две на линии на десктопе */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {paginated.length === 0 && (
-          <p className="text-gray-500 text-sm text-center py-8">Нет операций за выбранный период</p>
+          <p className="text-gray-500 text-sm text-center py-8 lg:col-span-2">Нет операций за выбранный период</p>
         )}
         {paginated.map(op => {
           const isIncoming = (op.type === 'transaction' && op.amount >= 0)
@@ -203,23 +192,23 @@ export default function History() {
           else if (op.type === 'transfer') amountText = (user && op.from_user_id === user.id ? '-' : '+') + op.amount
           else if (op.type === 'purchase') amountText = '-' + op.cost
 
-          const dir = isIncoming ? 'in' : 'out'
-
           return (
-            <div key={op.id + op.type} className="premium-card flex items-center gap-4">
-              {/* Иконка типа операции */}
+            <div
+              key={op.id + op.type}
+              className="premium-card flex items-center gap-3"
+              style={{ padding: '16px 20px' }}
+            >
               <div className="flex-shrink-0">
-                <OpIcon type={op.type} direction={dir} />
+                <OpIcon type={op.type} direction={isIncoming ? 'in' : 'out'} />
               </div>
 
-              {/* Текст */}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white truncate">{title}</p>
+                <p className="font-medium text-white text-sm truncate">{title}</p>
                 <p className="text-xs text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
               </div>
 
-              {/* Сумма */}
-              <span className={`font-semibold flex-shrink-0 ${isIncoming ? 'text-green-400' : 'text-red-400'}`}>
+              {/* Сумма прижата к тексту, не улетает на край экрана */}
+              <span className={`font-semibold text-sm whitespace-nowrap ${isIncoming ? 'text-green-400' : 'text-red-400'}`}>
                 {amountText}
               </span>
             </div>
