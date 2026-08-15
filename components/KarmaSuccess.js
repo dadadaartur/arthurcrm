@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 
-// «Поток кармы» — фирменная анимация успешной операции Кармического банка.
-// Без стандартных иконок и эмодзи: золотое ядро, две встречные орбиты
-// (золото и фиолет), искры кармы, ударная волна и живой счётчик суммы.
-//
-// Использование:
-// <KarmaSuccess show={true} amount={30} recipientName="Иван" onClose={...} />
+// Фирменная анимация успешной операции Кармического банка — версия 2.
+// В центре: вращающаяся гексаграмма (два треугольника) + 12 точек-кармиков
+// по орбите + 6 радиальных лучей + пульсирующее ядро. Несколько слоёв
+// вращения с разными скоростями дают глубину. Орбиты вокруг (золото и
+// фиолет) символизируют поток кармы между отправителем и получателем.
 export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
   const [visible, setVisible] = useState(false)
   const [counter, setCounter] = useState(0)
@@ -15,30 +14,28 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
     setVisible(true)
     setCounter(0)
 
-    // Плавно набираем сумму на счётчике
     const target = Math.max(0, parseInt(amount, 10) || 0)
     const started = Date.now()
-    const duration = 1000
+    const duration = 1100
     const tick = setInterval(() => {
       const p = Math.min(1, (Date.now() - started) / duration)
       setCounter(Math.round(target * (1 - Math.pow(1 - p, 3))))
       if (p >= 1) clearInterval(tick)
     }, 30)
 
-    // Автоскрытие через ~4.5 секунды
     const hide = setTimeout(() => {
       setVisible(false)
       setTimeout(() => onClose?.(), 450)
-    }, 4600)
+    }, 4800)
 
     return () => { clearInterval(tick); clearTimeout(hide) }
   }, [show, amount])
 
-  // Искры, разлетающиеся от ядра (14 штук, у каждой своя траектория)
+  // Искры, разлетающиеся от центра
   const sparks = useMemo(() =>
     Array.from({ length: 14 }, (_, i) => {
       const angle = ((i * 360) / 14 + (i % 3) * 9) * (Math.PI / 180)
-      const dist = 78 + (i % 5) * 20
+      const dist = 78 + (i % 5) * 22
       return {
         x: Math.cos(angle) * dist,
         y: Math.sin(angle) * dist,
@@ -49,6 +46,31 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
       }
     }), [])
 
+  // 12 точек-кармиков по орбите (средний слой)
+  const orbitDots = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => {
+      const angle = (i * 30 - 90) * (Math.PI / 180)
+      return {
+        x: 110 + Math.cos(angle) * 62,
+        y: 110 + Math.sin(angle) * 62,
+        size: i % 3 === 0 ? 3 : 2,
+        color: i % 4 === 0 ? '#c084fc' : '#FFD700',
+        delay: i * 0.08,
+      }
+    }), [])
+
+  // 6 радиальных лучей из центра
+  const rays = useMemo(() =>
+    Array.from({ length: 6 }, (_, i) => {
+      const angle = i * 60
+      return {
+        x1: 110 + Math.cos((angle - 90) * Math.PI / 180) * 18,
+        y1: 110 + Math.sin((angle - 90) * Math.PI / 180) * 18,
+        x2: 110 + Math.cos((angle - 90) * Math.PI / 180) * 38,
+        y2: 110 + Math.sin((angle - 90) * Math.PI / 180) * 38,
+      }
+    }), [])
+
   if (!show && !visible) return null
 
   return (
@@ -56,7 +78,7 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
       <style>{`
         @keyframes kb-pulse {
           0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(212,175,55,.55)); }
-          50% { transform: scale(1.08); filter: drop-shadow(0 0 26px rgba(212,175,55,.85)); }
+          50% { transform: scale(1.15); filter: drop-shadow(0 0 26px rgba(212,175,55,.85)); }
         }
         @keyframes kb-draw { to { stroke-dashoffset: 0; } }
         @keyframes kb-wave {
@@ -68,12 +90,28 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
           12% { opacity: 1; }
           100% { transform: translate(var(--kx), var(--ky)) scale(.3); opacity: 0; }
         }
-        .kb-core { animation: kb-pulse 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-        .kb-arc { stroke-dasharray: 520; stroke-dashoffset: 520; animation: kb-draw 1.1s ease-out forwards; }
-        .kb-arc-2 { animation-delay: .25s; }
+        @keyframes kb-rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes kb-rotate-rev {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(-360deg); }
+        }
+        @keyframes kb-ray-pulse {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.85; }
+        }
         .kb-wave { animation: kb-wave 1.6s ease-out forwards; }
         .kb-wave-2 { opacity: 0; animation: kb-wave 1.6s ease-out .5s forwards; }
         .kb-spark { position: absolute; left: 50%; top: 50%; border-radius: 9999px; opacity: 0; animation: kb-spark var(--kd) ease-out var(--kl) forwards; }
+        .kb-hexagram { transform-origin: 110px 110px; animation: kb-rotate 14s linear infinite; }
+        .kb-hexagram-inner { transform-origin: 110px 110px; animation: kb-rotate-rev 20s linear infinite; }
+        .kb-orbit-dots { transform-origin: 110px 110px; animation: kb-rotate 18s linear infinite; }
+        .kb-rays { transform-origin: 110px 110px; animation: kb-ray-pulse 2.4s ease-in-out infinite; }
+        .kb-core { transform-origin: 110px 110px; animation: kb-pulse 2.2s ease-in-out infinite; }
+        .kb-arc { stroke-dasharray: 520; stroke-dashoffset: 520; animation: kb-draw 1.1s ease-out forwards; }
+        .kb-arc-2 { animation-delay: .25s; }
       `}</style>
 
       <div
@@ -91,7 +129,7 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
           <div className="kb-wave absolute rounded-full" style={{ inset: 30, border: '1px solid rgba(212,175,55,.5)' }} />
           <div className="kb-wave-2 absolute rounded-full" style={{ inset: 30, border: '1px solid rgba(192,132,252,.4)' }} />
 
-          {/* Искры кармы */}
+          {/* Искры */}
           {sparks.map((s, i) => (
             <span
               key={i}
@@ -109,7 +147,6 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
             />
           ))}
 
-          {/* Орбиты потока */}
           <svg viewBox="0 0 220 220" width="220" height="220" className="absolute inset-0">
             <defs>
               <linearGradient id="kb-gold" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -120,6 +157,11 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
                 <stop offset="0%" stopColor="#c084fc" />
                 <stop offset="100%" stopColor="#f97316" />
               </linearGradient>
+              <linearGradient id="kb-star-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFD700" />
+                <stop offset="50%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#c084fc" />
+              </linearGradient>
               <radialGradient id="kb-core-g" cx="50%" cy="42%" r="60%">
                 <stop offset="0%" stopColor="#FFF7D6" />
                 <stop offset="45%" stopColor="#D4AF37" />
@@ -127,24 +169,81 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
               </radialGradient>
             </defs>
 
-            {/* Золотое ядро */}
-            <circle className="kb-core" cx="110" cy="110" r="24" fill="url(#kb-core-g)" />
-
-            {/* Две встречные орбиты — рисуются при появлении */}
-            <path id="kb-o1" className="kb-arc" d="M 110 28 A 82 82 0 1 1 109.9 28" fill="none" stroke="url(#kb-gold)" strokeWidth="1.6" opacity="0.75" />
-            <path id="kb-o2" className="kb-arc kb-arc-2" d="M 110 192 A 82 82 0 1 1 110.1 192" fill="none" stroke="url(#kb-violet)" strokeWidth="1.6" opacity="0.75" />
-
-            {/* Частицы, бегущие по орбитам */}
-            <circle r="5" fill="#FFD700" opacity="0.95">
+            {/* ВНЕШНИЙ СЛОЙ: две встречные орбиты с частицами */}
+            <path id="kb-o1" className="kb-arc" d="M 110 28 A 82 82 0 1 1 109.9 28" fill="none" stroke="url(#kb-gold)" strokeWidth="1.2" opacity="0.6" />
+            <path id="kb-o2" className="kb-arc kb-arc-2" d="M 110 192 A 82 82 0 1 1 110.1 192" fill="none" stroke="url(#kb-violet)" strokeWidth="1.2" opacity="0.6" />
+            <circle r="4.5" fill="#FFD700" opacity="0.95">
               <animateMotion dur="2.8s" repeatCount="indefinite" begin="0.9s">
                 <mpath href="#kb-o1" />
               </animateMotion>
             </circle>
-            <circle r="4" fill="#c084fc" opacity="0.9">
+            <circle r="3.5" fill="#c084fc" opacity="0.9">
               <animateMotion dur="3.6s" repeatCount="indefinite" begin="1.2s">
                 <mpath href="#kb-o2" />
               </animateMotion>
             </circle>
+
+            {/* СРЕДНИЙ СЛОЙ: 12 точек-кармиков по орбите (вращаются) */}
+            <g className="kb-orbit-dots">
+              {orbitDots.map((d, i) => (
+                <g key={i}>
+                  <circle
+                    cx={d.x}
+                    cy={d.y}
+                    r={d.size + 4}
+                    fill={d.color}
+                    opacity="0.15"
+                  />
+                  <circle
+                    cx={d.x}
+                    cy={d.y}
+                    r={d.size}
+                    fill={d.color}
+                    opacity="0.95"
+                  />
+                </g>
+              ))}
+            </g>
+
+            {/* СРЕДНИЙ СЛОЙ: гексаграмма (два треугольника, вращаются в разные стороны) */}
+            <g className="kb-hexagram">
+              <polygon
+                points="110,50 150,120 70,120"
+                fill="none"
+                stroke="url(#kb-star-grad)"
+                strokeWidth="1.2"
+                opacity="0.75"
+              />
+            </g>
+            <g className="kb-hexagram-inner">
+              <polygon
+                points="110,170 150,100 70,100"
+                fill="none"
+                stroke="url(#kb-star-grad)"
+                strokeWidth="1.2"
+                opacity="0.75"
+              />
+            </g>
+
+            {/* ВНУТРЕННИЙ СЛОЙ: 6 радиальных лучей (пульсируют) */}
+            <g className="kb-rays">
+              {rays.map((r, i) => (
+                <line
+                  key={i}
+                  x1={r.x1}
+                  y1={r.y1}
+                  x2={r.x2}
+                  y2={r.y2}
+                  stroke="url(#kb-star-grad)"
+                  strokeWidth="1"
+                  opacity="0.7"
+                />
+              ))}
+            </g>
+
+            {/* ЦЕНТР: пульсирующее ядро */}
+            <circle className="kb-core" cx="110" cy="110" r="9" fill="url(#kb-core-g)" />
+            <circle cx="110" cy="110" r="14" fill="none" stroke="url(#kb-star-grad)" strokeWidth="0.8" opacity="0.4" />
           </svg>
         </div>
 
@@ -159,14 +258,14 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
             letterSpacing: 0.5,
           }}
         >
-          Карма доставлена
+          Перевод выполнен
         </h3>
 
         <p
           className="mt-1 font-bold"
           style={{ fontSize: 34, color: '#FFD700', textShadow: '0 0 22px rgba(212,175,55,.55)' }}
         >
-          +{counter} кармиков
+          {counter} кармиков
         </p>
 
         {recipientName && (
