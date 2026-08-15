@@ -3,10 +3,10 @@ import { useRouter } from 'next/router'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabaseClient'
 
-// Типы событий и их фирменные цвета
 const TYPE_META = {
   transfer:        { color: '#4ade80' },
   task_new:        { color: '#f97316' },
+  task_review:     { color: '#FFD700' },
   task_done:       { color: '#7AC78F' },
   purchase:        { color: '#c084fc' },
   purchase_review: { color: '#D4AF37' },
@@ -14,17 +14,16 @@ const TYPE_META = {
   system:          { color: '#9aa9c1' },
 }
 
-// Определяем тип: из колонки type, а для старых записей — по ссылке
 function inferType(n) {
   if (n.type && TYPE_META[n.type]) return n.type
   if (n.link === '/history') return 'transfer'
   if (n.link === '/my-purchases') return 'purchase'
   if (n.link === '/company-admin/purchases') return 'purchase_review'
+  if (n.link === '/company-admin/review') return 'task_review'
   if (n.link === '/tasks') return 'task_done'
   return 'system'
 }
 
-// Тонкие фирменные иконки типов — свои SVG, без библиотек и эмодзи
 function TypeIcon({ type }) {
   const color = (TYPE_META[type] || TYPE_META.system).color
   const paths = {
@@ -38,6 +37,12 @@ function TypeIcon({ type }) {
       <>
         <path d="M12 3l7 9-7 9-7-9 7-9z" />
         <path d="M12 8v8M8 12h8" />
+      </>
+    ),
+    task_review: (
+      <>
+        <path d="M12 3l7 9-7 9-7-9 7-9z" />
+        <path d="M12 8.5V13l2.8 1.6" />
       </>
     ),
     task_done: (
@@ -121,10 +126,8 @@ export default function NotificationsBell({ userId }) {
     setItems(data || [])
   }
 
-  // Первая загрузка
   useEffect(() => { load() }, [userId])
 
-  // Realtime: новое уведомление прилетает без перезагрузки страницы
   useEffect(() => {
     if (!userId) return
     const channel = supabase
@@ -143,7 +146,6 @@ export default function NotificationsBell({ userId }) {
     return () => { supabase.removeChannel(channel) }
   }, [userId])
 
-  // Закрытие по клику вне колокольчика и вне панели
   useEffect(() => {
     const onDoc = (e) => {
       const inBtn = btnRef.current && btnRef.current.contains(e.target)
@@ -158,9 +160,6 @@ export default function NotificationsBell({ userId }) {
 
   const togglePanel = () => {
     const next = !open
-    // Перед открытием вычисляем позицию панели от кнопки —
-    // панель рендерится через портал прямо в body и не может быть
-    // перекрыта никаким контентом страницы.
     if (next && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
       setPanelPos({
@@ -212,7 +211,6 @@ export default function NotificationsBell({ userId }) {
         .nb-badge { animation: nb-badge-pulse 2s ease-in-out infinite; }
       `}</style>
 
-      {/* Колокольчик — без системной всплывающей подсказки */}
       <button
         ref={btnRef}
         onClick={togglePanel}
@@ -236,7 +234,6 @@ export default function NotificationsBell({ userId }) {
           <path d="M9.8 19.5a2.3 2.3 0 0 0 4.4 0" stroke="url(#nb-grad)" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
 
-        {/* Золотой счётчик непрочитанных */}
         {unread > 0 && (
           <span
             className="nb-badge absolute flex items-center justify-center font-bold"
@@ -255,7 +252,6 @@ export default function NotificationsBell({ userId }) {
         )}
       </button>
 
-      {/* Панель уведомлений — через портал в body, поверх всего сайта */}
       {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={panelRef}
@@ -276,7 +272,6 @@ export default function NotificationsBell({ userId }) {
             flexDirection: 'column',
           }}
         >
-          {/* Шапка панели */}
           <div
             className="flex justify-between items-center px-4 py-3 flex-shrink-0"
             style={{ borderBottom: '1px solid rgba(249,115,22,.2)' }}
@@ -305,7 +300,6 @@ export default function NotificationsBell({ userId }) {
             )}
           </div>
 
-          {/* Список */}
           <div className="overflow-y-auto" style={{ flex: 1 }}>
             {items.length === 0 && (
               <p className="text-center text-xs text-gray-500 py-10">
