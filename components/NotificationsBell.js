@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
+import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabaseClient'
 
 // Типы событий и их фирменные цвета
@@ -105,7 +106,9 @@ export default function NotificationsBell({ userId }) {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
   const [ringing, setRinging] = useState(false)
-  const rootRef = useRef(null)
+  const [panelPos, setPanelPos] = useState({ top: 60, right: 12 })
+  const btnRef = useRef(null)
+  const panelRef = useRef(null)
 
   const load = async () => {
     if (!userId) return
@@ -140,10 +143,12 @@ export default function NotificationsBell({ userId }) {
     return () => { supabase.removeChannel(channel) }
   }, [userId])
 
-  // Закрытие панели по клику вне
+  // Закрытие по клику вне колокольчика и вне панели
   useEffect(() => {
     const onDoc = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false)
+      const inBtn = btnRef.current && btnRef.current.contains(e.target)
+      const inPanel = panelRef.current && panelRef.current.contains(e.target)
+      if (!inBtn && !inPanel) setOpen(false)
     }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
@@ -153,8 +158,18 @@ export default function NotificationsBell({ userId }) {
 
   const togglePanel = () => {
     const next = !open
+    // Перед открытием вычисляем позицию панели от кнопки —
+    // панель рендерится через портал прямо в body и не может быть
+    // перекрыта никаким контентом страницы.
+    if (next && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPanelPos({
+        top: rect.bottom + 10,
+        right: Math.max(12, window.innerWidth - rect.right)
+      })
+    }
     setOpen(next)
-    if (next) load() // при открытии подтягиваем свежее
+    if (next) load()
   }
 
   const markRead = async (id) => {
@@ -179,7 +194,7 @@ export default function NotificationsBell({ userId }) {
   if (!userId) return null
 
   return (
-    <div ref={rootRef} className="relative">
+    <>
       <style>{`
         @keyframes nb-ring {
           0%, 100% { transform: rotate(0deg); }
@@ -197,12 +212,12 @@ export default function NotificationsBell({ userId }) {
         .nb-badge { animation: nb-badge-pulse 2s ease-in-out infinite; }
       `}</style>
 
-      {/* Колокольчик */}
+      {/* Колокольчик — без системной всплывающей подсказки */}
       <button
+        ref={btnRef}
         onClick={togglePanel}
         className="relative flex items-center justify-center transition-transform hover:scale-110"
-        style={{ width: 32, height: 32 }}
-        title="Уведомления"
+        style={{ width: 32, height: 32, cursor: 'pointer' }}
       >
         <svg
           width="21" height="21" viewBox="0 0 24 24" fill="none"
@@ -240,24 +255,30 @@ export default function NotificationsBell({ userId }) {
         )}
       </button>
 
-      {/* Панель уведомлений */}
-      {open && (
+      {/* Панель уведомлений — через портал в body, поверх всего сайта */}
+      {open && typeof document !== 'undefined' && createPortal(
         <div
-          className="absolute z-50 mt-3"
+          ref={panelRef}
           style={{
-            right: 0,
+            position: 'fixed',
+            top: panelPos.top,
+            right: panelPos.right,
             width: 380,
             maxWidth: 'calc(100vw - 24px)',
+            maxHeight: 'calc(100vh - 90px)',
+            zIndex: 2000,
             background: 'linear-gradient(145deg, #152238 0%, #0a1628 100%)',
             border: '1px solid rgba(212,175,55,.35)',
             borderRadius: 20,
             boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(249,115,22,.15)',
             overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Шапка панели */}
           <div
-            className="flex justify-between items-center px-4 py-3"
+            className="flex justify-between items-center px-4 py-3 flex-shrink-0"
             style={{ borderBottom: '1px solid rgba(249,115,22,.2)' }}
           >
             <div className="flex items-center gap-2">
@@ -285,7 +306,7 @@ export default function NotificationsBell({ userId }) {
           </div>
 
           {/* Список */}
-          <div className="overflow-y-auto" style={{ maxHeight: 420 }}>
+          <div className="overflow-y-auto" style={{ flex: 1 }}>
             {items.length === 0 && (
               <p className="text-center text-xs text-gray-500 py-10">
                 Пока тихо — уведомления появятся здесь
@@ -318,8 +339,9 @@ export default function NotificationsBell({ userId }) {
               )
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
