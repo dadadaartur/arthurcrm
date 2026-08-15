@@ -2,13 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import KarmaSuccess from './KarmaSuccess'
 
-// Окно перевода кармиков.
-// - Список коллег загружается сразу при открытии (не нужно помнить имена)
-// - Поиск фильтрует список локально (мгновенно, без запросов к серверу)
-// - Скролл в списке: максимум ~5 человек видно, дальше прокрутка с
-//   фирменным золотым ползунком — работает хоть на 500 сотрудников
-// - При успехе — фирменная анимация KarmaSuccess (гексаграмма, 12 точек-
-//   кармиков по орбите, радиальные лучи, искры) вместо унылого текста
 export default function TransferModal({ isOpen, onClose }) {
   const [colleagues, setColleagues] = useState([])
   const [query, setQuery] = useState('')
@@ -20,10 +13,8 @@ export default function TransferModal({ isOpen, onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
 
-  // При открытии модалки: сбрасываем форму и грузим всех коллег компании
   useEffect(() => {
     if (!isOpen) return
-
     setLoading(true)
     setQuery('')
     setSelected(null)
@@ -34,27 +25,20 @@ export default function TransferModal({ isOpen, onClose }) {
     setSuccess(null)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.access_token) {
-        setLoading(false)
-        return
-      }
+      if (!session?.access_token) { setLoading(false); return }
       try {
         const r = await fetch('/api/colleagues/search', {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const d = await r.json()
         setColleagues(Array.isArray(d) ? d : [])
-      } catch {
-        setColleagues([])
-      } finally {
-        setLoading(false)
-      }
+      } catch { setColleagues([]) }
+      finally { setLoading(false) }
     })
   }, [isOpen])
 
   if (!isOpen) return null
 
-  // Локальная фильтрация по запросу — мгновенно, без сетевых задержек
   const filtered = query.trim()
     ? colleagues.filter(p => {
         const q = query.toLowerCase()
@@ -66,7 +50,6 @@ export default function TransferModal({ isOpen, onClose }) {
       })
     : colleagues
 
-  // Успех: вместо формы показываем фирменную анимацию
   if (success) {
     return (
       <KarmaSuccess
@@ -123,8 +106,32 @@ export default function TransferModal({ isOpen, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
+      {/* Глобальные стили скроллбара для списка коллег — без styled-jsx,
+          работают гарантированно через обычный <style> тег */}
+      <style>{`
+        .tm-colleagues-scroll {
+          max-height: 288px;
+          overflow-y: auto;
+          padding-right: 4px;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(249,115,22,0.4) transparent;
+        }
+        .tm-colleagues-scroll::-webkit-scrollbar { width: 8px; }
+        .tm-colleagues-scroll::-webkit-scrollbar-track { background: transparent; }
+        .tm-colleagues-scroll::-webkit-scrollbar-thumb {
+          background: rgba(249,115,22,0.4);
+          border-radius: 10px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .tm-colleagues-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(249,115,22,0.65);
+          background-clip: padding-box;
+        }
+      `}</style>
+
       <div
-        className="modal-content transfer-modal"
+        className="modal-content"
         onClick={e => e.stopPropagation()}
         style={{ maxWidth: 520, textAlign: 'left' }}
       >
@@ -143,7 +150,6 @@ export default function TransferModal({ isOpen, onClose }) {
           <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
         </div>
 
-        {/* Поиск */}
         <label className="text-xs text-gray-400 mb-1 block">Найдите коллегу по имени</label>
         <input
           className="input-field"
@@ -153,11 +159,8 @@ export default function TransferModal({ isOpen, onClose }) {
           autoFocus
         />
 
-        {/* Список коллег со скроллом */}
-        <div
-          className="transfer-colleagues-list mt-3 space-y-1.5"
-          style={{ minHeight: 32 }}
-        >
+        {/* Список коллег со скроллом — класс tm-colleagues-scroll задан выше */}
+        <div className="tm-colleagues-scroll mt-3 space-y-1.5" style={{ minHeight: 32 }}>
           {loading && <p className="text-xs text-gray-500">Загружаем коллег…</p>}
           {!loading && filtered.length === 0 && (
             <p className="text-xs text-gray-500">
@@ -195,7 +198,6 @@ export default function TransferModal({ isOpen, onClose }) {
           ))}
         </div>
 
-        {/* Выбранный получатель */}
         {selected && (
           <div className="mt-3 flex items-center gap-2 text-sm flex-wrap">
             <span className="text-gray-500 text-xs">Получатель:</span>
@@ -214,7 +216,6 @@ export default function TransferModal({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* Сумма */}
         <label className="text-xs text-gray-400 mb-1 block mt-4">Сколько кармиков</label>
         <input
           className="input-field"
@@ -225,7 +226,6 @@ export default function TransferModal({ isOpen, onClose }) {
           onChange={e => setAmount(e.target.value)}
         />
 
-        {/* Комментарий */}
         <label className="text-xs text-gray-400 mb-1 block mt-4">Комментарий (необязательно)</label>
         <input
           className="input-field"
@@ -245,34 +245,6 @@ export default function TransferModal({ isOpen, onClose }) {
         >
           {sending ? 'Переводим…' : 'Перевести'}
         </button>
-
-        {/* Кастомный скроллбар для списка коллег — золотой, тонкий,
-            гармонирует с остальным дизайном проекта */}
-        <style jsx>{`
-          .transfer-colleagues-list {
-            max-height: 288px;
-            overflow-y: auto;
-            padding-right: 4px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(249,115,22,0.4) transparent;
-          }
-          .transfer-colleagues-list::-webkit-scrollbar {
-            width: 8px;
-          }
-          .transfer-colleagues-list::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .transfer-colleagues-list::-webkit-scrollbar-thumb {
-            background: rgba(249,115,22,0.4);
-            border-radius: 10px;
-            border: 2px solid transparent;
-            background-clip: padding-box;
-          }
-          .transfer-colleagues-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(249,115,22,0.65);
-            background-clip: padding-box;
-          }
-        `}</style>
       </div>
     </div>
   )
