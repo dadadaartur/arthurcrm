@@ -23,9 +23,7 @@ html, body {
   position: relative;
 }
 
-/* Тонкий скроллбар без "стрелок" на концах — нативные стрелки браузера
-   (особенно заметны в Chrome/Windows) портили вид на длинных страницах.
-   Сам скролл работает как раньше, меняется только внешний вид полосы. */
+/* Тонкий скроллбар без "стрелок" на концах */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -75,7 +73,7 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   overflow: hidden;
 }
 
-/* ЧЁРНАЯ ДЫРА – только чёрный круг и внешнее кольцо */
+/* ЧЁРНАЯ ДЫРА */
 .black-hole {
   position: absolute;
   top: 50%;
@@ -92,7 +90,6 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   z-index: 0;
   pointer-events: none;
 }
-
 .black-hole::before,
 .black-hole::after {
   display: none;
@@ -169,7 +166,7 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   color: transparent;
 }
 
-/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА */
+/* СПИННЕР – МАЛЕНЬКАЯ ЧЁРНАЯ ДЫРА (старый, оставлен для совместимости) */
 .spinner {
   display: inline-block;
   width: 32px;
@@ -195,6 +192,9 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+@keyframes diskRotate {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Разрешаем выделение текста в стикерах */
@@ -232,6 +232,49 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   font-size: 14px;
 }
 
+/* ===== НОВЫЕ СТЕКЛЯННЫЕ КНОПКИ (дизайн кнопки "Купить" из магазина) ===== */
+.btn-glass {
+  background: linear-gradient(135deg, rgba(160,233,255,0.18), rgba(255,179,198,0.18), rgba(255,226,159,0.18));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-shadow: 0 0 10px rgba(255,255,255,0.35);
+  text-align: center;
+}
+.btn-glass:hover {
+  background: linear-gradient(135deg, rgba(160,233,255,0.38), rgba(255,179,198,0.38), rgba(255,226,159,0.38));
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+.btn-glass:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-glass-green {
+  background: linear-gradient(135deg, rgba(74,222,128,0.25), rgba(34,197,94,0.12));
+  border: 1px solid rgba(74,222,128,0.5);
+}
+.btn-glass-green:hover {
+  background: linear-gradient(135deg, rgba(74,222,128,0.45), rgba(34,197,94,0.28));
+  border-color: rgba(74,222,128,0.85);
+  box-shadow: 0 0 20px rgba(74,222,128,0.35);
+}
+.btn-glass-red {
+  background: linear-gradient(135deg, rgba(248,113,113,0.2), rgba(239,68,68,0.1));
+  border: 1px solid rgba(248,113,113,0.5);
+}
+.btn-glass-red:hover {
+  background: linear-gradient(135deg, rgba(248,113,113,0.4), rgba(239,68,68,0.25));
+  border-color: rgba(248,113,113,0.85);
+  box-shadow: 0 0 20px rgba(248,113,113,0.35);
+}
+
 .input-field {
   background: #0f1f35;
   border: 1px solid rgba(249,115,22,0.5);
@@ -259,7 +302,6 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   justify-content: center;
   z-index: 1000;
 }
-
 .modal-content {
   background: linear-gradient(145deg, #1a2f4a 0%, #0f1f35 100%);
   border: 1px solid #f97316;
@@ -282,7 +324,6 @@ html { scrollbar-width: thin; scrollbar-color: rgba(249,115,22,0.4) transparent;
   min-width: 110px;
   text-align: center;
 }
-
 .filter-pill.active {
   background: linear-gradient(135deg, #f97316, #c084fc);
   color: white;
@@ -315,6 +356,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-datetime-edit,
 input[type="datetime-local"]::-webkit-datetime-edit {
   color: #eaf0fb;
+}
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
 }
 
 /* Кнопка загрузки – аккуратная обводка с небольшим отступом */
