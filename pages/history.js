@@ -42,6 +42,7 @@ export default function History() {
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
   const filtered = allOperations.filter(op => {
+    if (!user) return true
     if (filter === 'income') return (op.type === 'transaction' && op.amount > 0) || (op.type === 'transfer' && op.to_user_id === user.id)
     if (filter === 'expense') return (op.type === 'transaction' && op.amount < 0) || (op.type === 'transfer' && op.from_user_id === user.id) || op.type === 'purchase'
     if (filter === 'transfer') return op.type === 'transfer'
@@ -69,7 +70,7 @@ export default function History() {
             <div>
               <p className="font-medium text-white">
                 {op.type === 'transfer' ? (
-                  op.from_user_id === user.id ? 'Исходящий перевод' : 'Входящий перевод'
+                  user && op.from_user_id === user.id ? 'Исходящий перевод' : 'Входящий перевод'
                 ) : op.type === 'purchase' ? (
                   `Покупка: ${op.reward_name}`
                 ) : (
@@ -78,9 +79,9 @@ export default function History() {
               </p>
               <p className="text-sm text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
             </div>
-            <span className={`font-semibold ${(op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id) ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`font-semibold ${(op.type === 'transaction' && op.amount >= 0) || (user && op.type === 'transfer' && op.to_user_id === user.id) ? 'text-green-400' : 'text-red-400'}`}>
               {op.type === 'transaction' ? (op.amount > 0 ? '+' : '') + op.amount :
-               op.type === 'transfer' ? (op.from_user_id === user.id ? '-' : '+') + op.amount :
+               op.type === 'transfer' ? (user && op.from_user_id === user.id ? '-' : '+') + op.amount :
                op.type === 'purchase' ? '-' + op.cost : ''}
             </span>
           </div>
