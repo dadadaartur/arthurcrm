@@ -43,6 +43,21 @@ function OpIcon({ type, direction }) {
   )
 }
 
+// Тонкий фирменный глиф комментария (речевой пузырь, свои линии)
+function CommentGlyph() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+      <path
+        d="M7 1.8c-3.1 0-5.6 2.1-5.6 4.7 0 1.5.8 2.8 2.1 3.7v2.3l2.6-1.4c.3.05.6.07.9.07 3.1 0 5.6-2.1 5.6-4.7S10.1 1.8 7 1.8z"
+        stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <circle cx="4.8" cy="6.5" r="0.55" fill="currentColor" />
+      <circle cx="7" cy="6.5" r="0.55" fill="currentColor" />
+      <circle cx="9.2" cy="6.5" r="0.55" fill="currentColor" />
+    </svg>
+  )
+}
+
 export default function History() {
   const router = useRouter()
   const [user, setUser] = useState(null)
@@ -54,6 +69,8 @@ export default function History() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(0)
+  // Открытый комментарий: { text, fromName, date } или null
+  const [commentModal, setCommentModal] = useState(null)
   const ITEMS_PER_PAGE = 10
 
   useEffect(() => {
@@ -145,7 +162,6 @@ export default function History() {
 
       <div className="premium-card mb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Фильтры по типу */}
           <div className="flex gap-2 flex-wrap">
             {['all', 'income', 'expense', 'transfer'].map(f => (
               <button
@@ -158,7 +174,6 @@ export default function History() {
             ))}
           </div>
 
-          {/* Премиальный календарь диапазона дат */}
           <DateRangePicker
             from={dateFrom}
             to={dateTo}
@@ -192,6 +207,8 @@ export default function History() {
           else if (op.type === 'transfer') amountText = (user && op.from_user_id === user.id ? '-' : '+') + op.amount
           else if (op.type === 'purchase') amountText = '-' + op.cost
 
+          const hasComment = op.type === 'transfer' && op.comment && String(op.comment).trim()
+
           return (
             <div
               key={op.id + op.type}
@@ -205,9 +222,24 @@ export default function History() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-white text-sm truncate">{title}</p>
                 <p className="text-xs text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
+
+                {/* Кнопка комментария — видна отправителю и получателю,
+                    если при переводе был написан комментарий */}
+                {hasComment && (
+                  <button
+                    onClick={() => setCommentModal({
+                      text: String(op.comment).trim(),
+                      fromName: getName(op.from_user_id),
+                      date: new Date(op.created_at).toLocaleString('ru'),
+                    })}
+                    className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-[#D4AF37] hover:text-[#FFD700] transition-colors"
+                  >
+                    <CommentGlyph />
+                    Комментарий
+                  </button>
+                )}
               </div>
 
-              {/* Сумма прижата к тексту, не улетает на край экрана */}
               <span className={`font-semibold text-sm whitespace-nowrap ${isIncoming ? 'text-green-400' : 'text-red-400'}`}>
                 {amountText}
               </span>
@@ -226,6 +258,73 @@ export default function History() {
           <button onClick={() => setPage(p => p + 1)}
             disabled={(page + 1) * ITEMS_PER_PAGE >= filtered.length}
             className="btn-outline text-sm">Вперед</button>
+        </div>
+      )}
+
+      {/* Красивое окно комментария к переводу */}
+      {commentModal && (
+        <div className="modal-overlay" onClick={() => setCommentModal(null)}>
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: 440, textAlign: 'left' }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3
+                className="text-lg font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #f97316, #c084fc)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
+                Комментарий к переводу
+              </h3>
+              <button onClick={() => setCommentModal(null)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+
+            {/* Цитата с фирменной золотой линией слева */}
+            <div
+              style={{
+                position: 'relative',
+                background: 'rgba(15,31,53,.6)',
+                border: '1px solid rgba(249,115,22,.3)',
+                borderLeft: '3px solid #D4AF37',
+                borderRadius: 14,
+                padding: '18px 20px',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Большая декоративная кавычка */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  left: 10,
+                  fontSize: 56,
+                  lineHeight: 1,
+                  fontFamily: 'Georgia, serif',
+                  background: 'linear-gradient(135deg, rgba(212,175,55,.5), rgba(192,132,252,.35))',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  pointerEvents: 'none',
+                }}
+              >
+                «
+              </div>
+              <p className="text-white text-sm leading-relaxed" style={{ position: 'relative', paddingTop: 10 }}>
+                {commentModal.text}
+              </p>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2 text-xs text-gray-400 flex-wrap">
+              <span className="font-semibold" style={{ color: '#FFD700' }}>{commentModal.fromName}</span>
+              <span>·</span>
+              <span>{commentModal.date}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
