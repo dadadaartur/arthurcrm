@@ -25,7 +25,9 @@ function CompanyAdminDashboard() {
       const compId = profile.company_id
       const [tasksRes, employeesRes, goalsRes] = await Promise.all([
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('company_id', compId).eq('is_active', true),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('company_id', compId).is('deleted_at', null).eq('is_company_admin', false),
+        // 'id' не существует в profiles (primary key — user_id), из-за этого
+        // count всегда возвращал 0. Исправлено на 'user_id'.
+        supabase.from('profiles').select('user_id', { count: 'exact', head: true }).eq('company_id', compId).is('deleted_at', null).eq('is_company_admin', false),
         supabase.from('goals').select('id', { count: 'exact', head: true }).eq('company_id', compId).eq('is_active', true)
       ])
 

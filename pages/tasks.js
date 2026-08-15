@@ -12,6 +12,16 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
 
+  // При загрузке: если есть задания "в работе" — показываем их первыми,
+  // так как пользователь скорее всего уже нажал "Начать" и ему важно продолжить.
+  // Новые задания остаются доступны на своей вкладке, но не подавляют "в работе".
+  useEffect(() => {
+    if (activeTasks.length > 0) {
+      const inProgress = activeTasks.filter(t => t.status === 'in_progress')
+      if (inProgress.length > 0) setActiveTab('in_progress')
+    }
+  }, [activeTasks])
+
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
   const [notification, setNotification] = useState({ show: false, message: '' })
@@ -136,8 +146,22 @@ export default function TasksPage() {
           { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
           { key: 'history', label: 'История', count: history.length }
         ].map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`filter-pill ${activeTab === tab.key ? 'active' : ''}`}>
-            {tab.label} ({tab.count})
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            className={`filter-pill relative ${activeTab === tab.key ? 'active' : ''}`}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span
+                className={`ml-2 inline-flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold
+                  ${tab.key === 'new' && activeTab !== 'new'
+                    ? 'bg-orange-500 text-white animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]'
+                    : 'bg-gray-700 text-gray-300'
+                  }`}
+                style={{ padding: '0 6px', fontSize: 11 }}
+              >
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>

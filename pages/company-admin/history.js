@@ -35,15 +35,31 @@ function HistoryPage() {
   }, [companyId, page, filter])
 
   const fetchHistory = async () => {
+    // eq('tasks.company_id', ...) — фильтр по embedded-джойну, который
+    // PostgREST не поддерживает как WHERE на основной таблице: запрос
+    // выполнялся, но company_id не фильтровал — история была пустой.
+    // Решение: получаем id задач компании отдельно, потом JOIN по ним.
+    const { data: companyTasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('company_id', companyId)
+
+    if (!companyTasks || companyTasks.length === 0) {
+      setHistory([])
+      return
+    }
+
+    const taskIds = companyTasks.map(t => t.id)
+
     let query = supabase
       .from('task_assignments')
       .select(`
-        id, status, comment, completed_at,
+        id, status, comment, completed_at, reward_karma,
         user_id,
         profiles:user_id (email, display_name),
         tasks:task_id (title, reward_karma, company_id)
       `)
-      .eq('tasks.company_id', companyId)
+      .in('task_id', taskIds)
       .in('status', ['completed', 'rejected'])
       .order('completed_at', { ascending: false })
       .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
