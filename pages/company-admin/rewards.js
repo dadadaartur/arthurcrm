@@ -34,9 +34,6 @@ export default function RewardsAdmin() {
         .select('company_id, role_id, is_company_admin, deleted_at')
         .eq('user_id', user.id)
         .maybeSingle()
-      // legacy-хардкод role_id IN (1,2) убран — company_id тут вообще
-      // не per-company понятие для сравнения ролей. Управлять магазином
-      // может админ своей компании либо супер-админ платформы.
       if (!prof || prof.deleted_at || !(prof.is_company_admin || prof.role_id === 1)) {
         router.push('/')
         return
@@ -98,8 +95,44 @@ export default function RewardsAdmin() {
       return
     }
 
-    setNotification({ show: true, message: editingId ? 'Товар обновлён' : 'Товар создан!' })
+    // НОВОЕ: при создании нового товара уведомляем всю компанию через
+    // серверный роут (клиенту вставлять notifications запрещает RLS).
+    // При редактировании товара уведомления не отправляем.
+    if (!editingId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        const { data: members } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('company_id', profile.company_id)
+          .is('deleted_at', null)
+          .neq('user_id', user?.id)
 
+        const recipients = (members || []).map(m => m.user_id)
+        if (recipients.length) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.access_token) {
+            await fetch('/api/notifications/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                recipients,
+                type: 'shop',
+                message: `Новый товар в магазине: "${form.name}" за ${costValue} кармиков.`,
+                link: '/shop'
+              })
+            })
+          }
+        }
+      } catch (notifyError) {
+        console.error('[rewards] не удалось отправить уведомления', notifyError)
+      }
+    }
+
+    setNotification({ show: true, message: editingId ? 'Товар обновлён' : 'Товар создан!' })
     setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
     setEditingId(null)
     loadRewards(profile)
@@ -127,7 +160,6 @@ export default function RewardsAdmin() {
   const handleDelete = async () => {
     const { rewardId } = deleteModal
     if (!rewardId) return
-
     const { error } = await supabase.from('rewards').delete().eq('id', rewardId)
     if (error) {
       setNotification({ show: true, message: 'Ошибка удаления: ' + error.message })
@@ -165,7 +197,6 @@ export default function RewardsAdmin() {
         <Link href="/company-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
           <span style={{ fontSize: 18 }}>←</span> Назад
         </Link>
-
         <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Управление товарами</h1>
 
         <button onClick={() => setShowHistory(!showHistory)} style={{
@@ -312,6 +343,7 @@ export default function RewardsAdmin() {
       <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Информация">
         <p style={{ color: '#fff' }}>{notification.message}</p>
       </PremiumModal>
+
       <style jsx global>{`
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.95); }
