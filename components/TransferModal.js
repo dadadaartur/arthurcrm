@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import KarmaSuccess from './KarmaSuccess'
 
-// Окно перевода кармиков: показывает список коллег сразу при открытии,
-// поиск фильтрует локально (мгновенно). При успехе — фирменная анимация KarmaSuccess.
+// Окно перевода кармиков.
+// - Список коллег загружается сразу при открытии (не нужно помнить имена)
+// - Поиск фильтрует список локально (мгновенно, без запросов к серверу)
+// - Скролл в списке: максимум ~5 человек видно, дальше прокрутка с
+//   фирменным золотым ползунком — работает хоть на 500 сотрудников
+// - При успехе — фирменная анимация KarmaSuccess (гексаграмма, 12 точек-
+//   кармиков по орбите, радиальные лучи, искры) вместо унылого текста
 export default function TransferModal({ isOpen, onClose }) {
-  const [colleagues, setColleagues] = useState([]) // Все коллеги (загружаются при открытии)
-  const [query, setQuery] = useState('') // Поисковый запрос
+  const [colleagues, setColleagues] = useState([])
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(null)
   const [amount, setAmount] = useState('')
@@ -15,10 +20,10 @@ export default function TransferModal({ isOpen, onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
 
-  // Загрузка всех коллег при открытии модалки
+  // При открытии модалки: сбрасываем форму и грузим всех коллег компании
   useEffect(() => {
     if (!isOpen) return
-    
+
     setLoading(true)
     setQuery('')
     setSelected(null)
@@ -49,7 +54,7 @@ export default function TransferModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  // Фильтруем коллег локально по запросу (мгновенно)
+  // Локальная фильтрация по запросу — мгновенно, без сетевых задержек
   const filtered = query.trim()
     ? colleagues.filter(p => {
         const q = query.toLowerCase()
@@ -118,7 +123,11 @@ export default function TransferModal({ isOpen, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, textAlign: 'left' }}>
+      <div
+        className="modal-content transfer-modal"
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: 520, textAlign: 'left' }}
+      >
         <div className="flex justify-between items-center mb-4">
           <h3
             className="text-xl font-bold"
@@ -144,8 +153,11 @@ export default function TransferModal({ isOpen, onClose }) {
           autoFocus
         />
 
-        {/* Список коллег */}
-        <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto" style={{ minHeight: 32 }}>
+        {/* Список коллег со скроллом */}
+        <div
+          className="transfer-colleagues-list mt-3 space-y-1.5"
+          style={{ minHeight: 32 }}
+        >
           {loading && <p className="text-xs text-gray-500">Загружаем коллег…</p>}
           {!loading && filtered.length === 0 && (
             <p className="text-xs text-gray-500">
@@ -158,11 +170,11 @@ export default function TransferModal({ isOpen, onClose }) {
               onClick={() => { setSelected(p); setQuery('') }}
               className="w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left"
               style={{
-                border: selected?.user_id === p.user_id 
-                  ? '1px solid rgba(212,175,55,.6)' 
+                border: selected?.user_id === p.user_id
+                  ? '1px solid rgba(212,175,55,.6)'
                   : '1px solid rgba(249,115,22,.25)',
-                background: selected?.user_id === p.user_id 
-                  ? 'rgba(212,175,55,.08)' 
+                background: selected?.user_id === p.user_id
+                  ? 'rgba(212,175,55,.08)'
                   : 'rgba(15,31,53,.6)',
               }}
             >
@@ -185,7 +197,7 @@ export default function TransferModal({ isOpen, onClose }) {
 
         {/* Выбранный получатель */}
         {selected && (
-          <div className="mt-3 flex items-center gap-2 text-sm">
+          <div className="mt-3 flex items-center gap-2 text-sm flex-wrap">
             <span className="text-gray-500 text-xs">Получатель:</span>
             <span
               className="px-3 py-1 rounded-full text-xs font-semibold"
@@ -233,6 +245,34 @@ export default function TransferModal({ isOpen, onClose }) {
         >
           {sending ? 'Переводим…' : 'Перевести'}
         </button>
+
+        {/* Кастомный скроллбар для списка коллег — золотой, тонкий,
+            гармонирует с остальным дизайном проекта */}
+        <style jsx>{`
+          .transfer-colleagues-list {
+            max-height: 288px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(249,115,22,0.4) transparent;
+          }
+          .transfer-colleagues-list::-webkit-scrollbar {
+            width: 8px;
+          }
+          .transfer-colleagues-list::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .transfer-colleagues-list::-webkit-scrollbar-thumb {
+            background: rgba(249,115,22,0.4);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+          }
+          .transfer-colleagues-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(249,115,22,0.65);
+            background-clip: padding-box;
+          }
+        `}</style>
       </div>
     </div>
   )
