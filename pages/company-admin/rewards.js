@@ -3,54 +3,41 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
-import PremiumModal from '../../components/PremiumModal'
+import SuccessBurst from '../../components/SuccessBurst'
+
+const TYPE_LABELS = { digital: 'Сертификат', workplace: 'Рабочее место', delivery: 'Доставка домой', promocode: 'Промокод' }
 
 export default function RewardsAdmin() {
   const router = useRouter()
   const [profile, setProfile] = useState(null)
   const [rewards, setRewards] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    cost: '',
-    type: 'digital',
-    requires_approval: false,
-    limit_per_user: '',
-    image_file: null,
-    preview_url: ''
-  })
+  const [tab, setTab] = useState('create') // create | history
   const [editingId, setEditingId] = useState(null)
-  const [showHistory, setShowHistory] = useState(false)
-  const [notification, setNotification] = useState({ show: false, message: '' })
-  const [deleteModal, setDeleteModal] = useState({ show: false, rewardId: null, rewardName: '' })
+  const [success, setSuccess] = useState({ show: false, message: '' })
+  const [deleteModal, setDeleteModal] = useState({ show: false, reward: null })
+  const [form, setForm] = useState({
+    name: '', description: '', cost: '', type: 'digital',
+    requires_approval: false, limit_per_user: '', image_file: null, preview_url: ''
+  })
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const { data: prof } = await supabase
-        .from('profiles')
-        .select('company_id, role_id, is_company_admin, deleted_at')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (!prof || prof.deleted_at || !(prof.is_company_admin || prof.role_id === 1)) {
-        router.push('/')
-        return
-      }
+        .from('profiles').select('company_id, role_id, is_company_admin, deleted_at')
+        .eq('user_id', user.id).maybeSingle()
+      if (!prof || prof.deleted_at || !(prof.is_company_admin || prof.role_id === 1)) { router.push('/'); return }
       setProfile(prof)
       await loadRewards(prof)
       setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   const loadRewards = async (prof) => {
-    const { data } = await supabase
-      .from('rewards')
-      .select('*')
-      .eq('company_id', prof.company_id)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('rewards').select('*').eq('company_id', prof.company_id).order('created_at', { ascending: false })
     setRewards(data || [])
   }
 
@@ -58,298 +45,169 @@ export default function RewardsAdmin() {
     e.preventDefault()
     const costValue = parseInt(form.cost, 10)
     if (!form.name || isNaN(costValue) || costValue < 0) {
-      setNotification({ show: true, message: 'Введите название и корректную стоимость' })
-      return
+      setSuccess({ show: true, message: 'Введите название и корректную стоимость' }); return
     }
-
     let imageUrl = form.preview_url || null
     if (form.image_file) {
       const fileExt = form.image_file.name.split('.').pop()
       const fileName = `reward-${Date.now()}.${fileExt}`
       const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, form.image_file)
-      if (error) {
-        setNotification({ show: true, message: 'Ошибка загрузки изображения' })
-        return
-      }
+      if (error) { setSuccess({ show: true, message: 'Ошибка загрузки изображения' }); return }
       const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
       imageUrl = publicUrl.publicUrl
     }
-
     const rewardData = {
-      name: form.name,
-      description: form.description,
-      cost: costValue,
-      type: form.type,
+      name: form.name, description: form.description, cost: costValue, type: form.type,
       requires_approval: form.requires_approval,
       limit_per_user: form.limit_per_user ? parseInt(form.limit_per_user) : null,
-      image_url: imageUrl,
-      company_id: profile.company_id
+      image_url: imageUrl, company_id: profile.company_id
     }
-
     const { error } = editingId
       ? await supabase.from('rewards').update(rewardData).eq('id', editingId)
       : await supabase.from('rewards').insert(rewardData)
+    if (error) { setSuccess({ show: true, message: 'Ошибка сохранения товара' }); return }
 
-    if (error) {
-      setNotification({ show: true, message: 'Ошибка сохранения товара: ' + error.message })
-      return
-    }
-
-    // НОВОЕ: при создании нового товара уведомляем всю компанию через
-    // серверный роут (клиенту вставлять notifications запрещает RLS).
-    // При редактировании товара уведомления не отправляем.
-    if (!editingId) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        const { data: members } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('company_id', profile.company_id)
-          .is('deleted_at', null)
-          .neq('user_id', user?.id)
-
-        const recipients = (members || []).map(m => m.user_id)
-        if (recipients.length) {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session?.access_token) {
-            await fetch('/api/notifications/send', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({
-                recipients,
-                type: 'shop',
-                message: `Новый товар в магазине: "${form.name}" за ${costValue} кармиков.`,
-                link: '/shop'
-              })
-            })
-          }
-        }
-      } catch (notifyError) {
-        console.error('[rewards] не удалось отправить уведомления', notifyError)
-      }
-    }
-
-    setNotification({ show: true, message: editingId ? 'Товар обновлён' : 'Товар создан!' })
+    setSuccess({ show: true, message: editingId ? 'Товар обновлён' : 'Товар создан' })
     setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
     setEditingId(null)
     loadRewards(profile)
   }
 
   const handleEdit = (reward) => {
-    setEditingId(reward.id)
-    setShowHistory(false)
+    setEditingId(reward.id); setTab('create')
     setForm({
-      name: reward.name,
-      description: reward.description || '',
-      cost: reward.cost.toString(),
-      type: reward.type || 'digital',
-      requires_approval: reward.requires_approval || false,
+      name: reward.name, description: reward.description || '', cost: reward.cost.toString(),
+      type: reward.type || 'digital', requires_approval: reward.requires_approval || false,
       limit_per_user: reward.limit_per_user ? reward.limit_per_user.toString() : '',
-      image_file: null,
-      preview_url: reward.image_url || ''
+      image_file: null, preview_url: reward.image_url || ''
     })
   }
 
-  const confirmDelete = (reward) => {
-    setDeleteModal({ show: true, rewardId: reward.id, rewardName: reward.name })
-  }
-
   const handleDelete = async () => {
-    const { rewardId } = deleteModal
-    if (!rewardId) return
-    const { error } = await supabase.from('rewards').delete().eq('id', rewardId)
-    if (error) {
-      setNotification({ show: true, message: 'Ошибка удаления: ' + error.message })
-    } else {
-      setNotification({ show: true, message: 'Товар удалён' })
-      loadRewards(profile)
-    }
-    setDeleteModal({ show: false, rewardId: null, rewardName: '' })
+    const { reward } = deleteModal
+    if (!reward) return
+    const { error } = await supabase.from('rewards').delete().eq('id', reward.id)
+    if (!error) { setSuccess({ show: true, message: 'Товар удалён' }); loadRewards(profile) }
+    else setSuccess({ show: true, message: 'Ошибка удаления товара' })
+    setDeleteModal({ show: false, reward: null })
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <div className="flex justify-center items-center py-24"><Spinner size={52} /></div>
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 20px', position: 'relative' }}>
-      {/* Звёзды */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        {Array.from({ length: 80 }).map((_, i) => {
-          const size = Math.random() * 2 + 0.5
-          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-          const color = colors[Math.floor(Math.random() * colors.length)]
-          return (
-            <div key={i} style={{
-              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-              boxShadow: `0 0 ${size * 2}px ${color}`,
-              opacity: Math.random() * 0.5 + 0.3,
-              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
-              animationDelay: Math.random() * 10 + 's'
-            }} />
-          )
-        })}
-      </div>
-
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1000px', margin: '0 auto' }}>
-        <Link href="/company-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa', textDecoration: 'none', marginBottom: 24 }}>
-          <span style={{ fontSize: 18 }}>←</span> Назад
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="transition-transform group-hover:-translate-x-1">
+            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
+            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </Link>
-        <h1 style={{ fontSize: 28, marginBottom: 32, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Управление товарами</h1>
-
-        <button onClick={() => setShowHistory(!showHistory)} style={{
-          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
-          borderRadius: 14, padding: '10px 24px', color: '#fff', cursor: 'pointer',
-          marginBottom: 24, fontSize: 14, backdropFilter: 'blur(12px)'
-        }}>
-          {showHistory ? 'Создать товар' : 'История товаров'}
-        </button>
-
-        {showHistory ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {rewards.length === 0 && <p style={{ color: '#aaa' }}>Товаров пока нет</p>}
-            {rewards.map(reward => (
-              <div key={reward.id} style={{
-                background: 'rgba(20,25,45,0.9)', backdropFilter: 'blur(10px)',
-                borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', gap: 16,
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                {reward.image_url && <img src={reward.image_url} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 16 }}>{reward.name}</div>
-                  <div style={{ fontSize: 13, color: '#aaa' }}>{reward.description?.slice(0, 80)}</div>
-                  <div style={{ fontSize: 13, color: '#FFD700' }}>{reward.cost} кармиков · {reward.type === 'digital' ? 'Цифровой' : reward.type === 'workplace' ? 'Рабочее место' : reward.type === 'delivery' ? 'Доставка домой' : reward.type === 'promocode' ? 'Промокод' : 'Товар'} {reward.requires_approval && '· Требуется согласование'} {reward.limit_per_user && `· Лимит: ${reward.limit_per_user} шт.`}</div>
-                </div>
-                <button onClick={() => handleEdit(reward)} style={{
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.25)',
-                  borderRadius: 14, padding: '8px 20px', color: '#fff', cursor: 'pointer',
-                  backdropFilter: 'blur(8px)', fontSize: 14
-                }}>Редактировать</button>
-                <button onClick={() => confirmDelete(reward)} style={{
-                  background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.4)',
-                  borderRadius: 14, padding: '8px 20px', color: '#f44', cursor: 'pointer',
-                  backdropFilter: 'blur(8px)', fontSize: 14
-                }}>Удалить</button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{
-            background: 'rgba(20,25,45,0.9)', backdropFilter: 'blur(10px)',
-            borderRadius: 16, padding: 24, marginBottom: 32,
-            border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr'
-          }}>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: 14, color: '#aaa' }}>Название</label>
-              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} required />
-            </div>
-            <div>
-              <label style={{ fontSize: 14, color: '#aaa' }}>Стоимость (кармики)</label>
-              <input type="number" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} placeholder="Например, 100" style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} min="0" step="1" />
-            </div>
-            <div>
-              <label style={{ fontSize: 14, color: '#aaa' }}>Тип</label>
-              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }}>
-                <option value="digital">Цифровой (сертификат)</option>
-                <option value="workplace">Рабочее место</option>
-                <option value="delivery">Доставка домой</option>
-                <option value="promocode">Промокод</option>
-              </select>
-            </div>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: 14, color: '#aaa' }}>Описание</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} rows={3} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#aaa' }}>
-                <input type="checkbox" checked={form.requires_approval} onChange={e => setForm({ ...form, requires_approval: e.target.checked })} />
-                Требуется согласование
-              </label>
-            </div>
-            <div>
-              <label style={{ fontSize: 14, color: '#aaa' }}>Лимит на сотрудника</label>
-              <input type="number" value={form.limit_per_user} onChange={e => setForm({ ...form, limit_per_user: e.target.value })} placeholder="Без ограничений" style={{ width: '100%', padding: 10, borderRadius: 8, background: '#111', border: '1px solid #333', color: '#fff' }} min="1" step="1" />
-            </div>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: 14, color: '#aaa', display: 'block', marginBottom: 8 }}>Изображение</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <label style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '1px dashed rgba(255,255,255,0.3)',
-                  borderRadius: 8,
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  color: '#ccc'
-                }}>
-                  {form.image_file ? form.image_file.name : form.preview_url ? 'Заменить изображение' : 'Выбрать файл'}
-                  <input type="file" accept="image/*" onChange={e => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setForm({ ...form, image_file: file, preview_url: URL.createObjectURL(file) });
-                    }
-                  }} style={{ display: 'none' }} />
-                </label>
-                {form.preview_url && (
-                  <img src={form.preview_url} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />
-                )}
-              </div>
-            </div>
-            <button type="submit" style={{
-              gridColumn: 'span 2',
-              background: 'rgba(255,255,255,0.06)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,215,0,0.25)',
-              borderRadius: 14,
-              padding: '14px 28px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500,
-              transition: 'all 0.3s',
-              textShadow: '0 0 10px rgba(255,200,0,0.5)'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.borderColor = '#FFD700';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-              e.currentTarget.style.borderColor = 'rgba(255,215,0,0.25)';
-            }}
-            >
-              {editingId ? 'Сохранить изменения' : 'Создать товар'}
-            </button>
-          </form>
-        )}
+        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Управление товарами</h1>
       </div>
+
+      {/* Переключатель创建 / история */}
+      <div className="flex gap-2 flex-wrap mb-6">
+        <button onClick={() => { setTab('create'); }} className={`filter-pill ${tab === 'create' ? 'active' : ''}`}>
+          {editingId ? 'Редактировать товар' : 'Новый товар'}
+        </button>
+        <button onClick={() => setTab('history')} className={`filter-pill ${tab === 'history' ? 'active' : ''}`}>
+          История товаров
+        </button>
+      </div>
+
+      {tab === 'history' ? (
+        <div className="space-y-3">
+          {rewards.length === 0 && <div className="premium-card"><p className="text-gray-400">Товаров пока нет</p></div>}
+          {rewards.map(reward => (
+            <div key={reward.id} className="premium-card flex items-center gap-4">
+              {reward.image_url
+                ? <img src={reward.image_url} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                : <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />}
+              <div className="flex-1 min-w-0">
+                <div className="text-white font-medium truncate">{reward.name}</div>
+                <div className="text-xs text-gray-400 truncate">{reward.description}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#FFD700' }}>
+                  {reward.cost} кармиков · {TYPE_LABELS[reward.type] || 'Товар'}
+                  {reward.requires_approval ? ' · Требуется согласование' : ''}
+                  {reward.limit_per_user ? ` · Лимит: ${reward.limit_per_user}` : ''}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={() => handleEdit(reward)} className="btn-glass text-xs px-4 py-2">Редактировать</button>
+                <button onClick={() => setDeleteModal({ show: true, reward })} className="btn-glass btn-glass-red text-xs px-4 py-2">Удалить</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="premium-card grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="text-xs text-gray-400 mb-1 block">Название</label>
+            <input type="text" className="input-field" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Стоимость (кармики)</label>
+            <input type="number" className="input-field" value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value })} min="0" step="1" placeholder="Например, 100" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Тип</label>
+            <select className="input-field" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+              <option value="digital">Цифровой (сертификат)</option>
+              <option value="workplace">Рабочее место</option>
+              <option value="delivery">Доставка домой</option>
+              <option value="promocode">Промокод</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs text-gray-400 mb-1 block">Описание</label>
+            <textarea className="input-field" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div className="flex items-center">
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input type="checkbox" checked={form.requires_approval} onChange={e => setForm({ ...form, requires_approval: e.target.checked })} />
+              Требуется согласование
+            </label>
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Лимит на сотрудника</label>
+            <input type="number" className="input-field" value={form.limit_per_user} onChange={e => setForm({ ...form, limit_per_user: e.target.value })} min="1" step="1" placeholder="Без ограничений" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs text-gray-400 mb-1 block">Изображение</label>
+            <div className="flex items-center gap-3 mt-1">
+              <label className="btn-glass cursor-pointer inline-block text-sm">
+                {form.image_file ? form.image_file.name : form.preview_url ? 'Заменить изображение' : 'Выбрать файл'}
+                <input type="file" accept="image/*" className="hidden" onChange={e => {
+                  const file = e.target.files[0]
+                  if (file) setForm({ ...form, image_file: file, preview_url: URL.createObjectURL(file) })
+                }} />
+              </label>
+              {form.preview_url && <img src={form.preview_url} alt="" className="w-14 h-14 rounded-xl object-cover" />}
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <button type="submit" className="btn-glass w-full">{editingId ? 'Сохранить изменения' : 'Создать товар'}</button>
+          </div>
+        </form>
+      )}
 
       {/* Модалка подтверждения удаления */}
-      {deleteModal.show && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setDeleteModal({ show: false })}>
-          <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%', border: '1px solid rgba(255,215,0,0.2)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 20, marginBottom: 16, color: '#fff' }}>Удалить товар?</h3>
-            <p style={{ color: '#aaa', marginBottom: 24 }}>Вы действительно хотите удалить «{deleteModal.rewardName}»?</p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setDeleteModal({ show: false })} style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '10px', color: '#fff' }}>Отмена</button>
-              <button onClick={handleDelete} style={{ flex: 1, background: 'rgba(255,0,0,0.8)', border: 'none', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 600 }}>Удалить</button>
+      {deleteModal.show && deleteModal.reward && (
+        <div className="modal-overlay" onClick={() => setDeleteModal({ show: false, reward: null })}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <h3 className="text-xl font-bold text-white mb-3">Удалить товар?</h3>
+            <p className="text-gray-400 mb-6">Вы действительно хотите удалить «{deleteModal.reward.name}»?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal({ show: false, reward: null })} className="btn-glass flex-1">Отмена</button>
+              <button onClick={handleDelete} className="btn-glass btn-glass-red flex-1">Удалить</button>
             </div>
           </div>
         </div>
       )}
 
-      <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Информация">
-        <p style={{ color: '#fff' }}>{notification.message}</p>
-      </PremiumModal>
-
-      <style jsx global>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.95); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-      `}</style>
+      {/* Красивая анимация успеха вместо слова "Информация" */}
+      <SuccessBurst show={success.show} message={success.message} onClose={() => setSuccess({ show: false, message: '' })} />
     </div>
   )
 }
