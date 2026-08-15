@@ -1,21 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../lib/auth'
 
-// Перевод кармиков. Версия 2.
-//
-// ЧТО ПОЧИНЕНО:
-// 1. Баг "получатель не получает кармики": раньше баланс получателя
-//    обновлялся через .update() — а если у получателя ещё не было строки
-//    в karma_balance (ни разу не получал кармики), update молча не делал
-//    ничего, и деньги сгорали. Теперь всё делает ОДНА функция в базе —
-//    transfer_karma: она сама создаёт кошелёк получателю при необходимости.
-// 2. Атомарность: списание, зачисление и запись в историю — одна операция
-//    внутри БД. Любая ошибка = полный откат, деньги не зависают.
-// 3. Проверка статуса компании: transfer_karma сама не даёт переводить
-//    кармики из заблокированной (suspended) компании — раньше серверный
-//    код этого не проверял и обходил модерацию.
-// 4. Получатель теперь выбирается из поиска коллег (recipientId — user_id),
-//    email оставлен для совместимости со старыми вызовами.
+// Атомарный перевод через RPC transfer_karma + уведомления с типом 'transfer'
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -40,7 +26,6 @@ export default async function handler(req, res) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  // 1. Находим получателя: по user_id (из поиска коллег) или по email (старый вариант)
   let recipientQuery = supabaseAdmin
     .from('profiles')
     .select('user_id, email, display_name, first_name, last_name, company_id')
@@ -65,10 +50,6 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Получатель из другой компании' })
   }
 
-  // 2. Атомарный перевод одной функцией базы.
-  // Внутри transfer_karma: блокирует балансы от гонок, проверяет что
-  // компания активна, списывает у отправителя, зачисляет получателю
-  // (создавая кошелёк, если его не было) и пишет запись в transfers.
   const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('transfer_karma', {
     p_from_user_id: ctx.user.id,
     p_to_user_id: recipient.user_id,
@@ -91,15 +72,16 @@ export default async function handler(req, res) {
     || [recipient.first_name, recipient.last_name].filter(Boolean).join(' ')
     || recipient.email
 
-  // 3. Уведомления обеим сторонам
   await supabaseAdmin.from('notifications').insert([
     {
       user_id: ctx.user.id,
+      type: 'transfer',
       message: `Вы перевели ${transferAmount} кармиков → ${recipientName}${comment ? '. ' + comment : ''}`,
       link: '/history'
     },
     {
       user_id: recipient.user_id,
+      type: 'transfer',
       message: `Вам перевели ${transferAmount} кармиков от ${ctx.profile.display_name || ctx.profile.email || ctx.user.email}${comment ? '. Комментарий: ' + comment : ''}`,
       link: '/history'
     }
