@@ -2,17 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import KarmaSuccess from './KarmaSuccess'
 
-// Окно перевода кармиков: получатель выбирается поиском по имени/фамилии
-// среди коллег своей компании. При успехе — фирменная анимация KarmaSuccess.
-//
-// Использование на странице:
-//   const [transferOpen, setTransferOpen] = useState(false)
-//   <button onClick={() => setTransferOpen(true)}>Перевести кармики</button>
-//   <TransferModal isOpen={transferOpen} onClose={() => setTransferOpen(false)} />
+// Окно перевода кармиков: показывает список коллег сразу при открытии,
+// поиск фильтрует локально (мгновенно). При успехе — фирменная анимация KarmaSuccess.
 export default function TransferModal({ isOpen, onClose }) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [searching, setSearching] = useState(false)
+  const [colleagues, setColleagues] = useState([]) // Все коллеги (загружаются при открытии)
+  const [query, setQuery] = useState('') // Поисковый запрос
+  const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState(null)
   const [amount, setAmount] = useState('')
   const [comment, setComment] = useState('')
@@ -20,39 +15,51 @@ export default function TransferModal({ isOpen, onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
 
-  // Сброс формы при каждом открытии
-  useEffect(() => {
-    if (isOpen) {
-      setQuery(''); setResults([]); setSelected(null)
-      setAmount(''); setComment(''); setError(''); setSending(false); setSuccess(null)
-    }
-  }, [isOpen])
-
-  // Поиск коллег с задержкой 300 мс, чтобы не дёргать сервер на каждую букву
+  // Загрузка всех коллег при открытии модалки
   useEffect(() => {
     if (!isOpen) return
-    const q = query.trim()
-    if (!q) { setResults([]); setSearching(false); return }
-    const t = setTimeout(async () => {
-      setSearching(true)
+    
+    setLoading(true)
+    setQuery('')
+    setSelected(null)
+    setAmount('')
+    setComment('')
+    setError('')
+    setSending(false)
+    setSuccess(null)
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session?.access_token) {
+        setLoading(false)
+        return
+      }
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.access_token) return
-        const r = await fetch(`/api/colleagues/search?q=${encodeURIComponent(q)}`, {
+        const r = await fetch('/api/colleagues/search', {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
         const d = await r.json()
-        setResults(Array.isArray(d) ? d : [])
+        setColleagues(Array.isArray(d) ? d : [])
       } catch {
-        setResults([])
+        setColleagues([])
       } finally {
-        setSearching(false)
+        setLoading(false)
       }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [query, isOpen])
+    })
+  }, [isOpen])
 
   if (!isOpen) return null
+
+  // Фильтруем коллег локально по запросу (мгновенно)
+  const filtered = query.trim()
+    ? colleagues.filter(p => {
+        const q = query.toLowerCase()
+        return (
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.email || '').toLowerCase().includes(q) ||
+          (p.position || '').toLowerCase().includes(q)
+        )
+      })
+    : colleagues
 
   // Успех: вместо формы показываем фирменную анимацию
   if (success) {
@@ -111,7 +118,7 @@ export default function TransferModal({ isOpen, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 460, textAlign: 'left' }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, textAlign: 'left' }}>
         <div className="flex justify-between items-center mb-4">
           <h3
             className="text-xl font-bold"
@@ -124,31 +131,39 @@ export default function TransferModal({ isOpen, onClose }) {
           >
             Перевести кармики
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
         </div>
 
-        {/* Поиск получателя по имени */}
-        <label className="text-xs text-gray-400 mb-1 block">Кому — найдите коллегу по имени</label>
+        {/* Поиск */}
+        <label className="text-xs text-gray-400 mb-1 block">Найдите коллегу по имени</label>
         <input
           className="input-field"
           placeholder="Начните вводить имя или фамилию…"
           value={query}
           onChange={e => { setQuery(e.target.value); setSelected(null) }}
+          autoFocus
         />
 
-        <div className="mt-2 space-y-1.5" style={{ minHeight: 32 }}>
-          {searching && <p className="text-xs text-gray-500">Ищем коллег…</p>}
-          {!searching && query.trim() && results.length === 0 && (
-            <p className="text-xs text-gray-500">Никого не нашли в вашей компании</p>
+        {/* Список коллег */}
+        <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto" style={{ minHeight: 32 }}>
+          {loading && <p className="text-xs text-gray-500">Загружаем коллег…</p>}
+          {!loading && filtered.length === 0 && (
+            <p className="text-xs text-gray-500">
+              {query ? 'Никого не нашли' : 'В вашей компании пока нет других сотрудников'}
+            </p>
           )}
-          {results.map(p => (
+          {!loading && filtered.map(p => (
             <button
               key={p.user_id}
-              onClick={() => { setSelected(p); setQuery(''); setResults([]) }}
+              onClick={() => { setSelected(p); setQuery('') }}
               className="w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left"
               style={{
-                border: '1px solid rgba(249,115,22,.25)',
-                background: 'rgba(15,31,53,.6)',
+                border: selected?.user_id === p.user_id 
+                  ? '1px solid rgba(212,175,55,.6)' 
+                  : '1px solid rgba(249,115,22,.25)',
+                background: selected?.user_id === p.user_id 
+                  ? 'rgba(212,175,55,.08)' 
+                  : 'rgba(15,31,53,.6)',
               }}
             >
               {p.avatar_url
