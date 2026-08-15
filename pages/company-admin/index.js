@@ -149,26 +149,7 @@ function CompanyAdminDashboard() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 20px', position: 'relative' }}>
-      {/* Звёзды */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        {Array.from({ length: 80 }).map((_, i) => {
-          const size = Math.random() * 2 + 0.5
-          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-          const color = colors[Math.floor(Math.random() * colors.length)]
-          return (
-            <div key={i} style={{
-              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-              boxShadow: `0 0 ${size * 2}px ${color}`,
-              opacity: Math.random() * 0.5 + 0.3,
-              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
-              animationDelay: Math.random() * 10 + 's'
-            }} />
-          )
-        })}
-      </div>
-
+    <div style={{ minHeight: '100vh', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 20px', position: 'relative' }}>
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '1200px', margin: '0 auto' }}>
         <h1 style={{
           fontSize: 28, fontWeight: 600, marginBottom: 24,
@@ -229,13 +210,6 @@ function CompanyAdminDashboard() {
           </AnalyticsCard>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.95); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-      `}</style>
     </div>
   )
 }
