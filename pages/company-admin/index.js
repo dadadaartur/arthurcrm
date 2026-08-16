@@ -31,7 +31,6 @@ function CompanyAdminDashboard() {
   }, [])
 
   const loadAll = async (compId) => {
-    // КАЗНА: добавлен запрос баланса фонда компании (company_karma_accounts)
     const [tasksRes, employeesRes, rewardsRes, karmaRes] = await Promise.all([
       supabase.from('tasks').select('id, task_type').eq('company_id', compId).eq('is_active', true),
       supabase.from('profiles').select('user_id').eq('company_id', compId).is('deleted_at', null).eq('is_company_admin', false),
@@ -41,7 +40,7 @@ function CompanyAdminDashboard() {
     const tasks = tasksRes.data || []
     const employees = employeesRes.data || []
     const rewards = rewardsRes.data || []
-    const karmaFund = karmaRes.data?.balance || 0 // КАЗНА
+    const karmaFund = karmaRes.data?.balance || 0
     const taskIds = tasks.map(t => t.id)
     const userIds = employees.map(e => e.user_id)
 
@@ -73,7 +72,7 @@ function CompanyAdminDashboard() {
       tasksCount: tasks.length,
       employeesCount: employees.length,
       rewardsCount: rewards.length,
-      karmaFund, // КАЗНА
+      karmaFund,
       pendingReviews: assignments.filter(a => a.status === 'pending_review').length,
       pendingCerts: purchasesByStatus['pending'] || 0,
       completed: completedList.length,
@@ -161,31 +160,27 @@ function CompanyAdminDashboard() {
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
         }}>Панель управления</h1>
 
-        {/* Навигация — консервативные стеклянные кнопки */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32 }}>
           <NavBtn href="/company-admin/tasks">Управление заданиями</NavBtn>
           <NavBtn href="/company-admin/employees">Управление командой</NavBtn>
           <NavBtn href="/company-admin/rewards">Управление товарами</NavBtn>
-          <NavBtn href="/company-admin/karma">Казна компании</NavBtn> {/* КАЗНА */}
+          <NavBtn href="/company-admin/resources">Управление ресурсами</NavBtn>
           <NavBtn href="/company-admin/review" badge={d.pendingReviews}>Задания на проверке</NavBtn>
           <NavBtn href="/company-admin/purchases" badge={d.pendingCerts}>Подтверждение сертификатов</NavBtn>
           <NavBtn href="/company-admin/history">История заданий</NavBtn>
           <NavBtn href="/company-admin/goals">Цели</NavBtn>
         </div>
 
-        {/* Кликабельные карточки-счётчики */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 32 }}>
           <StatCard value={d.tasksCount} label={getPlural(d.tasksCount, ['активное задание', 'активных задания', 'активных заданий'])} href="/company-admin/tasks" />
           <StatCard value={d.employeesCount} label={getPlural(d.employeesCount, ['сотрудник', 'сотрудника', 'сотрудников'])} href="/company-admin/employees" />
           <StatCard value={d.rewardsCount} label={getPlural(d.rewardsCount, ['товар в магазине', 'товара в магазине', 'товаров в магазине'])} href="/company-admin/rewards" />
-          {/* КАЗНА: баланс фонда компании */}
-          <StatCard value={d.karmaFund} label={getPlural(d.karmaFund, ['кармик в казне', 'кармика в казне', 'кармиков в казне'])} href="/company-admin/karma" />
+          <StatCard value={d.karmaFund} label={getPlural(d.karmaFund, ['кармик в фонде', 'кармика в фонде', 'кармиков в фонде'])} href="/company-admin/resources" />
           <StatCard value={d.pendingReviews} label={getPlural(d.pendingReviews, ['задание на проверке', 'задания на проверке', 'заданий на проверке'])} href="/company-admin/review" badge={d.pendingReviews} />
           <StatCard value={d.pendingCerts} label={getPlural(d.pendingCerts, ['сертификат на подтверждении', 'сертификата на подтверждении', 'сертификатов на подтверждении'])} href="/company-admin/purchases" badge={d.pendingCerts} />
           <StatCard value={d.completed} label={getPlural(d.completed, ['задание выполнено', 'задания выполнено', 'заданий выполнено'])} href="/company-admin/history" />
         </div>
 
-        {/* Аналитика */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
           <AnalyticsCard title="Время выполнения заданий">
             <Row label="Среднее время" value={d.avgMs ? formatDuration(d.avgMs) : '—'} />
