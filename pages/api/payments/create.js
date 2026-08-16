@@ -1,13 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
 
-// Настоящие тестовые ключи ЮKassa (shopId от Артура).
-// НЕ ПУТАТЬ: shopId (идентификатор магазина) — 1438003, а не 447003.
-const YOOKASSA_SHOP_ID = '1438003'
-const YOOKASSA_SECRET = 'test_-oA0sytv2DJkkaJjo-qUlLdSIJ29YAtc0NMZ4LfQsqo'
+// YooKassa credentials must be provided via environment variables:
+// YOOKASSA_SHOP_ID and YOOKASSA_SECRET. DO NOT commit real keys.
 
-// Создание платежа через ЮKassa для пополнения фонда или смены тарифа.
-// Возвращает confirmation_url — на него редиректим пользователя.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
@@ -33,6 +29,13 @@ export default async function handler(req, res) {
     : `Переход на тариф: ${tariffCode || 'unknown'}`
 
   const idempotenceKey = `karma-${companyId}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+
+  const YOOKASSA_SHOP_ID = process.env.YOOKASSA_SHOP_ID
+  const YOOKASSA_SECRET = process.env.YOOKASSA_SECRET
+  if (!YOOKASSA_SHOP_ID || !YOOKASSA_SECRET) {
+    // Не раскрываем ключи в логах
+    return res.status(500).json({ error: 'Payment provider is not configured on the server' })
+  }
 
   const yookassaResponse = await fetch('https://api.yookassa.ru/v3/payments', {
     method: 'POST',

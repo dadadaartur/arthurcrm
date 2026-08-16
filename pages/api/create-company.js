@@ -10,7 +10,7 @@ function extractAccessToken(req) {
   const cookies = Object.fromEntries(
     rawCookie.split('; ').map(c => {
       const idx = c.indexOf('=')
-      if (idx === -11) return [c.trim(), '']
+      // если нет символа '=', считаем, что это флаговая кука без значения
       if (idx === -1) return [c.trim(), '']
       return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
     })
