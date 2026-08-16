@@ -1,48 +1,82 @@
-import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '../../lib/supabaseClient'
+import Spinner from '../../components/Spinner'
 
-const FOUNDER_EMAIL = 'arturgalkin.ru@mail.ru'
+const TYPE_LABELS = {
+  emission: 'Эмиссия', topup: 'Оплата (ЮKassa)', utilization: 'Списание (магазин)',
+  tariff_change: 'Смена тарифа', purchase: 'Покупка', transfer: 'Перевод',
+  task_reward: 'Награда за задание', transaction: 'Операция'
+}
 
-export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).end()
-  const ctx = await requireAuth(req, res, {})
-  if (!ctx) return
-  if (ctx.user.email !== FOUNDER_EMAIL) return res.status(403).json({ error: 'Доступ только для основателя' })
+export default function Movements() {
+  const [access, setAccess] = useState('checking')
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  useEffect(() => { load() }, [])
 
-  const [ledger, purchases, transactions, transfers, profiles, companies] = await Promise.all([
-    sb.from('central_bank_ledger').select('*').order('created_at', { ascending: false }).limit(100),
-    sb.from('purchases').select('id,user_id,cost,reward_name,status,company_id,created_at').order('created_at', { ascending: false }).limit(100),
-    sb.from('karma_transactions').select('id,user_id,amount,description,type,created_at').order('created_at', { ascending: false }).limit(100),
-    sb.from('transfers').select('id,from_user_id,to_user_id,amount,comment,created_at').order('created_at', { ascending: false }).limit(100),
-    sb.from('profiles').select('user_id,email,display_name,company_id'),
-    sb.from('companies').select('id,name')
-  ])
+  const load = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.email !== 'arturgalkin.ru@mail.ru') { setAccess('denied'); setLoading(false); return }
+    setAccess('granted')
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/central-bank/movements', { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (res.ok) setRows(await res.json())
+    setLoading(false)
+  }
 
-  const nameOf = id => { const p = (profiles.data || []).find(x => x.user_id === id); return p?.display_name || p?.email || '—' }
-  const compOf = id => { const c = (companies.data || []).find(x => x.id === id); return c?.name || '' }
-  const userComp = id => { const p = (profiles.data || []).find(x => x.user_id === id); return compOf(p?.company_id) }
+  if (loading) return <div className="flex justify-center items-center py-24"><Spinner /></div>
+  if (access === 'denied') return (
+    <div className="max-w-2xl mx-auto px-8 py-24"><div className="premium-card text-center">
+      <h1 className="text-2xl font-bold text-red-400">Доступ запрещён</h1>
+    </div></div>
+  )
 
-  const feed = []
-  ;(ledger.data || []).forEach(e => feed.push({
-    id: 'L' + e.id, at: e.created_at, type: e.event_type, title: e.description,
-    company: compOf(e.company_id), user: '', amount: e.amount, sign: e.amount > 0 ? '+' : ''
-  }))
-  ;(purchases.data || []).forEach(p => { if (p.status !== 'rejected') feed.push({
-    id: 'P' + p.id, at: p.created_at, type: 'purchase', title: `Покупка: ${p.reward_name}`,
-    company: compOf(p.company_id), user: nameOf(p.user_id), amount: p.cost, sign: '-'
-  })})
-  ;(transactions.data || []).forEach(t => feed.push({
-    id: 'T' + t.id, at: t.created_at, type: t.type || 'transaction', title: t.description || 'Начисление',
-    company: userComp(t.user_id), user: nameOf(t.user_id), amount: t.amount, sign: t.amount > 0 ? '+' : ''
-  }))
-  ;(transfers.data || []).forEach(t => feed.push({
-    id: 'F' + t.id, at: t.created_at, type: 'transfer',
-    title: `Перевод: ${nameOf(t.from_user_id)} → ${nameOf(t.to_user_id)}`,
-    company: userComp(t.from_user_id), user: nameOf(t.from_user_id), amount: t.amount, sign: '↔'
-  }))
+  const color = r => r.sign === '-' ? '#f87171' : r.sign === '+' ? '#4ade80' : '#a0e9ff'
 
-  feed.sort((a, b) => new Date(b.at) - new Date(a.at))
-  res.status(200).json(feed.slice(0, 300))
+  return (
+    <div style={{ width: '100%', padding: '40px 32px', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/central-bank" className="flex items-center justify-center hover:bg-white/5 transition-colors"
+            style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(255,215,0,0.3)', textDecoration: 'none', flexShrink: 0 }}>
+            <span style={{ fontSize: 20, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>←</span>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: '#d4af37' }}>Все движения кармиков</h1>
+            <p className="text-sm text-gray-400 mt-1">Полная лента операций от всех сотрудников всех компаний</p>
+          </div>
+        </div>
+
+        <div className="premium-card overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-gray-400 border-b border-gray-700">
+              <tr>
+                <th className="py-3 pr-4">Время</th>
+                <th className="py-3 pr-4">Тип</th>
+                <th className="py-3 pr-4">Компания</th>
+                <th className="py-3 pr-4">Сотрудник</th>
+                <th className="py-3 pr-4">Описание</th>
+                <th className="py-3 text-right">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.id} className="border-b border-gray-800 hover:bg-white/[0.02]">
+                  <td className="py-2 pr-4 text-gray-400 whitespace-nowrap">{new Date(r.at).toLocaleString('ru')}</td>
+                  <td className="py-2 pr-4"><span className="px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(255,255,255,0.06)', color: '#ccc' }}>{TYPE_LABELS[r.type] || r.type}</span></td>
+                  <td className="py-2 pr-4 text-gray-300">{r.company || '—'}</td>
+                  <td className="py-2 pr-4 text-gray-300">{r.user || '—'}</td>
+                  <td className="py-2 pr-4 text-gray-200">{r.title}</td>
+                  <td className="py-2 text-right font-semibold whitespace-nowrap" style={{ color: color(r) }}>{r.sign}{r.amount}</td>
+                </tr>
+              ))}
+              {rows.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-gray-500">Движений пока нет</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
 }
