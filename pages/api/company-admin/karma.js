@@ -40,7 +40,6 @@ export default async function handler(req, res) {
 
   const circulation = enriched.reduce((s, e) => s + e.balance, 0)
 
-  // Центробанк + история эмиссий именно этой компании
   const { data: centralBank } = await supabaseAdmin.from('central_bank').select('*').eq('id', 1).maybeSingle()
   const { data: emissions } = await supabaseAdmin
     .from('central_bank_ledger')
@@ -50,12 +49,19 @@ export default async function handler(req, res) {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  const { data: allTariffs } = await supabaseAdmin
+    .from('tariffs')
+    .select('*')
+    .eq('is_active', true)
+    .order('karma_per_employee', { ascending: true })
+
   res.status(200).json({
     account: account || null,
     tariff: tariff || null,
     employees: enriched,
     circulation,
     central_bank: centralBank || null,
-    emissions: emissions || []
+    emissions: emissions || [],
+    all_tariffs: allTariffs || []
   })
 }
