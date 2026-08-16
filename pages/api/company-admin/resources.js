@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
 
+// Данные для страницы «Управление ресурсами».
+// Возвращает: казну, тариф, список тарифов, сотрудников с балансами.
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
@@ -10,9 +12,14 @@ export default async function handler(req, res) {
   const isAdmin = ctx.profile?.is_company_admin || ctx.profile?.role_id === 1
   if (!companyId || !isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
 
-  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
 
-  const { data: account } = await sb.from('company_karma_accounts').select('*').eq('company_id', companyId).maybeSingle()
+  const { data: account } = await sb
+    .from('company_karma_accounts').select('*').eq('company_id', companyId).maybeSingle()
+
   let tariff = null
   if (account?.tariff_id) {
     const { data: t } = await sb.from('tariffs').select('*').eq('id', account.tariff_id).maybeSingle()
@@ -31,14 +38,20 @@ export default async function handler(req, res) {
 
   const circulation = enriched.reduce((s, e) => s + e.balance, 0)
 
-  const { data: allTariffs } = await sb.from('tariffs').select('*').eq('is_active', true)
-    .order('karma_per_employee', { ascending: true })
+  const { data: allTariffs } = await sb.from('tariffs')
+    .select('*').eq('is_active', true).order('karma_per_employee', { ascending: true })
+
+  // История платежей компании
+  const { data: payments } = await sb.from('payments')
+    .select('*').eq('company_id', companyId)
+    .order('created_at', { ascending: false }).limit(20)
 
   res.status(200).json({
     account: account || null,
     tariff: tariff || null,
     employees: enriched,
     circulation,
-    all_tariffs: allTariffs || []
+    all_tariffs: allTariffs || [],
+    payments: payments || []
   })
 }
