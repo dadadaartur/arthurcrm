@@ -10,7 +10,6 @@ function extractAccessToken(req) {
   const cookies = Object.fromEntries(
     rawCookie.split('; ').map(c => {
       const idx = c.indexOf('=')
-      if (idx === -11) return [c.trim(), '']
       if (idx === -1) return [c.trim(), '']
       return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
     })
@@ -50,6 +49,25 @@ async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessT
 }
 
 export default async function handler(req, res) {
+  // Rate limiting: не более 5 запросов в минуту на IP
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const WINDOW_MS = 60 * 1000
+  const MAX_REQUESTS = 5
+
+  if (!global.rateLimitStore) global.rateLimitStore = {}
+  const store = global.rateLimitStore
+  if (!store[ip]) store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+
+  if (now > store[ip].resetTime) {
+    store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+  }
+
+  store[ip].count++
+  if (store[ip].count > MAX_REQUESTS) {
+    return res.status(429).json({ error: 'Слишком много запросов. Попробуйте позже.' })
+  }
+
   if (req.method !== 'POST') return res.status(405).end()
 
   try {
@@ -95,8 +113,9 @@ export default async function handler(req, res) {
       if (realEmail !== email.toLowerCase().trim()) {
         return res.status(403).json({ error: 'Доступ запрещён: email не совпадает с аккаунтом' })
       }
-      if (authUser.email_confirmed_at) {
-        return res.status(403).json({ error: 'Требуется авторизация: подтвердите email и войдите, затем создайте компанию из личного кабинета' })
+      // Разрешаем создание компании только если email подтверждён
+      if (!authUser.email_confirmed_at) {
+        return res.status(403).json({ error: 'Подтвердите email перед созданием компании' })
       }
       const createdAt = new Date(authUser.created_at).getTime()
       const FIFTEEN_MIN = 15 * 60 * 1000
@@ -153,7 +172,7 @@ export default async function handler(req, res) {
         return res.status(409).json({ error: 'Компания с таким названием уже существует — придумайте другое название' })
       }
       console.error('[create-company] ошибка insert companies', compError)
-      return res.status(500).json({ error: 'Ошибка создания компании: ' + compError.message })
+      return res.status(500).json({ error: 'Ошибка создания компании' })
     }
 
     const { data: adminRole, error: roleError } = await supabaseAdmin
@@ -169,7 +188,7 @@ export default async function handler(req, res) {
     if (roleError) {
       console.error('[create-company] ошибка insert roles', roleError)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
-      return res.status(500).json({ error: 'Ошибка создания роли администратора: ' + roleError.message })
+      return res.status(500).json({ error: 'Ошибка создания роли администратора' })
     }
 
     // Базовая роль для обычных сотрудников — разумный дефолт для приглашений.
@@ -200,12 +219,12 @@ export default async function handler(req, res) {
       console.error('[create-company] ошибка upsert profiles', profileError)
       await supabaseAdmin.from('roles').delete().eq('id', adminRole.id)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
-      return res.status(500).json({ error: 'Ошибка привязки профиля: ' + profileError.message })
+      return res.status(500).json({ error: 'Ошибка привязки профиля' })
     }
 
     res.status(200).json({ companyId: company.id })
   } catch (e) {
     console.error('[create-company] необработанная ошибка', e)
-    res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + (e?.message || String(e)) })
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
   }
 }

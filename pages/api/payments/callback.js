@@ -37,21 +37,28 @@ export default async function handler(req, res) {
     }).eq('id', payment.id)
 
     if (payment.payment_type === 'topup' && payment.karma_amount) {
+      const karmaAmount = Number(payment.karma_amount)
+      
       const { data: acc } = await sb.from('company_karma_accounts')
         .select('*').eq('company_id', payment.company_id).maybeSingle()
 
       if (acc) {
+        // 1. Обновляем счёт компании
         await sb.from('company_karma_accounts').update({
-          balance: Number(acc.balance) + Number(payment.karma_amount),
-          total_issued: Number(acc.total_issued || 0) + Number(payment.karma_amount),
+          balance: Number(acc.balance) + karmaAmount,
+          total_issued: Number(acc.total_issued || 0) + karmaAmount,
           updated_at: new Date().toISOString()
         }).eq('company_id', payment.company_id)
 
+        // 2. Обновляем Центральный Банк (списываем из резерва)
+        await sb.rpc('central_bank_issue', { amount: karmaAmount })
+
+        // 3. Запись в леджер ЦБ
         await sb.from('central_bank_ledger').insert({
           event_type: 'topup',
           company_id: payment.company_id,
-          amount: Number(payment.karma_amount),
-          description: `Пополнение через ЮKassa: ${payment.amount_rub} ₽ → ${payment.karma_amount} кармиков`
+          amount: karmaAmount,
+          description: `Пополнение через ЮKassa: ${payment.amount_rub} ₽ → ${karmaAmount} кармиков`
         })
 
         // Уведомление админам компании об успешном пополнении

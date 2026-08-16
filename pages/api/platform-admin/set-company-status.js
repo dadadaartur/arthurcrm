@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     })
     .eq('id', companyId)
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) return res.status(500).json({ error: 'Ошибка обновления статуса компании' })
 
   await supabaseAdmin.from('audit_logs').insert({
     user_id: ctx.user.id,

@@ -4,6 +4,25 @@ import { requireAuth } from '../../lib/auth'
 // Атомарный перевод кармиков через RPC transfer_karma.
 // Получатель ищется по user_id (из поиска коллег) или по email (запасной путь).
 export default async function handler(req, res) {
+  // Rate limiting: не более 10 запросов в минуту на IP для переводов
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const WINDOW_MS = 60 * 1000
+  const MAX_REQUESTS = 10
+
+  if (!global.rateLimitStore) global.rateLimitStore = {}
+  const store = global.rateLimitStore
+  if (!store[ip]) store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+
+  if (now > store[ip].resetTime) {
+    store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+  }
+
+  store[ip].count++
+  if (store[ip].count > MAX_REQUESTS) {
+    return res.status(429).json({ error: 'Слишком много запросов. Попробуйте позже.' })
+  }
+
   if (req.method !== 'POST') return res.status(405).end()
 
   const ctx = await requireAuth(req, res, {})
@@ -69,7 +88,7 @@ export default async function handler(req, res) {
     if (msg.includes('самому себе')) return res.status(400).json({ error: 'Нельзя перевести самому себе' })
     if (msg.includes('другой компании')) return res.status(403).json({ error: 'Получатель из другой компании' })
     if (msg.includes('неактивна')) return res.status(403).json({ error: 'Компания неактивна — переводы недоступны' })
-    return res.status(500).json({ error: 'Ошибка перевода: ' + msg })
+    return res.status(500).json({ error: 'Ошибка перевода' })
   }
 
   const result = Array.isArray(rpcData) ? rpcData[0] : rpcData

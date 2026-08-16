@@ -28,6 +28,6 @@ export default async function handler(req, res) {
     .update({ status: 'cancelled' })
     .eq('id', invitationId)
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) return res.status(500).json({ error: 'Ошибка отмены приглашения' })
   res.status(200).json({ success: true })
 }

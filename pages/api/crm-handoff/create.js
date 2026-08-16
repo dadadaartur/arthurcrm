@@ -52,7 +52,7 @@ export default async function handler(req, res) {
   })
 
   if (error) {
-    return res.status(500).json({ error: 'Не удалось создать код обмена: ' + error.message })
+    return res.status(500).json({ error: 'Не удалось создать код обмена' })
   }
 
   res.status(200).json({ code, expiresAt: expiresAt.toISOString() })

@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error('[leaderboard] ошибка выборки', error)
-    return res.status(500).json({ error: 'Ошибка загрузки рейтинга: ' + error.message })
+    return res.status(500).json({ error: 'Ошибка загрузки рейтинга' })
   }
 
   const leaders = (profiles || [])

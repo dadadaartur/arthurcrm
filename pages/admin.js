@@ -132,6 +132,9 @@ export default function Admin() {
         <button onClick={() => setTab('knowledge')} className={`filter-pill ${tab === 'knowledge' ? 'active' : ''}`}>
           База знаний
         </button>
+        <button onClick={() => window.location.href = '/admin/company-settings'} className="filter-pill" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', borderColor: 'rgba(59, 130, 246, 0.4)' }}>
+          ⚙️ Настройки компании
+        </button>
       </div>
 
       {tab === 'backlog' && (
