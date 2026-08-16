@@ -89,10 +89,14 @@ export default function CentralBank() {
             style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(255,215,0,0.3)', textDecoration: 'none', flexShrink: 0 }}>
             <span style={{ fontSize: 20, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>←</span>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold" style={{ color: '#d4af37' }}>Кармический Центробанк</h1>
             <p className="text-sm text-gray-400 mt-1">Регулятор эмиссии · учёт оплат · доступ: только основатель</p>
           </div>
+          <Link href="/central-bank/movements" className="text-sm px-4 py-2"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', borderRadius: 10, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Все движения кармиков →
+          </Link>
         </div>
 
         {message && (
@@ -245,9 +249,18 @@ export default function CentralBank() {
                       <td className="py-3 pr-4 text-gray-300">{tariff ? `+${expected}` : '—'}</td>
                       <td className="py-3 pr-4 text-gray-400">{c.valid_until ? new Date(c.valid_until).toLocaleDateString('ru') : '—'}</td>
                       <td className="py-3 text-right">
-                        <button onClick={() => handleEmit(c.id)} disabled={emittingId === c.id || !tariff}
-                          className="btn-gold text-xs px-4 py-1.5"
-                          style={{ opacity: (!tariff || emittingId === c.id) ? 0.5 : 1 }}>
+                        <button
+                          onClick={() => handleEmit(c.id)}
+                          disabled={emittingId === c.id || !tariff}
+                          className="text-xs px-4 py-1.5"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(212,175,55,0.08))',
+                            border: '1px solid rgba(255,215,0,0.45)',
+                            color: '#FFD700',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            opacity: (!tariff || emittingId === c.id) ? 0.5 : 1
+                          }}>
                           {emittingId === c.id ? 'Эмиссия...' : 'Эмитировать'}
                         </button>
                       </td>
@@ -262,7 +275,7 @@ export default function CentralBank() {
           </div>
         </div>
 
-        {/* Журнал эмиссий */}
+        {/* Журнал */}
         <div className="premium-card">
           <h2 className="text-xl font-semibold mb-4 text-white">Журнал операций Центробанка</h2>
           {ledger.length === 0 ? (
