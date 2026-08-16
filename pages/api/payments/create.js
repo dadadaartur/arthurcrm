@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
 
-// Создание платежа через ЮKassa для пополнения фонда или смены тарифа.
-// Тестовый режим: используется тестовый shop_id и secret.
-const YOOKASSA_SHOP_ID = '447003'
-const YOOKASSA_SECRET = 'test_oA0sytv2DJkkaJjo-qUlLdSIJ29YAtc0NMZ4LfQsqo'
+// Настоящие тестовые ключи ЮKassa (shopId от Артура).
+// НЕ ПУТАТЬ: shopId (идентификатор магазина) — 1438003, а не 447003.
+const YOOKASSA_SHOP_ID = '1438003'
+const YOOKASSA_SECRET = 'test_-oA0sytv2DJkkaJjo-qUlLdSIJ29YAtc0NMZ4LfQsqo'
 
+// Создание платежа через ЮKassa для пополнения фонда или смены тарифа.
+// Возвращает confirmation_url — на него редиректим пользователя.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
@@ -16,26 +18,31 @@ export default async function handler(req, res) {
   if (!companyId || !isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
 
   const { amountRub, karmaAmount, paymentType, tariffCode } = req.body
-  if (!amountRub || !paymentType) {
+  if (!amountRub || amountRub <= 0 || !paymentType) {
     return res.status(400).json({ error: 'Не указаны параметры платежа' })
   }
 
-  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
 
-  const returnBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const returnBase = process.env.NEXT_PUBLIC_APP_URL || 'https://arthurcrm.vercel.app'
   const description = paymentType === 'topup'
-    ? `Пополнение фонда: ${karmaAmount} кармиков`
-    : `Переход на тариф: ${tariffCode}`
+    ? `Пополнение фонда: ${karmaAmount || 0} кармиков`
+    : `Переход на тариф: ${tariffCode || 'unknown'}`
+
+  const idempotenceKey = `karma-${companyId}-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
   const yookassaResponse = await fetch('https://api.yookassa.ru/v3/payments', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Idempotence-Key': `karma-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      'Idempotence-Key': idempotenceKey,
       'Authorization': `Basic ${Buffer.from(`${YOOKASSA_SHOP_ID}:${YOOKASSA_SECRET}`).toString('base64')}`
     },
     body: JSON.stringify({
-      amount: { value: amountRub.toFixed(2), currency: 'RUB' },
+      amount: { value: Number(amountRub).toFixed(2), currency: 'RUB' },
       confirmation: {
         type: 'redirect',
         return_url: `${returnBase}/company-admin/resources?payment=success`
@@ -53,14 +60,16 @@ export default async function handler(req, res) {
 
   if (!yookassaResponse.ok) {
     const err = await yookassaResponse.json().catch(() => ({}))
-    return res.status(400).json({ error: 'Ошибка ЮKassa: ' + (err.description || 'неизвестная ошибка') })
+    return res.status(400).json({
+      error: 'Ошибка ЮKassa: ' + (err.description || JSON.stringify(err))
+    })
   }
 
   const paymentData = await yookassaResponse.json()
 
   const { data: payment, error: dbError } = await sb.from('payments').insert({
     company_id: companyId,
-    amount_rub: amountRub,
+    amount_rub: Number(amountRub),
     karma_amount: karmaAmount || null,
     payment_type: paymentType,
     tariff_code: tariffCode || null,
