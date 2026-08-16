@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
   if (error) {
     console.error('[colleagues/search] ошибка', error)
-    return res.status(500).json({ error: 'Ошибка поиска коллег: ' + error.message })
+    return res.status(500).json({ error: 'Ошибка поиска коллег' })
   }
 
   res.status(200).json((data || []).map(p => ({

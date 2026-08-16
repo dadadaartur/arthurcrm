@@ -10,7 +10,6 @@ function extractAccessToken(req) {
   const cookies = Object.fromEntries(
     rawCookie.split('; ').map(c => {
       const idx = c.indexOf('=')
-      if (idx === -11) return [c.trim(), '']
       if (idx === -1) return [c.trim(), '']
       return [c.substring(0, idx).trim(), decodeURIComponent(c.substring(idx + 1))]
     })
@@ -95,7 +94,7 @@ export default async function handler(req, res) {
       if (realEmail !== email.toLowerCase().trim()) {
         return res.status(403).json({ error: 'Доступ запрещён: email не совпадает с аккаунтом' })
       }
-      if (authUser.email_confirmed_at) {
+      if (!authUser.email_confirmed_at) {
         return res.status(403).json({ error: 'Требуется авторизация: подтвердите email и войдите, затем создайте компанию из личного кабинета' })
       }
       const createdAt = new Date(authUser.created_at).getTime()
@@ -153,7 +152,7 @@ export default async function handler(req, res) {
         return res.status(409).json({ error: 'Компания с таким названием уже существует — придумайте другое название' })
       }
       console.error('[create-company] ошибка insert companies', compError)
-      return res.status(500).json({ error: 'Ошибка создания компании: ' + compError.message })
+      return res.status(500).json({ error: 'Ошибка создания компании' })
     }
 
     const { data: adminRole, error: roleError } = await supabaseAdmin
@@ -169,7 +168,7 @@ export default async function handler(req, res) {
     if (roleError) {
       console.error('[create-company] ошибка insert roles', roleError)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
-      return res.status(500).json({ error: 'Ошибка создания роли администратора: ' + roleError.message })
+      return res.status(500).json({ error: 'Ошибка создания роли администратора' })
     }
 
     // Базовая роль для обычных сотрудников — разумный дефолт для приглашений.
@@ -200,12 +199,12 @@ export default async function handler(req, res) {
       console.error('[create-company] ошибка upsert profiles', profileError)
       await supabaseAdmin.from('roles').delete().eq('id', adminRole.id)
       await supabaseAdmin.from('companies').delete().eq('id', company.id)
-      return res.status(500).json({ error: 'Ошибка привязки профиля: ' + profileError.message })
+      return res.status(500).json({ error: 'Ошибка привязки профиля' })
     }
 
     res.status(200).json({ companyId: company.id })
   } catch (e) {
     console.error('[create-company] необработанная ошибка', e)
-    res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + (e?.message || String(e)) })
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' })
   }
 }

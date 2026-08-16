@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     if (msg.includes('самому себе')) return res.status(400).json({ error: 'Нельзя перевести самому себе' })
     if (msg.includes('другой компании')) return res.status(403).json({ error: 'Получатель из другой компании' })
     if (msg.includes('неактивна')) return res.status(403).json({ error: 'Компания неактивна — переводы недоступны' })
-    return res.status(500).json({ error: 'Ошибка перевода: ' + msg })
+    return res.status(500).json({ error: 'Ошибка перевода' })
   }
 
   const result = Array.isArray(rpcData) ? rpcData[0] : rpcData

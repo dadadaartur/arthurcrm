@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     .eq('status', 'pending')
     .select('id')
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) return res.status(500).json({ error: 'Ошибка отклонения покупки' })
   if (!updated || updated.length === 0) {
     return res.status(409).json({ error: 'Покупка уже обработана другим запросом' })
   }
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
 
   if (refundError) {
     return res.status(500).json({
-      error: 'Покупка отклонена, но не удалось вернуть кармики: ' + refundError.message
+      error: 'Покупка отклонена, но не удалось вернуть кармики'
     })
   }
 

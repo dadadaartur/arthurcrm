@@ -50,7 +50,7 @@ export default function Transfer() {
       if (profile?.company_id) {
         const { data: colleaguesData, error: colError } = await supabase
           .from('profiles')
-          .select('user_id, display_name, first_name, last_name, email, avatar_url')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
           .eq('company_id', profile.company_id)
           .is('deleted_at', null)
           .neq('user_id', user.id)
@@ -75,13 +75,13 @@ export default function Transfer() {
   }, [])
 
   const colleagueName = (c) =>
-    c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || c.email || 'Без имени'
+    c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Без имени'
 
   const filteredColleagues = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return colleagues
     return colleagues.filter(c => {
-      const haystack = [c.display_name, c.first_name, c.last_name, c.email]
+      const haystack = [c.display_name, c.first_name, c.last_name]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -204,7 +204,6 @@ export default function Transfer() {
                       )}
                       <div className="min-w-0">
                         <div className="text-sm text-white truncate">{colleagueName(c)}</div>
-                        {c.email && <div className="text-xs text-gray-500 truncate">{c.email}</div>}
                       </div>
                     </button>
                   ))
