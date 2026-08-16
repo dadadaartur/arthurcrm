@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabaseClient'
 
+// Типы событий и их фирменные цвета (включая финансовые)
 const TYPE_META = {
   transfer:        { color: '#4ade80' },
   task_new:        { color: '#f97316' },
@@ -11,11 +12,16 @@ const TYPE_META = {
   purchase:        { color: '#c084fc' },
   purchase_review: { color: '#D4AF37' },
   shop:            { color: '#D4AF37' },
+  topup:           { color: '#4ade80' },
+  tariff_change:   { color: '#a0e9ff' },
+  emission:        { color: '#FFD700' },
   system:          { color: '#9aa9c1' },
 }
 
 function inferType(n) {
   if (n.type && TYPE_META[n.type]) return n.type
+  if (/пополнен/i.test(n.message || '')) return 'topup'
+  if (/тариф/i.test(n.message || '')) return 'tariff_change'
   if (n.link === '/history') return 'transfer'
   if (n.link === '/my-purchases') return 'purchase'
   if (n.link === '/company-admin/purchases') return 'purchase_review'
@@ -70,6 +76,23 @@ function TypeIcon({ type }) {
         <path d="M5 10l1.2-5h11.6L19 10" />
         <path d="M5 10v9h14v-9" />
         <path d="M9.5 19v-5h5v5" />
+      </>
+    ),
+    topup: (
+      <>
+        <path d="M12 3v10" />
+        <path d="M8 9l4 4 4-4" />
+        <path d="M4 17h16v4H4z" />
+      </>
+    ),
+    tariff_change: (
+      <path d="M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 8.7l5.4-.8z" />
+    ),
+    emission: (
+      <>
+        <path d="M3 9l9-6 9 6" />
+        <path d="M4 9v11h16V9" />
+        <path d="M9 13v4M15 13v4" />
       </>
     ),
     system: (
@@ -128,6 +151,7 @@ export default function NotificationsBell({ userId }) {
 
   useEffect(() => { load() }, [userId])
 
+  // Realtime: новое уведомление прилетает без перезагрузки
   useEffect(() => {
     if (!userId) return
     const channel = supabase
@@ -217,10 +241,8 @@ export default function NotificationsBell({ userId }) {
         className="relative flex items-center justify-center transition-transform hover:scale-110"
         style={{ width: 32, height: 32, cursor: 'pointer' }}
       >
-        <svg
-          width="21" height="21" viewBox="0 0 24 24" fill="none"
-          className={ringing ? 'nb-ringing' : ''}
-        >
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none"
+          className={ringing ? 'nb-ringing' : ''}>
           <defs>
             <linearGradient id="nb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
@@ -252,6 +274,7 @@ export default function NotificationsBell({ userId }) {
         )}
       </button>
 
+      {/* Панель через портал — поверх любого фона, zIndex 2000 */}
       {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={panelRef}
