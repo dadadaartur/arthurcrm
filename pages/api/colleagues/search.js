@@ -3,7 +3,27 @@ import { requireAuth } from '../../../lib/auth'
 
 // Список/поиск коллег для перевода кармиков.
 // Пустой q = все коллеги компании (для выпадающего списка при открытии).
+// Скрываем email до момента выбора получателя (защита от утечки данных).
 export default async function handler(req, res) {
+  // Rate limiting: не более 30 запросов в минуту на IP для поиска
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const WINDOW_MS = 60 * 1000
+  const MAX_REQUESTS = 30
+
+  if (!global.rateLimitStore) global.rateLimitStore = {}
+  const store = global.rateLimitStore
+  if (!store[ip]) store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+
+  if (now > store[ip].resetTime) {
+    store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+  }
+
+  store[ip].count++
+  if (store[ip].count > MAX_REQUESTS) {
+    return res.status(429).json({ error: 'Слишком много запросов. Попробуйте позже.' })
+  }
+
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
 
@@ -40,7 +60,8 @@ export default async function handler(req, res) {
   res.status(200).json((data || []).map(p => ({
     user_id: p.user_id,
     name: [p.first_name, p.last_name].filter(Boolean).join(' ') || p.display_name || p.email,
-    email: p.email,
+    // Скрываем email в общем списке - показываем только при выборе для перевода
+    email: null,
     avatar_url: p.avatar_url,
     position: null
   })))

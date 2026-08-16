@@ -49,6 +49,25 @@ async function resolveAuthUser(supabaseAdmin, anonClient, userId, email, accessT
 }
 
 export default async function handler(req, res) {
+  // Rate limiting: не более 5 запросов в минуту на IP
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const WINDOW_MS = 60 * 1000
+  const MAX_REQUESTS = 5
+
+  if (!global.rateLimitStore) global.rateLimitStore = {}
+  const store = global.rateLimitStore
+  if (!store[ip]) store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+
+  if (now > store[ip].resetTime) {
+    store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+  }
+
+  store[ip].count++
+  if (store[ip].count > MAX_REQUESTS) {
+    return res.status(429).json({ error: 'Слишком много запросов. Попробуйте позже.' })
+  }
+
   if (req.method !== 'POST') return res.status(405).end()
 
   try {
@@ -94,8 +113,9 @@ export default async function handler(req, res) {
       if (realEmail !== email.toLowerCase().trim()) {
         return res.status(403).json({ error: 'Доступ запрещён: email не совпадает с аккаунтом' })
       }
+      // Разрешаем создание компании только если email подтверждён
       if (!authUser.email_confirmed_at) {
-        return res.status(403).json({ error: 'Требуется авторизация: подтвердите email и войдите, затем создайте компанию из личного кабинета' })
+        return res.status(403).json({ error: 'Подтвердите email перед созданием компании' })
       }
       const createdAt = new Date(authUser.created_at).getTime()
       const FIFTEEN_MIN = 15 * 60 * 1000

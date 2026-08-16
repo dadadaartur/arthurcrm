@@ -4,6 +4,25 @@ import { requireAuth } from '../../../lib/auth'
 // Казна компании + Центробанк для панели управления.
 // Доступ: админ своей компании или супер-админ. Читаем service-role'ом.
 export default async function handler(req, res) {
+  // Rate limiting: не более 20 запросов в минуту на IP для админских endpoint'ов
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const WINDOW_MS = 60 * 1000
+  const MAX_REQUESTS = 20
+
+  if (!global.rateLimitStore) global.rateLimitStore = {}
+  const store = global.rateLimitStore
+  if (!store[ip]) store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+
+  if (now > store[ip].resetTime) {
+    store[ip] = { count: 0, resetTime: now + WINDOW_MS }
+  }
+
+  store[ip].count++
+  if (store[ip].count > MAX_REQUESTS) {
+    return res.status(429).json({ error: 'Слишком много запросов. Попробуйте позже.' })
+  }
+
   if (req.method !== 'GET') return res.status(405).end()
 
   const ctx = await requireAuth(req, res, {})
