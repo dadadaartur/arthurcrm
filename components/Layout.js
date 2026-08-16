@@ -22,14 +22,10 @@ function StarsBackground() {
       else if (c < 0.97) color = '#ffeccd'
       else color = '#ffd9a3'
       arr.push({
-        id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size,
-        color,
+        id: i, left: Math.random() * 100, top: Math.random() * 100,
+        size, color,
         opacity: roll >= 0.92 ? Math.random() * 0.4 + 0.6 : Math.random() * 0.45 + 0.3,
-        dur: Math.random() * 7 + 5,
-        delay: Math.random() * 7,
+        dur: Math.random() * 7 + 5, delay: Math.random() * 7,
       })
     }
     return arr
@@ -39,12 +35,8 @@ function StarsBackground() {
     <div id="real-stars" className="stars-bg">
       {stars.map(s => (
         <div key={s.id} style={{
-          position: 'absolute',
-          left: s.left + '%',
-          top: s.top + '%',
-          width: s.size + 'px',
-          height: s.size + 'px',
-          borderRadius: '50%',
+          position: 'absolute', left: s.left + '%', top: s.top + '%',
+          width: s.size + 'px', height: s.size + 'px', borderRadius: '50%',
           background: s.color,
           boxShadow: s.size >= 2 ? `0 0 ${Math.round(s.size * 2)}px 0 ${s.color}` : 'none',
           opacity: s.opacity,
@@ -60,15 +52,16 @@ export default function Layout({ children }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
   const [isPlatformStaff, setIsPlatformStaff] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotifs, setShowNotifs] = useState(false)
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     if (user) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session?.access_token) return
         fetch('/api/platform-admin/me', { headers: { Authorization: `Bearer ${session.access_token}` } })
-          .then(r => r.json())
-          .then(d => setIsPlatformStaff(!!d.isPlatformStaff))
-          .catch(() => {})
+          .then(r => r.json()).then(d => setIsPlatformStaff(!!d.isPlatformStaff)).catch(() => {})
       })
 
       supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -88,18 +81,43 @@ export default function Layout({ children }) {
           if (!res.ok) return
           const { code } = await res.json()
           setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?handoff=${encodeURIComponent(code)}`)
-        } catch (e) {
-        }
+        } catch (e) {}
       })
+
+      loadNotifications()
     }
 
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
-        .then(({ data: comp }) => {
-          if (comp) setCompanyName(comp.name)
-        })
+        .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
     }
   }, [user, profile])
+
+  const loadNotifications = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+    try {
+      const res = await fetch('/api/notifications', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setNotifications(data.notifications || [])
+        setUnreadCount(data.unreadCount || 0)
+      }
+    } catch (e) {}
+  }
+
+  const markAllRead = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+    await fetch('/api/notifications/mark-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+    })
+    setUnreadCount(0)
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -137,8 +155,6 @@ export default function Layout({ children }) {
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
-
-  // Доступ к Центробанку — только для основателя платформы
   const isFounder = user?.email === 'arturgalkin.ru@mail.ru'
 
   if (isBlockedByModeration) {
@@ -212,6 +228,58 @@ export default function Layout({ children }) {
         </div>
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+          
+          {/* Колокольчик уведомлений */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowNotifs(!showNotifs); if (!showNotifs && unreadCount > 0) markAllRead() }}
+              className="action-btn !py-1.5 !px-3 relative"
+              title="Уведомления"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold bg-red-500 text-white px-1">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Выпадающий список уведомлений */}
+            {showNotifs && (
+              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto premium-card z-50" style={{ minWidth: 320 }}>
+                <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                  <h3 className="text-sm font-semibold text-white">Уведомления</h3>
+                  {notifications.length > 0 && (
+                    <button onClick={markAllRead} className="text-xs text-gray-400 hover:text-white">
+                      Прочитать все
+                    </button>
+                  )}
+                </div>
+                {notifications.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">Нет уведомлений</p>
+                ) : (
+                  <div className="space-y-2">
+                    {notifications.map(n => (
+                      <div
+                        key={n.id}
+                        onClick={() => { if (n.link) window.location.href = n.link; setShowNotifs(false) }}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          n.read ? 'bg-gray-800/50' : 'bg-gray-800 border-l-2 border-gold'
+                        } hover:bg-gray-700/50`}
+                      >
+                        <p className="text-sm text-white mb-1">{n.message}</p>
+                        <p className="text-xs text-gray-500">{new Date(n.created_at).toLocaleString('ru')}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
