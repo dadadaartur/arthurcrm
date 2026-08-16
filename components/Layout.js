@@ -4,22 +4,16 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
 
-// ЕДИНЫЙ КОСМИЧЕСКИЙ ФОН. Чистое звёздное поле без размытых цветных
-// пятен (они читались как "прыщи"). Звёзды — крошечные острые точки,
-// как на реальных снимках: основная масса мелочь, редко яркие. Ореол
-// только у крупных звёзд и очень плотный, не размазанный.
 function StarsBackground() {
   const stars = useMemo(() => {
     const arr = []
     const count = 300
     for (let i = 0; i < count; i++) {
       const roll = Math.random()
-      // Распределение размеров: 70% мелочь, 22% средние, 8% яркие
       let size
-      if (roll < 0.70) size = Math.random() * 0.7 + 0.5       // 0.5–1.2px
-      else if (roll < 0.92) size = Math.random() * 0.8 + 1.2  // 1.2–2.0px
-      else size = Math.random() * 0.8 + 2.0                    // 2.0–2.8px
-      // Цвета: в основном белые/холодные, реже тёплые и золотистые
+      if (roll < 0.70) size = Math.random() * 0.7 + 0.5
+      else if (roll < 0.92) size = Math.random() * 0.8 + 1.2
+      else size = Math.random() * 0.8 + 2.0
       const c = Math.random()
       let color
       if (c < 0.52) color = '#ffffff'
@@ -52,7 +46,6 @@ function StarsBackground() {
           height: s.size + 'px',
           borderRadius: '50%',
           background: s.color,
-          // Ореол только у ярких звёзд, плотный и короткий — не размытое пятно
           boxShadow: s.size >= 2 ? `0 0 ${Math.round(s.size * 2)}px 0 ${s.color}` : 'none',
           opacity: s.opacity,
           animation: `realTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite alternate`,
@@ -96,7 +89,6 @@ export default function Layout({ children }) {
           const { code } = await res.json()
           setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?handoff=${encodeURIComponent(code)}`)
         } catch (e) {
-          // Тихо не показываем кнопку рабочей, если обмен не удался
         }
       })
     }
@@ -145,6 +137,9 @@ export default function Layout({ children }) {
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
+
+  // Доступ к Центробанку — только для основателя платформы
+  const isFounder = user?.email === 'arturgalkin.ru@mail.ru'
 
   if (isBlockedByModeration) {
     return (
@@ -202,6 +197,11 @@ export default function Layout({ children }) {
               CRM Лето
             </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {isFounder && (
+              <Link href="/central-bank" className="action-btn !py-1.5 !px-4 !text-xs" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(212,175,55,0.15))', border: '1px solid rgba(255,215,0,0.4)' }}>
+                Центробанк
+              </Link>
+            )}
             {isPlatformStaff && (
               <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">Модерация площадки</Link>
             )}
