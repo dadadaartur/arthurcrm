@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Webhook от ЮKassa. Приходит асинхронно после успешной оплаты.
-// ВАЖНО: в личном кабинете ЮKassa должен быть прописан URL:
-// https://ТВОЙ-ДОМЕН.vercel.app/api/payments/callback
-// и выбраны события payment.succeeded, payment.canceled.
+// Webhook от ЮKassa при успешном платеже.
+// URL для уведомлений в личном кабинете ЮKassa:
+// https://arthurcrm.vercel.app/api/payments/callback
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -18,10 +17,9 @@ export default async function handler(req, res) {
   )
 
   const paymentId = object.id
-  const status = object.status // succeeded | canceled | waiting_for_capture
+  const status = object.status
   const metadata = object.metadata || {}
 
-  // Находим платёж в нашей БД
   const { data: payment } = await sb
     .from('payments')
     .select('*')
@@ -29,18 +27,15 @@ export default async function handler(req, res) {
     .maybeSingle()
 
   if (!payment) {
-    // Платёж не наш — игнорируем (возможно, webhook по другому магазину)
     return res.status(200).json({ status: 'ignored', reason: 'payment not found' })
   }
 
   if (event === 'payment.succeeded' || status === 'succeeded') {
-    // Обновляем статус платежа
     await sb.from('payments').update({
       status: 'succeeded',
       paid_at: new Date().toISOString()
     }).eq('id', payment.id)
 
-    // Пополнение фонда — зачисляем кармики в казну компании
     if (payment.payment_type === 'topup' && payment.karma_amount) {
       const { data: acc } = await sb.from('company_karma_accounts')
         .select('*').eq('company_id', payment.company_id).maybeSingle()
@@ -52,17 +47,30 @@ export default async function handler(req, res) {
           updated_at: new Date().toISOString()
         }).eq('company_id', payment.company_id)
 
-        // Записываем в журнал Центробанка (для аналитики и антифрода)
         await sb.from('central_bank_ledger').insert({
           event_type: 'topup',
           company_id: payment.company_id,
           amount: Number(payment.karma_amount),
           description: `Пополнение через ЮKassa: ${payment.amount_rub} ₽ → ${payment.karma_amount} кармиков`
         })
+
+        // Уведомление админам компании об успешном пополнении
+        const { data: admins } = await sb.from('profiles')
+          .select('user_id')
+          .eq('company_id', payment.company_id)
+          .or('is_company_admin.eq.true,role_id.eq.1')
+
+        if (admins?.length) {
+          const notifications = admins.map(a => ({
+            user_id: a.user_id,
+            message: `Фонд компании пополнен: +${payment.karma_amount} кармиков (оплата ${payment.amount_rub} ₽)`,
+            link: '/company-admin/resources'
+          }))
+          await sb.from('notifications').insert(notifications)
+        }
       }
     }
 
-    // Смена тарифа — применяем новый тариф
     if (payment.payment_type === 'tariff_upgrade' && payment.tariff_code) {
       const { data: tariff } = await sb.from('tariffs')
         .select('*').eq('code', payment.tariff_code).maybeSingle()
@@ -80,6 +88,21 @@ export default async function handler(req, res) {
           amount: 0,
           description: `Смена тарифа на "${tariff.name}" (${payment.amount_rub} ₽)`
         })
+
+        // Уведомление админам о смене тарифа
+        const { data: admins } = await sb.from('profiles')
+          .select('user_id')
+          .eq('company_id', payment.company_id)
+          .or('is_company_admin.eq.true,role_id.eq.1')
+
+        if (admins?.length) {
+          const notifications = admins.map(a => ({
+            user_id: a.user_id,
+            message: `Тариф изменён на "${tariff.name}" (${payment.amount_rub} ₽/мес)`,
+            link: '/company-admin/resources'
+          }))
+          await sb.from('notifications').insert(notifications)
+        }
       }
     }
   } else if (event === 'payment.canceled' || status === 'canceled') {
