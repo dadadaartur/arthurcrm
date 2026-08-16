@@ -161,6 +161,7 @@ function CompanyAdminDashboard() {
         }}>Панель управления</h1>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32 }}>
+          <NavBtn href="/company-admin/settings">Настройки компании</NavBtn>
           <NavBtn href="/company-admin/tasks">Управление заданиями</NavBtn>
           <NavBtn href="/company-admin/employees">Управление командой</NavBtn>
           <NavBtn href="/company-admin/rewards">Управление товарами</NavBtn>
