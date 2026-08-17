@@ -30,13 +30,15 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-// ============ КОЛОКОЛЬЧИК (встроен прямо в Layout) ============
+// ============ КОЛОКОЛЬЧИК (встроен в Layout, fixed + z-9999) ============
 function NotificationBell() {
   const { user } = useProfile()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
   const [unread, setUnread] = useState(0)
+  const [pos, setPos] = useState({ top: 50, right: 20 })
+  const btnRef = useRef(null)
 
   const load = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -53,9 +55,7 @@ function NotificationBell() {
     } catch (e) {}
   }
 
-  useEffect(() => {
-    if (user) load()
-  }, [user])
+  useEffect(() => { if (user) load() }, [user])
 
   const markAll = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -71,14 +71,21 @@ function NotificationBell() {
     setItems(p => p.map(n => ({ ...n, read: true })))
   }
 
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right })
+    }
+    const next = !open
+    setOpen(next)
+    if (next && unread > 0) markAll()
+  }
+
   return (
-    <div style={{ position: 'relative' }}>
+    <>
       <button
-        onClick={() => {
-          const next = !open
-          setOpen(next)
-          if (next && unread > 0) markAll()
-        }}
+        ref={btnRef}
+        onClick={toggle}
         className="action-btn !py-1.5 !px-3"
         style={{ position: 'relative', cursor: 'pointer', color: '#fff' }}
         title="Уведомления"
@@ -100,11 +107,13 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div className="premium-card" style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
-          width: 320, maxHeight: 380, overflowY: 'auto', zIndex: 60, padding: 14,
-          background: 'rgba(15,20,35,0.98)', backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12
+        <div style={{
+          position: 'fixed', top: pos.top, right: pos.right,
+          width: 320, maxHeight: 400, overflowY: 'auto',
+          zIndex: 9999, padding: 14,
+          background: 'rgba(15,20,35,0.98)', backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5)'
         }}>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -114,9 +123,7 @@ function NotificationBell() {
             {items.length > 0 && (
               <button onClick={markAll} style={{
                 fontSize: 11, color: '#aaa', background: 'none', border: 'none', cursor: 'pointer'
-              }}>
-                Прочитать все
-              </button>
+              }}>Прочитать все</button>
             )}
           </div>
           {items.length === 0 ? (
@@ -127,12 +134,15 @@ function NotificationBell() {
             items.map(n => (
               <div
                 key={n.id}
-                onClick={() => { if (n.link) router.push(n.link); setOpen(false) }}
+                onClick={() => { if (n.link) { router.push(n.link); setOpen(false) } }}
                 style={{
                   padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6,
                   background: n.read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)',
                   borderLeft: n.read ? '2px solid transparent' : '2px solid #FFD700',
+                  transition: 'background 0.2s'
                 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.15)'}
+                onMouseLeave={e => e.currentTarget.style.background = n.read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)'}
               >
                 <p style={{ fontSize: 13, color: '#eee', margin: 0 }}>{n.message}</p>
                 <p style={{ fontSize: 11, color: '#777', margin: '4px 0 0' }}>
@@ -143,9 +153,12 @@ function NotificationBell() {
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }
+
+// нужен useRef
+const { useRef } = require('react')
 
 export default function Layout({ children }) {
   const { user, profile, loading } = useProfile()
@@ -204,17 +217,9 @@ export default function Layout({ children }) {
         <header className="flex justify-between items-center px-6 py-2 relative z-10">
           <div className="flex items-center gap-4">
             <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="flex gap-2">
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"></div>
           </div>
         </header>
         <main className="flex-grow relative z-10">{children}</main>
@@ -252,7 +257,6 @@ export default function Layout({ children }) {
           <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
           <p className="text-gray-400 mb-4">
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
-            Обычно это занимает немного времени — как только заявку одобрят, здесь появится полный доступ.
           </p>
           <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
         </div>
@@ -294,7 +298,6 @@ export default function Layout({ children }) {
         </div>
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-          {/* === ВОТ КОЛОКОЛЬЧИК === */}
           <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
