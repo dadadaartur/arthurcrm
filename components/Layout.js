@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
+import NotificationBell from './NotificationBell'
 
 function StarsBackground() {
   useEffect(() => {
     const container = document.getElementById('real-stars')
     if (!container || container.children.length > 0) return
-
     const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
     for (let i = 0; i < 40; i++) {
       const star = document.createElement('div')
@@ -68,6 +68,7 @@ export default function Layout({ children }) {
         }
       })
     }
+
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
         .then(({ data: comp }) => {
@@ -108,7 +109,6 @@ export default function Layout({ children }) {
 
   const isSuperAdmin = checkIsSuperAdmin(profile)
   const isCompanyAdmin = checkIsCompanyAdmin(profile) || isSuperAdmin
-
   const companyStatus = profile?.companies?.status
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
@@ -177,9 +177,9 @@ export default function Layout({ children }) {
             )}
           </nav>
         </div>
-
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+          <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -193,9 +193,7 @@ export default function Layout({ children }) {
           <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
         </div>
       </header>
-
       <main className="flex-grow relative z-10">{children}</main>
-
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>
