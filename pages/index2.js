@@ -53,165 +53,53 @@ function CorporateLanding() {
 }
 
 // =====================================================================
-// СТОЛПЫ ТВОРЕНИЯ — правый нижний угол. Статичный величественный пейзаж.
-// Живёт только свет: дыхание подсветки, мерцание звёзд, дрейф дымки.
+// ПАДАЮЩАЯ ЗВЕЗДА: заострённый тающий хвост + яркая голова со свечением.
+// Летит по диагонали в глубине (за чёрной дырой), плавно появляется и гаснет.
 // =====================================================================
-function PillarsOfCreation({ uid }) {
-  const stars = useMemo(() => [
-    { x: 148, y: 262, r: 2.2, d: 5, delay: 0 },
-    { x: 296, y: 172, r: 2.8, d: 6, delay: 1.2 },
-    { x: 450, y: 340, r: 2, d: 4.5, delay: 2 },
-    { x: 370, y: 508, r: 1.6, d: 5.5, delay: 0.6 },
-    { x: 210, y: 430, r: 1.4, d: 6.5, delay: 2.8 },
-    { x: 520, y: 240, r: 1.8, d: 5, delay: 1.6 },
-    { x: 80, y: 380, r: 1.5, d: 7, delay: 3.4 },
-    { x: 330, y: 300, r: 1.3, d: 6, delay: 4 },
-    { x: 480, y: 520, r: 1.6, d: 5.2, delay: 2.4 },
-    { x: 250, y: 560, r: 1.2, d: 6.8, delay: 1 },
-  ], [])
-
-  // Силуэты столпов (основное тело пыли)
-  const pillarPaths = [
-    // левый, средний
-    'M 120 820 C 110 680, 130 600, 122 520 C 116 460, 96 430, 104 380 C 110 340, 90 320, 100 285 C 108 252, 140 246, 148 280 C 156 315, 140 340, 146 385 C 152 430, 138 470, 146 540 C 154 620, 170 700, 165 820 Z',
-    // центральный, высокий
-    'M 260 820 C 250 660, 275 560, 265 460 C 258 390, 235 350, 245 300 C 252 262, 232 235, 243 195 C 252 160, 290 152, 298 190 C 306 228, 288 255, 296 300 C 304 348, 285 390, 293 460 C 301 560, 320 680, 315 820 Z',
-    // правый, низкий
-    'M 420 820 C 412 700, 430 640, 424 570 C 419 515, 400 490, 408 445 C 414 410, 398 390, 407 358 C 415 328, 445 324, 452 356 C 459 388, 444 410, 450 450 C 456 495, 442 530, 448 600 C 454 680, 468 730, 464 820 Z',
-    // малый выступ
-    'M 350 820 C 345 720, 355 660, 350 610 C 346 570, 335 555, 341 525 C 346 500, 368 498, 372 524 C 376 550, 366 570, 370 615 C 374 665, 382 730, 378 820 Z',
-  ]
-
-  // Внутренние тёмные прожилки
-  const veins = [
-    'M 132 780 C 126 640, 140 540, 132 440 C 128 380, 118 340, 126 300',
-    'M 278 780 C 268 620, 288 520, 278 420 C 272 350, 258 300, 268 240',
-    'M 434 780 C 428 680, 442 620, 436 550 C 432 500, 420 470, 428 420',
-  ]
-
+function ShootingStar({ fly, dur, delay, rotate, scale = 0.8, uid }) {
   return (
     <div style={{
-      position: 'absolute', right: -60, bottom: -30, zIndex: 2, pointerEvents: 'none',
-      width: 'min(46vw, 620px)', height: 'min(72vh, 820px)',
-      opacity: 0.95, filter: 'blur(0.6px)',
+      position: 'absolute', left: 0, top: 0, zIndex: 3, pointerEvents: 'none',
+      opacity: 0,
+      animation: `${fly} ${dur}s linear ${delay}s infinite`,
     }}>
-      <svg width="100%" height="100%" viewBox="0 0 600 820" preserveAspectRatio="xMaxYMax meet" style={{ overflow: 'visible' }}>
-        <defs>
-          {/* Органичные рваные края */}
-          <filter id={`${uid}-turb`} x="-40%" y="-40%" width="180%" height="180%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.014 0.028" numOctaves="5" seed="12" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="46" />
-          </filter>
-          <filter id={`${uid}-turb2`} x="-40%" y="-40%" width="180%" height="180%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.04" numOctaves="4" seed="7" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="26" />
-          </filter>
-          <filter id={`${uid}-haze`} x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="22" />
-          </filter>
-          <filter id={`${uid}-rimblur`} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id={`${uid}-starblur`} x="-200%" y="-200%" width="500%" height="500%">
-            <feGaussianBlur stdDeviation="1.4" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-
-          {/* Тело пыли: тёмный низ → янтарный верх */}
-          <linearGradient id={`${uid}-body`} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0" stopColor="#160d08" />
-            <stop offset="0.45" stopColor="#2b1a10" />
-            <stop offset="0.78" stopColor="#4a2c18" />
-            <stop offset="1" stopColor="#6b4226" />
-          </linearGradient>
-
-          {/* Rim-light слева (свет от центра галактики) */}
-          <linearGradient id={`${uid}-rim`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="rgba(255,196,120,0.95)" />
-            <stop offset="0.45" stopColor="rgba(255,150,70,0.35)" />
-            <stop offset="1" stopColor="rgba(255,140,60,0)" />
-          </linearGradient>
-
-          {/* Холодный контр-свет справа */}
-          <linearGradient id={`${uid}-rimcool`} x1="1" y1="0" x2="0" y2="0">
-            <stop offset="0" stopColor="rgba(140,190,255,0.5)" />
-            <stop offset="0.5" stopColor="rgba(120,170,255,0.15)" />
-            <stop offset="1" stopColor="rgba(120,170,255,0)" />
-          </linearGradient>
-
-          {/* Фоновая дымка */}
-          <radialGradient id={`${uid}-hazewarm`} cx="0.5" cy="0.65" r="0.6">
-            <stop offset="0" stopColor="rgba(150,90,40,0.30)" />
-            <stop offset="0.6" stopColor="rgba(120,70,35,0.14)" />
-            <stop offset="1" stopColor="rgba(100,60,30,0)" />
-          </radialGradient>
-          <radialGradient id={`${uid}-hazecool`} cx="0.5" cy="0.2" r="0.7">
-            <stop offset="0" stopColor="rgba(70,110,180,0.20)" />
-            <stop offset="0.6" stopColor="rgba(50,80,140,0.10)" />
-            <stop offset="1" stopColor="rgba(40,60,110,0)" />
-          </radialGradient>
-        </defs>
-
-        {/* Фоновая дымка (дрейфует) */}
-        <g style={{ animation: 'pillarsHaze 90s ease-in-out infinite alternate' }}>
-          <rect x="-100" y="-60" width="800" height="500" fill={`url(#${uid}-hazecool)`} filter={`url(#${uid}-haze)`} />
-          <rect x="-60" y="240" width="760" height="620" fill={`url(#${uid}-hazewarm)`} filter={`url(#${uid}-haze)`} />
-        </g>
-
-        {/* Дальний размытый столп (глубина) */}
-        <path d="M 520 820 C 512 700, 528 620, 520 540 C 514 480, 500 450, 508 400 C 514 362, 540 358, 546 396 C 552 434, 540 470, 546 540 C 552 640, 566 720, 560 820 Z"
-          fill="#241610" opacity="0.55" filter={`url(#${uid}-haze)`} />
-
-        {/* Основные столпы: тело */}
-        <g filter={`url(#${uid}-turb)`}>
-          {pillarPaths.map((d, i) => (
-            <path key={i} d={d} fill={`url(#${uid}-body)`} />
-          ))}
-        </g>
-
-        {/* Внутренние прожилки */}
-        <g filter={`url(#${uid}-turb2)`} opacity="0.5">
-          {veins.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke="#120a06" strokeWidth="7" strokeLinecap="round" />
-          ))}
-        </g>
-
-        {/* Rim-light: золотой слева (дышит) */}
-        <g filter={`url(#${uid}-rimblur)`} style={{ animation: 'pillarsGlow 14s ease-in-out infinite alternate' }}>
-          {pillarPaths.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke={`url(#${uid}-rim)`} strokeWidth="2.6" />
-          ))}
-        </g>
-
-        {/* Холодный контр-свет справа (тише) */}
-        <g filter={`url(#${uid}-rimblur)`} opacity="0.5">
-          {pillarPaths.map((d, i) => (
-            <path key={i} d={d} fill="none" stroke={`url(#${uid}-rimcool)`} strokeWidth="1.6" />
-          ))}
-        </g>
-
-        {/* Светящиеся шапки на остриях */}
-        <g filter={`url(#${uid}-starblur)`} style={{ animation: 'pillarsGlow 14s ease-in-out infinite alternate' }}>
-          <ellipse cx="124" cy="268" rx="16" ry="10" fill="rgba(255,180,100,0.35)" />
-          <ellipse cx="270" cy="178" rx="20" ry="12" fill="rgba(255,190,110,0.4)" />
-          <ellipse cx="428" cy="344" rx="14" ry="9" fill="rgba(255,175,95,0.32)" />
-          <ellipse cx="356" cy="512" rx="10" ry="7" fill="rgba(255,170,90,0.3)" />
-        </g>
-
-        {/* Новорождённые звёзды */}
-        <g filter={`url(#${uid}-starblur)`}>
-          {stars.map((s, i) => (
-            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={i % 3 === 0 ? '#ffe9c4' : '#cfe4ff'}
-              style={{ animation: `twinkle ${s.d}s ease-in-out ${s.delay}s infinite` }} />
-          ))}
-        </g>
-      </svg>
+      <div style={{ transform: `rotate(${rotate}deg) scale(${scale})`, transformOrigin: '0 0', filter: 'blur(0.4px)' }}>
+        <svg width="240" height="48" viewBox="0 0 240 48" style={{ overflow: 'visible', display: 'block' }}>
+          <defs>
+            <linearGradient id={`${uid}-tail`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="rgba(160,200,255,0)" />
+              <stop offset="0.55" stopColor="rgba(180,215,255,0.28)" />
+              <stop offset="0.85" stopColor="rgba(220,240,255,0.7)" />
+              <stop offset="1" stopColor="rgba(255,255,255,0.95)" />
+            </linearGradient>
+            <radialGradient id={`${uid}-head`}>
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="30%" stopColor="rgba(225,240,255,0.9)" />
+              <stop offset="60%" stopColor="rgba(160,210,255,0.35)" />
+              <stop offset="100%" stopColor="rgba(140,190,255,0)" />
+            </radialGradient>
+            <filter id={`${uid}-glow`} x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="2.2" result="b" />
+              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <filter id={`${uid}-soft`} x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="3.5" />
+            </filter>
+          </defs>
+          {/* Широкий мягкий ореол хвоста */}
+          <path d="M 12 24 L 172 13 L 232 24 L 172 35 Z" fill={`url(#${uid}-tail)`} opacity="0.3" filter={`url(#${uid}-soft)`} />
+          {/* Чёткий заострённый хвост */}
+          <path d="M 34 24 L 226 21.2 L 232 24 L 226 26.8 Z" fill={`url(#${uid}-tail)`} />
+          {/* Голова */}
+          <circle cx="232" cy="24" r="8" fill={`url(#${uid}-head)`} filter={`url(#${uid}-glow)`} />
+          <circle cx="232" cy="24" r="2.2" fill="#ffffff" filter={`url(#${uid}-glow)`} />
+        </svg>
+      </div>
     </div>
   )
 }
 
-// ============ ГЛАВНАЯ (v11 — столпы творения в правом нижнем углу) ============
+// ============ ГЛАВНАЯ (v12 — столпы картинкой + падающие звёзды) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -313,8 +201,38 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* СТОЛПЫ ТВОРЕНИЯ — правый нижний угол */}
-        <PillarsOfCreation uid="pil" />
+        {/* ============ СТОЛПЫ ТВОРЕНИЯ — правый нижний угол ============ */}
+        {/* Тёплое свечение позади столпов */}
+        <div style={{
+          position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none',
+          width: '52%', height: '70%',
+          background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)',
+          filter: 'blur(30px)',
+          animation: 'pillarsBreath 22s ease-in-out infinite alternate',
+        }} />
+        {/* Сама картинка: чёрный растворяется через screen */}
+        <div style={{
+          position: 'absolute', right: -30, bottom: -24, zIndex: 2, pointerEvents: 'none',
+          width: 'min(46vw, 620px)',
+          animation: 'pillarsBreath 22s ease-in-out infinite alternate',
+        }}>
+          <img
+            src="/pillars.png"
+            alt=""
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{
+              width: '100%', display: 'block',
+              mixBlendMode: 'screen',
+              filter: 'blur(0.5px) saturate(1.15) brightness(1.02)',
+              maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)',
+              WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)',
+            }}
+          />
+        </div>
+
+        {/* ПАДАЮЩИЕ ЗВЁЗДЫ — в глубине, за чёрной дырой */}
+        <ShootingStar fly="starFlyA" dur={58} delay={6} rotate={-32} scale={0.8} uid="ssa" />
+        <ShootingStar fly="starFlyB" dur={74} delay={38} rotate={147} scale={0.65} uid="ssb" />
 
         {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -510,10 +428,24 @@ export default function Home() {
         }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
-        /* Столпы: дыхание золотой подсветки */
-        @keyframes pillarsGlow { 0% { opacity: 0.55; } 100% { opacity: 0.95; } }
-        /* Столпы: дрейф дымки */
-        @keyframes pillarsHaze { 0% { transform: translate(0,0); } 100% { transform: translate(-14px,-10px); } }
+        /* Столпы: медленное дыхание света */
+        @keyframes pillarsBreath { 0% { opacity: 0.75; } 100% { opacity: 1; } }
+        /* Падающая звезда А: слева-снизу направо-вверх, за дырой */
+        @keyframes starFlyA {
+          0% { transform: translate(-14vw, 74vh); opacity: 0; }
+          3% { opacity: 0.85; }
+          14% { transform: translate(46vw, 37vh); opacity: 0.85; }
+          18% { transform: translate(55vw, 31vh); opacity: 0; }
+          100% { transform: translate(55vw, 31vh); opacity: 0; }
+        }
+        /* Падающая звезда Б: справа-сверху налево-вниз */
+        @keyframes starFlyB {
+          0% { transform: translate(108vw, 20vh); opacity: 0; }
+          3% { opacity: 0.75; }
+          15% { transform: translate(52vw, 56vh); opacity: 0.75; }
+          19% { transform: translate(43vw, 62vh); opacity: 0; }
+          100% { transform: translate(43vw, 62vh); opacity: 0; }
+        }
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
         @keyframes skillGrow2 { from { width: 0; } to { width: 91%; } }
