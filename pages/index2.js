@@ -14,9 +14,6 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-const HOLO_CURSOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 3 L8 26 L14 21 L18 29 L22 27 L18 19 L26 18 Z" fill="rgba(160,233,255,0.30)" stroke="rgba(160,233,255,0.85)" stroke-width="4" stroke-linejoin="round"/><path d="M8 3 L8 26 L14 21 L18 29 L22 27 L18 19 L26 18 Z" fill="#cfeeff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/></svg>`
-const HOLO_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(HOLO_CURSOR_SVG)}") 8 3, auto`
-
 function CorporateLanding() {
   const router = useRouter()
   const { user } = useProfile()
@@ -79,7 +76,9 @@ export default function Home() {
   const [pulse, setPulse] = useState(0)
   const starsRef = useRef(null)
   const nebulaRef = useRef(null)
-  const sweepRef = useRef(null)
+  const topFlashRef = useRef(null)
+  const bottomFlashRef = useRef(null)
+  const glowRef = useRef(null)
 
   const mastery = { title: 'Специалист', stage: 2, stagesTotal: 6, currentEnergy: 2460, nextEnergy: 3200 }
   const stages = ['Новичок', 'Специалист', 'Старший специалист', 'Эксперт', 'Мастер', 'Президент']
@@ -121,15 +120,21 @@ export default function Home() {
     loadData()
   }, [user, loading, profile])
 
+  // Вспышки ленты при скролле
   useEffect(() => {
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const p = max > 0 ? window.scrollY / max : 0
-      if (sweepRef.current) sweepRef.current.style.top = (p * 84) + '%'
+    const flash = (ref, name) => {
+      const el = ref.current
+      if (!el) return
+      el.style.animation = 'none'
+      void el.offsetWidth
+      el.style.animation = `${name} 1.3s ease-out`
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    const onWheel = (e) => {
+      if (e.deltaY < 0) flash(topFlashRef, 'flashTop')
+      else if (e.deltaY > 0) flash(bottomFlashRef, 'flashBottom')
+    }
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
   }, [])
 
   const handleMouseMove = (e) => {
@@ -137,6 +142,7 @@ export default function Home() {
     const y = e.clientY / window.innerHeight - 0.5
     if (starsRef.current) starsRef.current.style.transform = `translate(${x * -6}px, ${y * -6}px)`
     if (nebulaRef.current) nebulaRef.current.style.transform = `translate(${x * -14}px, ${y * -14}px)`
+    if (glowRef.current) glowRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`
   }
 
   const toggleHole = () => {
@@ -152,7 +158,7 @@ export default function Home() {
   const centerY = 42
 
   const blocks = [
-    { title: 'Задания', sub: '', left: 58, top: 16, colors: ['#d4af37', '#A3E0B0'] },
+    { title: 'Задания', sub: 'Заработай кармики!', left: 58, top: 16, colors: ['#d4af37', '#A3E0B0'] },
     { title: 'Чемпионат', sub: 'менеджеров', left: 77, top: 24, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Магазин', sub: 'награды', left: 85, top: 42, colors: ['#F28B82', '#FFD700'] },
     { title: 'Моя компания', sub: 'данные и новости', left: 77, top: 60, colors: ['#c084fc', '#F28B82'] },
@@ -177,9 +183,16 @@ export default function Home() {
   return (
     <>
       <Head><title>Кармический банк</title></Head>
-      <div onMouseMove={handleMouseMove} className={holo ? 'holo-mode' : ''} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif', cursor: holo ? HOLO_CURSOR : 'auto' }}>
+      <div onMouseMove={handleMouseMove} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
 
-        {/* Звёзды (чистая зона у дыры) */}
+        {/* Голографическая подсветка вокруг родной стрелки (курсор не меняется) */}
+        {holo && (
+          <div ref={glowRef} style={{ position: 'fixed', left: 0, top: 0, zIndex: 9998, pointerEvents: 'none', willChange: 'transform', transform: 'translate(-300px, -300px)' }}>
+            <div className="holo-glow-inner" />
+          </div>
+        )}
+
+        {/* Звёзды */}
         <div ref={starsRef} style={{ position: 'absolute', top: '-2%', left: '-2%', width: '104%', height: '104%', zIndex: 0, transition: 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}>
           {stars.map((s, i) => (
             <div key={i} style={{ position: 'absolute', left: s.left + '%', top: s.top + '%', width: s.size + 'px', height: s.size + 'px', borderRadius: '50%', background: s.color, boxShadow: `0 0 ${s.size * 2}px ${s.color}`, opacity: s.op, animation: `twinkle ${s.dur}s ease-in-out infinite`, animationDelay: s.delay + 's' }} />
@@ -192,11 +205,14 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Кометы: периодически в разных местах */}
+        {/* Кометы */}
         <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={70} delay={6} scale={0.55} />
         <FlyingComet left="70%" top="10%" angle={158} dist={600} dur={80} delay={45} scale={0.45} />
         <FlyingComet left="12%" top="70%" angle={-30} dist={520} dur={75} delay={90} scale={0.5} />
         <FlyingComet left="85%" top="55%" angle={200} dist={560} dur={85} delay={130} scale={0.42} />
+
+        {/* Освещение космоса при клике */}
+        {pulse > 0 && <div key={pulse} className="cosmos-light" />}
 
         {/* Столпы */}
         <div style={{ position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none', width: '52%', height: '70%', background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)', filter: 'blur(30px)', animation: 'pillarsBreath 22s ease-in-out infinite alternate' }} />
@@ -205,8 +221,10 @@ export default function Home() {
             style={{ width: '100%', display: 'block', mixBlendMode: 'screen', filter: 'blur(0.5px) saturate(1.15) brightness(1.02)', maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)', WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)' }} />
         </div>
 
-        {/* Лента (блик в такт скроллу) */}
-        <div className="holo-rail"><div ref={sweepRef} className="holo-rail-sweep" style={{ top: '0%' }} /></div>
+        {/* Лента + вспышки */}
+        <div className="holo-rail" />
+        <div ref={topFlashRef} className="scroll-flash-top" />
+        <div ref={bottomFlashRef} className="scroll-flash-bottom" />
 
         {/* Переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -222,9 +240,6 @@ export default function Home() {
           <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.45) 0%, rgba(255,100,0,0.2) 30%, transparent 62%)', filter: 'blur(16px)', animation: 'orbitSpin 90s linear infinite' }} />
           <div style={{ position: 'absolute', top: '-6%', left: '-6%', width: '112%', height: '112%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.55) 0%, rgba(200,100,255,0.22) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 70s linear infinite reverse' }} />
           <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.5), 0 0 90px rgba(255,180,0,0.28)', filter: 'blur(2px)' }} />
-          {pulse > 0 && (
-            <div key={pulse} style={{ position: 'absolute', inset: '-60%', borderRadius: '50%', background: 'radial-gradient(circle, transparent 32%, rgba(160,233,255,0.55) 46%, rgba(255,215,0,0.3) 60%, transparent 74%)', animation: 'holeFlash 2.4s ease-out forwards', pointerEvents: 'none' }} />
-          )}
         </div>
 
         {/* Лучи */}
@@ -314,15 +329,30 @@ export default function Home() {
         html, body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
-        .holo-mode, .holo-mode * { cursor: ${HOLO_CURSOR} !important; }
+        /* Голографическая подсветка вокруг стрелки */
+        .holo-glow-inner { width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(160,233,255,0.5) 0%, rgba(120,200,255,0.25) 40%, transparent 70%);
+          filter: blur(2px); mix-blend-mode: screen; pointer-events: none;
+          animation: glowIn 0.6s ease-out both, glowPulse 2.4s ease-in-out 0.6s infinite; }
+        @keyframes glowIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes glowPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
+        /* Лента */
         .holo-rail { position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px; border-radius: 3px; z-index: 40; pointer-events: none;
           background: linear-gradient(180deg, transparent, rgba(160,233,255,0.14), rgba(192,132,252,0.14), rgba(255,179,196,0.14), transparent);
           box-shadow: 0 0 6px rgba(160,233,255,0.08); }
-        .holo-rail-sweep { position: absolute; left: 0; width: 100%; height: 16%; border-radius: 3px;
-          background: linear-gradient(180deg, transparent, rgba(160,233,255,0.5), rgba(255,255,255,0.7), rgba(160,233,255,0.5), transparent);
-          box-shadow: 0 0 8px rgba(160,233,255,0.4);
-          transition: top 0.15s ease-out; }
+        .scroll-flash-top { position: fixed; left: 0; right: 0; top: 0; height: 140px; z-index: 45; pointer-events: none; opacity: 0;
+          background: radial-gradient(ellipse at 50% 0%, rgba(160,233,255,0.35) 0%, rgba(160,233,255,0.12) 45%, transparent 75%); }
+        .scroll-flash-bottom { position: fixed; left: 0; right: 0; bottom: 0; height: 140px; z-index: 45; pointer-events: none; opacity: 0;
+          background: radial-gradient(ellipse at 50% 100%, rgba(255,190,140,0.22) 0%, rgba(255,170,120,0.08) 45%, transparent 75%); }
+        @keyframes flashTop { 0% { opacity: 0; } 20% { opacity: 0.6; } 100% { opacity: 0; } }
+        @keyframes flashBottom { 0% { opacity: 0; } 20% { opacity: 0.35; } 100% { opacity: 0; } }
+
+        /* Освещение космоса */
+        .cosmos-light { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+          background: radial-gradient(circle at 58% 42%, rgba(255,120,140,0.45) 0%, rgba(255,100,120,0.26) 30%, rgba(200,80,120,0.14) 55%, transparent 78%);
+          animation: cosmosLight 3.4s ease-in-out forwards; }
+        @keyframes cosmosLight { 0% { opacity: 0; } 25% { opacity: 1; } 60% { opacity: 0.6; } 100% { opacity: 0; } }
 
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -338,7 +368,6 @@ export default function Home() {
         @keyframes breathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
         @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
         @keyframes holeBreath { 0%, 100% { transform: translate(-50%, -50%) scale(0.92); } 50% { transform: translate(-50%, -50%) scale(1.42); } }
-        @keyframes holeFlash { 0% { transform: scale(0.5); opacity: 0; } 12% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(2); } }
         @keyframes gravBreath { 0%, 100% { transform: translate(calc(var(--ux) * 14px), calc(var(--uy) * 14px)); } 50% { transform: translate(calc(var(--ux) * -24px), calc(var(--uy) * -24px)); } }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
