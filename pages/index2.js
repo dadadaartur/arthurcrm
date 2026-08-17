@@ -53,146 +53,165 @@ function CorporateLanding() {
 }
 
 // =====================================================================
-// КОМЕТА-СЛЕД: точка пролетает, остаётся ровная линия, затем расплывается
-// как самолётный дым. Два слоя следа + размытие, в глубине, не очевидно.
+// СТОЛПЫ ТВОРЕНИЯ — правый нижний угол. Статичный величественный пейзаж.
+// Живёт только свет: дыхание подсветки, мерцание звёзд, дрейф дымки.
 // =====================================================================
-function ContrailComet({ left, top, angle, dist, dur, delay, uid, scale = 0.7 }) {
-  return (
-    <div style={{
-      position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
-      transform: `rotate(${angle}deg)`,
-      '--dist': dist + 'px',
-      filter: 'blur(0.5px)',
-    }}>
-      <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
-        {/* Широкий дымчатый слой (расплывается сильнее) */}
-        <div style={{
-          position: 'absolute', left: 0, top: -3, height: 6, width: dist,
-          transformOrigin: '0 50%', borderRadius: 4,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(180,200,255,0.10) 55%, rgba(215,235,255,0.28) 100%)',
-          filter: 'blur(3px)',
-          animation: `cometSmoke ${dur}s linear ${delay}s infinite`,
-        }} />
-        {/* Резкий тонкий след: рисуется за точкой, потом расплывается */}
-        <div style={{
-          position: 'absolute', left: 0, top: -0.75, height: 1.5, width: dist,
-          transformOrigin: '0 50%', borderRadius: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(200,220,255,0.22) 55%, rgba(235,245,255,0.65) 92%, rgba(255,255,255,0.85) 100%)',
-          animation: `cometTrail ${dur}s linear ${delay}s infinite`,
-        }} />
-        {/* Точка-голова */}
-        <div style={{ position: 'absolute', left: 0, top: 0, animation: `cometHead ${dur}s linear ${delay}s infinite` }}>
-          <div style={{
-            position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%',
-            background: 'radial-gradient(circle, #fff 0%, rgba(220,240,255,0.8) 50%, transparent 100%)',
-            boxShadow: '0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(170,210,255,0.55)',
-          }} />
-        </div>
-      </div>
-    </div>
-  )
-}
+function PillarsOfCreation({ uid }) {
+  const stars = useMemo(() => [
+    { x: 148, y: 262, r: 2.2, d: 5, delay: 0 },
+    { x: 296, y: 172, r: 2.8, d: 6, delay: 1.2 },
+    { x: 450, y: 340, r: 2, d: 4.5, delay: 2 },
+    { x: 370, y: 508, r: 1.6, d: 5.5, delay: 0.6 },
+    { x: 210, y: 430, r: 1.4, d: 6.5, delay: 2.8 },
+    { x: 520, y: 240, r: 1.8, d: 5, delay: 1.6 },
+    { x: 80, y: 380, r: 1.5, d: 7, delay: 3.4 },
+    { x: 330, y: 300, r: 1.3, d: 6, delay: 4 },
+    { x: 480, y: 520, r: 1.6, d: 5.2, delay: 2.4 },
+    { x: 250, y: 560, r: 1.2, d: 6.8, delay: 1 },
+  ], [])
 
-// =====================================================================
-// СВЕРХНОВАЯ-ДРАМА: нарастание → цветение → долгое живое плато → медленное угасание.
-// Внутри всё дышит/мерцает/вращается бесконечно, видно только когда envelope открыт.
-// =====================================================================
-function DramaSupernova({ left, top, delay, duration, uid, size = 280 }) {
-  const filaments = useMemo(() => Array.from({ length: 20 }).map((_, i) => {
-    const angle = (i / 20) * 360 + (Math.random() - 0.5) * 30
-    const r1 = 20 + Math.random() * 14
-    const r2 = 60 + Math.random() * 60
-    const bend = (Math.random() - 0.5) * 90
-    const colors = ['#FFD700', '#FFA500', '#FF6347', '#FF4500', '#c084fc', '#ffb3c6', '#ffe29f', '#ff8c5a']
-    return {
-      id: i, angle, r1, r2, bend,
-      color: colors[i % colors.length],
-      width: 0.6 + Math.random() * 1.6,
-      shimmerDur: 4 + Math.random() * 5,
-      shimmerDelay: Math.random() * 4,
-    }
-  }), [])
+  // Силуэты столпов (основное тело пыли)
+  const pillarPaths = [
+    // левый, средний
+    'M 120 820 C 110 680, 130 600, 122 520 C 116 460, 96 430, 104 380 C 110 340, 90 320, 100 285 C 108 252, 140 246, 148 280 C 156 315, 140 340, 146 385 C 152 430, 138 470, 146 540 C 154 620, 170 700, 165 820 Z',
+    // центральный, высокий
+    'M 260 820 C 250 660, 275 560, 265 460 C 258 390, 235 350, 245 300 C 252 262, 232 235, 243 195 C 252 160, 290 152, 298 190 C 306 228, 288 255, 296 300 C 304 348, 285 390, 293 460 C 301 560, 320 680, 315 820 Z',
+    // правый, низкий
+    'M 420 820 C 412 700, 430 640, 424 570 C 419 515, 400 490, 408 445 C 414 410, 398 390, 407 358 C 415 328, 445 324, 452 356 C 459 388, 444 410, 450 450 C 456 495, 442 530, 448 600 C 454 680, 468 730, 464 820 Z',
+    // малый выступ
+    'M 350 820 C 345 720, 355 660, 350 610 C 346 570, 335 555, 341 525 C 346 500, 368 498, 372 524 C 376 550, 366 570, 370 615 C 374 665, 382 730, 378 820 Z',
+  ]
 
-  const filamentPath = (f) => {
-    const a = (f.angle * Math.PI) / 180
-    const x1 = 140 + Math.cos(a) * f.r1
-    const y1 = 140 + Math.sin(a) * f.r1
-    const x2 = 140 + Math.cos(a) * f.r2
-    const y2 = 140 + Math.sin(a) * f.r2
-    const mx = 140 + Math.cos(a) * ((f.r1 + f.r2) / 2) - Math.sin(a) * f.bend
-    const my = 140 + Math.sin(a) * ((f.r1 + f.r2) / 2) + Math.cos(a) * f.bend
-    return `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`
-  }
+  // Внутренние тёмные прожилки
+  const veins = [
+    'M 132 780 C 126 640, 140 540, 132 440 C 128 380, 118 340, 126 300',
+    'M 278 780 C 268 620, 288 520, 278 420 C 272 350, 258 300, 268 240',
+    'M 434 780 C 428 680, 442 620, 436 550 C 432 500, 420 470, 428 420',
+  ]
 
   return (
     <div style={{
-      position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
-      width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2,
+      position: 'absolute', right: -60, bottom: -30, zIndex: 2, pointerEvents: 'none',
+      width: 'min(46vw, 620px)', height: 'min(72vh, 820px)',
+      opacity: 0.95, filter: 'blur(0.6px)',
     }}>
-      <svg width={size} height={size} viewBox="0 0 280 280" style={{
-        overflow: 'visible', filter: 'blur(2px)',
-        transformOrigin: '50% 50%',
-        animation: `snEnvelope ${duration}s ease-in-out ${delay}s infinite, snGrow ${duration}s cubic-bezier(0.2,0.5,0.4,1) ${delay}s infinite`,
-      }}>
+      <svg width="100%" height="100%" viewBox="0 0 600 820" preserveAspectRatio="xMaxYMax meet" style={{ overflow: 'visible' }}>
         <defs>
-          <filter id={`${uid}-turb`} x="-60%" y="-60%" width="220%" height="220%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="4" seed="8" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="38" />
+          {/* Органичные рваные края */}
+          <filter id={`${uid}-turb`} x="-40%" y="-40%" width="180%" height="180%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.014 0.028" numOctaves="5" seed="12" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="46" />
           </filter>
-          <filter id={`${uid}-soft`} x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="5" />
+          <filter id={`${uid}-turb2`} x="-40%" y="-40%" width="180%" height="180%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.04" numOctaves="4" seed="7" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="26" />
           </filter>
-          <filter id={`${uid}-glow`} x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="3" result="b" />
+          <filter id={`${uid}-haze`} x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="22" />
+          </filter>
+          <filter id={`${uid}-rimblur`} x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="2.4" result="b" />
             <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-          <radialGradient id={`${uid}-coreg`}>
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="28%" stopColor="rgba(255,242,205,0.9)" />
-            <stop offset="58%" stopColor="rgba(255,185,85,0.35)" />
-            <stop offset="100%" stopColor="rgba(255,140,0,0)" />
+          <filter id={`${uid}-starblur`} x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="1.4" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+
+          {/* Тело пыли: тёмный низ → янтарный верх */}
+          <linearGradient id={`${uid}-body`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="#160d08" />
+            <stop offset="0.45" stopColor="#2b1a10" />
+            <stop offset="0.78" stopColor="#4a2c18" />
+            <stop offset="1" stopColor="#6b4226" />
+          </linearGradient>
+
+          {/* Rim-light слева (свет от центра галактики) */}
+          <linearGradient id={`${uid}-rim`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="rgba(255,196,120,0.95)" />
+            <stop offset="0.45" stopColor="rgba(255,150,70,0.35)" />
+            <stop offset="1" stopColor="rgba(255,140,60,0)" />
+          </linearGradient>
+
+          {/* Холодный контр-свет справа */}
+          <linearGradient id={`${uid}-rimcool`} x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0" stopColor="rgba(140,190,255,0.5)" />
+            <stop offset="0.5" stopColor="rgba(120,170,255,0.15)" />
+            <stop offset="1" stopColor="rgba(120,170,255,0)" />
+          </linearGradient>
+
+          {/* Фоновая дымка */}
+          <radialGradient id={`${uid}-hazewarm`} cx="0.5" cy="0.65" r="0.6">
+            <stop offset="0" stopColor="rgba(150,90,40,0.30)" />
+            <stop offset="0.6" stopColor="rgba(120,70,35,0.14)" />
+            <stop offset="1" stopColor="rgba(100,60,30,0)" />
           </radialGradient>
-          <radialGradient id={`${uid}-shellg`}>
-            <stop offset="45%" stopColor="rgba(255,175,0,0)" />
-            <stop offset="70%" stopColor="rgba(255,145,0,0.35)" />
-            <stop offset="88%" stopColor="rgba(255,80,40,0.2)" />
-            <stop offset="100%" stopColor="rgba(195,60,120,0)" />
-          </radialGradient>
-          <radialGradient id={`${uid}-haze`}>
-            <stop offset="0%" stopColor="rgba(255,190,120,0.25)" />
-            <stop offset="60%" stopColor="rgba(255,120,80,0.12)" />
-            <stop offset="100%" stopColor="rgba(160,80,160,0)" />
+          <radialGradient id={`${uid}-hazecool`} cx="0.5" cy="0.2" r="0.7">
+            <stop offset="0" stopColor="rgba(70,110,180,0.20)" />
+            <stop offset="0.6" stopColor="rgba(50,80,140,0.10)" />
+            <stop offset="1" stopColor="rgba(40,60,110,0)" />
           </radialGradient>
         </defs>
 
-        {/* Медленно вращающееся живое тело */}
-        <g style={{ transformOrigin: '140px 140px', animation: `snSpin 240s linear infinite` }}>
-          {/* Внешняя дымка */}
-          <circle cx="140" cy="140" r="120" fill={`url(#${uid}-haze)`} filter={`url(#${uid}-soft)`} />
-          {/* Оболочка */}
-          <circle cx="140" cy="140" r="92" fill={`url(#${uid}-shellg)`} filter={`url(#${uid}-turb)`} />
-          {/* Нити — мерцают */}
-          {filaments.map(f => (
-            <path key={f.id} d={filamentPath(f)} stroke={f.color} strokeWidth={f.width} fill="none"
-              strokeLinecap="round" filter={`url(#${uid}-turb)`}
-              style={{ animation: `snShimmer ${f.shimmerDur}s ease-in-out ${f.shimmerDelay}s infinite` }} />
+        {/* Фоновая дымка (дрейфует) */}
+        <g style={{ animation: 'pillarsHaze 90s ease-in-out infinite alternate' }}>
+          <rect x="-100" y="-60" width="800" height="500" fill={`url(#${uid}-hazecool)`} filter={`url(#${uid}-haze)`} />
+          <rect x="-60" y="240" width="760" height="620" fill={`url(#${uid}-hazewarm)`} filter={`url(#${uid}-haze)`} />
+        </g>
+
+        {/* Дальний размытый столп (глубина) */}
+        <path d="M 520 820 C 512 700, 528 620, 520 540 C 514 480, 500 450, 508 400 C 514 362, 540 358, 546 396 C 552 434, 540 470, 546 540 C 552 640, 566 720, 560 820 Z"
+          fill="#241610" opacity="0.55" filter={`url(#${uid}-haze)`} />
+
+        {/* Основные столпы: тело */}
+        <g filter={`url(#${uid}-turb)`}>
+          {pillarPaths.map((d, i) => (
+            <path key={i} d={d} fill={`url(#${uid}-body)`} />
           ))}
-          {/* Ядро — пульсирует */}
-          <g style={{ animation: `snCorePulse 7s ease-in-out infinite` }}>
-            <circle cx="140" cy="140" r="34" fill={`url(#${uid}-coreg)`} filter={`url(#${uid}-soft)`} />
-            <circle cx="140" cy="140" r="3" fill="#fff" filter={`url(#${uid}-glow)`} />
-          </g>
-          {/* Яркие узелки */}
-          <circle cx="112" cy="120" r="2" fill="#ffe9c0" filter={`url(#${uid}-glow)`} style={{ animation: 'snShimmer 5s ease-in-out 1s infinite' }} />
-          <circle cx="168" cy="158" r="1.6" fill="#ffd9a0" filter={`url(#${uid}-glow)`} style={{ animation: 'snShimmer 6s ease-in-out 2.5s infinite' }} />
-          <circle cx="150" cy="105" r="1.4" fill="#fff" filter={`url(#${uid}-glow)`} style={{ animation: 'snShimmer 4.5s ease-in-out 0.5s infinite' }} />
+        </g>
+
+        {/* Внутренние прожилки */}
+        <g filter={`url(#${uid}-turb2)`} opacity="0.5">
+          {veins.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke="#120a06" strokeWidth="7" strokeLinecap="round" />
+          ))}
+        </g>
+
+        {/* Rim-light: золотой слева (дышит) */}
+        <g filter={`url(#${uid}-rimblur)`} style={{ animation: 'pillarsGlow 14s ease-in-out infinite alternate' }}>
+          {pillarPaths.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke={`url(#${uid}-rim)`} strokeWidth="2.6" />
+          ))}
+        </g>
+
+        {/* Холодный контр-свет справа (тише) */}
+        <g filter={`url(#${uid}-rimblur)`} opacity="0.5">
+          {pillarPaths.map((d, i) => (
+            <path key={i} d={d} fill="none" stroke={`url(#${uid}-rimcool)`} strokeWidth="1.6" />
+          ))}
+        </g>
+
+        {/* Светящиеся шапки на остриях */}
+        <g filter={`url(#${uid}-starblur)`} style={{ animation: 'pillarsGlow 14s ease-in-out infinite alternate' }}>
+          <ellipse cx="124" cy="268" rx="16" ry="10" fill="rgba(255,180,100,0.35)" />
+          <ellipse cx="270" cy="178" rx="20" ry="12" fill="rgba(255,190,110,0.4)" />
+          <ellipse cx="428" cy="344" rx="14" ry="9" fill="rgba(255,175,95,0.32)" />
+          <ellipse cx="356" cy="512" rx="10" ry="7" fill="rgba(255,170,90,0.3)" />
+        </g>
+
+        {/* Новорождённые звёзды */}
+        <g filter={`url(#${uid}-starblur)`}>
+          {stars.map((s, i) => (
+            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={i % 3 === 0 ? '#ffe9c4' : '#cfe4ff'}
+              style={{ animation: `twinkle ${s.d}s ease-in-out ${s.delay}s infinite` }} />
+          ))}
         </g>
       </svg>
     </div>
   )
 }
 
-// ============ ГЛАВНАЯ (v10) ============
+// ============ ГЛАВНАЯ (v11 — столпы творения в правом нижнем углу) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -294,13 +313,8 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* СВЕРХНОВЫЕ-ДРАМА */}
-        <DramaSupernova left="68%" top="12%" delay={8} duration={120} uid="sna" size={300} />
-        <DramaSupernova left="76%" top="86%" delay={70} duration={150} uid="snb" size={260} />
-
-        {/* КОМЕТЫ-СЛЕДЫ */}
-        <ContrailComet left="6%" top="24%" angle={14} dist={520} dur={70} delay={12} uid="coma" scale={0.7} />
-        <ContrailComet left="90%" top="70%" angle={196} dist={560} dur={85} delay={50} uid="comb" scale={0.6} />
+        {/* СТОЛПЫ ТВОРЕНИЯ — правый нижний угол */}
+        <PillarsOfCreation uid="pil" />
 
         {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -392,7 +406,7 @@ export default function Home() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА (расширен) === */}
+        {/* === БЛОК БАЛАНСА === */}
         <div style={{
           position: 'absolute', left: '2.5%', top: 10, zIndex: 20,
           animation: 'driftBalance 55s ease-in-out infinite alternate',
@@ -427,7 +441,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ (расширена) === */}
+        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ === */}
         <div style={{
           position: 'absolute', left: '2.5%', top: 250, zIndex: 20,
           animation: 'driftGoals 60s ease-in-out infinite alternate',
@@ -473,7 +487,7 @@ export default function Home() {
       </div>
 
       <style jsx global>{`
-        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.7; transform: scale(1.05); } }
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes accretionSpin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes beamPulse { 0% { opacity: 0.15; } 100% { opacity: 0.4; } }
@@ -496,56 +510,10 @@ export default function Home() {
         }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
-
-        /* КОМЕТА: голова летит */
-        @keyframes cometHead {
-          0% { transform: translateX(0); opacity: 0; }
-          2% { opacity: 1; }
-          38% { transform: translateX(var(--dist)); opacity: .95; }
-          46% { transform: translateX(var(--dist)); opacity: 0; }
-          100% { transform: translateX(var(--dist)); opacity: 0; }
-        }
-        /* КОМЕТА: ровный след рисуется, потом расплывается как дым */
-        @keyframes cometTrail {
-          0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(0.5px); }
-          2% { opacity: .8; }
-          38% { transform: scaleX(1) scaleY(1); opacity: .75; filter: blur(0.8px); }
-          52% { transform: scaleX(1) scaleY(1.5); opacity: .5; filter: blur(2px); }
-          76% { transform: scaleX(1) scaleY(2.8); opacity: .22; filter: blur(4px); }
-          96%, 100% { transform: scaleX(1) scaleY(3.6); opacity: 0; filter: blur(7px); }
-        }
-        /* КОМЕТА: широкий дым */
-        @keyframes cometSmoke {
-          0% { transform: scaleX(0) scaleY(1); opacity: 0; }
-          3% { opacity: .5; }
-          38% { transform: scaleX(1) scaleY(1); opacity: .4; }
-          62% { transform: scaleX(1) scaleY(1.9); opacity: .28; }
-          92%, 100% { transform: scaleX(1) scaleY(3.2); opacity: 0; }
-        }
-
-        /* СВЕРХНОВАЯ: конверт прозрачности (долгое плато красоты) */
-        @keyframes snEnvelope {
-          0%, 55% { opacity: 0; }
-          60% { opacity: .4; }
-          64% { opacity: .85; }
-          68% { opacity: 1; }
-          90% { opacity: .88; }
-          100% { opacity: 0; }
-        }
-        /* СВЕРХНОВАЯ: рост */
-        @keyframes snGrow {
-          0%, 58% { transform: scale(.25); }
-          68% { transform: scale(.7); }
-          90% { transform: scale(1); }
-          100% { transform: scale(1.12); }
-        }
-        /* СВЕРХНОВАЯ: бесконечное медленное вращение тела */
-        @keyframes snSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        /* СВЕРХНОВАЯ: мерцание нитей */
-        @keyframes snShimmer { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
-        /* СВЕРХНОВАЯ: пульс ядра */
-        @keyframes snCorePulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
-
+        /* Столпы: дыхание золотой подсветки */
+        @keyframes pillarsGlow { 0% { opacity: 0.55; } 100% { opacity: 0.95; } }
+        /* Столпы: дрейф дымки */
+        @keyframes pillarsHaze { 0% { transform: translate(0,0); } 100% { transform: translate(-14px,-10px); } }
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
         @keyframes skillGrow2 { from { width: 0; } to { width: 91%; } }
