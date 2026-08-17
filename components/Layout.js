@@ -30,7 +30,7 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-// ============ КОЛОКОЛЬЧИК УВЕДОМЛЕНИЙ (встроен прямо в Layout) ============
+// ============ КОЛОКОЛЬЧИК (встроен прямо в Layout) ============
 function NotificationBell() {
   const { user } = useProfile()
   const router = useRouter()
@@ -42,7 +42,9 @@ function NotificationBell() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) return
     try {
-      const res = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      const res = await fetch('/api/notifications', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
       if (res.ok) {
         const d = await res.json()
         setItems(d.notifications || [])
@@ -51,14 +53,19 @@ function NotificationBell() {
     } catch (e) {}
   }
 
-  useEffect(() => { if (user) load() }, [user])
+  useEffect(() => {
+    if (user) load()
+  }, [user])
 
   const markAll = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) return
     await fetch('/api/notifications/mark-read', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`
+      }
     })
     setUnread(0)
     setItems(p => p.map(n => ({ ...n, read: true })))
@@ -67,7 +74,11 @@ function NotificationBell() {
   return (
     <div style={{ position: 'relative' }}>
       <button
-        onClick={() => { const next = !open; setOpen(next); if (next && unread > 0) markAll() }}
+        onClick={() => {
+          const next = !open
+          setOpen(next)
+          if (next && unread > 0) markAll()
+        }}
         className="action-btn !py-1.5 !px-3"
         style={{ position: 'relative', cursor: 'pointer', color: '#fff' }}
         title="Уведомления"
@@ -79,7 +90,8 @@ function NotificationBell() {
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px',
-            borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #f97316)',
+            borderRadius: 9999,
+            background: 'linear-gradient(135deg, #FFD700, #f97316)',
             color: '#0a1628', fontSize: 11, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 10px rgba(255,215,0,.7)'
@@ -88,17 +100,29 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div className="premium-card" style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 320, maxHeight: 380, overflowY: 'auto', zIndex: 60, padding: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="premium-card" style={{
+          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+          width: 320, maxHeight: 380, overflowY: 'auto', zIndex: 60, padding: 14,
+          background: 'rgba(15,20,35,0.98)', backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12
+        }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Уведомления</span>
             {items.length > 0 && (
-              <button onClick={markAll} style={{ fontSize: 11, color: '#aaa', background: 'none', border: 'none', cursor: 'pointer' }}>
+              <button onClick={markAll} style={{
+                fontSize: 11, color: '#aaa', background: 'none', border: 'none', cursor: 'pointer'
+              }}>
                 Прочитать все
               </button>
             )}
           </div>
           {items.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#777', textAlign: 'center', padding: '14px 0' }}>Нет уведомлений</p>
+            <p style={{ fontSize: 13, color: '#777', textAlign: 'center', padding: '14px 0' }}>
+              Нет уведомлений
+            </p>
           ) : (
             items.map(n => (
               <div
@@ -111,7 +135,9 @@ function NotificationBell() {
                 }}
               >
                 <p style={{ fontSize: 13, color: '#eee', margin: 0 }}>{n.message}</p>
-                <p style={{ fontSize: 11, color: '#777', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
+                <p style={{ fontSize: 11, color: '#777', margin: '4px 0 0' }}>
+                  {new Date(n.created_at).toLocaleString('ru')}
+                </p>
               </div>
             ))
           )}
@@ -268,6 +294,7 @@ export default function Layout({ children }) {
         </div>
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+          {/* === ВОТ КОЛОКОЛЬЧИК === */}
           <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
