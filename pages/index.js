@@ -78,7 +78,7 @@ export default function Home() {
   const nebulaRef = useRef(null)
   const topFlashRef = useRef(null)
   const bottomFlashRef = useRef(null)
-  const cursorRef = useRef(null)
+  const glowRef = useRef(null)
 
   const mastery = { title: 'Специалист', stage: 2, stagesTotal: 6, currentEnergy: 2460, nextEnergy: 3200 }
   const stages = ['Новичок', 'Специалист', 'Старший специалист', 'Эксперт', 'Мастер', 'Президент']
@@ -120,7 +120,7 @@ export default function Home() {
     loadData()
   }, [user, loading, profile])
 
-  // Вспышки ленты: вверх — сверху, вниз — снизу
+  // Вспышки ленты при скролле
   useEffect(() => {
     const flash = (ref, name) => {
       const el = ref.current
@@ -142,7 +142,7 @@ export default function Home() {
     const y = e.clientY / window.innerHeight - 0.5
     if (starsRef.current) starsRef.current.style.transform = `translate(${x * -6}px, ${y * -6}px)`
     if (nebulaRef.current) nebulaRef.current.style.transform = `translate(${x * -14}px, ${y * -14}px)`
-    if (cursorRef.current) cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`
+    if (glowRef.current) glowRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`
   }
 
   const toggleHole = () => {
@@ -183,16 +183,12 @@ export default function Home() {
   return (
     <>
       <Head><title>Кармический банк</title></Head>
-      <div onMouseMove={handleMouseMove} className={holo ? 'holo-mode' : ''} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+      <div onMouseMove={handleMouseMove} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
 
-        {/* Голографический курсор (растёт со свечением при включении) */}
+        {/* Голографическая подсветка вокруг родной стрелки (курсор не меняется) */}
         {holo && (
-          <div ref={cursorRef} style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform' }}>
-            <div style={{ animation: 'cursorIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-              <svg width="30" height="30" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 6px rgba(160,233,255,0.95)) drop-shadow(0 0 14px rgba(120,200,255,0.6))' }}>
-                <path d="M4 2 L4 19 L9 15 L12 21 L15 19.5 L12 13.5 L18 13 Z" fill="rgba(160,233,255,0.95)" stroke="#ffffff" strokeWidth="1" />
-              </svg>
-            </div>
+          <div ref={glowRef} style={{ position: 'fixed', left: 0, top: 0, zIndex: 9998, pointerEvents: 'none', willChange: 'transform', transform: 'translate(-300px, -300px)' }}>
+            <div className="holo-glow-inner" />
           </div>
         )}
 
@@ -215,10 +211,8 @@ export default function Home() {
         <FlyingComet left="12%" top="70%" angle={-30} dist={520} dur={75} delay={90} scale={0.5} />
         <FlyingComet left="85%" top="55%" angle={200} dist={560} dur={85} delay={130} scale={0.42} />
 
-        {/* ОСВЕЩЕНИЕ КОСМОСА при клике по дыре */}
-        {pulse > 0 && (
-          <div key={pulse} className="cosmos-light" />
-        )}
+        {/* Освещение космоса при клике */}
+        {pulse > 0 && <div key={pulse} className="cosmos-light" />}
 
         {/* Столпы */}
         <div style={{ position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none', width: '52%', height: '70%', background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)', filter: 'blur(30px)', animation: 'pillarsBreath 22s ease-in-out infinite alternate' }} />
@@ -227,7 +221,7 @@ export default function Home() {
             style={{ width: '100%', display: 'block', mixBlendMode: 'screen', filter: 'blur(0.5px) saturate(1.15) brightness(1.02)', maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)', WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)' }} />
         </div>
 
-        {/* Лента (статична) + вспышки сверху/снизу */}
+        {/* Лента + вспышки */}
         <div className="holo-rail" />
         <div ref={topFlashRef} className="scroll-flash-top" />
         <div ref={bottomFlashRef} className="scroll-flash-bottom" />
@@ -335,14 +329,18 @@ export default function Home() {
         html, body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
-        .holo-mode, .holo-mode * { cursor: none !important; }
+        /* Голографическая подсветка вокруг стрелки */
+        .holo-glow-inner { width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(160,233,255,0.5) 0%, rgba(120,200,255,0.25) 40%, transparent 70%);
+          filter: blur(2px); mix-blend-mode: screen; pointer-events: none;
+          animation: glowIn 0.6s ease-out both, glowPulse 2.4s ease-in-out 0.6s infinite; }
+        @keyframes glowIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes glowPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
 
-        /* Лента статична */
+        /* Лента */
         .holo-rail { position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px; border-radius: 3px; z-index: 40; pointer-events: none;
           background: linear-gradient(180deg, transparent, rgba(160,233,255,0.14), rgba(192,132,252,0.14), rgba(255,179,196,0.14), transparent);
           box-shadow: 0 0 6px rgba(160,233,255,0.08); }
-
-        /* Вспышки ленты */
         .scroll-flash-top { position: fixed; left: 0; right: 0; top: 0; height: 140px; z-index: 45; pointer-events: none; opacity: 0;
           background: radial-gradient(ellipse at 50% 0%, rgba(160,233,255,0.35) 0%, rgba(160,233,255,0.12) 45%, transparent 75%); }
         .scroll-flash-bottom { position: fixed; left: 0; right: 0; bottom: 0; height: 140px; z-index: 45; pointer-events: none; opacity: 0;
@@ -350,14 +348,11 @@ export default function Home() {
         @keyframes flashTop { 0% { opacity: 0; } 20% { opacity: 0.6; } 100% { opacity: 0; } }
         @keyframes flashBottom { 0% { opacity: 0; } 20% { opacity: 0.35; } 100% { opacity: 0; } }
 
-        /* Освещение космоса при клике */}
-        .cosmos-light { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; mix-blend-mode: screen;
-          background: radial-gradient(circle at 58% 42%, rgba(255,120,140,0.4) 0%, rgba(255,100,120,0.22) 30%, rgba(200,80,120,0.12) 55%, transparent 78%);
-          animation: cosmosLight 3.2s ease-in-out forwards; }
+        /* Освещение космоса */
+        .cosmos-light { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+          background: radial-gradient(circle at 58% 42%, rgba(255,120,140,0.45) 0%, rgba(255,100,120,0.26) 30%, rgba(200,80,120,0.14) 55%, transparent 78%);
+          animation: cosmosLight 3.4s ease-in-out forwards; }
         @keyframes cosmosLight { 0% { opacity: 0; } 25% { opacity: 1; } 60% { opacity: 0.6; } 100% { opacity: 0; } }
-
-        /* Появление голографического курсора */}
-        @keyframes cursorIn { 0% { transform: scale(0) rotate(-25deg); opacity: 0; } 60% { transform: scale(1.25) rotate(5deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
 
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
