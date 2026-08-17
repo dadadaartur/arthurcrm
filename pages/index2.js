@@ -15,7 +15,7 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// ============ ЛЕНДИНГ (без изменений) ============
+// ============ ЛЕНДИНГ ============
 function CorporateLanding() {
   const router = useRouter()
   const { user } = useProfile()
@@ -54,139 +54,165 @@ function CorporateLanding() {
   )
 }
 
-// ============ КИНЕМАТОГРАФИЧНАЯ КОМЕТА (в глубине космоса) ============
-// Маленькая, размытая, далёкая. Ядро + кома + 3 хвоста + рой искр.
-function DeepComet({ startX, startY, angle, dist, dur, delay, scale }) {
-  const sparks = useMemo(() =>
-    Array.from({ length: 14 }).map((_, i) => ({
-      id: i,
-      offsetY: (Math.random() - 0.5) * 6,
-      offsetX: -10 - Math.random() * 50,
-      size: 0.8 + Math.random() * 1.4,
-      lifeDur: 1.4 + Math.random() * 1.4,
-      lifeDelay: Math.random() * 2,
-      driftX: 15 + Math.random() * 25,
-      driftY: (Math.random() - 0.5) * 5,
-      warm: Math.random() > 0.5,
-    })), [])
+// =====================================================================
+// СВЕРХНОВАЯ — SVG с turbulence-фильтрами.
+// Вспышка звезды с дифракционными лучами + растущая нитчатая оболочка.
+// =====================================================================
+function SupernovaRemnant({ left, top, delay, duration, uid, size = 240 }) {
+  const filaments = useMemo(() => Array.from({ length: 16 }).map((_, i) => {
+    const angle = (i / 16) * 360 + (Math.random() - 0.5) * 24
+    const r1 = 26 + Math.random() * 14
+    const r2 = 62 + Math.random() * 46
+    const bend = (Math.random() - 0.5) * 70
+    const colors = ['#FFD700', '#FFA500', '#FF6347', '#FF4500', '#c084fc', '#ffb3c6', '#ffe29f']
+    return { id: i, angle, r1, r2, bend, color: colors[i % colors.length], width: 0.7 + Math.random() * 1.5 }
+  }), [])
+
+  const filamentPath = (f) => {
+    const a = (f.angle * Math.PI) / 180
+    const x1 = 130 + Math.cos(a) * f.r1
+    const y1 = 130 + Math.sin(a) * f.r1
+    const x2 = 130 + Math.cos(a) * f.r2
+    const y2 = 130 + Math.sin(a) * f.r2
+    const mx = 130 + Math.cos(a) * ((f.r1 + f.r2) / 2) - Math.sin(a) * f.bend
+    const my = 130 + Math.sin(a) * ((f.r1 + f.r2) / 2) + Math.cos(a) * f.bend
+    return `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`
+  }
 
   return (
     <div style={{
-      position: 'absolute', left: startX, top: startY,
-      zIndex: 1, pointerEvents: 'none',
-      width: 0, height: 0,
+      position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
+      width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2,
+    }}>
+      <svg width={size} height={size} viewBox="0 0 260 260" style={{ overflow: 'visible', filter: 'blur(0.5px)' }}>
+        <defs>
+          <filter id={`${uid}-turb`} x="-60%" y="-60%" width="220%" height="220%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="4" seed="8" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="30" />
+          </filter>
+          <filter id={`${uid}-soft`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3.5" />
+          </filter>
+          <filter id={`${uid}-glow`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="2.2" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <radialGradient id={`${uid}-coreg`}>
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="28%" stopColor="rgba(255,242,205,0.95)" />
+            <stop offset="58%" stopColor="rgba(255,185,85,0.4)" />
+            <stop offset="100%" stopColor="rgba(255,140,0,0)" />
+          </radialGradient>
+          <radialGradient id={`${uid}-shellg`}>
+            <stop offset="50%" stopColor="rgba(255,175,0,0)" />
+            <stop offset="72%" stopColor="rgba(255,145,0,0.4)" />
+            <stop offset="88%" stopColor="rgba(255,80,40,0.22)" />
+            <stop offset="100%" stopColor="rgba(195,60,120,0)" />
+          </radialGradient>
+        </defs>
+
+        {/* Растущая нитчатая оболочка (остаток взрыва) */}
+        <g style={{ transformOrigin: '130px 130px', animation: `snShell ${duration}s cubic-bezier(0.15,0.55,0.45,1) ${delay}s infinite` }}>
+          <circle cx="130" cy="130" r="82" fill={`url(#${uid}-shellg)`} filter={`url(#${uid}-turb)`} />
+          {filaments.map(f => (
+            <path key={f.id} d={filamentPath(f)} stroke={f.color} strokeWidth={f.width} fill="none"
+              opacity="0.75" strokeLinecap="round" filter={`url(#${uid}-turb)`} />
+          ))}
+        </g>
+
+        {/* Звезда: вспышка + дифракционные лучи */}
+        <g style={{ transformOrigin: '130px 130px', animation: `snStar ${duration}s ease-out ${delay}s infinite` }}>
+          <circle cx="130" cy="130" r="30" fill={`url(#${uid}-coreg)`} />
+          <circle cx="130" cy="130" r="2.4" fill="#ffffff" filter={`url(#${uid}-glow)`} />
+          <line x1="130" y1="92" x2="130" y2="168" stroke="rgba(255,255,255,0.8)" strokeWidth="0.8" filter={`url(#${uid}-soft)`} />
+          <line x1="92" y1="130" x2="168" y2="130" stroke="rgba(255,255,255,0.8)" strokeWidth="0.8" filter={`url(#${uid}-soft)`} />
+          <line x1="106" y1="106" x2="154" y2="154" stroke="rgba(255,255,255,0.45)" strokeWidth="0.5" filter={`url(#${uid}-soft)`} />
+          <line x1="154" y1="106" x2="106" y2="154" stroke="rgba(255,255,255,0.45)" strokeWidth="0.5" filter={`url(#${uid}-soft)`} />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+// =====================================================================
+// КОМЕТА — SVG: изогнутый пылевой хвост + ионный хвост + ядро с комой.
+// =====================================================================
+function DeepSpaceComet({ startX, startY, angle, dist, dur, delay, uid, scale = 0.6 }) {
+  const particles = useMemo(() => Array.from({ length: 16 }).map((_, i) => ({
+    id: i,
+    x: 250 - Math.random() * 210,
+    y: 40 + (Math.random() - 0.5) * (6 + i * 1.2),
+    r: 0.5 + Math.random() * 1.1,
+    o: 0.2 + Math.random() * 0.5,
+    warm: Math.random() > 0.4,
+  })), [])
+
+  return (
+    <div style={{
+      position: 'absolute', left: startX, top: startY, zIndex: 1, pointerEvents: 'none',
       opacity: 0,
       '--rot': angle + 'deg', '--dist': dist + 'px',
-      animation: `cometPath ${dur}s ease-in ${delay}s infinite`,
+      animation: `cometTravel ${dur}s linear ${delay}s infinite`,
     }}>
-      <div style={{ transform: `rotate(var(--rot)) scale(${scale})`, transformOrigin: '0 0', filter: 'blur(0.6px)' }}>
-        {/* Широкий размытый пылевой хвост (самый дальний) */}
-        <div style={{
-          position: 'absolute', top: -3, left: -220, width: 220, height: 6,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(255,190,120,0.12) 30%, rgba(255,210,150,0.3) 80%, rgba(255,240,210,0.5) 100%)',
-          filter: 'blur(4px)', borderRadius: 3,
-        }} />
-        {/* Ионный голубой хвост (средний) */}
-        <div style={{
-          position: 'absolute', top: -1.5, left: -150, width: 150, height: 3,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(140,190,255,0.2) 40%, rgba(190,225,255,0.6) 85%, rgba(255,255,255,0.9) 100%)',
-          filter: 'blur(1.2px)', borderRadius: 2,
-        }} />
-        {/* Яркий короткий хвост */}
-        <div style={{
-          position: 'absolute', top: -0.75, left: -70, width: 70, height: 1.5,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(220,240,255,0.7) 70%, #ffffff 100%)',
-          borderRadius: 2,
-        }} />
-        {/* Кома — размытое свечение вокруг ядра */}
-        <div style={{
-          position: 'absolute', top: -9, left: -9, width: 18, height: 18, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(180,220,255,0.35) 40%, transparent 70%)',
-          filter: 'blur(2px)',
-        }} />
-        {/* Ядро */}
-        <div style={{
-          position: 'absolute', top: -2.5, left: -2.5, width: 5, height: 5, borderRadius: '50%',
-          background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.9) 50%, transparent 100%)',
-          boxShadow: '0 0 6px rgba(255,255,255,1), 0 0 14px rgba(180,220,255,0.8), 0 0 26px rgba(140,190,255,0.4)',
-        }} />
-        {/* Рой искр */}
-        {sparks.map(s => (
-          <div key={s.id} style={{
-            position: 'absolute', top: s.offsetY + 'px', left: s.offsetX + 'px',
-            width: s.size + 'px', height: s.size + 'px', borderRadius: '50%',
-            background: s.warm ? '#ffe0b0' : '#cfe4ff',
-            boxShadow: `0 0 ${s.size * 2}px ${s.warm ? 'rgba(255,200,130,0.8)' : 'rgba(170,210,255,0.8)'}`,
-            opacity: 0,
-            '--driftX': s.driftX + 'px', '--driftY': s.driftY + 'px',
-            animation: `cometSpark ${s.lifeDur}s ease-out ${delay + s.lifeDelay}s infinite`,
-          }} />
-        ))}
+      <div style={{ transform: `scale(${scale})`, filter: 'blur(0.5px)' }}>
+        <div style={{ animation: 'cometSway 6s ease-in-out infinite' }}>
+          <svg width="300" height="80" viewBox="0 0 300 80" style={{ overflow: 'visible' }}>
+            <defs>
+              <filter id={`${uid}-cturb`} x="-60%" y="-60%" width="220%" height="220%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="5" result="n" />
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="12" />
+              </filter>
+              <filter id={`${uid}-cblur`} x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="1.6" />
+              </filter>
+              <filter id={`${uid}-cglow`} x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="2" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <linearGradient id={`${uid}-dustg`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="rgba(255,200,140,0)" />
+                <stop offset="0.5" stopColor="rgba(255,205,140,0.18)" />
+                <stop offset="0.85" stopColor="rgba(255,225,180,0.45)" />
+                <stop offset="1" stopColor="rgba(255,245,220,0.8)" />
+              </linearGradient>
+              <linearGradient id={`${uid}-iong`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="rgba(140,180,255,0)" />
+                <stop offset="0.6" stopColor="rgba(150,190,255,0.25)" />
+                <stop offset="1" stopColor="rgba(220,240,255,0.85)" />
+              </linearGradient>
+              <radialGradient id={`${uid}-headg`}>
+                <stop offset="0" stopColor="#ffffff" />
+                <stop offset="25%" stopColor="rgba(220,240,255,0.9)" />
+                <stop offset="55%" stopColor="rgba(160,210,255,0.35)" />
+                <stop offset="100%" stopColor="rgba(140,190,255,0)" />
+              </radialGradient>
+            </defs>
+
+            {/* Изогнутый пылевой хвост (верхняя кромка) */}
+            <path d="M 262 40 C 200 34, 120 26, 20 12 C 90 34, 180 42, 262 46 Z"
+              fill={`url(#${uid}-dustg)`} filter={`url(#${uid}-cturb)`} />
+            {/* Вторая пылевая кромка (нижняя, шире и прозрачнее) */}
+            <path d="M 262 41 C 190 40, 110 40, 10 52 C 100 48, 190 46, 262 45 Z"
+              fill={`url(#${uid}-dustg)`} opacity="0.55" filter={`url(#${uid}-cturb)`} />
+            {/* Ионный хвост (тонкий, голубой, прямой) */}
+            <path d="M 262 40 L 30 30 L 262 43 Z" fill={`url(#${uid}-iong)`} filter={`url(#${uid}-cblur)`} />
+            {/* Частицы вдоль хвоста */}
+            {particles.map(p => (
+              <circle key={p.id} cx={p.x} cy={p.y} r={p.r}
+                fill={p.warm ? 'rgba(255,220,170,0.9)' : 'rgba(190,220,255,0.9)'}
+                opacity={p.o} filter={`url(#${uid}-cblur)`} />
+            ))}
+            {/* Кома и ядро */}
+            <circle cx="262" cy="40" r="14" fill={`url(#${uid}-headg)`} />
+            <circle cx="262" cy="40" r="2.4" fill="#ffffff" filter={`url(#${uid}-cglow)`} />
+          </svg>
+        </div>
       </div>
     </div>
   )
 }
 
-// ============ СВЕРХНОВАЯ-ТУМАННОСТЬ (в глубине, не перекрывает UI) ============
-// Многослойная расширяющаяся туманность золото→огненно-красный.
-// Никаких ровных кругов и колец — только смещённые градиенты с blur.
-function DeepSupernova({ left, top, delay, duration, size }) {
-  return (
-    <div style={{
-      position: 'absolute', left, top,
-      zIndex: 1, pointerEvents: 'none',
-      width: 0, height: 0,
-      opacity: 0,
-      animation: `snNebula ${duration}s ease-in-out ${delay}s infinite`,
-    }}>
-      {/* Внешнее тёмно-красное гало */}
-      <div style={{
-        position: 'absolute', left: -size * 0.9, top: -size * 0.85,
-        width: size * 1.8, height: size * 1.7,
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(180,40,30,0.5) 0%, rgba(140,25,25,0.25) 45%, transparent 75%)',
-        filter: 'blur(40px)', borderRadius: '50%',
-      }} />
-      {/* Огненно-оранжевый слой, смещён вправо-вверх */}
-      <div style={{
-        position: 'absolute', left: -size * 0.6, top: -size * 0.7,
-        width: size * 1.4, height: size * 1.3,
-        background: 'radial-gradient(ellipse at 55% 45%, rgba(255,110,40,0.6) 0%, rgba(230,70,30,0.3) 50%, transparent 78%)',
-        filter: 'blur(30px)', borderRadius: '50%',
-      }} />
-      {/* Золотое ядро, смещено влево-вниз */}
-      <div style={{
-        position: 'absolute', left: -size * 0.5, top: -size * 0.45,
-        width: size * 1.1, height: size,
-        background: 'radial-gradient(ellipse at 45% 55%, rgba(255,215,0,0.7) 0%, rgba(255,170,0,0.35) 45%, transparent 75%)',
-        filter: 'blur(24px)', borderRadius: '50%',
-      }} />
-      {/* Язык пламени 1 (повёрнут) */}
-      <div style={{
-        position: 'absolute', left: -size * 0.7, top: -size * 0.2,
-        width: size * 1.5, height: size * 0.4,
-        background: 'linear-gradient(90deg, transparent 0%, rgba(255,140,0,0.4) 40%, rgba(255,200,60,0.5) 60%, transparent 100%)',
-        filter: 'blur(18px)',
-        transform: 'rotate(28deg)',
-        borderRadius: '50%',
-      }} />
-      {/* Язык пламени 2 (повёрнут в другую сторону) */}
-      <div style={{
-        position: 'absolute', left: -size * 0.6, top: -size * 0.1,
-        width: size * 1.3, height: size * 0.35,
-        background: 'linear-gradient(90deg, transparent 0%, rgba(220,60,30,0.4) 45%, rgba(255,120,40,0.45) 65%, transparent 100%)',
-        filter: 'blur(16px)',
-        transform: 'rotate(-35deg)',
-        borderRadius: '50%',
-      }} />
-      {/* Яркие точки-вспышки внутри туманности */}
-      <div style={{ position: 'absolute', left: -size * 0.1, top: -size * 0.12, width: 3, height: 3, borderRadius: '50%', background: '#fff', boxShadow: '0 0 8px rgba(255,240,200,1), 0 0 18px rgba(255,190,80,0.8)', filter: 'blur(0.5px)' }} />
-      <div style={{ position: 'absolute', left: size * 0.18, top: size * 0.05, width: 2, height: 2, borderRadius: '50%', background: '#ffe9c0', boxShadow: '0 0 6px rgba(255,220,150,0.9)', filter: 'blur(0.5px)' }} />
-      <div style={{ position: 'absolute', left: -size * 0.25, top: size * 0.1, width: 2, height: 2, borderRadius: '50%', background: '#ffd9a0', boxShadow: '0 0 6px rgba(255,200,120,0.9)', filter: 'blur(0.5px)' }} />
-    </div>
-  )
-}
-
-// ============ ГЛАВНАЯ (v7) ============
+// ============ ГЛАВНАЯ (v8 — SVG космос) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -235,7 +261,6 @@ export default function Home() {
   const centerX = 58
   const centerY = 42
 
-  // 8 КНОПОК равномерно по эллипсу (добавлены Магазин и Покупки)
   const blocks = [
     { title: 'Задания', sub: '', left: 58, top: 16, colors: ['#d4af37', '#A3E0B0'] },
     { title: 'Чемпионат', sub: 'менеджеров', left: 77, top: 24, colors: ['#7AC78F', '#c084fc'] },
@@ -254,14 +279,9 @@ export default function Home() {
     return { angle, length }
   })
   const routes = {
-    'Чемпионат': '/leaderboard',
-    'Моя компания': '/company',
-    'База знаний': '/knowledge',
-    'План адаптации': '/onboarding',
-    'Цели': '/goals',
-    'Задания': '/tasks',
-    'Магазин': '/shop',
-    'Покупки': '/my-purchases',
+    'Чемпионат': '/leaderboard', 'Моя компания': '/company', 'База знаний': '/knowledge',
+    'План адаптации': '/onboarding', 'Цели': '/goals', 'Задания': '/tasks',
+    'Магазин': '/shop', 'Покупки': '/my-purchases',
   }
 
   return (
@@ -294,13 +314,13 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* СВЕРХНОВЫЕ-ТУМАННОСТИ — в глубине, справа, не трогают баланс и центр */}
-        <DeepSupernova left="80%" top="16%" delay={20} duration={150} size={150} />
-        <DeepSupernova left="72%" top="82%" delay={95} duration={180} size={130} />
+        {/* СВЕРХНОВЫЕ — в глубине справа, не трогают баланс и меню */}
+        <SupernovaRemnant left="80%" top="18%" delay={18} duration={160} uid="sna" size={230} />
+        <SupernovaRemnant left="72%" top="84%" delay={100} duration={190} uid="snb" size={200} />
 
-        {/* КОМЕТЫ — маленькие и далёкие */}
-        <DeepComet startX="6%" startY="75%" angle={-24} dist={1400} dur={70} delay={8} scale={0.8} />
-        <DeepComet startX="92%" startY="20%" angle={156} dist={1500} dur={85} delay={48} scale={0.7} />
+        {/* КОМЕТЫ — маленькие, далёкие */}
+        <DeepSpaceComet startX="4%" startY="76%" angle={-22} dist={1500} dur={75} delay={10} uid="coma" scale={0.55} />
+        <DeepSpaceComet startX="94%" startY="14%" angle={158} dist={1600} dur={90} delay={55} uid="comb" scale={0.5} />
 
         {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -351,8 +371,7 @@ export default function Home() {
           return (
             <div key={idx} style={{
               position: 'absolute', left: block.left + '%', top: block.top + '%',
-              zIndex: 10,
-              '--ux': ux, '--uy': uy,
+              zIndex: 10, '--ux': ux, '--uy': uy,
               animation: 'gravBreath 30s ease-in-out infinite',
             }}>
               <div style={{ animation: `drift${idx % 3} ${130 + idx * 6}s ease-in-out infinite alternate` }}>
@@ -393,7 +412,7 @@ export default function Home() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА (растянут, выровнен) === */}
+        {/* === БЛОК БАЛАНСА (растянут) === */}
         <div style={{
           position: 'absolute', left: '2.5%', top: '2%', zIndex: 20,
           animation: 'driftBalance 55s ease-in-out infinite alternate',
@@ -433,7 +452,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ (выровнен по ширине баланса) === */}
+        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ === */}
         <div style={{
           position: 'absolute', left: '2.5%', top: 260, zIndex: 20,
           animation: 'driftGoals 60s ease-in-out infinite alternate',
@@ -492,7 +511,6 @@ export default function Home() {
         @keyframes progressPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
         @keyframes breathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
         @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
-
         @keyframes holeBreath {
           0%, 100% { transform: translate(-50%, -50%) scale(0.93); }
           50% { transform: translate(-50%, -50%) scale(1.12); }
@@ -501,32 +519,37 @@ export default function Home() {
           0%, 100% { transform: translate(calc(var(--ux) * 12px), calc(var(--uy) * 12px)); }
           50% { transform: translate(calc(var(--ux) * -18px), calc(var(--uy) * -18px)); }
         }
-
-        /* КОМЕТА: путь с плавным появлением/исчезнением, базово невидима */
-        @keyframes cometPath {
-          0%, 100% { opacity: 0; transform: rotate(0deg) translateX(0); }
-          4% { opacity: 0.7; }
-          26% { opacity: 0.7; transform: rotate(0deg) translateX(calc(var(--dist) * 0.6)); }
-          34% { opacity: 0; transform: rotate(0deg) translateX(var(--dist)); }
-          34.01%, 99.99% { opacity: 0; }
-        }
-        @keyframes cometSpark {
-          0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
-          15% { opacity: 0.9; transform: translate(0, 0) scale(1); }
-          100% { opacity: 0; transform: translate(var(--driftX), var(--driftY)) scale(0.2); }
-        }
-
-        /* СВЕРХНОВАЯ-ТУМАННОСТЬ: медленное расширение и затухание, базово невидима */
-        @keyframes snNebula {
-          0%, 100% { opacity: 0; transform: scale(0.5); }
-          10% { opacity: 0.55; }
-          30% { opacity: 0.5; transform: scale(1); }
-          55% { opacity: 0.25; transform: scale(1.25); }
-          70%, 99.99% { opacity: 0; transform: scale(1.45); }
-        }
-
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
+
+        /* КОМЕТА: плавный пролёт, базово невидима */
+        @keyframes cometTravel {
+          0% { opacity: 0; transform: rotate(var(--rot)) translateX(0); }
+          6% { opacity: 0.75; }
+          44% { opacity: 0.75; }
+          54% { opacity: 0; transform: rotate(var(--rot)) translateX(var(--dist)); }
+          100% { opacity: 0; transform: rotate(var(--rot)) translateX(var(--dist)); }
+        }
+        @keyframes cometSway {
+          0%, 100% { transform: rotate(-0.6deg); }
+          50% { transform: rotate(0.6deg); }
+        }
+
+        /* СВЕРХНОВАЯ: вспышка звезды */
+        @keyframes snStar {
+          0%, 86% { opacity: 0; transform: scale(0.4); }
+          87.5% { opacity: 1; transform: scale(1.7); }
+          90% { opacity: 0.95; transform: scale(1); }
+          96% { opacity: 0.55; transform: scale(0.9); }
+          99%, 100% { opacity: 0; transform: scale(0.7); }
+        }
+        /* СВЕРХНОВАЯ: рост нитчатой оболочки */
+        @keyframes snShell {
+          0%, 88% { opacity: 0; transform: scale(0.06); }
+          90% { opacity: 0.95; }
+          96% { opacity: 0.75; transform: scale(1); }
+          99.5%, 100% { opacity: 0; transform: scale(1.3); }
+        }
 
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
