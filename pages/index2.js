@@ -40,26 +40,8 @@ function CorporateLanding() {
           Управляйте не людьми, <br />
           <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">а энергией их достижений</span>
         </h1>
-        <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-10">Традиционные премии — это прошлое. «Кармический Банк» — это операционная система для мотивации, которая превращает ежедневную рутину в азартную гонку за результатом.</p>
+        <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-10">Традиционные премии — это прошлое. «Кармический Банк» — это операционная система для мотивации.</p>
         <div className="flex gap-6"><button onClick={() => router.push('/create-company')} className="btn-gold !text-lg !py-4 !px-12">Создать компанию</button></div>
-      </section>
-      <section className="max-w-6xl mx-auto px-6 py-20 relative z-10">
-        <h2 className="text-4xl font-bold mb-16 text-center">Бизнесу больше не нужна скучная мотивация</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="dash-card"><h3 className="!text-2xl text-gold mb-4">Тихое увольнение</h3><p className="text-sm text-gray-300 leading-relaxed">Сотрудники делают ровно столько, чтобы их не уволили.<br /><br /><strong className="text-white">Решение:</strong> Каждое микро‑действие приносит «кармики».</p></div>
-          <div className="dash-card"><h3 className="!text-2xl text-gold mb-4">Выгорание</h3><p className="text-sm text-gray-300 leading-relaxed">60% сотрудников уходят, потому что чувствуют себя «винтиками».<br /><br /><strong className="text-white">Решение:</strong> В системе есть история. Менеджер — Адмирал своей компании.</p></div>
-          <div className="dash-card"><h3 className="!text-2xl text-gold mb-4">Пропасть между CRM и реальностью</h3><p className="text-sm text-gray-300 leading-relaxed">Данные в CRM часто мёртвы.<br /><br /><strong className="text-white">Решение:</strong> Кармический банк «вдыхает жизнь» в цифры.</p></div>
-        </div>
-      </section>
-      <section className="py-20 bg-gray-900/30 backdrop-blur-xl border-y border-orange-500/20">
-        <div className="max-w-6xl mx-auto px-10">
-          <h2 className="text-4xl font-bold mb-16 text-center">Три кита Галактики</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="text-center"><div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 border border-white/10 flex items-center justify-center"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-sm" /></div><h3 className="text-2xl font-bold mb-4">Автоматизированная меритократия</h3><p className="text-sm text-gray-300 leading-relaxed">Система объективна. У кого выше баланс — тот лидер.</p></div>
-            <div className="text-center"><div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-400/20 to-orange-400/20 border border-white/10 flex items-center justify-center"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 blur-sm" /></div><h3 className="text-2xl font-bold mb-4">Виртуальный бюджет с реальным весом</h3><p className="text-sm text-gray-300 leading-relaxed">«Кармики» — это ваша внутренняя валюта.</p></div>
-            <div className="text-center"><div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-green-400/20 to-teal-400/20 border border-white/10 flex items-center justify-center"><div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-500 blur-sm" /></div><h3 className="text-2xl font-bold mb-4">Инвестиция в HR‑бренд</h3><p className="text-sm text-gray-300 leading-relaxed">«Кармический банк» — ваше ядерное преимущество.</p></div>
-          </div>
-        </div>
       </section>
       <footer className="py-10 border-t border-white/5 text-center text-gray-600 text-xs">&copy; {new Date().getFullYear()} Кармический банк.</footer>
       <style jsx>{`
@@ -72,248 +54,139 @@ function CorporateLanding() {
   )
 }
 
-// ============ УЛЬТРА-ПРЕМИУМ КОМЕТА ============
-// Многослойный хвост + 18 искр с физикой + пылевой след + двойное свечение ядра + волнистая траектория
-function PremiumMeteor({ left, top, dist, dur, delay, angle, length }) {
-  // Искры: каждая со своей физикой — скоростью, временем жизни, отклонением
+// ============ КИНЕМАТОГРАФИЧНАЯ КОМЕТА (в глубине космоса) ============
+// Маленькая, размытая, далёкая. Ядро + кома + 3 хвоста + рой искр.
+function DeepComet({ startX, startY, angle, dist, dur, delay, scale }) {
   const sparks = useMemo(() =>
-    Array.from({ length: 18 }).map((_, i) => ({
+    Array.from({ length: 14 }).map((_, i) => ({
       id: i,
-      offsetY: (Math.random() - 0.5) * 8,
-      offsetX: -12 - Math.random() * 40,
-      size: 1 + Math.random() * 1.8,
-      lifeDur: 1.2 + Math.random() * 1.2,
-      lifeDelay: Math.random() * 1.5,
-      driftX: 20 + Math.random() * 30,
-      driftY: (Math.random() - 0.5) * 6,
-      hue: 180 + Math.random() * 60,
+      offsetY: (Math.random() - 0.5) * 6,
+      offsetX: -10 - Math.random() * 50,
+      size: 0.8 + Math.random() * 1.4,
+      lifeDur: 1.4 + Math.random() * 1.4,
+      lifeDelay: Math.random() * 2,
+      driftX: 15 + Math.random() * 25,
+      driftY: (Math.random() - 0.5) * 5,
+      warm: Math.random() > 0.5,
     })), [])
-
-  // Пылевые частицы — мягкое размытое свечение вдоль хвоста
-  const dust = useMemo(() =>
-    Array.from({ length: 8 }).map((_, i) => ({
-      id: i,
-      offsetX: -20 - i * (length / 8),
-      offsetY: (Math.random() - 0.5) * 3,
-      size: 4 + Math.random() * 4,
-      opacity: 0.15 + Math.random() * 0.2,
-    })), [length])
 
   return (
     <div style={{
-      position: 'absolute', left, top, zIndex: 3, pointerEvents: 'none',
+      position: 'absolute', left: startX, top: startY,
+      zIndex: 1, pointerEvents: 'none',
       width: 0, height: 0,
-      '--rot': angle + 'deg',
-      '--dist': dist + 'px',
+      opacity: 0,
+      '--rot': angle + 'deg', '--dist': dist + 'px',
+      animation: `cometPath ${dur}s ease-in ${delay}s infinite`,
     }}>
-      {/* Главный контейнер — движется по траектории, долго и медленно */}
-      <div style={{
-        animation: `meteorPath ${dur}s ease-in ${delay}s infinite`,
-        transform: 'rotate(var(--rot))',
-        transformOrigin: '0 0',
-      }}>
-        {/* Волнистость траектории — мягкое покачивание */}
-        <div style={{ animation: `meteorSine ${dur * 0.4}s ease-in-out ${delay}s infinite` }}>
-
-          {/* Длинный диффузный слой хвоста (самый дальний) */}
-          <div style={{
-            position: 'absolute', top: -1.5, left: -length * 1.4,
-            width: length * 1.4 + 'px', height: 3,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(100,160,255,0.1) 30%, rgba(160,200,255,0.3) 80%, rgba(255,255,255,0.6) 100%)',
-            filter: 'blur(2px)',
-            borderRadius: 2,
-          }} />
-
-          {/* Средний слой хвоста */}
-          <div style={{
-            position: 'absolute', top: -1, left: -length,
-            width: length + 'px', height: 2,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(140,190,255,0.2) 40%, rgba(200,230,255,0.7) 85%, rgba(255,255,255,0.95) 100%)',
-            filter: 'blur(0.8px)',
-            borderRadius: 2,
-          }} />
-
-          {/* Яркий короткий слой хвоста */}
-          <div style={{
-            position: 'absolute', top: -0.75, left: -length * 0.5,
-            width: length * 0.5 + 'px', height: 1.5,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(200,230,255,0.7) 70%, #ffffff 100%)',
-            borderRadius: 2,
-          }} />
-
-          {/* Пылевой след — мягкое свечение вдоль траектории */}
-          {dust.map(d => (
-            <div key={d.id} style={{
-              position: 'absolute', top: d.offsetY + 'px', left: d.offsetX + 'px',
-              width: d.size + 'px', height: d.size + 'px', borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(200,230,255,' + d.opacity + ') 0%, transparent 70%)',
-              filter: 'blur(3px)',
-            }} />
-          ))}
-
-          {/* Искры с физикой — каждая живёт своей жизнью */}
-          {sparks.map(s => (
-            <div key={s.id} style={{
-              position: 'absolute', top: s.offsetY + 'px', left: s.offsetX + 'px',
-              width: s.size + 'px', height: s.size + 'px', borderRadius: '50%',
-              background: `hsl(${s.hue}, 80%, 80%)`,
-              boxShadow: `0 0 ${s.size * 2}px hsl(${s.hue}, 90%, 75%)`,
-              opacity: 0,
-              '--driftX': s.driftX + 'px', '--driftY': s.driftY + 'px',
-              animation: `meteorSpark ${s.lifeDur}s ease-out ${delay + s.lifeDelay}s infinite`,
-            }} />
-          ))}
-
-          {/* Внешний ореол ядра (голубой) */}
-          <div style={{
-            position: 'absolute', top: -8, left: -8, width: 16, height: 16,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(160,220,255,0.9) 0%, rgba(120,180,255,0.4) 40%, transparent 70%)',
-            filter: 'blur(1.5px)',
-            animation: 'meteorTwinkle 1.8s ease-in-out infinite',
-          }} />
-
-          {/* Внутреннее ядро (белое, очень яркое) */}
-          <div style={{
-            position: 'absolute', top: -3.5, left: -3.5, width: 7, height: 7,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.95) 40%, rgba(220,240,255,0.5) 75%, transparent 100%)',
-            boxShadow: '0 0 8px rgba(255,255,255,1), 0 0 20px rgba(160,220,255,0.9), 0 0 40px rgba(120,180,255,0.5)',
-          }} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ============ КИНЕМАТОГРАФИЧНАЯ СВЕРХНОВАЯ ============
-// Асимметричный взрыв, спиральные фрагменты, хроматическая аберрация, остаточная туманность
-function CinematicSupernova({ left, top, delay, duration, coreTint, ringTint, dustTint }) {
-  // Пылевые фрагменты, разлетающиеся по СПИРАЛИ (не радиально) — это и даёт кинематографичность
-  const fragments = useMemo(() =>
-    Array.from({ length: 24 }).map((_, i) => {
-      const baseAngle = (i / 24) * Math.PI * 2 + (Math.random() - 0.5) * 0.6
-      const dist = 60 + Math.random() * 110
-      const spiralTwist = (Math.random() - 0.5) * 1.8
-      const size = 1 + Math.random() * 2.2
-      return {
-        id: i,
-        startX: 0, startY: 0,
-        endX: Math.cos(baseAngle) * dist,
-        endY: Math.sin(baseAngle) * dist,
-        midX: Math.cos(baseAngle + spiralTwist) * dist * 0.5,
-        midY: Math.sin(baseAngle + spiralTwist) * dist * 0.5,
-        size,
-        delay: Math.random() * 0.4,
-      }
-    }), [])
-
-  return (
-    <div style={{ position: 'absolute', left, top, zIndex: 2, pointerEvents: 'none', width: 0, height: 0 }}>
-
-      {/* === ОСТАТОЧНАЯ ТУМАННОСТЬ (держится после взрыва) === */}
-      {/* Появляется медленно и остаётся как напоминание — не идеальная форма */}
-      <div style={{
-        position: 'absolute',
-        animation: `snRemnant ${duration}s ease-out ${delay}s infinite`,
-      }}>
+      <div style={{ transform: `rotate(var(--rot)) scale(${scale})`, transformOrigin: '0 0', filter: 'blur(0.6px)' }}>
+        {/* Широкий размытый пылевой хвост (самый дальний) */}
         <div style={{
-          position: 'absolute', left: -55, top: -50, width: 110, height: 100,
-          background: `radial-gradient(ellipse at 45% 48%, ${dustTint}35 0%, ${dustTint}15 40%, transparent 75%)`,
-          filter: 'blur(12px)',
-          borderRadius: '60% 40% 55% 45% / 50% 60% 40% 50%',
-          opacity: 0,
-          animation: `snRemnantGlow ${duration}s ease-out ${delay}s infinite`,
+          position: 'absolute', top: -3, left: -220, width: 220, height: 6,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,190,120,0.12) 30%, rgba(255,210,150,0.3) 80%, rgba(255,240,210,0.5) 100%)',
+          filter: 'blur(4px)', borderRadius: 3,
         }} />
-      </div>
-
-      {/* === ЯДРО ВЗРЫВА — асимметричное, из 3 перекрывающихся кругов === */}
-      <div style={{
-        position: 'absolute',
-        animation: `snCoreBurst ${duration}s ease-out ${delay}s infinite`,
-        transformOrigin: '0 0',
-      }}>
-        {/* Основной круг */}
+        {/* Ионный голубой хвост (средний) */}
         <div style={{
-          position: 'absolute', left: -50, top: -50, width: 100, height: 100,
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 48% 52%, #ffffff 0%, ${coreTint} 30%, ${coreTint}80 60%, transparent 85%)`,
+          position: 'absolute', top: -1.5, left: -150, width: 150, height: 3,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(140,190,255,0.2) 40%, rgba(190,225,255,0.6) 85%, rgba(255,255,255,0.9) 100%)',
+          filter: 'blur(1.2px)', borderRadius: 2,
+        }} />
+        {/* Яркий короткий хвост */}
+        <div style={{
+          position: 'absolute', top: -0.75, left: -70, width: 70, height: 1.5,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(220,240,255,0.7) 70%, #ffffff 100%)',
+          borderRadius: 2,
+        }} />
+        {/* Кома — размытое свечение вокруг ядра */}
+        <div style={{
+          position: 'absolute', top: -9, left: -9, width: 18, height: 18, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(180,220,255,0.35) 40%, transparent 70%)',
           filter: 'blur(2px)',
         }} />
-        {/* Второй круг со смещением (асимметрия) */}
+        {/* Ядро */}
         <div style={{
-          position: 'absolute', left: -40, top: -55, width: 90, height: 95,
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 52% 48%, ${coreTint} 0%, transparent 70%)`,
-          filter: 'blur(3px)', opacity: 0.7,
+          position: 'absolute', top: -2.5, left: -2.5, width: 5, height: 5, borderRadius: '50%',
+          background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.9) 50%, transparent 100%)',
+          boxShadow: '0 0 6px rgba(255,255,255,1), 0 0 14px rgba(180,220,255,0.8), 0 0 26px rgba(140,190,255,0.4)',
         }} />
-        {/* Третий круг (ещё асимметрия) */}
-        <div style={{
-          position: 'absolute', left: -55, top: -45, width: 95, height: 90,
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 45% 55%, ${coreTint}90 0%, transparent 65%)`,
-          filter: 'blur(3px)', opacity: 0.6,
-        }} />
+        {/* Рой искр */}
+        {sparks.map(s => (
+          <div key={s.id} style={{
+            position: 'absolute', top: s.offsetY + 'px', left: s.offsetX + 'px',
+            width: s.size + 'px', height: s.size + 'px', borderRadius: '50%',
+            background: s.warm ? '#ffe0b0' : '#cfe4ff',
+            boxShadow: `0 0 ${s.size * 2}px ${s.warm ? 'rgba(255,200,130,0.8)' : 'rgba(170,210,255,0.8)'}`,
+            opacity: 0,
+            '--driftX': s.driftX + 'px', '--driftY': s.driftY + 'px',
+            animation: `cometSpark ${s.lifeDur}s ease-out ${delay + s.lifeDelay}s infinite`,
+          }} />
+        ))}
       </div>
-
-      {/* === ХРОМАТИЧЕСКОЕ СВЕЧЕНИЕ (несколько цветов вокруг ядра) === */}
-      <div style={{
-        position: 'absolute', left: -70, top: -70, width: 140, height: 140,
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${coreTint}50 0%, ${coreTint}20 30%, transparent 65%)`,
-        filter: 'blur(6px)',
-        animation: `snChromatic ${duration}s ease-out ${delay}s infinite`,
-      }} />
-      <div style={{
-        position: 'absolute', left: -90, top: -85, width: 180, height: 170,
-        borderRadius: '50%',
-        background: `radial-gradient(circle at 55% 45%, ${ringTint}30 0%, transparent 60%)`,
-        filter: 'blur(10px)',
-        animation: `snChromatic ${duration}s ease-out ${delay + 0.2}s infinite`,
-      }} />
-
-      {/* === УДАРНЫЕ ВОЛНЫ — 3 штуки, расходятся с разной скоростью === */}
-      <div style={{
-        position: 'absolute', left: -80, top: -80, width: 160, height: 160,
-        borderRadius: '50%',
-        border: `2px solid ${ringTint}`,
-        boxShadow: `0 0 24px ${ringTint}99, inset 0 0 12px ${ringTint}55`,
-        animation: `snShockwave1 ${duration}s ease-out ${delay}s infinite`,
-      }} />
-      <div style={{
-        position: 'absolute', left: -60, top: -60, width: 120, height: 120,
-        borderRadius: '50%',
-        border: `1px solid ${coreTint}`,
-        boxShadow: `0 0 16px ${coreTint}88`,
-        animation: `snShockwave2 ${duration}s ease-out ${delay + 0.3}s infinite`,
-      }} />
-      <div style={{
-        position: 'absolute', left: -40, top: -40, width: 80, height: 80,
-        borderRadius: '50%',
-        border: `1px solid #ffffff`,
-        boxShadow: `0 0 10px #ffffff99`,
-        animation: `snShockwave3 ${duration}s ease-out ${delay + 0.6}s infinite`,
-      }} />
-
-      {/* === СПИРАЛЬНЫЕ ФРАГМЕНТЫ (главная "кинематографичность") === */}
-      {fragments.map(f => (
-        <div key={f.id} style={{
-          position: 'absolute',
-          width: f.size + 'px', height: f.size + 'px',
-          borderRadius: '50%',
-          background: f.id % 3 === 0 ? '#ffffff' : dustTint,
-          boxShadow: `0 0 ${f.size * 3}px ${f.id % 3 === 0 ? '#ffffff' : dustTint}`,
-          opacity: 0,
-          '--endX': f.endX + 'px', '--endY': f.endY + 'px',
-          '--midX': f.midX + 'px', '--midY': f.midY + 'px',
-          animation: `snFragment ${duration}s ease-out ${delay + f.delay}s infinite`,
-        }} />
-      ))}
     </div>
   )
 }
 
-// ============ ГЛАВНАЯ (v6 — медленно, величественно, кинематографично) ============
+// ============ СВЕРХНОВАЯ-ТУМАННОСТЬ (в глубине, не перекрывает UI) ============
+// Многослойная расширяющаяся туманность золото→огненно-красный.
+// Никаких ровных кругов и колец — только смещённые градиенты с blur.
+function DeepSupernova({ left, top, delay, duration, size }) {
+  return (
+    <div style={{
+      position: 'absolute', left, top,
+      zIndex: 1, pointerEvents: 'none',
+      width: 0, height: 0,
+      opacity: 0,
+      animation: `snNebula ${duration}s ease-in-out ${delay}s infinite`,
+    }}>
+      {/* Внешнее тёмно-красное гало */}
+      <div style={{
+        position: 'absolute', left: -size * 0.9, top: -size * 0.85,
+        width: size * 1.8, height: size * 1.7,
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(180,40,30,0.5) 0%, rgba(140,25,25,0.25) 45%, transparent 75%)',
+        filter: 'blur(40px)', borderRadius: '50%',
+      }} />
+      {/* Огненно-оранжевый слой, смещён вправо-вверх */}
+      <div style={{
+        position: 'absolute', left: -size * 0.6, top: -size * 0.7,
+        width: size * 1.4, height: size * 1.3,
+        background: 'radial-gradient(ellipse at 55% 45%, rgba(255,110,40,0.6) 0%, rgba(230,70,30,0.3) 50%, transparent 78%)',
+        filter: 'blur(30px)', borderRadius: '50%',
+      }} />
+      {/* Золотое ядро, смещено влево-вниз */}
+      <div style={{
+        position: 'absolute', left: -size * 0.5, top: -size * 0.45,
+        width: size * 1.1, height: size,
+        background: 'radial-gradient(ellipse at 45% 55%, rgba(255,215,0,0.7) 0%, rgba(255,170,0,0.35) 45%, transparent 75%)',
+        filter: 'blur(24px)', borderRadius: '50%',
+      }} />
+      {/* Язык пламени 1 (повёрнут) */}
+      <div style={{
+        position: 'absolute', left: -size * 0.7, top: -size * 0.2,
+        width: size * 1.5, height: size * 0.4,
+        background: 'linear-gradient(90deg, transparent 0%, rgba(255,140,0,0.4) 40%, rgba(255,200,60,0.5) 60%, transparent 100%)',
+        filter: 'blur(18px)',
+        transform: 'rotate(28deg)',
+        borderRadius: '50%',
+      }} />
+      {/* Язык пламени 2 (повёрнут в другую сторону) */}
+      <div style={{
+        position: 'absolute', left: -size * 0.6, top: -size * 0.1,
+        width: size * 1.3, height: size * 0.35,
+        background: 'linear-gradient(90deg, transparent 0%, rgba(220,60,30,0.4) 45%, rgba(255,120,40,0.45) 65%, transparent 100%)',
+        filter: 'blur(16px)',
+        transform: 'rotate(-35deg)',
+        borderRadius: '50%',
+      }} />
+      {/* Яркие точки-вспышки внутри туманности */}
+      <div style={{ position: 'absolute', left: -size * 0.1, top: -size * 0.12, width: 3, height: 3, borderRadius: '50%', background: '#fff', boxShadow: '0 0 8px rgba(255,240,200,1), 0 0 18px rgba(255,190,80,0.8)', filter: 'blur(0.5px)' }} />
+      <div style={{ position: 'absolute', left: size * 0.18, top: size * 0.05, width: 2, height: 2, borderRadius: '50%', background: '#ffe9c0', boxShadow: '0 0 6px rgba(255,220,150,0.9)', filter: 'blur(0.5px)' }} />
+      <div style={{ position: 'absolute', left: -size * 0.25, top: size * 0.1, width: 2, height: 2, borderRadius: '50%', background: '#ffd9a0', boxShadow: '0 0 6px rgba(255,200,120,0.9)', filter: 'blur(0.5px)' }} />
+    </div>
+  )
+}
+
+// ============ ГЛАВНАЯ (v7) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -322,14 +195,7 @@ export default function Home() {
   const starsRef = useRef(null)
   const nebulaRef = useRef(null)
 
-  // Кармическая энергия + звание (уровень мастерства)
-  const mastery = {
-    title: 'Специалист',        // звание
-    stage: 2,                   // этап из 6
-    stagesTotal: 6,
-    currentEnergy: 2460,        // кармическая энергия
-    nextEnergy: 3200,           // сколько нужно до следующего звания
-  }
+  const mastery = { title: 'Специалист', stage: 2, stagesTotal: 6, currentEnergy: 2460, nextEnergy: 3200 }
   const stages = ['Новичок', 'Специалист', 'Старший специалист', 'Эксперт', 'Мастер', 'Президент']
   const progressPercent = Math.round((mastery.currentEnergy / mastery.nextEnergy) * 100)
   const energyRemaining = mastery.nextEnergy - mastery.currentEnergy
@@ -355,7 +221,6 @@ export default function Home() {
     loadData()
   }, [user, loading, profile])
 
-  // Мягкий параллакс
   const handleMouseMove = (e) => {
     const x = e.clientX / window.innerWidth - 0.5
     const y = e.clientY / window.innerHeight - 0.5
@@ -370,14 +235,16 @@ export default function Home() {
   const centerX = 58
   const centerY = 42
 
-  // Боевые названия меню (как ты прислал)
+  // 8 КНОПОК равномерно по эллипсу (добавлены Магазин и Покупки)
   const blocks = [
-    { title: 'Чемпионат', sub: 'менеджеров', left: 80, top: 40, colors: ['#7AC78F', '#c084fc'] },
-    { title: 'Моя компания', sub: 'данные и новости', left: 67.5, top: 61.7, colors: ['#c084fc', '#F28B82'] },
-    { title: 'База знаний', sub: 'лучшие практики', left: 42.5, top: 61.7, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'План адаптации', sub: 'твой путь', left: 35, top: 35, colors: ['#7AC78F', '#F28B82'] },
-    { title: 'Цели', sub: 'твои победы', left: 42.5, top: 18.3, colors: ['#A3E0B0', '#d4af37'] },
-    { title: 'Задания', sub: '', left: 67.5, top: 18.3, colors: ['#d4af37', '#A3E0B0'] },
+    { title: 'Задания', sub: '', left: 58, top: 16, colors: ['#d4af37', '#A3E0B0'] },
+    { title: 'Чемпионат', sub: 'менеджеров', left: 77, top: 24, colors: ['#7AC78F', '#c084fc'] },
+    { title: 'Магазин', sub: 'награды', left: 85, top: 42, colors: ['#F28B82', '#FFD700'] },
+    { title: 'Моя компания', sub: 'данные и новости', left: 77, top: 60, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Покупки', sub: 'мои награды', left: 58, top: 68, colors: ['#ffe29f', '#b3f0ff'] },
+    { title: 'База знаний', sub: 'лучшие практики', left: 39, top: 60, colors: ['#c084fc', '#7AC78F'] },
+    { title: 'План адаптации', sub: 'твой путь', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
+    { title: 'Цели', sub: 'твои победы', left: 39, top: 24, colors: ['#A3E0B0', '#d4af37'] },
   ]
   const beams = blocks.map(block => {
     const dx = block.left - centerX
@@ -393,22 +260,16 @@ export default function Home() {
     'План адаптации': '/onboarding',
     'Цели': '/goals',
     'Задания': '/tasks',
+    'Магазин': '/shop',
+    'Покупки': '/my-purchases',
   }
-
-  // 4 ультра-премиум кометы с разными характеристиками (очень медленные)
-  const meteors = [
-    { left: '4%', top: '12%', dist: 900, dur: 150, delay: 12, angle: 32, length: 280 },
-    { left: '76%', top: '8%', dist: 1100, dur: 190, delay: 45, angle: -28, length: 320 },
-    { left: '92%', top: '62%', dist: 950, dur: 165, delay: 95, angle: -158, length: 260 },
-    { left: '16%', top: '80%', dist: 1050, dur: 205, delay: 140, angle: 22, length: 300 },
-  ]
 
   return (
     <>
       <Head><title>Кармический банк</title></Head>
       <div onMouseMove={handleMouseMove} style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
 
-        {/* Звёзды (параллакс) */}
+        {/* Звёзды */}
         <div ref={starsRef} style={{ position: 'absolute', top: '-2%', left: '-2%', width: '104%', height: '104%', zIndex: 0, transition: 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}>
           {Array.from({ length: 180 }).map((_, i) => {
             const size = Math.random() * 2.2 + 0.5
@@ -427,26 +288,25 @@ export default function Home() {
           })}
         </div>
 
-        {/* Туманности (мягкие переливы, органично) */}
+        {/* Туманности-фон */}
         <div ref={nebulaRef} style={{ position: 'absolute', top: '-3%', left: '-3%', width: '106%', height: '106%', zIndex: 1, transition: 'transform 2s cubic-bezier(0.22, 1, 0.36, 1)' }}>
           <div style={{ position: 'absolute', top: '18%', left: '-4%', width: '38%', height: '38%', background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.06) 0%, transparent 70%)', filter: 'blur(55px)', animation: 'nebulaDrift1 220s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', top: '55%', left: '30%', width: '28%', height: '28%', background: 'radial-gradient(ellipse at center, rgba(160,233,255,0.04) 0%, transparent 70%)', filter: 'blur(65px)', animation: 'nebulaDrift3 180s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Мягкие переливы снизу (возвращены, органично) */}
+        {/* СВЕРХНОВЫЕ-ТУМАННОСТИ — в глубине, справа, не трогают баланс и центр */}
+        <DeepSupernova left="80%" top="16%" delay={20} duration={150} size={150} />
+        <DeepSupernova left="72%" top="82%" delay={95} duration={180} size={130} />
+
+        {/* КОМЕТЫ — маленькие и далёкие */}
+        <DeepComet startX="6%" startY="75%" angle={-24} dist={1400} dur={70} delay={8} scale={0.8} />
+        <DeepComet startX="92%" startY="20%" angle={156} dist={1500} dur={85} delay={48} scale={0.7} />
+
+        {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.18) 0%, rgba(255,100,50,0.08) 40%, transparent 75%)', filter: 'blur(18px)', animation: 'breathe1 38s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '-8%', width: '115%', height: '100%', background: 'radial-gradient(ellipse at 28% 100%, rgba(255,100,150,0.1) 0%, transparent 70%)', filter: 'blur(22px)', animation: 'breathe2 46s ease-in-out infinite alternate' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: '-8%', width: '115%', height: '100%', background: 'radial-gradient(ellipse at 72% 100%, rgba(130,100,255,0.12) 0%, transparent 70%)', filter: 'blur(24px)', animation: 'breathe3 54s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.16) 0%, rgba(255,100,50,0.07) 40%, transparent 75%)', filter: 'blur(18px)', animation: 'breathe1 40s ease-in-out infinite alternate' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: '-8%', width: '115%', height: '100%', background: 'radial-gradient(ellipse at 72% 100%, rgba(130,100,255,0.1) 0%, transparent 70%)', filter: 'blur(24px)', animation: 'breathe3 56s ease-in-out infinite alternate' }} />
         </div>
-
-        {/* Ультра-премиум кометы */}
-        {meteors.map((m, i) => <PremiumMeteor key={i} {...m} />)}
-
-        {/* Кинематографичные сверхновые (очень редкие, 180-240s) */}
-        <CinematicSupernova left="11%" top="23%" delay={25} duration={210} coreTint="#a0e9ff" ringTint="#c084fc" dustTint="#a0e9ff" />
-        <CinematicSupernova left="89%" top="75%" delay={120} duration={240} coreTint="#ffb3c6" ringTint="#FFD700" dustTint="#ffb3c6" />
 
         {/* Аккреционный диск */}
         <div style={{
@@ -459,14 +319,14 @@ export default function Home() {
           pointerEvents: 'none', zIndex: 4,
         }} />
 
-        {/* ЧЁРНАЯ ДЫРА — очень медленное дыхание (30s) */}
+        {/* ЧЁРНАЯ ДЫРА */}
         <div style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: 110, height: 110, zIndex: 5, animation: 'holeBreath 30s ease-in-out infinite' }}>
           <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.45) 0%, rgba(255,100,0,0.2) 30%, transparent 62%)', filter: 'blur(16px)', animation: 'orbitSpin 90s linear infinite' }} />
           <div style={{ position: 'absolute', top: '-6%', left: '-6%', width: '112%', height: '112%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.55) 0%, rgba(200,100,255,0.22) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 70s linear infinite reverse' }} />
           <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.5), 0 0 90px rgba(255,180,0,0.28)', filter: 'blur(2px)' }} />
         </div>
 
-        {/* Лучи-рукава (очень медленно пульсируют) */}
+        {/* Лучи */}
         {beams.map((beam, idx) => (
           <div key={`beam-${idx}`} style={{
             position: 'absolute', left: centerX + '%', top: centerY + '%',
@@ -479,7 +339,7 @@ export default function Home() {
           }} />
         ))}
 
-        {/* ОРБИТАЛЬНЫЕ КНОПКИ: гравитация 30s → дрейф 130s → hover */}
+        {/* 8 ОРБИТАЛЬНЫХ КНОПОК */}
         {blocks.map((block, idx) => {
           const [c1, c2] = block.colors
           const dx = block.left - centerX
@@ -519,12 +379,12 @@ export default function Home() {
                     background: `linear-gradient(135deg, ${c1}, ${c2})`,
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.6))',
-                    textAlign: 'center',
+                    textAlign: 'center', whiteSpace: 'nowrap',
                   }}>{block.title}</div>
                   {block.sub && (
                     <div style={{
                       fontSize: 13, fontWeight: 400, color: '#eaf0fb',
-                      filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center',
+                      filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center', whiteSpace: 'nowrap',
                     }}>{block.sub}</div>
                   )}
                 </div>
@@ -533,17 +393,23 @@ export default function Home() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА (парящий) — только Перевести и Операции === */}
-        <div style={{ position: 'absolute', left: '2.5%', top: '2%', zIndex: 20, animation: 'driftBalance 55s ease-in-out infinite alternate', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Link href="/" style={{ fontSize: 11, color: '#888', textDecoration: 'none', marginBottom: 10, transition: 'color 0.5s ease' }}
+        {/* === БЛОК БАЛАНСА (растянут, выровнен) === */}
+        <div style={{
+          position: 'absolute', left: '2.5%', top: '2%', zIndex: 20,
+          animation: 'driftBalance 55s ease-in-out infinite alternate',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          minWidth: 300, padding: '8px 24px',
+        }}>
+          <Link href="/" style={{ fontSize: 11, color: '#888', textDecoration: 'none', marginBottom: 12, transition: 'color 0.5s ease', alignSelf: 'flex-start' }}
             onMouseEnter={(e) => e.currentTarget.style.color = '#a0e9ff'}
             onMouseLeave={(e) => e.currentTarget.style.color = '#888'}>
             На главную
           </Link>
-          <div style={{ fontSize: 52, fontWeight: 600, lineHeight: 1, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 14px rgba(100,200,255,0.9)) drop-shadow(0 0 28px rgba(255,150,200,0.6))', animation: 'rainbowShift 12s ease-in-out infinite alternate', marginBottom: 4 }}>{balance}</div>
-          <div style={{ fontSize: 12, fontWeight: 300, color: 'rgba(255,255,255,0.85)', textShadow: '0 0 8px rgba(100,200,255,0.7)', letterSpacing: 2, marginBottom: 20 }}>{karmikWord}</div>
-          <div style={{ width: 70, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent)', marginBottom: 16 }} />
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+          <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', textShadow: '0 0 8px rgba(160,233,255,0.6)', marginBottom: 6 }}>Баланс</div>
+          <div style={{ fontSize: 56, fontWeight: 600, lineHeight: 1, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 14px rgba(100,200,255,0.9)) drop-shadow(0 0 28px rgba(255,150,200,0.6))', animation: 'rainbowShift 12s ease-in-out infinite alternate', marginBottom: 4 }}>{balance}</div>
+          <div style={{ fontSize: 12, fontWeight: 300, color: 'rgba(255,255,255,0.85)', textShadow: '0 0 8px rgba(100,200,255,0.7)', letterSpacing: 2, marginBottom: 18 }}>{karmikWord}</div>
+          <div style={{ width: '70%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent)', marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 40, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             {[
               { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
               { label: 'Операции', path: '/history', color: '#ffb3c6' },
@@ -560,27 +426,28 @@ export default function Home() {
                   e.currentTarget.firstChild.style.color = 'rgba(255,255,255,0.6)'
                   e.currentTarget.firstChild.style.textShadow = '0 0 6px rgba(100,200,255,0.4)'
                 }}>
-                <div style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.6)', textShadow: '0 0 6px rgba(100,200,255,0.4)', transition: 'all 0.5s ease', marginBottom: 5 }}>{btn.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.6)', textShadow: '0 0 6px rgba(100,200,255,0.4)', transition: 'all 0.5s ease', marginBottom: 5 }}>{btn.label}</div>
                 <div style={{ width: 3, height: 3, borderRadius: '50%', background: btn.color, margin: '0 auto', boxShadow: `0 0 6px ${btn.color}` }} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ (парящий, звание + энергия) === */}
-        <div style={{ position: 'absolute', left: '2.5%', top: 250, zIndex: 20, animation: 'driftGoals 60s ease-in-out infinite alternate', width: 250 }}>
-          {/* Звание (уровень мастерства) */}
-          <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ (выровнен по ширине баланса) === */}
+        <div style={{
+          position: 'absolute', left: '2.5%', top: 260, zIndex: 20,
+          animation: 'driftGoals 60s ease-in-out infinite alternate',
+          width: 300, padding: '0 24px', boxSizing: 'border-box',
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(192,132,252,0.4)', marginBottom: 4 }}>Уровень мастерства</div>
             <div style={{ fontSize: 22, fontWeight: 600, background: 'linear-gradient(135deg, #c084fc, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.7))', marginBottom: 3 }}>{mastery.title}</div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', textShadow: '0 0 6px rgba(192,132,252,0.5)', letterSpacing: 1 }}>Этап {mastery.stage} из {mastery.stagesTotal}</div>
           </div>
-
-          {/* Кармическая энергия — цифры */}
           <div style={{ textAlign: 'center', marginBottom: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(255,215,0,0.4)', marginBottom: 4 }}>Кармическая энергия</div>
             <div style={{
-              fontSize: 24, fontWeight: 600,
+              fontSize: 26, fontWeight: 600,
               background: 'linear-gradient(135deg, #FFD700, #ffb3c6, #a0e9ff)',
               backgroundSize: '200% 200%',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
@@ -592,12 +459,9 @@ export default function Home() {
               До «{stages[mastery.stage]}»: {energyRemaining.toLocaleString('ru')} энергии
             </div>
           </div>
-
-          {/* Прогресс до следующего звания */}
-          <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 18, marginTop: 10 }}>
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 16, marginTop: 10 }}>
             <div style={{ height: '100%', width: progressPercent + '%', background: 'linear-gradient(90deg, #c084fc, #FFD700)', borderRadius: 2, boxShadow: '0 0 8px rgba(255,215,0,0.6)', animation: 'progressPulse 6s ease-in-out infinite' }} />
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
             {skills.map((skill, idx) => (
               <div key={idx}>
@@ -627,10 +491,8 @@ export default function Home() {
         @keyframes rainbowShift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
         @keyframes progressPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
         @keyframes breathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
-        @keyframes breathe2 { 0% { opacity: 0.5; transform: scaleY(1.03) translateX(-1%); } 100% { opacity: 0.9; transform: scaleY(1.12) translateX(1%); } }
         @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
 
-        /* Дыхание дыры и гравитация — 30s синхронно, очень медленно */
         @keyframes holeBreath {
           0%, 100% { transform: translate(-50%, -50%) scale(0.93); }
           50% { transform: translate(-50%, -50%) scale(1.12); }
@@ -640,79 +502,31 @@ export default function Home() {
           50% { transform: translate(calc(var(--ux) * -18px), calc(var(--uy) * -18px)); }
         }
 
-        /* УЛЬТРА-ПРЕМИУМ КОМЕТА — путь + волнистость + искры */
-        @keyframes meteorPath {
-          0%, 100% { opacity: 0; transform: rotate(var(--rot)) translateX(0); }
-          3% { opacity: 1; }
-          22% { opacity: 1; transform: rotate(var(--rot)) translateX(calc(var(--dist) * 0.55)); }
-          30% { opacity: 0; transform: rotate(var(--rot)) translateX(var(--dist)); }
-          30.01%, 99.99% { opacity: 0; }
+        /* КОМЕТА: путь с плавным появлением/исчезнением, базово невидима */
+        @keyframes cometPath {
+          0%, 100% { opacity: 0; transform: rotate(0deg) translateX(0); }
+          4% { opacity: 0.7; }
+          26% { opacity: 0.7; transform: rotate(0deg) translateX(calc(var(--dist) * 0.6)); }
+          34% { opacity: 0; transform: rotate(0deg) translateX(var(--dist)); }
+          34.01%, 99.99% { opacity: 0; }
         }
-        @keyframes meteorSine {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(2px); }
-        }
-        @keyframes meteorTwinkle {
-          0%, 100% { opacity: 0.85; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.15); }
-        }
-        @keyframes meteorSpark {
+        @keyframes cometSpark {
           0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
-          15% { opacity: 1; transform: translate(0, 0) scale(1); }
+          15% { opacity: 0.9; transform: translate(0, 0) scale(1); }
           100% { opacity: 0; transform: translate(var(--driftX), var(--driftY)) scale(0.2); }
         }
 
-        /* КИНЕМАТОГРАФИЧНАЯ СВЕРХНОВАЯ — асимметричный взрыв со спиральными фрагментами */
-        @keyframes snCoreBurst {
-          0%, 92% { opacity: 0; transform: scale(0); }
-          93.5% { opacity: 1; transform: scale(0.4); }
-          95% { opacity: 0.95; transform: scale(1); }
-          97.5% { opacity: 0.4; transform: scale(1.3); }
-          99%, 100% { opacity: 0; transform: scale(1.6); }
-        }
-        @keyframes snChromatic {
-          0%, 92% { opacity: 0; }
-          94% { opacity: 0.8; }
-          98.5%, 100% { opacity: 0; }
-        }
-        @keyframes snShockwave1 {
-          0%, 93% { opacity: 0; transform: scale(0.3); }
-          94% { opacity: 0.9; }
-          99.5%, 100% { opacity: 0; transform: scale(2.6); }
-        }
-        @keyframes snShockwave2 {
-          0%, 93.5% { opacity: 0; transform: scale(0.25); }
-          94.5% { opacity: 0.7; }
-          99.5%, 100% { opacity: 0; transform: scale(2.2); }
-        }
-        @keyframes snShockwave3 {
-          0%, 94% { opacity: 0; transform: scale(0.2); }
-          95% { opacity: 0.6; }
-          99.5%, 100% { opacity: 0; transform: scale(1.8); }
-        }
-        /* Спиральные фрагменты — каждый со своей кривой через midX/midY */
-        @keyframes snFragment {
-          0%, 93% { opacity: 0; transform: translate(0, 0); }
-          94% { opacity: 1; transform: translate(var(--midX), var(--midY)); }
-          99.5%, 100% { opacity: 0; transform: translate(var(--endX), var(--endY)); }
-        }
-        /* Остаточная туманность — появляется и держится дольше взрыва */
-        @keyframes snRemnant {
-          0%, 95% { opacity: 0; }
-          96% { opacity: 0.3; }
-          99.5% { opacity: 0.2; }
-          100% { opacity: 0; }
-        }
-        @keyframes snRemnantGlow {
-          0%, 95% { opacity: 0; }
-          96% { opacity: 1; }
-          99.5% { opacity: 0.7; }
-          100% { opacity: 0; }
+        /* СВЕРХНОВАЯ-ТУМАННОСТЬ: медленное расширение и затухание, базово невидима */
+        @keyframes snNebula {
+          0%, 100% { opacity: 0; transform: scale(0.5); }
+          10% { opacity: 0.55; }
+          30% { opacity: 0.5; transform: scale(1); }
+          55% { opacity: 0.25; transform: scale(1.25); }
+          70%, 99.99% { opacity: 0; transform: scale(1.45); }
         }
 
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
-        @keyframes nebulaDrift3 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(7%,-5%) scale(1.08); } }
 
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
