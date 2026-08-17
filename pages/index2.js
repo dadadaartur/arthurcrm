@@ -77,7 +77,7 @@ function CorporateLanding() {
   )
 }
 
-// ============ ГЛАВНАЯ (дизайн v2) ============
+// ============ ГЛАВНАЯ (дизайн v3 — парящие блоки) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -85,7 +85,6 @@ export default function Home() {
   const [stats, setStats] = useState({ active: 0, completed: 0, earned: 0 })
   const [pageLoading, setPageLoading] = useState(true)
 
-  // Тестовые характеристики сотрудника (в проде — из БД)
   const [skills] = useState([
     { name: 'Эффективность', value: 82, max: 100, color: '#a0e9ff' },
     { name: 'Обучаемость', value: 67, max: 100, color: '#c084fc' },
@@ -208,87 +207,74 @@ export default function Home() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА (переделанный) === */}
+        {/* === БАЛАНС (парящий, без фона — часть экосистемы) === */}
         <div style={{
-          position: 'absolute', left: '2.5%', top: '2%', zIndex: 20,
+          position: 'absolute', left: '3%', top: '4%', zIndex: 20,
           animation: 'driftBalance 25s ease-in-out infinite alternate',
-          background: 'rgba(10,15,30,0.4)',
-          backdropFilter: 'blur(16px)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255,215,0,0.15)',
-          boxShadow: '0 0 40px rgba(255,215,0,0.08), inset 0 0 20px rgba(160,233,255,0.03)',
-          padding: '24px 32px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
-          {/* Тонкая надпись "Баланс" */}
-          <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 8, textAlign: 'center' }}>Баланс</div>
-          
-          <div style={{ fontSize: 48, fontWeight: 600, fontFamily: 'Inter, sans-serif', background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 12px rgba(100,200,255,0.8)) drop-shadow(0 0 25px rgba(255,150,200,0.6))', animation: 'rainbowShift 4s ease-in-out infinite alternate', lineHeight: 1, marginBottom: 4, textAlign: 'center' }}>{balance}</div>
-          
-          <div style={{ fontSize: 13, fontWeight: 300, fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,0.85)', textShadow: '0 0 8px rgba(100,200,255,0.7), 0 0 16px rgba(255,150,200,0.5)', letterSpacing: 2, marginBottom: 20, textAlign: 'center' }}>{karmikWord}</div>
-          
-          {/* Разделительная линия */}
-          <div style={{ width: '60%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent)', margin: '0 auto 18px' }} />
-          
-          {/* Только "История операций" и "Перевести" */}
-          <div style={{ display: 'flex', gap: 32, justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', textShadow: '0 0 8px rgba(160,233,255,0.6)', marginBottom: 6 }}>Баланс</div>
+          <div style={{
+            fontSize: 52, fontWeight: 600, lineHeight: 1,
+            background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)',
+            backgroundSize: '200% 200%',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 14px rgba(100,200,255,0.9)) drop-shadow(0 0 28px rgba(255,150,200,0.6))',
+            animation: 'rainbowShift 4s ease-in-out infinite alternate',
+            marginBottom: 4,
+          }}>{balance}</div>
+          <div style={{ fontSize: 12, fontWeight: 300, color: 'rgba(255,255,255,0.8)', textShadow: '0 0 8px rgba(100,200,255,0.7)', letterSpacing: 2, marginBottom: 16 }}>{karmikWord}</div>
+          <div style={{ width: 70, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent)', marginBottom: 14 }} />
+          <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
             {[
               { label: 'История операций', path: '/history', color: '#ffb3c6' },
-              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' }
+              { label: 'Перевести', path: '/transfer', color: '#a0e9ff' },
             ].map((btn, idx) => (
-              <div key={idx} style={{ textAlign: 'center' }}>
-                <div onClick={() => router.push(btn.path)} style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textShadow: '0 0 5px rgba(100,200,255,0.4)', transition: 'all 0.3s ease', marginBottom: 6 }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = btn.color; e.currentTarget.style.textShadow = `0 0 10px ${btn.color}`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.textShadow = '0 0 5px rgba(100,200,255,0.4)'; }}>
-                  {btn.label}
-                </div>
+              <div key={idx} style={{ textAlign: 'center', cursor: 'pointer' }}
+                onClick={() => router.push(btn.path)}
+                onMouseEnter={(e) => { e.currentTarget.style.color = btn.color; e.currentTarget.style.textShadow = `0 0 12px ${btn.color}`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.textShadow = '0 0 6px rgba(100,200,255,0.4)'; }}>
+                <div style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,0.6)', textShadow: '0 0 6px rgba(100,200,255,0.4)', transition: 'all 0.3s ease', marginBottom: 5 }}>{btn.label}</div>
                 <div style={{ width: 3, height: 3, borderRadius: '50%', background: btn.color, margin: '0 auto', boxShadow: `0 0 6px ${btn.color}` }} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* === БЛОК ЦЕЛЕЙ (ультрапремиум) === */}
+        {/* === ЦЕЛИ (парящие, без фона и заголовка — часть экосистемы) === */}
         <div style={{
-          position: 'absolute', left: '2.5%', top: '280px', zIndex: 20,
-          animation: 'driftBalance 25s ease-in-out infinite alternate',
-          background: 'rgba(10,15,30,0.4)',
-          backdropFilter: 'blur(16px)',
-          borderRadius: '20px',
-          border: '1px solid rgba(192,132,252,0.2)',
-          boxShadow: '0 0 40px rgba(192,132,252,0.08), inset 0 0 20px rgba(160,233,255,0.03)',
-          padding: '24px 28px',
-          width: '280px',
+          position: 'absolute', left: '3%', top: '250px', zIndex: 20,
+          animation: 'driftGoals 22s ease-in-out infinite alternate',
+          width: 250,
         }}>
-          {/* Заголовок */}
-          <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(192,132,252,0.7)', marginBottom: 16, textAlign: 'center' }}>Цели сотрудника</div>
-          
-          {/* Текущий уровень */}
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <div style={{ fontSize: 20, fontWeight: 600, background: 'linear-gradient(135deg, #c084fc, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 8px rgba(192,132,252,0.6))', marginBottom: 4 }}>{currentLevel.name}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 12 }}>Ранг {currentLevel.rank} из {ranks.length}</div>
-            
-            {/* Прогресс до следующего уровня */}
-            <div style={{ position: 'relative', width: '100%', height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 6 }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${progressPercent}%`, background: 'linear-gradient(90deg, #c084fc, #FFD700)', borderRadius: 2, animation: 'progressPulse 3s ease-in-out infinite' }} />
-            </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>До {ranks[currentLevel.rank]}: {xpRemaining} XP ({progressPercent}%)</div>
+          {/* Звание */}
+          <div style={{ textAlign: 'center', marginBottom: 14 }}>
+            <div style={{
+              fontSize: 20, fontWeight: 600,
+              background: 'linear-gradient(135deg, #c084fc, #FFD700)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.7))',
+              marginBottom: 3,
+            }}>{currentLevel.name}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', textShadow: '0 0 6px rgba(192,132,252,0.5)', letterSpacing: 1 }}>Ранг {currentLevel.rank} из {ranks.length}</div>
           </div>
-          
-          {/* Разделитель */}
-          <div style={{ width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(192,132,252,0.3), transparent)', marginBottom: 16 }} />
-          
-          {/* Характеристики */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Тонкая линия прогресса до следующего ранга */}
+          <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 5 }}>
+            <div style={{ height: '100%', width: `${progressPercent}%`, background: 'linear-gradient(90deg, #c084fc, #FFD700)', borderRadius: 2, boxShadow: '0 0 8px rgba(255,215,0,0.6)', animation: 'progressPulse 3s ease-in-out infinite' }} />
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', textShadow: '0 0 5px rgba(192,132,252,0.4)', textAlign: 'center', marginBottom: 18 }}>До {ranks[currentLevel.rank]}: {xpRemaining} XP ({progressPercent}%)</div>
+          {/* Характеристики — тонкие светящиеся линии */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
             {skills.map((skill, idx) => {
               const percent = Math.round((skill.value / skill.max) * 100)
               return (
                 <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
-                    <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{skill.name}</span>
-                    <span style={{ color: skill.color, fontWeight: 600 }}>{percent}%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', textShadow: '0 0 6px rgba(255,255,255,0.3)', fontWeight: 500 }}>{skill.name}</span>
+                    <span style={{ fontSize: 11, color: skill.color, textShadow: `0 0 6px ${skill.color}`, fontWeight: 600 }}>{percent}%</span>
                   </div>
-                  <div style={{ position: 'relative', width: '100%', height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${percent}%`, background: `linear-gradient(90deg, ${skill.color}40, ${skill.color})`, borderRadius: 2, animation: `skillGrow${idx} 2s ease-out forwards` }} />
+                  <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${percent}%`, background: `linear-gradient(90deg, ${skill.color}40, ${skill.color})`, borderRadius: 2, boxShadow: `0 0 6px ${skill.color}`, animation: `skillGrow${idx} 2s ease-out forwards` }} />
                   </div>
                 </div>
               )
@@ -309,6 +295,7 @@ export default function Home() {
         @keyframes drift1 { 0% { transform: translate(-50%, -50%) translateX(6px) translateY(-6px); } 100% { transform: translate(-50%, -50%) translateX(-6px) translateY(6px); } }
         @keyframes drift2 { 0% { transform: translate(-50%, -50%) translateX(-7px) translateY(-5px); } 100% { transform: translate(-50%, -50%) translateX(7px) translateY(5px); } }
         @keyframes driftBalance { 0% { transform: translate(0, 0); } 100% { transform: translate(5px, -5px); } }
+        @keyframes driftGoals { 0% { transform: translate(0, 0); } 100% { transform: translate(-4px, 6px); } }
         @keyframes rainbowShift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
         @keyframes progressPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
