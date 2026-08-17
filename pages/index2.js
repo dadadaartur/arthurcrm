@@ -53,53 +53,46 @@ function CorporateLanding() {
 }
 
 // =====================================================================
-// ПАДАЮЩАЯ ЗВЕЗДА: заострённый тающий хвост + яркая голова со свечением.
-// Летит по диагонали в глубине (за чёрной дырой), плавно появляется и гаснет.
+// ГЛУБОКАЯ КОМЕТА: маленькая, далеко, в глубине. Голова пролетает быстро,
+// хвост остаётся и медленно расплывается как дым.
 // =====================================================================
-function ShootingStar({ fly, dur, delay, rotate, scale = 0.8, uid }) {
+function DeepSmokeComet({ left, top, angle, dist, dur, delay, uid, scale = 0.5 }) {
   return (
     <div style={{
-      position: 'absolute', left: 0, top: 0, zIndex: 3, pointerEvents: 'none',
-      opacity: 0,
-      animation: `${fly} ${dur}s linear ${delay}s infinite`,
+      position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
+      transform: `rotate(${angle}deg)`,
+      '--dist': dist + 'px',
+      filter: 'blur(1px)',
     }}>
-      <div style={{ transform: `rotate(${rotate}deg) scale(${scale})`, transformOrigin: '0 0', filter: 'blur(0.4px)' }}>
-        <svg width="240" height="48" viewBox="0 0 240 48" style={{ overflow: 'visible', display: 'block' }}>
-          <defs>
-            <linearGradient id={`${uid}-tail`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="rgba(160,200,255,0)" />
-              <stop offset="0.55" stopColor="rgba(180,215,255,0.28)" />
-              <stop offset="0.85" stopColor="rgba(220,240,255,0.7)" />
-              <stop offset="1" stopColor="rgba(255,255,255,0.95)" />
-            </linearGradient>
-            <radialGradient id={`${uid}-head`}>
-              <stop offset="0" stopColor="#ffffff" />
-              <stop offset="30%" stopColor="rgba(225,240,255,0.9)" />
-              <stop offset="60%" stopColor="rgba(160,210,255,0.35)" />
-              <stop offset="100%" stopColor="rgba(140,190,255,0)" />
-            </radialGradient>
-            <filter id={`${uid}-glow`} x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="2.2" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-            <filter id={`${uid}-soft`} x="-100%" y="-100%" width="300%" height="300%">
-              <feGaussianBlur stdDeviation="3.5" />
-            </filter>
-          </defs>
-          {/* Широкий мягкий ореол хвоста */}
-          <path d="M 12 24 L 172 13 L 232 24 L 172 35 Z" fill={`url(#${uid}-tail)`} opacity="0.3" filter={`url(#${uid}-soft)`} />
-          {/* Чёткий заострённый хвост */}
-          <path d="M 34 24 L 226 21.2 L 232 24 L 226 26.8 Z" fill={`url(#${uid}-tail)`} />
-          {/* Голова */}
-          <circle cx="232" cy="24" r="8" fill={`url(#${uid}-head)`} filter={`url(#${uid}-glow)`} />
-          <circle cx="232" cy="24" r="2.2" fill="#ffffff" filter={`url(#${uid}-glow)`} />
-        </svg>
+      <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
+        {/* Широкий дым (расплывается сильнее всего) */}
+        <div style={{
+          position: 'absolute', left: 0, top: -3, height: 6, width: dist,
+          transformOrigin: '0 50%', borderRadius: 4,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(180,200,255,0.10) 55%, rgba(220,235,255,0.25) 100%)',
+          animation: `cometSmokeDeep ${dur}s linear ${delay}s infinite`,
+        }} />
+        {/* Тонкий след: рисуется за головой, потом медленно расплывается */}
+        <div style={{
+          position: 'absolute', left: 0, top: -0.75, height: 1.5, width: dist,
+          transformOrigin: '0 50%', borderRadius: 2,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(200,220,255,0.2) 55%, rgba(240,248,255,0.6) 92%, rgba(255,255,255,0.8) 100%)',
+          animation: `cometTrailDeep ${dur}s linear ${delay}s infinite`,
+        }} />
+        {/* Голова: пролетает быстро */}
+        <div style={{ position: 'absolute', left: 0, top: 0, animation: `cometHeadDeep ${dur}s linear ${delay}s infinite` }}>
+          <div style={{
+            position: 'absolute', left: -2.5, top: -2.5, width: 5, height: 5, borderRadius: '50%',
+            background: 'radial-gradient(circle, #fff 0%, rgba(220,240,255,0.8) 50%, transparent 100%)',
+            boxShadow: '0 0 6px rgba(255,255,255,0.9), 0 0 14px rgba(170,210,255,0.5)',
+          }} />
+        </div>
       </div>
     </div>
   )
 }
 
-// ============ ГЛАВНАЯ (v12 — столпы картинкой + падающие звёзды) ============
+// ============ ГЛАВНАЯ (v13) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -174,7 +167,7 @@ export default function Home() {
   return (
     <>
       <Head><title>Кармический банк</title></Head>
-      <div onMouseMove={handleMouseMove} style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+      <div onMouseMove={handleMouseMove} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
 
         {/* Звёзды */}
         <div ref={starsRef} style={{ position: 'absolute', top: '-2%', left: '-2%', width: '104%', height: '104%', zIndex: 0, transition: 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}>
@@ -201,8 +194,11 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* ============ СТОЛПЫ ТВОРЕНИЯ — правый нижний угол ============ */}
-        {/* Тёплое свечение позади столпов */}
+        {/* ГЛУБОКИЕ КОМЕТЫ: маленькие, далеко, голова быстрая, хвост-дым медленный */}
+        <DeepSmokeComet left="8%" top="20%" angle={-18} dist={520} dur={70} delay={10} uid="dca" scale={0.5} />
+        <DeepSmokeComet left="70%" top="10%" angle={160} dist={560} dur={85} delay={48} uid="dcb" scale={0.42} />
+
+        {/* СТОЛПЫ ТВОРЕНИЯ — правый нижний угол */}
         <div style={{
           position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none',
           width: '52%', height: '70%',
@@ -210,7 +206,6 @@ export default function Home() {
           filter: 'blur(30px)',
           animation: 'pillarsBreath 22s ease-in-out infinite alternate',
         }} />
-        {/* Сама картинка: чёрный растворяется через screen */}
         <div style={{
           position: 'absolute', right: -30, bottom: -24, zIndex: 2, pointerEvents: 'none',
           width: 'min(46vw, 620px)',
@@ -229,10 +224,6 @@ export default function Home() {
             }}
           />
         </div>
-
-        {/* ПАДАЮЩИЕ ЗВЁЗДЫ — в глубине, за чёрной дырой */}
-        <ShootingStar fly="starFlyA" dur={58} delay={6} rotate={-32} scale={0.8} uid="ssa" />
-        <ShootingStar fly="starFlyB" dur={74} delay={38} rotate={147} scale={0.65} uid="ssb" />
 
         {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -405,6 +396,29 @@ export default function Home() {
       </div>
 
       <style jsx global>{`
+        /* Убираем горизонтальный скролл */
+        html, body { overflow-x: hidden; }
+        html { scrollbar-width: thin; scrollbar-color: rgba(192,132,252,0.8) rgba(10,15,30,0.6); }
+
+        /* Голографическая вертикальная скролл-лента */
+        ::-webkit-scrollbar { width: 9px; }
+        ::-webkit-scrollbar-track {
+          background: linear-gradient(180deg, rgba(10,15,30,0.7), rgba(20,25,50,0.7));
+          border-left: 1px solid rgba(160,233,255,0.08);
+        }
+        ::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #a0e9ff, #c084fc, #ffb3c6, #FFD700, #a0e9ff);
+          background-size: 100% 300%;
+          border-radius: 8px;
+          border: 2px solid rgba(10,15,30,0.9);
+          box-shadow: 0 0 10px rgba(160,233,255,0.5), 0 0 18px rgba(192,132,252,0.3);
+          animation: holoScroll 6s linear infinite;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          box-shadow: 0 0 14px rgba(160,233,255,0.8), 0 0 24px rgba(192,132,252,0.5);
+        }
+        @keyframes holoScroll { 0% { background-position: 0 0; } 100% { background-position: 0 300%; } }
+
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes accretionSpin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
@@ -428,24 +442,36 @@ export default function Home() {
         }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
-        /* Столпы: медленное дыхание света */
         @keyframes pillarsBreath { 0% { opacity: 0.75; } 100% { opacity: 1; } }
-        /* Падающая звезда А: слева-снизу направо-вверх, за дырой */
-        @keyframes starFlyA {
-          0% { transform: translate(-14vw, 74vh); opacity: 0; }
-          3% { opacity: 0.85; }
-          14% { transform: translate(46vw, 37vh); opacity: 0.85; }
-          18% { transform: translate(55vw, 31vh); opacity: 0; }
-          100% { transform: translate(55vw, 31vh); opacity: 0; }
+
+        /* ГЛУБОКАЯ КОМЕТА: голова быстрая */
+        @keyframes cometHeadDeep {
+          0% { transform: translateX(0); opacity: 0; }
+          1% { opacity: 0.6; }
+          6% { transform: translateX(var(--dist)); opacity: 0.5; }
+          8% { transform: translateX(var(--dist)); opacity: 0; }
+          100% { transform: translateX(var(--dist)); opacity: 0; }
         }
-        /* Падающая звезда Б: справа-сверху налево-вниз */
-        @keyframes starFlyB {
-          0% { transform: translate(108vw, 20vh); opacity: 0; }
-          3% { opacity: 0.75; }
-          15% { transform: translate(52vw, 56vh); opacity: 0.75; }
-          19% { transform: translate(43vw, 62vh); opacity: 0; }
-          100% { transform: translate(43vw, 62vh); opacity: 0; }
+        /* ГЛУБОКАЯ КОМЕТА: след рисуется, потом медленно расплывается как дым */
+        @keyframes cometTrailDeep {
+          0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(0.6px); }
+          1% { opacity: 0.5; }
+          6% { transform: scaleX(1) scaleY(1); opacity: 0.45; filter: blur(0.8px); }
+          20% { transform: scaleX(1) scaleY(1.8); opacity: 0.3; filter: blur(2px); }
+          40% { transform: scaleX(1) scaleY(3); opacity: 0.15; filter: blur(4px); }
+          60% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(6px); }
+          100% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(6px); }
         }
+        /* ГЛУБОКАЯ КОМЕТА: широкий дым */
+        @keyframes cometSmokeDeep {
+          0% { transform: scaleX(0) scaleY(1); opacity: 0; }
+          1% { opacity: 0.4; }
+          6% { transform: scaleX(1) scaleY(1); opacity: 0.35; }
+          25% { transform: scaleX(1) scaleY(2); opacity: 0.22; }
+          55% { transform: scaleX(1) scaleY(3.4); opacity: 0; }
+          100% { transform: scaleX(1) scaleY(3.4); opacity: 0; }
+        }
+
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
         @keyframes skillGrow2 { from { width: 0; } to { width: 91%; } }
