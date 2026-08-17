@@ -1,59 +1,33 @@
 import Link from 'next/link'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
-import NotificationsBell from './NotificationsBell'
 
 function StarsBackground() {
-  const stars = useMemo(() => {
-    const arr = []
-    const count = 300
-    for (let i = 0; i < count; i++) {
-      const roll = Math.random()
-      let size
-      if (roll < 0.70) size = Math.random() * 0.7 + 0.5
-      else if (roll < 0.92) size = Math.random() * 0.8 + 1.2
-      else size = Math.random() * 0.8 + 2.0
-      const c = Math.random()
-      let color
-      if (c < 0.52) color = '#ffffff'
-      else if (c < 0.74) color = '#e3eeff'
-      else if (c < 0.89) color = '#fff7e6'
-      else if (c < 0.97) color = '#ffeccd'
-      else color = '#ffd9a3'
-      arr.push({
-        id: i,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        size,
-        color,
-        opacity: roll >= 0.92 ? Math.random() * 0.4 + 0.6 : Math.random() * 0.45 + 0.3,
-        dur: Math.random() * 7 + 5,
-        delay: Math.random() * 7,
-      })
-    }
-    return arr
-  }, [])
+  useEffect(() => {
+    const container = document.getElementById('real-stars')
+    if (!container || container.children.length > 0) return
 
-  return (
-    <div id="real-stars" className="stars-bg">
-      {stars.map(s => (
-        <div key={s.id} style={{
-          position: 'absolute',
-          left: s.left + '%',
-          top: s.top + '%',
-          width: s.size + 'px',
-          height: s.size + 'px',
-          borderRadius: '50%',
-          background: s.color,
-          boxShadow: s.size >= 2 ? `0 0 ${Math.round(s.size * 2)}px 0 ${s.color}` : 'none',
-          opacity: s.opacity,
-          animation: `realTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite alternate`,
-        }} />
-      ))}
-    </div>
-  )
+    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div')
+      const size = Math.random() * 4 + 1.5
+      star.style.width = size + 'px'
+      star.style.height = size + 'px'
+      star.style.borderRadius = '50%'
+      star.style.background = colors[Math.floor(Math.random() * colors.length)]
+      star.style.position = 'absolute'
+      star.style.left = Math.random() * 100 + '%'
+      star.style.top = Math.random() * 100 + '%'
+      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
+      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
+      star.style.animationDelay = Math.random() * 5 + 's'
+      star.style.opacity = '0'
+      container.appendChild(star)
+    }
+  }, [])
+  return <div id="real-stars" className="stars-bg" />
 }
 
 export default function Layout({ children }) {
@@ -67,7 +41,9 @@ export default function Layout({ children }) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session?.access_token) return
         fetch('/api/platform-admin/me', { headers: { Authorization: `Bearer ${session.access_token}` } })
-          .then(r => r.json()).then(d => setIsPlatformStaff(!!d.isPlatformStaff)).catch(() => {})
+          .then(r => r.json())
+          .then(d => setIsPlatformStaff(!!d.isPlatformStaff))
+          .catch(() => {})
       })
 
       supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -87,13 +63,16 @@ export default function Layout({ children }) {
           if (!res.ok) return
           const { code } = await res.json()
           setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?handoff=${encodeURIComponent(code)}`)
-        } catch (e) {}
+        } catch (e) {
+          // Тихо не показываем кнопку рабочей, если обмен не удался
+        }
       })
     }
-
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
-        .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
+        .then(({ data: comp }) => {
+          if (comp) setCompanyName(comp.name)
+        })
     }
   }, [user, profile])
 
@@ -129,17 +108,16 @@ export default function Layout({ children }) {
 
   const isSuperAdmin = checkIsSuperAdmin(profile)
   const isCompanyAdmin = checkIsCompanyAdmin(profile) || isSuperAdmin
+
   const companyStatus = profile?.companies?.status
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
-  const isFounder = user?.email === 'arturgalkin.ru@mail.ru'
 
   if (isBlockedByModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <div className="premium-card max-w-md text-center relative z-10">
+        <div className="premium-card max-w-md text-center">
           <h1 className="text-xl font-bold text-red-400 mb-3">
             {companyStatus === 'suspended' ? 'Компания заблокирована' : 'Заявка компании отклонена'}
           </h1>
@@ -155,8 +133,7 @@ export default function Layout({ children }) {
   if (isPendingModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
-        <StarsBackground />
-        <div className="premium-card max-w-md text-center relative z-10">
+        <div className="premium-card max-w-md text-center">
           <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
           <p className="text-gray-400 mb-4">
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
@@ -187,15 +164,11 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 text-xs font-medium">
             <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
             <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
+            <Link href="/goals" className="action-btn !py-1.5 !px-4 !text-xs">Мои цели</Link>
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
               CRM Лето
             </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {isFounder && (
-              <Link href="/central-bank" className="action-btn !py-1.5 !px-4 !text-xs" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(212,175,55,0.15))', border: '1px solid rgba(255,215,0,0.4)' }}>
-                Центробанк
-              </Link>
-            )}
             {isPlatformStaff && (
               <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">Модерация площадки</Link>
             )}
@@ -204,12 +177,9 @@ export default function Layout({ children }) {
             )}
           </nav>
         </div>
+
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-
-          {/* Твой колокольчик уведомлений */}
-          <NotificationsBell userId={user.id} />
-
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -223,7 +193,9 @@ export default function Layout({ children }) {
           <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
         </div>
       </header>
+
       <main className="flex-grow relative z-10">{children}</main>
+
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
         © {new Date().getFullYear()} Кармический банк
       </footer>

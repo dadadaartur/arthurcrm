@@ -3,17 +3,15 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
-import DateRangePicker from '../../components/DateRangePicker'
 import { withAuth } from '../../components/withAuth'
-import { getPlural } from '../../lib/format'
 
 function HistoryPage() {
   const router = useRouter()
   const [companyId, setCompanyId] = useState(null)
-  const [all, setAll] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [history, setHistory] = useState([])
   const [filter, setFilter] = useState({ status: '', employee: '', dateFrom: '', dateTo: '' })
   const [page, setPage] = useState(0)
+  const [loading, setLoading] = useState(true)
   const ITEMS_PER_PAGE = 20
 
   useEffect(() => {
@@ -27,156 +25,107 @@ function HistoryPage() {
         .single()
       if (!profile) { router.push('/'); return }
       setCompanyId(profile.company_id)
-      await fetchHistory(profile.company_id)
       setLoading(false)
     }
     init()
   }, [router])
 
-  const fetchHistory = async (compId) => {
+  useEffect(() => {
+    if (companyId) fetchHistory()
+  }, [companyId, page, filter])
+
+  const fetchHistory = async () => {
+    // eq('tasks.company_id', ...) — фильтр по embedded-джойну, который
+    // PostgREST не поддерживает как WHERE на основной таблице: запрос
+    // выполнялся, но company_id не фильтровал — история была пустой.
+    // Решение: получаем id задач компании отдельно, потом JOIN по ним.
     const { data: companyTasks } = await supabase
       .from('tasks')
-      .select('id, title, reward_karma')
-      .eq('company_id', compId)
-    if (!companyTasks?.length) { setAll([]); return }
-    const taskMap = {}
-    companyTasks.forEach(t => { taskMap[t.id] = t })
+      .select('id')
+      .eq('company_id', companyId)
 
-    const { data: rows, error } = await supabase
-      .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, user_id, task_id')
-      .in('task_id', companyTasks.map(t => t.id))
-      .in('status', ['completed', 'rejected', 'in_progress'])
-      .order('completed_at', { ascending: false })
-      .limit(500)
-
-    if (error || !rows) { setAll([]); return }
-
-    // Имена сотрудников одним запросом (embed profiles:user_id ломался
-    // из-за отсутствия FK — отсюда "история не работала")
-    const userIds = [...new Set(rows.map(r => r.user_id))]
-    const nameMap = {}
-    if (userIds.length) {
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('user_id, email, display_name, first_name, last_name')
-        .in('user_id', userIds)
-      ;(profs || []).forEach(p => {
-        nameMap[p.user_id] = [p.first_name, p.last_name].filter(Boolean).join(' ')
-          || p.display_name || p.email || p.user_id.slice(0, 8) + '…'
-      })
+    if (!companyTasks || companyTasks.length === 0) {
+      setHistory([])
+      return
     }
 
-    setAll(rows.map(r => ({
-      ...r,
-      task: taskMap[r.task_id] || null,
-      employee: nameMap[r.user_id] || r.user_id.slice(0, 8) + '…'
-    })))
+    const taskIds = companyTasks.map(t => t.id)
+
+    let query = supabase
+      .from('task_assignments')
+      .select(`
+        id, status, comment, completed_at, reward_karma,
+        user_id,
+        profiles:user_id (email, display_name),
+        tasks:task_id (title, reward_karma, company_id)
+      `)
+      .in('task_id', taskIds)
+      .in('status', ['completed', 'rejected'])
+      .order('completed_at', { ascending: false })
+      .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
+
+    if (filter.status) query = query.eq('status', filter.status)
+    if (filter.dateFrom) query = query.gte('completed_at', filter.dateFrom)
+    if (filter.dateTo) query = query.lte('completed_at', filter.dateTo)
+
+    const { data, error } = await query
+    if (!error && data) {
+      const enriched = data.map(item => ({
+        ...item,
+        employee_email: item.profiles?.email || '',
+        employee_name: item.profiles?.display_name || ''
+      })).filter(item => {
+        if (filter.employee) {
+          return item.employee_email.includes(filter.employee) || item.employee_name.includes(filter.employee)
+        }
+        return true
+      })
+      setHistory(enriched)
+    } else {
+      setHistory([])
+    }
   }
 
-  const filtered = all.filter(h => {
-    if (filter.status && h.status !== filter.status) return false
-    if (filter.employee) {
-      const q = filter.employee.toLowerCase()
-      if (!h.employee.toLowerCase().includes(q)) return false
-    }
-    const refDate = h.completed_at || h.started_at
-    if (filter.dateFrom && refDate) {
-      const from = new Date(filter.dateFrom); from.setHours(0, 0, 0, 0)
-      if (new Date(refDate) < from) return false
-    }
-    if (filter.dateTo && refDate) {
-      const to = new Date(filter.dateTo); to.setHours(23, 59, 59, 999)
-      if (new Date(refDate) > to) return false
-    }
-    return true
-  })
-
-  const paginated = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE)
-
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner text="Загружаем историю…" /></div>
+  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"
-            className="transition-transform group-hover:-translate-x-1">
-            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
-            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>История заданий</h1>
-      </div>
-
-      <div className="premium-card mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div>
-            <label className="text-xs text-gray-400 mb-1 block">Статус</label>
-            <select className="input-field w-auto" value={filter.status}
-              onChange={e => { setFilter({ ...filter, status: e.target.value }); setPage(0) }}>
-              <option value="">Все статусы</option>
-              <option value="completed">Выполнено</option>
-              <option value="rejected">Отклонено</option>
-              <option value="in_progress">В работе</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-1 block">Сотрудник</label>
-            <input type="text" placeholder="Имя или email" className="input-field"
-              style={{ width: 220 }}
-              value={filter.employee}
-              onChange={e => { setFilter({ ...filter, employee: e.target.value }); setPage(0) }} />
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-1 block">Период</label>
-            <DateRangePicker
-              from={filter.dateFrom}
-              to={filter.dateTo}
-              onChange={({ from, to }) => { setFilter({ ...filter, dateFrom: from, dateTo: to }); setPage(0) }}
-            />
-          </div>
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
+      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>История заданий</h1>
+      <div className="dash-card">
+        <div className="flex flex-wrap gap-4 mb-4">
+          <select className="input-field w-auto" value={filter.status} onChange={e => setFilter({...filter, status: e.target.value})}>
+            <option value="">Все статусы</option>
+            <option value="completed">Выполнено</option>
+            <option value="rejected">Отклонено</option>
+          </select>
+          <input type="text" placeholder="Сотрудник (email)" className="input-field w-auto" value={filter.employee} onChange={e => setFilter({...filter, employee: e.target.value})} />
+          <input type="date" className="input-field w-auto" value={filter.dateFrom} onChange={e => setFilter({...filter, dateFrom: e.target.value})} />
+          <input type="date" className="input-field w-auto" value={filter.dateTo} onChange={e => setFilter({...filter, dateTo: e.target.value})} />
+          <button onClick={() => { setPage(0); fetchHistory(); }} className="btn-gold text-xs px-4">Применить</button>
         </div>
-      </div>
-
-      <div className="premium-card">
-        <p className="text-xs text-gray-500 mb-3">
-          {filtered.length} {getPlural(filtered.length, ['запись', 'записи', 'записей'])}
-        </p>
-        <div className="space-y-2">
-          {paginated.length === 0 && <p className="text-gray-400">Нет записей</p>}
-          {paginated.map(h => (
-            <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
-              <div className="min-w-0">
-                <span className="text-white">{h.task?.title || 'Задание удалено'}</span>
-                <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
-                  h.status === 'completed' ? 'bg-green-900 text-green-300' :
-                  h.status === 'rejected' ? 'bg-red-900 text-red-300' :
-                  'bg-orange-900 text-orange-300'
-                }`}>
-                  {h.status === 'completed' ? 'Выполнено' : h.status === 'rejected' ? 'Отклонено' : 'В работе'}
-                </span>
-                <span className="text-gray-500 ml-2">{h.employee}</span>
-                {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
-                <span className="text-xs text-gray-500 ml-2">
-                  {new Date(h.completed_at || h.started_at).toLocaleString('ru')}
-                </span>
+        <div className="max-h-80 overflow-y-auto space-y-2">
+          {history.length === 0 ? (
+            <p className="text-gray-400">Нет записей</p>
+          ) : (
+            history.map(h => (
+              <div key={h.id} className="flex justify-between items-center p-2 rounded bg-gray-800">
+                <div>
+                  <span className="text-white">{h.tasks?.title}</span>
+                  <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>{h.status === 'completed' ? 'Выполнено' : 'Отклонено'}</span>
+                  <span className="text-gray-500 ml-2">{h.employee_email}</span>
+                  {h.comment && <span className="text-gray-500 ml-2">— {h.comment}</span>}
+                  <span className="text-xs text-gray-500 ml-2">{new Date(h.completed_at).toLocaleString('ru')}</span>
+                </div>
+                <span className="text-sm text-yellow-400">+ {h.tasks?.reward_karma} кармиков</span>
               </div>
-              <span className="text-sm text-yellow-400 flex-shrink-0 ml-3">+ {h.task?.reward_karma ?? 0} кармиков</span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-
-        {filtered.length > ITEMS_PER_PAGE && (
-          <div className="flex justify-between items-center mt-4">
-            <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="btn-glass text-xs">Назад</button>
-            <span className="text-xs text-gray-500">
-              {page + 1} из {Math.ceil(filtered.length / ITEMS_PER_PAGE)}
-            </span>
-            <button onClick={() => setPage(p => p + 1)}
-              disabled={(page + 1) * ITEMS_PER_PAGE >= filtered.length} className="btn-glass text-xs">Вперед</button>
-          </div>
-        )}
+        <div className="flex justify-between mt-4">
+          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="btn-outline text-xs">Назад</button>
+          <button onClick={() => setPage(p => p + 1)} className="btn-outline text-xs">Вперед</button>
+        </div>
       </div>
     </div>
   )

@@ -31,40 +31,19 @@ function ReviewPage() {
   }, [router])
 
   const fetchPendingReviews = async (compId) => {
-    const { data: companyTasks } = await supabase
-      .from('tasks')
-      .select('id, title, company_id, reward_karma, description')
-      .eq('company_id', compId)
-    if (!companyTasks?.length) { setPendingReviews([]); return }
-    const taskMap = {}
-    companyTasks.forEach(t => { taskMap[t.id] = t })
-
     const { data, error } = await supabase
       .from('task_assignments')
-      .select('id, status, comment, started_at, deadline_at, task_id, user_id')
+      .select('id, status, comment, started_at, deadline_at, task_id, user_id, tasks!inner( id, title, company_id, reward_karma )')
       .eq('status', 'pending_review')
-      .in('task_id', companyTasks.map(t => t.id))
+      .eq('tasks.company_id', compId)
 
-    if (error || !data) { setPendingReviews([]); return }
-
-    const userIds = [...new Set(data.map(i => i.user_id))]
-    const nameMap = {}
-    if (userIds.length) {
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('user_id, email, display_name, first_name, last_name')
-        .in('user_id', userIds)
-      ;(profs || []).forEach(p => {
-        nameMap[p.user_id] = [p.first_name, p.last_name].filter(Boolean).join(' ')
-          || p.display_name || p.email || ''
-      })
-    }
-
-    setPendingReviews(data.map(item => ({
-      ...item,
-      tasks: taskMap[item.task_id] || null,
-      employee_name: nameMap[item.user_id] || ''
-    })))
+    if (!error && data) {
+      const enriched = await Promise.all(data.map(async (item) => {
+        const { data: profileData } = await supabase.from('profiles').select('email, display_name').eq('user_id', item.user_id).single()
+        return { ...item, employee_email: profileData?.email || '', employee_name: profileData?.display_name || '' }
+      }))
+      setPendingReviews(enriched)
+    } else setPendingReviews([])
   }
 
   const handleReview = async (assignmentId, action) => {
@@ -82,45 +61,38 @@ function ReviewPage() {
       fetchPendingReviews(companyId)
     } else {
       const err = await res.json()
-      setSuccessModal({ show: true, message: 'Ошибка: ' + (err.error || 'Неизвестная ошибка') })
+      alert('Ошибка: ' + (err.error || 'Неизвестная ошибка'))
     }
   }
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner text="Загружаем задания…" /></div>
+  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"
-            className="transition-transform group-hover:-translate-x-1">
-            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
-            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Задания на проверке</h1>
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
+      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Задания на проверке</h1>
+      <div className="dash-card">
+        {pendingReviews.length === 0 ? (
+          <p className="text-gray-400">Нет заданий, ожидающих проверки</p>
+        ) : (
+          <div className="space-y-4">
+            {pendingReviews.map(item => (
+              <div key={item.id} className="premium-card flex justify-between items-center">
+                <div>
+                  <h4 className="text-white font-semibold">{item.tasks.title}</h4>
+                  <p className="text-sm text-gray-400">Сотрудник: {item.employee_name || item.employee_email}</p>
+                  <p className="text-sm text-yellow-400">Награда: + {item.tasks.reward_karma} кармиков</p>
+                  {item.comment && <p className="text-sm text-gray-400 mt-1">Комментарий: {item.comment}</p>}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleReview(item.id, 'approve')} className="btn-gold text-xs px-3 py-1.5">Одобрить</button>
+                  <button onClick={() => handleReview(item.id, 'reject')} className="btn-outline text-xs px-3 py-1.5">Отклонить</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {pendingReviews.length === 0 ? (
-        <div className="premium-card"><p className="text-gray-400">Нет заданий, ожидающих проверки</p></div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {pendingReviews.map(item => (
-            <div key={item.id} className="premium-card flex flex-col gap-3">
-              <div>
-                <h4 className="text-white font-semibold">{item.tasks?.title || 'Задание удалено'}</h4>
-                <p className="text-sm text-gray-400 mt-1">Сотрудник: {item.employee_name}</p>
-                <p className="text-sm text-yellow-400">Награда: +{item.tasks?.reward_karma} кармиков</p>
-                {item.comment && <p className="text-sm text-gray-400 mt-1">Комментарий: {item.comment}</p>}
-              </div>
-              <div className="flex gap-2 mt-auto">
-                <button onClick={() => handleReview(item.id, 'approve')} className="btn-glass btn-glass-green flex-1 text-xs px-3 py-2">Одобрить</button>
-                <button onClick={() => handleReview(item.id, 'reject')} className="btn-glass btn-glass-red flex-1 text-xs px-3 py-2">Отклонить</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       <PremiumModal isOpen={successModal.show} onClose={() => setSuccessModal({ show: false, message: '' })} title="Информация">
         <p className="text-white">{successModal.message}</p>

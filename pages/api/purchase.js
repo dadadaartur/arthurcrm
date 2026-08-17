@@ -3,6 +3,7 @@ import { requireAuth } from '../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
+
   const ctx = await requireAuth(req, res)
   if (!ctx) return
 
@@ -14,6 +15,7 @@ export default async function handler(req, res) {
   const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
   const userId = ctx.user.id
+
   const { data, error: purchaseError } = await supabaseAdmin.rpc('purchase_reward', {
     p_user_id: userId,
     p_reward_id: rewardId,
@@ -37,38 +39,49 @@ export default async function handler(req, res) {
 
   let message = `Вы приобрели "${rewardName}" за ${result.reward_cost} кармиков.`
   if (newStatus === 'new') {
-    message += ' Сертификат можно активировать позже в разделе "Мои покупки".'
+    message += ' Сертификат можно активировать позже в разделе «Мои покупки».'
   } else if (newStatus === 'pending') {
     message += ' Заявка отправлена на согласование руководителю.'
+  } else if (newStatus === 'approved') {
+    message += ' Товар будет доставлен — ожидайте!'
   }
 
   await supabaseAdmin.from('notifications').insert({
     user_id: userId,
-    type: 'purchase',
     message,
     link: '/my-purchases'
   })
 
-  if (newStatus === 'pending') {
-    const { data: profile } = await supabaseAdmin.from('profiles').select('company_id').eq('user_id', userId).single()
-    if (profile?.company_id) {
-      const { data: reviewers } = await supabaseAdmin
-        .from('profiles')
-        .select('user_id')
-        .eq('company_id', profile.company_id)
-        .or('is_company_admin.eq.true,can_review_tasks.eq.true')
+  // Уведомляем всех ревьюеров компании о ЛЮБОЙ покупке (pending + approved).
+  // Раньше уведомление уходило только при pending — физические товары без
+  // подтверждения (approved) оседали незамеченными, руководитель не знал,
+  // что нужно что-то доставить сотруднику.
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('company_id, display_name, email')
+    .eq('user_id', userId)
+    .single()
 
-      if (reviewers?.length) {
-        const notifs = reviewers.map(r => ({
-          user_id: r.user_id,
-          type: 'purchase_review',
-          message: `Сотрудник хочет приобрести "${rewardName}". Требуется подтверждение.`,
-          link: '/company-admin/purchases'
-        }))
-        await supabaseAdmin.from('notifications').insert(notifs)
-      }
+  if (profile?.company_id) {
+    const { data: reviewers } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id')
+      .eq('company_id', profile.company_id)
+      .neq('user_id', userId)
+      .or('is_company_admin.eq.true,can_review_tasks.eq.true')
+
+    if (reviewers?.length) {
+      const employeeName = profile.display_name || profile.email || 'Сотрудник'
+      const actionText = newStatus === 'pending'
+        ? 'требует подтверждения'
+        : 'оплачен и ожидает доставки'
+      const notifs = reviewers.map(r => ({
+        user_id: r.user_id,
+        message: `${employeeName} купил «${rewardName}» — ${actionText}.`,
+        link: '/company-admin/purchases'
+      }))
+      await supabaseAdmin.from('notifications').insert(notifs)
     }
   }
-
   res.status(200).json({ newBalance, message })
 }
