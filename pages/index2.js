@@ -52,11 +52,7 @@ function CorporateLanding() {
   )
 }
 
-// =====================================================================
-// КОМЕТА: ядро с хвостом ВИДИМО летит, позади остаётся дым,
-// который с момента появления размыт и медленно расширяется/растворяется.
-// =====================================================================
-function FlyingComet({ left, top, angle, dist, dur, delay, uid, scale = 0.55 }) {
+function FlyingComet({ left, top, angle, dist, dur, delay, scale = 0.55 }) {
   return (
     <div style={{
       position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
@@ -65,30 +61,25 @@ function FlyingComet({ left, top, angle, dist, dur, delay, uid, scale = 0.55 }) 
       filter: 'blur(0.6px)',
     }}>
       <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
-
-        {/* ДЫМ: остаётся после кометы, размыт с самого начала, медленно расплывается */}
+        {/* Дым: мягкий, расплывается */}
         <div style={{
           position: 'absolute', left: 0, top: -2, height: 4, width: dist,
           transformOrigin: '0 50%', borderRadius: 4,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.10) 40%, rgba(205,225,255,0.22) 80%, rgba(235,245,255,0.3) 100%)',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.08) 40%, rgba(205,225,255,0.16) 80%, rgba(235,245,255,0.22) 100%)',
           animation: `cometSmoke ${dur}s linear ${delay}s infinite`,
         }} />
-
-        {/* ЛЕТЯЩАЯ КОМЕТА: ядро + прикреплённый хвост, движется */}
+        {/* Летящая комета: не останавливается, гаснет в полёте */}
         <div style={{ position: 'absolute', left: 0, top: 0, animation: `cometFly ${dur}s linear ${delay}s infinite` }}>
-          {/* хвост, тянущийся назад от ядра */}
           <div style={{
             position: 'absolute', left: -140, top: -1, width: 140, height: 2,
             background: 'linear-gradient(90deg, transparent 0%, rgba(180,210,255,0.25) 55%, rgba(225,240,255,0.7) 88%, rgba(255,255,255,0.95) 100%)',
             borderRadius: 2, filter: 'blur(0.8px)',
           }} />
-          {/* мягкий ореол хвоста */}
           <div style={{
             position: 'absolute', left: -120, top: -2.5, width: 120, height: 5,
             background: 'linear-gradient(90deg, transparent 0%, rgba(160,200,255,0.15) 60%, rgba(220,235,255,0.35) 100%)',
             borderRadius: 4, filter: 'blur(2.5px)',
           }} />
-          {/* ядро */}
           <div style={{
             position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%',
             background: 'radial-gradient(circle, #fff 0%, rgba(225,240,255,0.9) 45%, transparent 100%)',
@@ -100,14 +91,16 @@ function FlyingComet({ left, top, angle, dist, dur, delay, uid, scale = 0.55 }) 
   )
 }
 
-// ============ ГЛАВНАЯ (v14) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
   const [balance, setBalance] = useState(0)
   const [pageLoading, setPageLoading] = useState(true)
+  const [holo, setHolo] = useState(false)
+  const [pulse, setPulse] = useState(0)
   const starsRef = useRef(null)
   const nebulaRef = useRef(null)
+  const cursorRef = useRef(null)
 
   const mastery = { title: 'Специалист', stage: 2, stagesTotal: 6, currentEnergy: 2460, nextEnergy: 3200 }
   const stages = ['Новичок', 'Специалист', 'Старший специалист', 'Эксперт', 'Мастер', 'Президент']
@@ -121,6 +114,28 @@ export default function Home() {
     { name: 'Ответственность', value: 85, color: '#FFD700' },
     { name: 'Инициатива', value: 52, color: '#f97316' },
   ], [])
+
+  // Звёзды с чистой зоной вокруг чёрной дыры
+  const stars = useMemo(() => {
+    const arr = []
+    const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
+    let attempts = 0
+    while (arr.length < 170 && attempts < 800) {
+      attempts++
+      const left = Math.random() * 100
+      const top = Math.random() * 100
+      if (Math.hypot(left - 58, top - 42) < 13) continue // чистая зона у дыры
+      arr.push({
+        left, top,
+        size: Math.random() * 2.2 + 0.5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        op: Math.random() * 0.5 + 0.3,
+        dur: Math.random() * 18 + 10,
+        delay: Math.random() * 14,
+      })
+    }
+    return arr
+  }, [])
 
   useEffect(() => {
     if (!user) { setPageLoading(false); return }
@@ -140,6 +155,12 @@ export default function Home() {
     const y = e.clientY / window.innerHeight - 0.5
     if (starsRef.current) starsRef.current.style.transform = `translate(${x * -6}px, ${y * -6}px)`
     if (nebulaRef.current) nebulaRef.current.style.transform = `translate(${x * -14}px, ${y * -14}px)`
+    if (cursorRef.current) cursorRef.current.style.transform = `translate(${e.clientX - 3}px, ${e.clientY - 2}px)`
+  }
+
+  const toggleHole = () => {
+    setHolo(h => !h)
+    setPulse(p => p + 1)
   }
 
   if (loading || pageLoading) return null
@@ -175,25 +196,29 @@ export default function Home() {
   return (
     <>
       <Head><title>Кармический банк</title></Head>
-      <div onMouseMove={handleMouseMove} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+      <div onMouseMove={handleMouseMove} className={holo ? 'holo-mode' : ''} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
 
-        {/* Звёзды */}
+        {/* Голографический курсор (когда включён) */}
+        {holo && (
+          <div ref={cursorRef} style={{ position: 'fixed', left: 0, top: 0, zIndex: 9999, pointerEvents: 'none', willChange: 'transform' }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 6px rgba(160,233,255,0.95)) drop-shadow(0 0 14px rgba(120,200,255,0.6))' }}>
+              <path d="M4 2 L4 19 L9 15 L12 21 L15 19.5 L12 13.5 L18 13 Z" fill="rgba(160,233,255,0.95)" stroke="#ffffff" strokeWidth="1" />
+            </svg>
+          </div>
+        )}
+
+        {/* Звёзды (чистая зона у дыры) */}
         <div ref={starsRef} style={{ position: 'absolute', top: '-2%', left: '-2%', width: '104%', height: '104%', zIndex: 0, transition: 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}>
-          {Array.from({ length: 180 }).map((_, i) => {
-            const size = Math.random() * 2.2 + 0.5
-            const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-            const color = colors[Math.floor(Math.random() * colors.length)]
-            return (
-              <div key={i} style={{
-                position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-                width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-                boxShadow: `0 0 ${size * 2}px ${color}`,
-                opacity: Math.random() * 0.5 + 0.3,
-                animation: `twinkle ${Math.random() * 18 + 10}s ease-in-out infinite`,
-                animationDelay: Math.random() * 14 + 's',
-              }} />
-            )
-          })}
+          {stars.map((s, i) => (
+            <div key={i} style={{
+              position: 'absolute', left: s.left + '%', top: s.top + '%',
+              width: s.size + 'px', height: s.size + 'px', borderRadius: '50%', background: s.color,
+              boxShadow: `0 0 ${s.size * 2}px ${s.color}`,
+              opacity: s.op,
+              animation: `twinkle ${s.dur}s ease-in-out infinite`,
+              animationDelay: s.delay + 's',
+            }} />
+          ))}
         </div>
 
         {/* Туманности-фон */}
@@ -202,75 +227,43 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* ЛЕТЯЩИЕ КОМЕТЫ: ядро с хвостом летит, дым остаётся и расплывается */}
-        <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={60} delay={8} uid="fca" scale={0.55} />
-        <FlyingComet left="72%" top="12%" angle={158} dist={600} dur={75} delay={42} uid="fcb" scale={0.45} />
+        {/* Кометы */}
+        <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={60} delay={8} scale={0.55} />
+        <FlyingComet left="72%" top="12%" angle={158} dist={600} dur={75} delay={42} scale={0.45} />
 
-        {/* СТОЛПЫ ТВОРЕНИЯ */}
-        <div style={{
-          position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none',
-          width: '52%', height: '70%',
-          background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)',
-          filter: 'blur(30px)',
-          animation: 'pillarsBreath 22s ease-in-out infinite alternate',
-        }} />
-        <div style={{
-          position: 'absolute', right: -30, bottom: -24, zIndex: 2, pointerEvents: 'none',
-          width: 'min(46vw, 620px)',
-          animation: 'pillarsBreath 22s ease-in-out infinite alternate',
-        }}>
-          <img
-            src="/pillars.png"
-            alt=""
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
-            style={{
-              width: '100%', display: 'block',
-              mixBlendMode: 'screen',
-              filter: 'blur(0.5px) saturate(1.15) brightness(1.02)',
-              maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)',
-              WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)',
-            }}
-          />
+        {/* Столпы */}
+        <div style={{ position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none', width: '52%', height: '70%', background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)', filter: 'blur(30px)', animation: 'pillarsBreath 22s ease-in-out infinite alternate' }} />
+        <div style={{ position: 'absolute', right: -30, bottom: -24, zIndex: 2, pointerEvents: 'none', width: 'min(46vw, 620px)', animation: 'pillarsBreath 22s ease-in-out infinite alternate' }}>
+          <img src="/pillars.png" alt="" onError={(e) => { e.currentTarget.style.display = 'none' }}
+            style={{ width: '100%', display: 'block', mixBlendMode: 'screen', filter: 'blur(0.5px) saturate(1.15) brightness(1.02)', maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)', WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)' }} />
         </div>
 
-        {/* ГОЛОГРАФИЧЕСКАЯ ЛЕНТА СПРАВА */}
+        {/* Голографическая лента (редкий мягкий блик) */}
         <div className="holo-rail"><div className="holo-rail-sweep" /></div>
 
-        {/* Мягкие переливы снизу */}
+        {/* Переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.16) 0%, rgba(255,100,50,0.07) 40%, transparent 75%)', filter: 'blur(18px)', animation: 'breathe1 40s ease-in-out infinite alternate' }} />
           <div style={{ position: 'absolute', bottom: 0, right: '-8%', width: '115%', height: '100%', background: 'radial-gradient(ellipse at 72% 100%, rgba(130,100,255,0.1) 0%, transparent 70%)', filter: 'blur(24px)', animation: 'breathe3 56s ease-in-out infinite alternate' }} />
         </div>
 
         {/* Аккреционный диск */}
-        <div style={{
-          position: 'absolute', left: centerX + '%', top: centerY + '%',
-          transform: 'translate(-50%, -50%)',
-          width: 560, height: 560, borderRadius: '50%',
-          background: 'conic-gradient(from 0deg, transparent, rgba(255,180,0,0.04) 20%, rgba(255,140,0,0.09) 40%, transparent 60%, rgba(139,92,246,0.07) 80%, transparent 100%)',
-          filter: 'blur(34px)',
-          animation: 'accretionSpin 180s linear infinite',
-          pointerEvents: 'none', zIndex: 4,
-        }} />
+        <div style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', transform: 'translate(-50%, -50%)', width: 560, height: 560, borderRadius: '50%', background: 'conic-gradient(from 0deg, transparent, rgba(255,180,0,0.04) 20%, rgba(255,140,0,0.09) 40%, transparent 60%, rgba(139,92,246,0.07) 80%, transparent 100%)', filter: 'blur(34px)', animation: 'accretionSpin 180s linear infinite', pointerEvents: 'none', zIndex: 4 }} />
 
-        {/* ЧЁРНАЯ ДЫРА */}
-        <div style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: 110, height: 110, zIndex: 5, animation: 'holeBreath 30s ease-in-out infinite' }}>
+        {/* ЧЁРНАЯ ДЫРА (кликабельна: курсор + свечение) */}
+        <div onClick={toggleHole} style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: 110, height: 110, zIndex: 5, animation: 'holeBreath 30s ease-in-out infinite', cursor: holo ? 'none' : 'pointer' }}>
           <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.45) 0%, rgba(255,100,0,0.2) 30%, transparent 62%)', filter: 'blur(16px)', animation: 'orbitSpin 90s linear infinite' }} />
           <div style={{ position: 'absolute', top: '-6%', left: '-6%', width: '112%', height: '112%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.55) 0%, rgba(200,100,255,0.22) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 70s linear infinite reverse' }} />
           <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.5), 0 0 90px rgba(255,180,0,0.28)', filter: 'blur(2px)' }} />
+          {/* Лёгкое свечение при клике (появляется и тает) */}
+          {pulse > 0 && (
+            <div key={pulse} style={{ position: 'absolute', inset: '-20%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(160,233,255,0.5) 0%, rgba(120,200,255,0.25) 40%, transparent 70%)', animation: 'holeClickGlow 1.6s ease-out forwards', pointerEvents: 'none' }} />
+          )}
         </div>
 
         {/* Лучи */}
         {beams.map((beam, idx) => (
-          <div key={`beam-${idx}`} style={{
-            position: 'absolute', left: centerX + '%', top: centerY + '%',
-            width: beam.length + '%', height: '1px',
-            background: 'linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.16) 30%, rgba(255,140,0,0.28) 60%, transparent 100%)',
-            transform: `rotate(${beam.angle}deg)`, transformOrigin: '0 0',
-            filter: 'blur(3px)',
-            animation: `beamPulse ${14 + idx % 3}s ease-in-out infinite alternate ${idx * 0.8}s`,
-            pointerEvents: 'none', zIndex: 6,
-          }} />
+          <div key={`beam-${idx}`} style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: beam.length + '%', height: '1px', background: 'linear-gradient(90deg, rgba(255,200,50,0) 0%, rgba(255,180,0,0.16) 30%, rgba(255,140,0,0.28) 60%, transparent 100%)', transform: `rotate(${beam.angle}deg)`, transformOrigin: '0 0', filter: 'blur(3px)', animation: `beamPulse ${14 + idx % 3}s ease-in-out infinite alternate ${idx * 0.8}s`, pointerEvents: 'none', zIndex: 6 }} />
         ))}
 
         {/* 8 КНОПОК */}
@@ -283,42 +276,14 @@ export default function Home() {
           const uy = dy / len
           const handleClick = () => { const p = routes[block.title]; if (p) router.push(p) }
           return (
-            <div key={idx} style={{
-              position: 'absolute', left: block.left + '%', top: block.top + '%',
-              zIndex: 10, '--ux': ux, '--uy': uy,
-              animation: 'gravBreath 30s ease-in-out infinite',
-            }}>
+            <div key={idx} style={{ position: 'absolute', left: block.left + '%', top: block.top + '%', zIndex: 10, '--ux': ux, '--uy': uy, animation: 'gravBreath 30s ease-in-out infinite' }}>
               <div style={{ animation: `drift${idx % 3} ${130 + idx * 6}s ease-in-out infinite alternate` }}>
-                <div
-                  onClick={handleClick}
-                  style={{
-                    transform: 'translate(-50%, -50%)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), filter 0.7s ease',
-                    willChange: 'transform',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.18)'
-                    e.currentTarget.style.filter = `drop-shadow(0 0 24px ${c1}) drop-shadow(0 0 8px ${c2})`
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'
-                    e.currentTarget.style.filter = 'none'
-                  }}
-                >
-                  <div style={{
-                    fontSize: 16, fontWeight: 600, lineHeight: 1.2, marginBottom: 4,
-                    background: `linear-gradient(135deg, ${c1}, ${c2})`,
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.6))',
-                    textAlign: 'center', whiteSpace: 'nowrap',
-                  }}>{block.title}</div>
+                <div onClick={handleClick} style={{ transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), filter 0.7s ease', willChange: 'transform' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.18)'; e.currentTarget.style.filter = `drop-shadow(0 0 24px ${c1}) drop-shadow(0 0 8px ${c2})` }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'; e.currentTarget.style.filter = 'none' }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.2, marginBottom: 4, background: `linear-gradient(135deg, ${c1}, ${c2})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.6))', textAlign: 'center', whiteSpace: 'nowrap' }}>{block.title}</div>
                   {block.sub && (
-                    <div style={{
-                      fontSize: 13, fontWeight: 400, color: '#eaf0fb',
-                      filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center', whiteSpace: 'nowrap',
-                    }}>{block.sub}</div>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: '#eaf0fb', filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))', opacity: 0.85, textAlign: 'center', whiteSpace: 'nowrap' }}>{block.sub}</div>
                   )}
                 </div>
               </div>
@@ -326,13 +291,8 @@ export default function Home() {
           )
         })}
 
-        {/* === БЛОК БАЛАНСА === */}
-        <div style={{
-          position: 'absolute', left: '2.5%', top: 10, zIndex: 20,
-          animation: 'driftBalance 55s ease-in-out infinite alternate',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          minWidth: 340, padding: '14px 40px',
-        }}>
+        {/* Баланс */}
+        <div style={{ position: 'absolute', left: '2.5%', top: 10, zIndex: 20, animation: 'driftBalance 55s ease-in-out infinite alternate', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 340, padding: '14px 40px' }}>
           <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', textShadow: '0 0 8px rgba(160,233,255,0.6)', marginBottom: 8 }}>Баланс</div>
           <div style={{ fontSize: 58, fontWeight: 600, lineHeight: 1, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 14px rgba(100,200,255,0.9)) drop-shadow(0 0 28px rgba(255,150,200,0.6))', animation: 'rainbowShift 12s ease-in-out infinite alternate', marginBottom: 6 }}>{balance}</div>
           <div style={{ fontSize: 12, fontWeight: 300, color: 'rgba(255,255,255,0.85)', textShadow: '0 0 8px rgba(100,200,255,0.7)', letterSpacing: 2, marginBottom: 20 }}>{karmikWord}</div>
@@ -344,16 +304,8 @@ export default function Home() {
             ].map((btn, idx) => (
               <div key={idx} style={{ textAlign: 'center', cursor: 'pointer', transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)' }}
                 onClick={() => router.push(btn.path)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.18)'
-                  e.currentTarget.firstChild.style.color = btn.color
-                  e.currentTarget.firstChild.style.textShadow = `0 0 14px ${btn.color}`
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)'
-                  e.currentTarget.firstChild.style.color = 'rgba(255,255,255,0.6)'
-                  e.currentTarget.firstChild.style.textShadow = '0 0 6px rgba(100,200,255,0.4)'
-                }}>
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.18)'; e.currentTarget.firstChild.style.color = btn.color; e.currentTarget.firstChild.style.textShadow = `0 0 14px ${btn.color}` }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.firstChild.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.firstChild.style.textShadow = '0 0 6px rgba(100,200,255,0.4)' }}>
                 <div style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.6)', textShadow: '0 0 6px rgba(100,200,255,0.4)', transition: 'all 0.5s ease', marginBottom: 5 }}>{btn.label}</div>
                 <div style={{ width: 3, height: 3, borderRadius: '50%', background: btn.color, margin: '0 auto', boxShadow: `0 0 6px ${btn.color}` }} />
               </div>
@@ -361,12 +313,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* === КАРМИЧЕСКАЯ ЭНЕРГИЯ === */}
-        <div style={{
-          position: 'absolute', left: '2.5%', top: 250, zIndex: 20,
-          animation: 'driftGoals 60s ease-in-out infinite alternate',
-          width: 340, padding: '0 40px', boxSizing: 'border-box',
-        }}>
+        {/* Кармическая энергия */}
+        <div style={{ position: 'absolute', left: '2.5%', top: 250, zIndex: 20, animation: 'driftGoals 60s ease-in-out infinite alternate', width: 340, padding: '0 40px', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(192,132,252,0.4)', marginBottom: 4 }}>Уровень мастерства</div>
             <div style={{ fontSize: 22, fontWeight: 600, background: 'linear-gradient(135deg, #c084fc, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 10px rgba(192,132,252,0.7))', marginBottom: 3 }}>{mastery.title}</div>
@@ -374,18 +322,8 @@ export default function Home() {
           </div>
           <div style={{ textAlign: 'center', marginBottom: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(255,215,0,0.4)', marginBottom: 4 }}>Кармическая энергия</div>
-            <div style={{
-              fontSize: 26, fontWeight: 600,
-              background: 'linear-gradient(135deg, #FFD700, #ffb3c6, #a0e9ff)',
-              backgroundSize: '200% 200%',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.7))',
-              animation: 'rainbowShift 14s ease-in-out infinite alternate',
-              marginBottom: 3,
-            }}>{mastery.currentEnergy.toLocaleString('ru')}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', textShadow: '0 0 5px rgba(255,215,0,0.4)' }}>
-              До «{stages[mastery.stage]}»: {energyRemaining.toLocaleString('ru')} энергии
-            </div>
+            <div style={{ fontSize: 26, fontWeight: 600, background: 'linear-gradient(135deg, #FFD700, #ffb3c6, #a0e9ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.7))', animation: 'rainbowShift 14s ease-in-out infinite alternate', marginBottom: 3 }}>{mastery.currentEnergy.toLocaleString('ru')}</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', textShadow: '0 0 5px rgba(255,215,0,0.4)' }}>До «{stages[mastery.stage]}»: {energyRemaining.toLocaleString('ru')} энергии</div>
           </div>
           <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 16, marginTop: 10 }}>
             <div style={{ height: '100%', width: progressPercent + '%', background: 'linear-gradient(90deg, #c084fc, #FFD700)', borderRadius: 2, boxShadow: '0 0 8px rgba(255,215,0,0.6)', animation: 'progressPulse 6s ease-in-out infinite' }} />
@@ -407,30 +345,21 @@ export default function Home() {
       </div>
 
       <style jsx global>{`
-        /* Убираем горизонтальный скролл и нативные скроллбары (ничего не портит) */
         html, body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
-        /* ГОЛОГРАФИЧЕСКАЯ ЛЕНТА СПРАВА */
-        .holo-rail {
-          position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px;
-          border-radius: 3px; z-index: 40; pointer-events: none;
-          background: linear-gradient(180deg, transparent, rgba(160,233,255,0.22), rgba(192,132,252,0.22), rgba(255,179,196,0.22), transparent);
-          box-shadow: 0 0 8px rgba(160,233,255,0.12);
-        }
-        .holo-rail-sweep {
-          position: absolute; left: 0; width: 100%; height: 18%; border-radius: 3px;
-          background: linear-gradient(180deg, transparent, #a0e9ff, #ffffff, #a0e9ff, transparent);
-          box-shadow: 0 0 12px rgba(160,233,255,0.8), 0 0 22px rgba(192,132,252,0.5);
-          animation: railSweep 7s cubic-bezier(0.4,0,0.6,1) infinite;
-        }
-        @keyframes railSweep {
-          0% { top: -20%; opacity: 0; }
-          10% { opacity: 1; }
-          50% { top: 88%; }
-          90% { opacity: 1; }
-          100% { top: 110%; opacity: 0; }
-        }
+        /* Голографический курсор: скрыть стандартный во всём */
+        .holo-mode, .holo-mode * { cursor: none !important; }
+
+        /* Лента: редкий мягкий блик */
+        .holo-rail { position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px; border-radius: 3px; z-index: 40; pointer-events: none;
+          background: linear-gradient(180deg, transparent, rgba(160,233,255,0.14), rgba(192,132,252,0.14), rgba(255,179,196,0.14), transparent);
+          box-shadow: 0 0 6px rgba(160,233,255,0.08); }
+        .holo-rail-sweep { position: absolute; left: 0; width: 100%; height: 16%; border-radius: 3px;
+          background: linear-gradient(180deg, transparent, rgba(160,233,255,0.5), rgba(255,255,255,0.7), rgba(160,233,255,0.5), transparent);
+          box-shadow: 0 0 8px rgba(160,233,255,0.4);
+          animation: railSweep 24s cubic-bezier(0.4,0,0.6,1) infinite; }
+        @keyframes railSweep { 0% { top: -18%; opacity: 0; } 8% { opacity: 0.5; } 50% { top: 90%; } 92% { opacity: 0.5; } 100% { top: 110%; opacity: 0; } }
 
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -445,35 +374,18 @@ export default function Home() {
         @keyframes progressPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
         @keyframes breathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
         @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
-        @keyframes holeBreath {
-          0%, 100% { transform: translate(-50%, -50%) scale(0.93); }
-          50% { transform: translate(-50%, -50%) scale(1.12); }
-        }
-        @keyframes gravBreath {
-          0%, 100% { transform: translate(calc(var(--ux) * 12px), calc(var(--uy) * 12px)); }
-          50% { transform: translate(calc(var(--ux) * -18px), calc(var(--uy) * -18px)); }
-        }
+        /* Дыхание дыры — шире, захватывает дух */
+        @keyframes holeBreath { 0%, 100% { transform: translate(-50%, -50%) scale(0.92); } 50% { transform: translate(-50%, -50%) scale(1.3); } }
+        /* Свечение при клике — появляется и тает */
+        @keyframes holeClickGlow { 0% { opacity: 0; } 20% { opacity: 0.8; } 100% { opacity: 0; } }
+        @keyframes gravBreath { 0%, 100% { transform: translate(calc(var(--ux) * 12px), calc(var(--uy) * 12px)); } 50% { transform: translate(calc(var(--ux) * -18px), calc(var(--uy) * -18px)); } }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
         @keyframes pillarsBreath { 0% { opacity: 0.75; } 100% { opacity: 1; } }
 
-        /* КОМЕТА: ядро с хвостом видимо летит */
-        @keyframes cometFly {
-          0% { transform: translateX(0); opacity: 0; }
-          2% { opacity: 0.9; }
-          10% { transform: translateX(var(--dist)); opacity: 0.85; }
-          14% { transform: translateX(var(--dist)); opacity: 0; }
-          100% { transform: translateX(var(--dist)); opacity: 0; }
-        }
-        /* КОМЕТА: дым остаётся, размыт с начала, медленно расплывается */
-        @keyframes cometSmoke {
-          0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(2px); }
-          2% { opacity: 0.35; }
-          10% { transform: scaleX(1) scaleY(1); opacity: 0.3; filter: blur(3px); }
-          30% { transform: scaleX(1) scaleY(2.2); opacity: 0.18; filter: blur(6px); }
-          55% { transform: scaleX(1) scaleY(3.5); opacity: 0; filter: blur(10px); }
-          100% { transform: scaleX(1) scaleY(3.5); opacity: 0; filter: blur(10px); }
-        }
+        /* Комета: не останавливается, гаснет в полёте */
+        @keyframes cometFly { 0% { transform: translateX(0); opacity: 0; } 2% { opacity: 0.85; } 12% { transform: translateX(var(--dist)); opacity: 0; } 100% { transform: translateX(var(--dist)); opacity: 0; } }
+        @keyframes cometSmoke { 0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(3px); } 2% { opacity: 0.22; } 12% { transform: scaleX(1) scaleY(1); opacity: 0.2; filter: blur(4px); } 35% { transform: scaleX(1) scaleY(2.4); opacity: 0.1; filter: blur(7px); } 60% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(10px); } 100% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(10px); } }
 
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
         @keyframes skillGrow1 { from { width: 0; } to { width: 67%; } }
