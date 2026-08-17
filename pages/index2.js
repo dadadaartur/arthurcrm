@@ -53,38 +53,46 @@ function CorporateLanding() {
 }
 
 // =====================================================================
-// ГЛУБОКАЯ КОМЕТА: маленькая, далеко, в глубине. Голова пролетает быстро,
-// хвост остаётся и медленно расплывается как дым.
+// КОМЕТА: ядро с хвостом ВИДИМО летит, позади остаётся дым,
+// который с момента появления размыт и медленно расширяется/растворяется.
 // =====================================================================
-function DeepSmokeComet({ left, top, angle, dist, dur, delay, uid, scale = 0.5 }) {
+function FlyingComet({ left, top, angle, dist, dur, delay, uid, scale = 0.55 }) {
   return (
     <div style={{
       position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
       transform: `rotate(${angle}deg)`,
       '--dist': dist + 'px',
-      filter: 'blur(1px)',
+      filter: 'blur(0.6px)',
     }}>
       <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
-        {/* Широкий дым (расплывается сильнее всего) */}
+
+        {/* ДЫМ: остаётся после кометы, размыт с самого начала, медленно расплывается */}
         <div style={{
-          position: 'absolute', left: 0, top: -3, height: 6, width: dist,
+          position: 'absolute', left: 0, top: -2, height: 4, width: dist,
           transformOrigin: '0 50%', borderRadius: 4,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(180,200,255,0.10) 55%, rgba(220,235,255,0.25) 100%)',
-          animation: `cometSmokeDeep ${dur}s linear ${delay}s infinite`,
+          background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.10) 40%, rgba(205,225,255,0.22) 80%, rgba(235,245,255,0.3) 100%)',
+          animation: `cometSmoke ${dur}s linear ${delay}s infinite`,
         }} />
-        {/* Тонкий след: рисуется за головой, потом медленно расплывается */}
-        <div style={{
-          position: 'absolute', left: 0, top: -0.75, height: 1.5, width: dist,
-          transformOrigin: '0 50%', borderRadius: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(200,220,255,0.2) 55%, rgba(240,248,255,0.6) 92%, rgba(255,255,255,0.8) 100%)',
-          animation: `cometTrailDeep ${dur}s linear ${delay}s infinite`,
-        }} />
-        {/* Голова: пролетает быстро */}
-        <div style={{ position: 'absolute', left: 0, top: 0, animation: `cometHeadDeep ${dur}s linear ${delay}s infinite` }}>
+
+        {/* ЛЕТЯЩАЯ КОМЕТА: ядро + прикреплённый хвост, движется */}
+        <div style={{ position: 'absolute', left: 0, top: 0, animation: `cometFly ${dur}s linear ${delay}s infinite` }}>
+          {/* хвост, тянущийся назад от ядра */}
           <div style={{
-            position: 'absolute', left: -2.5, top: -2.5, width: 5, height: 5, borderRadius: '50%',
-            background: 'radial-gradient(circle, #fff 0%, rgba(220,240,255,0.8) 50%, transparent 100%)',
-            boxShadow: '0 0 6px rgba(255,255,255,0.9), 0 0 14px rgba(170,210,255,0.5)',
+            position: 'absolute', left: -140, top: -1, width: 140, height: 2,
+            background: 'linear-gradient(90deg, transparent 0%, rgba(180,210,255,0.25) 55%, rgba(225,240,255,0.7) 88%, rgba(255,255,255,0.95) 100%)',
+            borderRadius: 2, filter: 'blur(0.8px)',
+          }} />
+          {/* мягкий ореол хвоста */}
+          <div style={{
+            position: 'absolute', left: -120, top: -2.5, width: 120, height: 5,
+            background: 'linear-gradient(90deg, transparent 0%, rgba(160,200,255,0.15) 60%, rgba(220,235,255,0.35) 100%)',
+            borderRadius: 4, filter: 'blur(2.5px)',
+          }} />
+          {/* ядро */}
+          <div style={{
+            position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%',
+            background: 'radial-gradient(circle, #fff 0%, rgba(225,240,255,0.9) 45%, transparent 100%)',
+            boxShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 18px rgba(170,210,255,0.6), 0 0 30px rgba(140,190,255,0.35)',
           }} />
         </div>
       </div>
@@ -92,7 +100,7 @@ function DeepSmokeComet({ left, top, angle, dist, dur, delay, uid, scale = 0.5 }
   )
 }
 
-// ============ ГЛАВНАЯ (v13) ============
+// ============ ГЛАВНАЯ (v14) ============
 export default function Home() {
   const { user, profile, loading } = useProfile()
   const router = useRouter()
@@ -194,11 +202,11 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* ГЛУБОКИЕ КОМЕТЫ: маленькие, далеко, голова быстрая, хвост-дым медленный */}
-        <DeepSmokeComet left="8%" top="20%" angle={-18} dist={520} dur={70} delay={10} uid="dca" scale={0.5} />
-        <DeepSmokeComet left="70%" top="10%" angle={160} dist={560} dur={85} delay={48} uid="dcb" scale={0.42} />
+        {/* ЛЕТЯЩИЕ КОМЕТЫ: ядро с хвостом летит, дым остаётся и расплывается */}
+        <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={60} delay={8} uid="fca" scale={0.55} />
+        <FlyingComet left="72%" top="12%" angle={158} dist={600} dur={75} delay={42} uid="fcb" scale={0.45} />
 
-        {/* СТОЛПЫ ТВОРЕНИЯ — правый нижний угол */}
+        {/* СТОЛПЫ ТВОРЕНИЯ */}
         <div style={{
           position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none',
           width: '52%', height: '70%',
@@ -224,6 +232,9 @@ export default function Home() {
             }}
           />
         </div>
+
+        {/* ГОЛОГРАФИЧЕСКАЯ ЛЕНТА СПРАВА */}
+        <div className="holo-rail"><div className="holo-rail-sweep" /></div>
 
         {/* Мягкие переливы снизу */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
@@ -396,28 +407,30 @@ export default function Home() {
       </div>
 
       <style jsx global>{`
-        /* Убираем горизонтальный скролл */
-        html, body { overflow-x: hidden; }
-        html { scrollbar-width: thin; scrollbar-color: rgba(192,132,252,0.8) rgba(10,15,30,0.6); }
+        /* Убираем горизонтальный скролл и нативные скроллбары (ничего не портит) */
+        html, body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
-        /* Голографическая вертикальная скролл-лента */
-        ::-webkit-scrollbar { width: 9px; }
-        ::-webkit-scrollbar-track {
-          background: linear-gradient(180deg, rgba(10,15,30,0.7), rgba(20,25,50,0.7));
-          border-left: 1px solid rgba(160,233,255,0.08);
+        /* ГОЛОГРАФИЧЕСКАЯ ЛЕНТА СПРАВА */
+        .holo-rail {
+          position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px;
+          border-radius: 3px; z-index: 40; pointer-events: none;
+          background: linear-gradient(180deg, transparent, rgba(160,233,255,0.22), rgba(192,132,252,0.22), rgba(255,179,196,0.22), transparent);
+          box-shadow: 0 0 8px rgba(160,233,255,0.12);
         }
-        ::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, #a0e9ff, #c084fc, #ffb3c6, #FFD700, #a0e9ff);
-          background-size: 100% 300%;
-          border-radius: 8px;
-          border: 2px solid rgba(10,15,30,0.9);
-          box-shadow: 0 0 10px rgba(160,233,255,0.5), 0 0 18px rgba(192,132,252,0.3);
-          animation: holoScroll 6s linear infinite;
+        .holo-rail-sweep {
+          position: absolute; left: 0; width: 100%; height: 18%; border-radius: 3px;
+          background: linear-gradient(180deg, transparent, #a0e9ff, #ffffff, #a0e9ff, transparent);
+          box-shadow: 0 0 12px rgba(160,233,255,0.8), 0 0 22px rgba(192,132,252,0.5);
+          animation: railSweep 7s cubic-bezier(0.4,0,0.6,1) infinite;
         }
-        ::-webkit-scrollbar-thumb:hover {
-          box-shadow: 0 0 14px rgba(160,233,255,0.8), 0 0 24px rgba(192,132,252,0.5);
+        @keyframes railSweep {
+          0% { top: -20%; opacity: 0; }
+          10% { opacity: 1; }
+          50% { top: 88%; }
+          90% { opacity: 1; }
+          100% { top: 110%; opacity: 0; }
         }
-        @keyframes holoScroll { 0% { background-position: 0 0; } 100% { background-position: 0 300%; } }
 
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
         @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -444,32 +457,22 @@ export default function Home() {
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
         @keyframes pillarsBreath { 0% { opacity: 0.75; } 100% { opacity: 1; } }
 
-        /* ГЛУБОКАЯ КОМЕТА: голова быстрая */
-        @keyframes cometHeadDeep {
+        /* КОМЕТА: ядро с хвостом видимо летит */
+        @keyframes cometFly {
           0% { transform: translateX(0); opacity: 0; }
-          1% { opacity: 0.6; }
-          6% { transform: translateX(var(--dist)); opacity: 0.5; }
-          8% { transform: translateX(var(--dist)); opacity: 0; }
+          2% { opacity: 0.9; }
+          10% { transform: translateX(var(--dist)); opacity: 0.85; }
+          14% { transform: translateX(var(--dist)); opacity: 0; }
           100% { transform: translateX(var(--dist)); opacity: 0; }
         }
-        /* ГЛУБОКАЯ КОМЕТА: след рисуется, потом медленно расплывается как дым */
-        @keyframes cometTrailDeep {
-          0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(0.6px); }
-          1% { opacity: 0.5; }
-          6% { transform: scaleX(1) scaleY(1); opacity: 0.45; filter: blur(0.8px); }
-          20% { transform: scaleX(1) scaleY(1.8); opacity: 0.3; filter: blur(2px); }
-          40% { transform: scaleX(1) scaleY(3); opacity: 0.15; filter: blur(4px); }
-          60% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(6px); }
-          100% { transform: scaleX(1) scaleY(4); opacity: 0; filter: blur(6px); }
-        }
-        /* ГЛУБОКАЯ КОМЕТА: широкий дым */
-        @keyframes cometSmokeDeep {
-          0% { transform: scaleX(0) scaleY(1); opacity: 0; }
-          1% { opacity: 0.4; }
-          6% { transform: scaleX(1) scaleY(1); opacity: 0.35; }
-          25% { transform: scaleX(1) scaleY(2); opacity: 0.22; }
-          55% { transform: scaleX(1) scaleY(3.4); opacity: 0; }
-          100% { transform: scaleX(1) scaleY(3.4); opacity: 0; }
+        /* КОМЕТА: дым остаётся, размыт с начала, медленно расплывается */
+        @keyframes cometSmoke {
+          0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(2px); }
+          2% { opacity: 0.35; }
+          10% { transform: scaleX(1) scaleY(1); opacity: 0.3; filter: blur(3px); }
+          30% { transform: scaleX(1) scaleY(2.2); opacity: 0.18; filter: blur(6px); }
+          55% { transform: scaleX(1) scaleY(3.5); opacity: 0; filter: blur(10px); }
+          100% { transform: scaleX(1) scaleY(3.5); opacity: 0; filter: blur(10px); }
         }
 
         @keyframes skillGrow0 { from { width: 0; } to { width: 82%; } }
