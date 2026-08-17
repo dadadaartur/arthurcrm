@@ -14,7 +14,6 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-// Голографическая стрелка через нативный cursor (та же сенса, что у обычной)
 const HOLO_CURSOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 3 L8 26 L14 21 L18 29 L22 27 L18 19 L26 18 Z" fill="rgba(160,233,255,0.30)" stroke="rgba(160,233,255,0.85)" stroke-width="4" stroke-linejoin="round"/><path d="M8 3 L8 26 L14 21 L18 29 L22 27 L18 19 L26 18 Z" fill="#cfeeff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/></svg>`
 const HOLO_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(HOLO_CURSOR_SVG)}") 8 3, auto`
 
@@ -58,37 +57,13 @@ function CorporateLanding() {
 
 function FlyingComet({ left, top, angle, dist, dur, delay, scale = 0.55 }) {
   return (
-    <div style={{
-      position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none',
-      transform: `rotate(${angle}deg)`,
-      '--dist': dist + 'px',
-      filter: 'blur(0.6px)',
-    }}>
+    <div style={{ position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none', transform: `rotate(${angle}deg)`, '--dist': dist + 'px', filter: 'blur(0.6px)' }}>
       <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
-        {/* Хвост-дым: невидим до старта, остаётся и медленно тает */}
-        <div style={{
-          position: 'absolute', left: 0, top: -2, height: 4, width: dist,
-          transformOrigin: '0 50%', borderRadius: 4, opacity: 0,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.08) 40%, rgba(205,225,255,0.16) 80%, rgba(235,245,255,0.22) 100%)',
-          animation: `cometSmoke ${dur}s linear ${delay}s infinite`,
-        }} />
-        {/* Летящая комета: невидима до старта, гаснет в полёте */}
+        <div style={{ position: 'absolute', left: 0, top: -2, height: 4, width: dist, transformOrigin: '0 50%', borderRadius: 4, opacity: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.08) 40%, rgba(205,225,255,0.16) 80%, rgba(235,245,255,0.22) 100%)', animation: `cometSmoke ${dur}s linear ${delay}s infinite` }} />
         <div style={{ position: 'absolute', left: 0, top: 0, opacity: 0, animation: `cometFly ${dur}s linear ${delay}s infinite` }}>
-          <div style={{
-            position: 'absolute', left: -140, top: -1, width: 140, height: 2,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(180,210,255,0.25) 55%, rgba(225,240,255,0.7) 88%, rgba(255,255,255,0.95) 100%)',
-            borderRadius: 2, filter: 'blur(0.8px)',
-          }} />
-          <div style={{
-            position: 'absolute', left: -120, top: -2.5, width: 120, height: 5,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(160,200,255,0.15) 60%, rgba(220,235,255,0.35) 100%)',
-            borderRadius: 4, filter: 'blur(2.5px)',
-          }} />
-          <div style={{
-            position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%',
-            background: 'radial-gradient(circle, #fff 0%, rgba(225,240,255,0.9) 45%, transparent 100%)',
-            boxShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 18px rgba(170,210,255,0.6), 0 0 30px rgba(140,190,255,0.35)',
-          }} />
+          <div style={{ position: 'absolute', left: -140, top: -1, width: 140, height: 2, background: 'linear-gradient(90deg, transparent 0%, rgba(180,210,255,0.25) 55%, rgba(225,240,255,0.7) 88%, rgba(255,255,255,0.95) 100%)', borderRadius: 2, filter: 'blur(0.8px)' }} />
+          <div style={{ position: 'absolute', left: -120, top: -2.5, width: 120, height: 5, background: 'linear-gradient(90deg, transparent 0%, rgba(160,200,255,0.15) 60%, rgba(220,235,255,0.35) 100%)', borderRadius: 4, filter: 'blur(2.5px)' }} />
+          <div style={{ position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, rgba(225,240,255,0.9) 45%, transparent 100%)', boxShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 18px rgba(170,210,255,0.6), 0 0 30px rgba(140,190,255,0.35)' }} />
         </div>
       </div>
     </div>
@@ -146,7 +121,6 @@ export default function Home() {
     loadData()
   }, [user, loading, profile])
 
-  // Блик ленты движется только в такт скроллу
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight
@@ -205,7 +179,7 @@ export default function Home() {
       <Head><title>Кармический банк</title></Head>
       <div onMouseMove={handleMouseMove} className={holo ? 'holo-mode' : ''} style={{ width: '100%', height: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif', cursor: holo ? HOLO_CURSOR : 'auto' }}>
 
-        {/* Звёзды */}
+        {/* Звёзды (чистая зона у дыры) */}
         <div ref={starsRef} style={{ position: 'absolute', top: '-2%', left: '-2%', width: '104%', height: '104%', zIndex: 0, transition: 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)' }}>
           {stars.map((s, i) => (
             <div key={i} style={{ position: 'absolute', left: s.left + '%', top: s.top + '%', width: s.size + 'px', height: s.size + 'px', borderRadius: '50%', background: s.color, boxShadow: `0 0 ${s.size * 2}px ${s.color}`, opacity: s.op, animation: `twinkle ${s.dur}s ease-in-out infinite`, animationDelay: s.delay + 's' }} />
@@ -218,9 +192,11 @@ export default function Home() {
           <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'nebulaDrift2 260s ease-in-out infinite alternate' }} />
         </div>
 
-        {/* Кометы */}
-        <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={60} delay={8} scale={0.55} />
-        <FlyingComet left="72%" top="12%" angle={158} dist={600} dur={75} delay={42} scale={0.45} />
+        {/* Кометы: периодически в разных местах */}
+        <FlyingComet left="8%" top="22%" angle={-16} dist={560} dur={70} delay={6} scale={0.55} />
+        <FlyingComet left="70%" top="10%" angle={158} dist={600} dur={80} delay={45} scale={0.45} />
+        <FlyingComet left="12%" top="70%" angle={-30} dist={520} dur={75} delay={90} scale={0.5} />
+        <FlyingComet left="85%" top="55%" angle={200} dist={560} dur={85} delay={130} scale={0.42} />
 
         {/* Столпы */}
         <div style={{ position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none', width: '52%', height: '70%', background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)', filter: 'blur(30px)', animation: 'pillarsBreath 22s ease-in-out infinite alternate' }} />
@@ -229,7 +205,7 @@ export default function Home() {
             style={{ width: '100%', display: 'block', mixBlendMode: 'screen', filter: 'blur(0.5px) saturate(1.15) brightness(1.02)', maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)', WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)' }} />
         </div>
 
-        {/* Лента: блик только в такт скроллу */}
+        {/* Лента (блик в такт скроллу) */}
         <div className="holo-rail"><div ref={sweepRef} className="holo-rail-sweep" style={{ top: '0%' }} /></div>
 
         {/* Переливы снизу */}
@@ -242,12 +218,12 @@ export default function Home() {
         <div style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', transform: 'translate(-50%, -50%)', width: 560, height: 560, borderRadius: '50%', background: 'conic-gradient(from 0deg, transparent, rgba(255,180,0,0.04) 20%, rgba(255,140,0,0.09) 40%, transparent 60%, rgba(139,92,246,0.07) 80%, transparent 100%)', filter: 'blur(34px)', animation: 'accretionSpin 180s linear infinite', pointerEvents: 'none', zIndex: 4 }} />
 
         {/* ЧЁРНАЯ ДЫРА */}
-        <div onClick={toggleHole} style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: 110, height: 110, zIndex: 5, animation: 'holeBreath 30s ease-in-out infinite', cursor: holo ? 'inherit' : 'pointer' }}>
+        <div onClick={toggleHole} style={{ position: 'absolute', left: centerX + '%', top: centerY + '%', width: 110, height: 110, zIndex: 5, animation: 'holeBreath 30s ease-in-out infinite', cursor: 'pointer' }}>
           <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.45) 0%, rgba(255,100,0,0.2) 30%, transparent 62%)', filter: 'blur(16px)', animation: 'orbitSpin 90s linear infinite' }} />
           <div style={{ position: 'absolute', top: '-6%', left: '-6%', width: '112%', height: '112%', borderRadius: '50%', background: 'radial-gradient(circle at 45% 45%, rgba(255,200,100,0.55) 0%, rgba(200,100,255,0.22) 40%, transparent 70%)', filter: 'blur(10px)', animation: 'orbitSpin 70s linear infinite reverse' }} />
           <div style={{ position: 'absolute', top: '15%', left: '15%', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #0a0a0a 40%, transparent 80%)', boxShadow: '0 0 40px rgba(255,215,0,0.5), 0 0 90px rgba(255,180,0,0.28)', filter: 'blur(2px)' }} />
           {pulse > 0 && (
-            <div key={pulse} style={{ position: 'absolute', inset: '-20%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(160,233,255,0.5) 0%, rgba(120,200,255,0.25) 40%, transparent 70%)', animation: 'holeClickGlow 1.6s ease-out forwards', pointerEvents: 'none' }} />
+            <div key={pulse} style={{ position: 'absolute', inset: '-60%', borderRadius: '50%', background: 'radial-gradient(circle, transparent 32%, rgba(160,233,255,0.55) 46%, rgba(255,215,0,0.3) 60%, transparent 74%)', animation: 'holeFlash 2.4s ease-out forwards', pointerEvents: 'none' }} />
           )}
         </div>
 
@@ -338,10 +314,8 @@ export default function Home() {
         html, body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
         html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
-        /* Голографический курсор: дети наследуют, сама страница использует нативный url */
-        .holo-mode * { cursor: inherit !important; }
+        .holo-mode, .holo-mode * { cursor: ${HOLO_CURSOR} !important; }
 
-        /* Лента: блик движется только от скролла */
         .holo-rail { position: fixed; right: 6px; top: 8%; bottom: 8%; width: 3px; border-radius: 3px; z-index: 40; pointer-events: none;
           background: linear-gradient(180deg, transparent, rgba(160,233,255,0.14), rgba(192,132,252,0.14), rgba(255,179,196,0.14), transparent);
           box-shadow: 0 0 6px rgba(160,233,255,0.08); }
@@ -363,8 +337,8 @@ export default function Home() {
         @keyframes progressPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
         @keyframes breathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
         @keyframes breathe3 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
-        @keyframes holeBreath { 0%, 100% { transform: translate(-50%, -50%) scale(0.92); } 50% { transform: translate(-50%, -50%) scale(1.36); } }
-        @keyframes holeClickGlow { 0% { opacity: 0; } 20% { opacity: 0.8; } 100% { opacity: 0; } }
+        @keyframes holeBreath { 0%, 100% { transform: translate(-50%, -50%) scale(0.92); } 50% { transform: translate(-50%, -50%) scale(1.42); } }
+        @keyframes holeFlash { 0% { transform: scale(0.5); opacity: 0; } 12% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(2); } }
         @keyframes gravBreath { 0%, 100% { transform: translate(calc(var(--ux) * 14px), calc(var(--uy) * 14px)); } 50% { transform: translate(calc(var(--ux) * -24px), calc(var(--uy) * -24px)); } }
         @keyframes nebulaDrift1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
         @keyframes nebulaDrift2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
