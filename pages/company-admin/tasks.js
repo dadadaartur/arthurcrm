@@ -22,6 +22,8 @@ function TasksPage() {
     target_role: 'all',
     min_energy_level: 0,
     requires_review: true,
+    requires_proof: false,
+    proof_type: 'any',
     deadline_datetime: '',
     is_auto: false,
     crm_action_type: '',
@@ -100,6 +102,8 @@ function TasksPage() {
         target_role: form.target_role,
         min_energy_level: form.min_energy_level,
         requires_review: form.requires_review,
+        requires_proof: form.requires_proof,
+        proof_type: form.requires_proof ? form.proof_type : null,
         deadline_at: deadlineAt,
         created_by: null,
         is_active: true,
@@ -143,7 +147,8 @@ function TasksPage() {
 
     setForm({
       title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once', target_role: 'all',
-      min_energy_level: 0, requires_review: true, deadline_datetime: '', is_auto: false,
+      min_energy_level: 0, requires_review: true, requires_proof: false, proof_type: 'any',
+      deadline_datetime: '', is_auto: false,
       crm_action_type: '', crm_target_count: 0, image_file: null
     })
     loadData(companyId)
@@ -206,6 +211,23 @@ function TasksPage() {
                 <input type="checkbox" checked={form.requires_review} onChange={e => setForm({...form, requires_review: e.target.checked})} />
                 Требуется проверка
               </label>
+              <label className="flex items-center gap-2 text-gray-400">
+                <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({...form, requires_proof: e.target.checked})} />
+                Нужно медиа-подтверждение
+              </label>
+              {form.requires_proof && (
+                <div className="flex gap-3 ml-2">
+                  {[{v:'photo',l:'Фото'},{v:'video',l:'Видео'},{v:'any',l:'Любой'}].map(opt => (
+                    <label key={opt.v} className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
+                      <input type="radio" name="proof_type" value={opt.v}
+                        checked={form.proof_type === opt.v}
+                        onChange={() => setForm({...form, proof_type: opt.v})}
+                        className="accent-orange-500" />
+                      {opt.l}
+                    </label>
+                  ))}
+                </div>
+              )}
               <label className="flex items-center gap-2 text-gray-400">
                 <input type="checkbox" checked={form.is_auto} onChange={e => setForm({...form, is_auto: e.target.checked})} />
                 Авто из CRM
