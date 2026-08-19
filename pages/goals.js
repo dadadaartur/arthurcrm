@@ -6,6 +6,7 @@ import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
 import { BAND_LABELS, BAND_COLORS, BAND_RANK, energyFor, karmaFor } from '../lib/kpi'
 
+const smallLink = { background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '7px 16px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
 
 export default function GoalsPage() {
@@ -15,6 +16,7 @@ export default function GoalsPage() {
   const [oldGoals, setOldGoals] = useState([])
   const [expanded, setExpanded] = useState(null)
   const [pathOpen, setPathOpen] = useState(false)
+  const [tipsOpen, setTipsOpen] = useState(false)
   const [activeTest, setActiveTest] = useState(null)
   const [testResult, setTestResult] = useState(null)
 
@@ -49,8 +51,9 @@ export default function GoalsPage() {
   levels.forEach(l => { if (energy >= l.energy_threshold) cur = l })
   next = levels.find(l => l.energy_threshold > energy) || null
   const remaining = next ? next.energy_threshold - energy : 0
+  const levelSpan = next ? (next.energy_threshold - cur.energy_threshold) : 1
+  const levelPct = next ? energy - cur.energy_threshold : 1
 
-  // Прогноз: самые быстрые способы до следующего уровня
   const forecast = []
   if (next) {
     data.metrics.forEach(m => ['min', 'mid', 'top', 'ultra'].forEach(b => {
@@ -64,35 +67,36 @@ export default function GoalsPage() {
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/" title="Мои цели" extra={
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
-              <div style={{ fontSize: 20, fontWeight: 700, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
-            </div>
-            <button onClick={() => setPathOpen(true)} style={ghostBtn}>Путь прогресса</button>
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
+            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
+            {next && <div style={{ fontSize: 10, color: '#888' }}>ещё {remaining} до «{next.name}»</div>}
           </div>
         } />
 
-        {/* Уровень + прогноз */}
+        {/* Главная шкала прогресса уровня */}
         {cur && (
-          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 20, border: `1px solid ${cur.color}44`, marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: next ? 12 : 0 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: cur.color, textShadow: `0 0 10px ${cur.color}` }}>{cur.name}</span>
-              {next && <span style={{ fontSize: 13, color: '#888' }}>→ {next.name}: осталось <b style={{ color: '#FFD700' }}>{remaining}</b> энергии</span>}
+          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 18, border: `1px solid ${cur.color}33`, marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: cur.color, textShadow: `0 0 10px ${cur.color}` }}>{cur.name}</span>
+                {next && <span style={{ fontSize: 12, color: '#888' }}>→ {next.name}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 14 }}>
+                <button onClick={() => setTipsOpen(o => !o)} style={smallLink}>советы по достижению</button>
+                <button onClick={() => setPathOpen(true)} style={smallLink}>путь прогресса</button>
+              </div>
             </div>
-            {next && (
-              <ProgressBar3D value={energy} marks={levels.filter(l => l.energy_threshold > 0).slice(0, 5).map(l => ({ key: l.id, label: l.name, value: l.energy_threshold }))} height={12} />
-            )}
-            {next && forecast.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Как достичь быстрее всего (при ежедневном выполнении):</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {forecast.slice(0, 3).map((f, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#ccc', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      Держать «{f.name}» ≥ <b style={{ color: BAND_COLORS[f.band] }}>{f.thr}{f.unit}</b> ({BAND_LABELS[f.band]}): +{f.e} эн./день → ≈ <b style={{ color: '#FFD700' }}>{f.days} дн.</b> до «{next.name}»
-                    </div>
-                  ))}
-                </div>
+            <ProgressBar3D value={levelPct} height={16} />
+            {next && <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>осталось {remaining} энергии до уровня «{next.name}»</div>}
+            {tipsOpen && next && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
+                {forecast.slice(0, 3).map((f, i) => (
+                  <div key={i} style={{ fontSize: 12, color: '#ccc', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    Держать «{f.name}» ≥ <b style={{ color: BAND_COLORS[f.band] }}>{f.thr}{f.unit}</b> ({BAND_LABELS[f.band]}): +{f.e} эн./день → ≈ <b style={{ color: '#FFD700' }}>{f.days} дн.</b> до «{next.name}»
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -109,17 +113,16 @@ export default function GoalsPage() {
                     {m.current != null ? `${m.current}${m.unit} · ` : ''}{BAND_LABELS[m.band]}
                   </span>
                 </div>
-                <ProgressBar3D value={m.current ?? 0} unit={m.unit} marks={[{ key: 'min', label: BAND_LABELS.min, value: m.thr_min }, { key: 'mid', label: BAND_LABELS.mid, value: m.thr_mid }, { key: 'top', label: BAND_LABELS.top, value: m.thr_top }, { key: 'ultra', label: BAND_LABELS.ultra, value: m.thr_ultra }]} />
+                <ProgressBar3D value={m.current ?? 0} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-                  {[['min', m.thr_min], ['mid', m.thr_mid], ['top', m.thr_top], ['ultra', m.thr_ultra]].map(([b, v]) => (
-                    <span key={b} style={{ fontSize: 10, color: BAND_COLORS[b] }}>{BAND_LABELS[b]} {v}</span>
+                  {['min', 'mid', 'top', 'ultra'].map(b => (
+                    <span key={b} style={{ fontSize: 10, color: BAND_COLORS[b], opacity: 0.85 }}>{BAND_LABELS[b]} {m['thr_' + b]}{m.unit}</span>
                   ))}
                 </div>
               </div>
               {expanded === m.id && (
                 <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                   {m.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {m.description}</p>}
-                  {m.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#4ade80' }}>Советы:</b> {m.advice}</p>}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '12px 0' }}>
                     {['min', 'mid', 'top', 'ultra'].map(b => (
                       <div key={b} style={{ padding: 10, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
@@ -154,11 +157,11 @@ export default function GoalsPage() {
           {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
         </div>
 
-        {/* Цели на период */}
+        {/* Глобальные цели на период */}
         {oldGoals.length > 0 && (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Цели на период</h2>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Количественные цели, которые поставил руководитель. Прогресс обновляет руководитель по итогам работы.</p>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Глобальные цели на период</h2>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Количественные цели, которые поставил руководитель (звонки, письма, сделки). Прогресс обновляет руководитель.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {oldGoals.map(g => {
                 const pct = Math.min(100, ((g.current_value || 0) / (g.target_value || 1)) * 100)
@@ -169,7 +172,7 @@ export default function GoalsPage() {
                       <span style={{ color: '#fff', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>{g.title || g.goal_type}</span>
                       <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0, background: done ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.12)', color: done ? '#4ade80' : '#FFD700' }}>{done ? 'Выполнено' : `${Math.round(pct)}%`}</span>
                     </div>
-                    <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', label: 'Цель', value: g.target_value }]} height={12} />
+                    <ProgressBar3D value={g.current_value || 0} height={12} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 5 }}>
                       <span>Сейчас: {g.current_value ?? 0}</span>
                       <span>Цель: {g.target_value}</span>
