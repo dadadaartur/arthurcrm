@@ -1,125 +1,156 @@
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import BackArrow from '../../components/BackArrow'
 import DateRangePicker from '../../components/DateRangePicker'
 import { withAuth } from '../../components/withAuth'
-import { BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
+import { BAND_COLORS } from '../../lib/kpi'
 
-function toISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
-function Spark({points,color}){
-  if(!points||points.length<2)return null
-  const max=Math.max(...points),min=Math.min(...points),W=140,H=40
-  const pts=points.map((v,i)=>`${(i/(points.length-1))*W},${H-((v-min)/(max-min||1))*(H-8)-4}`).join(' ')
-  return <svg width={W} height={H}><polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>
+function toISO(d) { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
+function Spark({ points, color }) {
+  if (!points || points.length < 2) return null
+  const max = Math.max(...points), min = Math.min(...points), W = 140, H = 40
+  const pts = points.map((v, i) => `${(i / (points.length - 1)) * W},${H - ((v - min) / (max - min || 1)) * (H - 8) - 4}`).join(' ')
+  return <svg width={W} height={H}><polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" /></svg>
 }
+const pill = (active) => ({
+  padding: '7px 16px', borderRadius: 20, fontSize: 12, cursor: 'pointer', transition: 'all .2s',
+  background: active ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
+  border: `1px solid ${active ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
+  color: active ? '#FFD700' : '#aaa', backdropFilter: 'blur(8px)', fontWeight: active ? 700 : 400
+})
 
-function ResultsAdmin(){
-  const [loading,setLoading]=useState(true)
-  const [metrics,setMetrics]=useState([])
-  const [rows,setRows]=useState([])
-  const [range,setRange]=useState(()=>{const t=new Date(),f=new Date();f.setDate(f.getDate()-29);return{from:toISO(f),to:toISO(t)}})
-  const [metricFilter,setMetricFilter]=useState('')
-  const [sortBy,setSortBy]=useState('energy')
-  const [expanded,setExpanded]=useState(null)
+function ResultsAdmin() {
+  const [loading, setLoading] = useState(true)
+  const [metrics, setMetrics] = useState([])
+  const [rows, setRows] = useState([])
+  const [range, setRange] = useState(() => { const t = new Date(), f = new Date(); f.setDate(f.getDate() - 29); return { from: toISO(f), to: toISO(t) } })
+  const [sortBy, setSortBy] = useState('energy')
+  const [metricId, setMetricId] = useState('')
+  const [ddOpen, setDdOpen] = useState(false)
+  const [expanded, setExpanded] = useState(null)
+  const ddRef = useRef(null)
 
-  const auth=async()=>{const {data:{session}}=await supabase.auth.getSession();return {Authorization:`Bearer ${session.access_token}`}}
-  const load=async()=>{
-    const h=await auth()
-    const params=new URLSearchParams()
-    if(metricFilter)params.set('metricId',metricFilter)
-    if(range.from)params.set('from',range.from)
-    if(range.to)params.set('to',range.to)
-    const r=await fetch(`/api/company-admin/kpi/results?${params}`,{headers:h})
-    if(r.ok){const d=await r.json();setMetrics(d.metrics||[]);setRows(d.rows||[])}
+  useEffect(() => {
+    const onDoc = (e) => { if (ddRef.current && !ddRef.current.contains(e.target)) setDdOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
+
+  const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
+  const load = async () => {
+    const h = await auth()
+    const params = new URLSearchParams()
+    if (metricId) params.set('metricId', metricId)
+    if (range.from) params.set('from', range.from)
+    if (range.to) params.set('to', range.to)
+    const r = await fetch(`/api/kpi/results?${params}`, { headers: h })
+    if (r.ok) { const d = await r.json(); setMetrics(d.metrics || []); setRows(d.rows || []) }
     setLoading(false)
   }
-  useEffect(()=>{setLoading(true);load()},[range,metricFilter])
+  useEffect(() => { setLoading(true); load() }, [range, metricId])
 
-  const metricValue=row=>{
-    if(!metricFilter)return null
-    const e=(row.entries||[]).find(x=>x.metric_id===Number(metricFilter))
-    return e?Number(e.value):null
+  const metricValue = row => {
+    if (!metricId) return null
+    const e = (row.entries || []).find(x => x.metric_id === Number(metricId))
+    return e ? Number(e.value) : null
   }
-  const sortKey=row=>sortBy==='energy'?row.energy:sortBy==='tests'?row.tests_passed:(metricValue(row)??-1)
-  const sorted=[...rows].sort((a,b)=>sortKey(b)-sortKey(a))
-  const podium=sorted.slice(0,3)
+  const topCount = row => (row.latest || []).filter(e => e.band === 'top' || e.band === 'ultra').length
+  const sortKey = row => sortBy === 'energy' ? row.energy : sortBy === 'karma' ? row.balance : sortBy === 'metric' ? (metricValue(row) ?? -1) : topCount(row) * 100000 + row.energy
+  const sorted = [...rows].sort((a, b) => sortKey(b) - sortKey(a))
+  const podium = sorted.slice(0, 3)
+  const medal = ['#FFD700', '#c0c8d8', '#d4894a']
 
-  if(loading)return <div className="flex justify-center items-center py-24"><Spinner/></div>
-  return(
-    <div style={{minHeight:'100vh',background:'#000',color:'#fff',fontFamily:'Inter, sans-serif',padding:'40px 20px'}}>
-      <div style={{maxWidth:1200,margin:'0 auto'}}>
-        <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-          <h1 style={{fontSize:28,fontWeight:600,background:'linear-gradient(135deg, #a0e9ff, #c084fc)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Результаты команды</h1>
-          <DateRangePicker from={range.from} to={range.to} onChange={setRange}/>
-        </div>
-        <div className="flex flex-wrap gap-3 mb-8">
-          <select value={metricFilter} onChange={e=>setMetricFilter(e.target.value)} className="input-field">
-            <option value="">Все показатели</option>
-            {metrics.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-          <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="input-field">
-            <option value="energy">По энергии</option>
-            <option value="metric">По значению показателя</option>
-            <option value="tests">По пройденным тестам</option>
-          </select>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  return (
+    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+        <BackArrow href="/company-admin" title="Результаты команды" extra={<div style={{ marginLeft: 'auto' }}><DateRangePicker from={range.from} to={range.to} onChange={setRange} /></div>} />
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap', alignItems: 'center' }}>
+          {[['overall', 'Общие'], ['energy', 'По энергии'], ['karma', 'По кармикам']].map(([k, l]) => (
+            <button key={k} onClick={() => setSortBy(k)} style={pill(sortBy === k)}>{l}</button>
+          ))}
+          <div ref={ddRef} style={{ position: 'relative' }}>
+            <button onClick={() => { setSortBy('metric'); setDdOpen(o => !o) }} style={pill(sortBy === 'metric')}>
+              По показателю
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ display: 'inline', marginLeft: 6, transform: ddOpen ? 'rotate(180deg)' : 'none' }}><path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+            </button>
+            {ddOpen && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 50, minWidth: 240, background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,.35)', borderRadius: 14, boxShadow: '0 12px 40px rgba(0,0,0,.6)', padding: 8 }}>
+                {metrics.length === 0 && <div style={{ padding: '8px 12px', fontSize: 12, color: '#777' }}>Показателей пока нет</div>}
+                {metrics.map(m => (
+                  <div key={m.id} onClick={() => { setMetricId(String(m.id)); setDdOpen(false) }}
+                    style={{ padding: '9px 12px', fontSize: 13, borderRadius: 9, cursor: 'pointer', color: metricId === String(m.id) ? '#FFD700' : '#eaf0fb', background: metricId === String(m.id) ? 'rgba(255,215,0,0.1)' : 'transparent', transition: 'background .15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = metricId === String(m.id) ? 'rgba(255,215,0,0.1)' : 'transparent'}>
+                    {m.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Пьедестал */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {podium.map((r,i)=>(
-            <div key={r.user_id} className="premium-card text-center" style={{borderColor:i===0?'rgba(255,215,0,0.6)':i===1?'rgba(192,132,252,0.5)':'rgba(249,115,22,0.4)'}}>
-              <div style={{fontSize:34}}>{i===0?'🥇':i===1?'🥈':'🥉'}</div>
-              <div className="text-white font-semibold mt-1">{r.name}</div>
-              <div className="text-sm mt-1" style={{color:'#FFD700'}}>{r.energy} энергии</div>
-              {metricFilter&&<div className="text-xs text-gray-400 mt-1">{metricValue(r)??'—'} по показателю</div>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
+          {podium.map((r, i) => (
+            <div key={r.user_id} style={{ background: 'linear-gradient(145deg, rgba(21,34,56,0.9), rgba(10,22,40,0.9))', border: `1px solid ${medal[i]}55`, borderRadius: 18, padding: 22, textAlign: 'center', boxShadow: `0 0 24px ${medal[i]}22` }}>
+              <div style={{ width: 40, height: 40, margin: '0 auto 10px', borderRadius: '50%', background: `radial-gradient(circle, ${medal[i]}33, transparent 70%)`, border: `1.5px solid ${medal[i]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: medal[i] }}>{i + 1}</div>
+              <div style={{ color: '#fff', fontWeight: 600 }}>{r.name}</div>
+              <div style={{ fontSize: 13, marginTop: 4, color: '#FFD700' }}>{r.energy} энергии</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: '#a0e9ff' }}>{r.balance} кармиков</div>
             </div>
           ))}
         </div>
 
         {/* Рейтинг */}
-        <div className="space-y-3">
-          {sorted.map((r,idx)=>(
-            <div key={r.user_id} className="premium-card" onClick={()=>setExpanded(expanded===r.user_id?null:r.user_id)} style={{cursor:'pointer'}}>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-500 w-6 text-center font-bold">{idx+1}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-medium truncate">{r.name}</div>
-                  <div className="flex gap-4 text-xs text-gray-400 mt-1">
-                    <span style={{color:'#FFD700'}}>{r.energy} энергии</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sorted.map((r, idx) => (
+            <div key={r.user_id} onClick={() => setExpanded(expanded === r.user_id ? null : r.user_id)}
+              style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 14, padding: '14px 18px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)', transition: 'border .2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <span style={{ width: 26, textAlign: 'center', fontWeight: 800, color: idx < 3 ? medal[idx] : '#556' }}>{idx + 1}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: '#fff', fontWeight: 500 }}>{r.name}</div>
+                  <div style={{ display: 'flex', gap: 14, fontSize: 12, color: '#888', marginTop: 2 }}>
+                    <span style={{ color: '#FFD700' }}>{r.energy} энергии</span>
+                    <span style={{ color: '#a0e9ff' }}>{r.balance} кармиков</span>
                     <span>{r.tests_passed} тестов</span>
-                    {metricFilter&&<span>{metricValue(r)??'—'}</span>}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  {(r.latest||[]).slice(0,4).map(e=>{
-                    const m=metrics.find(x=>x.id===e.metric_id)
-                    return <span key={e.metric_id} title={m?.name} className="text-xs px-2 py-0.5 rounded-full" style={{background:`${BAND_COLORS[e.band]}22`,color:BAND_COLORS[e.band]}}>{e.value}{m?.unit}</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {(r.latest || []).slice(0, 4).map(e => {
+                    const m = metrics.find(x => x.id === e.metric_id)
+                    return <span key={e.metric_id} title={m?.name} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: `${BAND_COLORS[e.band]}18`, color: BAND_COLORS[e.band], border: `1px solid ${BAND_COLORS[e.band]}44` }}>{e.value}{m?.unit}</span>
                   })}
                 </div>
               </div>
-              {expanded===r.user_id&&(
-                <div className="mt-4 pt-4 border-t border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4" onClick={e=>e.stopPropagation()}>
-                  {metrics.map(m=>{
-                    const pts=(r.entries||[]).filter(e=>e.metric_id===m.id).map(e=>Number(e.value)).reverse()
-                    const last=pts[pts.length-1]
-                    return(
-                      <div key={m.id} className="p-3 rounded-lg" style={{background:'rgba(255,255,255,0.03)'}}>
-                        <div className="flex justify-between text-sm mb-1"><span className="text-white">{m.name}</span><span style={{color:BAND_COLORS[((r.latest||[]).find(x=>x.metric_id===m.id))?.band||'none']}}>{last??'—'}{m.unit}</span></div>
-                        <Spark points={pts} color={BAND_COLORS.top}/>
+              {expanded === r.user_id && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }} onClick={e => e.stopPropagation()}>
+                  {metrics.map(m => {
+                    const pts = (r.entries || []).filter(e => e.metric_id === m.id).map(e => Number(e.value)).reverse()
+                    const last = pts[pts.length - 1]
+                    const band = (r.latest || []).find(x => x.metric_id === m.id)?.band || 'none'
+                    return (
+                      <div key={m.id} style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                          <span style={{ color: '#fff' }}>{m.name}</span>
+                          <span style={{ color: BAND_COLORS[band], fontWeight: 700 }}>{last ?? '—'}{m.unit}</span>
+                        </div>
+                        <Spark points={pts} color={BAND_COLORS[band]} />
                       </div>
                     )
                   })}
-                  {metrics.length===0&&<p className="text-gray-500 text-sm">Нет данных за период</p>}
+                  {metrics.length === 0 && <p style={{ color: '#777', fontSize: 13 }}>Нет данных за период</p>}
                 </div>
               )}
             </div>
           ))}
-          {sorted.length===0&&<div className="premium-card text-center"><p className="text-gray-400">Нет данных за выбранный период</p></div>}
+          {sorted.length === 0 && <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 14, padding: 40, textAlign: 'center', color: '#777' }}>Нет данных за выбранный период</div>}
         </div>
       </div>
     </div>
   )
 }
-export default withAuth(ResultsAdmin,{anyStaff:true})
+export default withAuth(ResultsAdmin, { anyStaff: true })
