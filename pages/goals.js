@@ -5,7 +5,7 @@ import BackArrow from '../components/BackArrow'
 import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
-import { BAND_LABELS, BAND_COLORS, BAND_RANK, bandFor, energyFor, karmaFor } from '../lib/kpi'
+import { BAND_LABELS, BAND_COLORS, BAND_RANK, bandFor, rangeValue, energyFor, karmaFor, TYPE_LABELS } from '../lib/kpi'
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
@@ -24,7 +24,7 @@ export default function GoalsPage() {
   const [tipsOpen, setTipsOpen] = useState(false)
   const [activeTest, setActiveTest] = useState(null)
   const [testResult, setTestResult] = useState(null)
-  const [mode, setMode] = useState('today') // today | yesterday | 7d | 30d | all | custom
+  const [mode, setMode] = useState('today')
   const [customDay, setCustomDay] = useState(todayISO)
 
   useEffect(() => {
@@ -53,10 +53,6 @@ export default function GoalsPage() {
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
   if (!data) return <div style={{ padding: '40px 32px', color: '#777' }}>Нет данных</div>
 
-  // ===== Логика периода =====
-  const allDates = (data.metrics || []).flatMap(m => (m.history || []).map(e => e.entry_date)).sort()
-  const daysAll = allDates.length ? Math.min(365, Math.max(1, Math.round((new Date(todayISO) - new Date(allDates[0])) / 86400000) + 1)) : 1
-  const periodDays = mode === 'today' || mode === 'yesterday' || mode === 'custom' ? 1 : mode === '7d' ? 7 : mode === '30d' ? 30 : daysAll
   const inRange = d => {
     if (mode === 'today') return d === todayISO
     if (mode === 'yesterday') return d === shiftISO(-1)
@@ -65,14 +61,16 @@ export default function GoalsPage() {
     if (mode === '30d') return d >= shiftISO(-29) && d <= todayISO
     return true
   }
-  const valueFor = m => {
+  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
+
+  const metricView = m => {
     const list = (m.history || []).filter(e => inRange(e.entry_date))
-    if (!list.length) return null
-    if (periodDays === 1) return Number(list[0].value)
-    return Math.round(list.reduce((s, e) => s + Number(e.value), 0) * 10) / 10
+    const rv = rangeValue(m, list)
+    if (!rv) return { value: null, band: 'none', sm: m }
+    const sm = { ...m, thr_min: m.thr_min * rv.scale, thr_mid: m.thr_mid * rv.scale, thr_top: m.thr_top * rv.scale, thr_ultra: m.thr_ultra * rv.scale }
+    const band = rv.gate === false ? 'none' : bandFor(rv.value, sm)
+    return { value: rv.value, band, sm }
   }
-  const scaled = m => ({ ...m, thr_min: m.thr_min * periodDays, thr_mid: m.thr_mid * periodDays, thr_top: m.thr_top * periodDays, thr_ultra: m.thr_ultra * periodDays })
-  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : `накопительно за ${periodDays} дн.`
 
   const energy = data.energy || 0
   let cur = null, next = null
@@ -99,7 +97,6 @@ export default function GoalsPage() {
           </div>
         } />
 
-        {/* Уровень + советы/путь — только здесь */}
         {cur && (
           <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 18, border: `1px solid ${cur.color}33`, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -112,7 +109,7 @@ export default function GoalsPage() {
                 <button onClick={() => setPathOpen(true)} style={smallLink}>путь прогресса</button>
               </div>
             </div>
-            <ProgressBar3D value={next ? energy - cur.energy_threshold : 1} height={16} />
+            {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={16} />}
             {tipsOpen && next && (
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
@@ -126,44 +123,34 @@ export default function GoalsPage() {
           </div>
         )}
 
-        {/* Фирменный фильтр даты */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
           {[['today', 'Сегодня'], ['yesterday', 'Вчера'], ['7d', '7 дней'], ['30d', '30 дней'], ['all', 'Всё время']].map(([k, l]) => (
             <button key={k} onClick={() => setMode(k)} style={pill(mode === k)}>{l}</button>
           ))}
           <div style={{ width: 190 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
-          <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}{periodDays > 1 ? ' (пороги ×' + periodDays + ')' : ''}</span>
+          <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
         </div>
 
-        {/* Показатели */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 16, marginBottom: 40 }}>
           {data.metrics.map(m => {
-            const sm = scaled(m)
-            const value = valueFor(m)
-            const band = value != null ? bandFor(value, sm) : 'none'
+            const { value, band, sm } = metricView(m)
             return (
               <div key={m.id} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33` }}>
                 <div onClick={() => setExpanded(expanded === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
-                  {/* Строка 1: название (обрезка) + значение */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
                     <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
                     <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                   </div>
-                  {/* Строка 2: шкала */}
+                  <div style={{ fontSize: 10, color: '#777', marginBottom: 8 }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</div>
                   <ProgressBar3D value={value ?? 0} marks={[{ key: 'min', value: sm.thr_min }, { key: 'mid', value: sm.thr_mid }, { key: 'top', value: sm.thr_top }, { key: 'ultra', value: sm.thr_ultra }]} />
-                  {/* Строка 3: пороги слева, уровень справа — всегда одинаково */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 10 }}>
-                    <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}
-                    </span>
+                    <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}</span>
                     <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44`, whiteSpace: 'nowrap', flexShrink: 0 }}>{BAND_LABELS[band]}</span>
                   </div>
                 </div>
                 {expanded === m.id && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    <p style={{ fontSize: 13, color: '#fff', fontWeight: 600, marginBottom: 6 }}>{m.name}</p>
                     {m.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {m.description}</p>}
-                    {m.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#4ade80' }}>Советы:</b> {m.advice}</p>}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '12px 0' }}>
                       {['min', 'mid', 'top', 'ultra'].map(b => (
                         <div key={b} style={{ padding: 10, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
@@ -199,11 +186,10 @@ export default function GoalsPage() {
           {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
         </div>
 
-        {/* Глобальные цели на период */}
         {oldGoals.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Глобальные цели на период</h2>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Количественные цели руководителя (звонки, письма, сделки). Прогресс обновляет руководитель.</p>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Количественные цели руководителя. Прогресс обновляет руководитель.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {oldGoals.map(g => {
                 const pct = Math.min(100, ((g.current_value || 0) / (g.target_value || 1)) * 100)
@@ -216,8 +202,7 @@ export default function GoalsPage() {
                     </div>
                     <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={12} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 5 }}>
-                      <span>Сейчас: {g.current_value ?? 0}</span>
-                      <span>Цель: {g.target_value}</span>
+                      <span>Сейчас: {g.current_value ?? 0}</span><span>Цель: {g.target_value}</span>
                     </div>
                   </div>
                 )
