@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import BackArrow from '../../components/BackArrow'
 import PremiumModal from '../../components/PremiumModal'
 import { withAuth } from '../../components/withAuth'
 import { isCompanyAdmin, roleLabel } from '../../lib/permissions'
 import { useProfile } from '../../context/ProfileContext'
+import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const PERMISSION_FIELDS = [
   { key: 'can_create_tasks', label: 'Создание заданий' },
@@ -14,16 +15,35 @@ const PERMISSION_FIELDS = [
   { key: 'can_manage_employees', label: 'Добавление сотрудников' },
   { key: 'can_delete_employees', label: 'Удаление сотрудников' },
 ]
-
 const emptyPermissions = { can_create_tasks: false, can_review_tasks: false, can_manage_employees: false, can_delete_employees: false }
+
+const ghostBtn = {
+  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
+  padding: '10px 20px', color: '#fff', cursor: 'pointer', fontSize: 13,
+  transition: 'all .25s', letterSpacing: 0.3
+}
+const hoverOn = e => {
+  e.currentTarget.style.borderColor = '#FFD700'
+  e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'
+  e.currentTarget.style.transform = 'translateY(-1px)'
+}
+const hoverOff = e => {
+  e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'
+  e.currentTarget.style.boxShadow = 'none'
+  e.currentTarget.style.transform = 'translateY(0)'
+}
 
 function EmployeesPage() {
   const router = useRouter()
   const { profile: myProfile } = useProfile()
+  const { showSuccess, showError } = useFeedback()
   const [companyId, setCompanyId] = useState(null)
   const [employees, setEmployees] = useState([])
   const [positions, setPositions] = useState([])
   const [companyRoles, setCompanyRoles] = useState([])
+  const [levels, setLevels] = useState([])
+  const [energyMap, setEnergyMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [editForm, setEditForm] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
@@ -31,17 +51,14 @@ function EmployeesPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [newEmployee, setNewEmployee] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
   const [newPositionTitle, setNewPositionTitle] = useState('')
-  const [notification, setNotification] = useState({ show: false, message: '' })
+  const [addPositionOpen, setAddPositionOpen] = useState(false)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const { data: profileData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single()
+        .from('profiles').select('company_id').eq('user_id', user.id).single()
       if (!profileData) { router.push('/'); return }
       setCompanyId(profileData.company_id)
       await loadData(profileData.company_id)
@@ -51,14 +68,24 @@ function EmployeesPage() {
   }, [router])
 
   const loadData = async (compId) => {
-    const [empRes, posRes, rolesRes] = await Promise.all([
+    const [empRes, posRes, rolesRes, levelsRes] = await Promise.all([
       supabase.from('profiles').select('*, positions(title)').eq('company_id', compId).is('deleted_at', null),
       supabase.from('positions').select('*').eq('company_id', compId).order('title'),
-      supabase.from('roles').select('*').eq('company_id', compId).order('name')
+      supabase.from('roles').select('*').eq('company_id', compId).order('name'),
+      supabase.from('progress_levels').select('*').order('energy_threshold')
     ])
-    setEmployees(empRes.data?.filter(emp => !isCompanyAdmin(emp)) || [])
+    const emps = (empRes.data || []).filter(emp => !isCompanyAdmin(emp))
+    const userIds = emps.map(e => e.user_id)
+    let eMap = {}
+    if (userIds.length) {
+      const { data: energyRows } = await supabase.from('kpi_energy').select('user_id, energy').in('user_id', userIds)
+      eMap = Object.fromEntries((energyRows || []).map(r => [r.user_id, r.energy || 0]))
+    }
+    setEmployees(emps)
     setPositions(posRes.data || [])
     setCompanyRoles(rolesRes.data || [])
+    setLevels(levelsRes.data || [])
+    setEnergyMap(eMap)
     loadPendingInvites()
   }
 
@@ -70,24 +97,18 @@ function EmployeesPage() {
         headers: { Authorization: `Bearer ${session.access_token}` }
       })
       if (res.ok) setPendingInvites(await res.json())
-    } catch (e) {
-      // не критично для страницы
-    }
+    } catch (e) {}
   }
 
   const cancelInvite = async (invitationId) => {
     const { data: { session } } = await supabase.auth.getSession()
-    await fetch('/api/company-admin/cancel-invite', {
+    const r = await fetch('/api/company-admin/cancel-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ invitationId })
     })
-    loadPendingInvites()
-  }
-
-  const showNotification = (msg) => {
-    setNotification({ show: true, message: msg })
-    setTimeout(() => setNotification({ show: false, message: '' }), 3000)
+    if (r.ok) { showSuccess('Приглашение отменено'); loadPendingInvites() }
+    else showError('Ошибка отмены')
   }
 
   const handleAddPosition = async () => {
@@ -95,21 +116,16 @@ function EmployeesPage() {
     const { error } = await supabase.from('positions').insert({ company_id: companyId, title: newPositionTitle.trim() })
     if (!error) {
       setNewPositionTitle('')
+      setAddPositionOpen(false)
+      showSuccess('Должность добавлена')
       loadData(companyId)
-      showNotification('Должность добавлена')
     } else {
-      showNotification('Ошибка добавления должности')
+      showError('Ошибка добавления должности')
     }
   }
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.email) return
-    // Раньше здесь была прямая вставка строки в profiles без user_id и без
-    // создания приглашения — сотрудник физически не мог войти в систему
-    // (в проекте нигде не было кода, создающего invitations). Теперь это
-    // настоящее приглашение: Supabase Auth сам отправит письмо с
-    // безопасной одноразовой ссылкой, а профиль создастся при первом входе
-    // сотрудника (pages/api/invitations/accept.js).
+    if (!newEmployee.email) { showError('Укажите email сотрудника'); return }
     const { data: { session } } = await supabase.auth.getSession()
     try {
       const res = await fetch('/api/company-admin/invite-employee', {
@@ -133,16 +149,13 @@ function EmployeesPage() {
         })
       })
       const result = await res.json()
-      if (!res.ok) {
-        showNotification('Ошибка: ' + (result.error || 'не удалось пригласить'))
-        return
-      }
+      if (!res.ok) { showError('Ошибка: ' + (result.error || 'не удалось пригласить')); return }
       setShowAddModal(false)
       setNewEmployee({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
+      showSuccess('Приглашение отправлено на ' + newEmployee.email)
       loadData(companyId)
-      showNotification('Приглашение отправлено на ' + newEmployee.email)
     } catch (err) {
-      showNotification('Внутренняя ошибка сервера')
+      showError('Внутренняя ошибка сервера')
     }
   }
 
@@ -177,239 +190,334 @@ function EmployeesPage() {
     }).eq('user_id', editingEmployee.user_id)
     if (!error) {
       setEditingEmployee(null)
+      showSuccess('Сотрудник обновлён')
       loadData(companyId)
-      showNotification('Сотрудник обновлён')
     } else {
-      showNotification('Ошибка сохранения')
+      showError('Ошибка сохранения')
     }
   }
 
   const handleDeleteEmployee = async (empUserId) => {
     if (!myProfile?.can_delete_employees && !isCompanyAdmin(myProfile)) {
-      showNotification('У вас нет прав на удаление сотрудников')
-      return
+      showError('У вас нет прав на удаление сотрудников'); return
     }
-    // В profiles нет колонки id — первичный идентификатор это user_id.
-    // Раньше здесь было .eq('id', empId), которое всегда падало с ошибкой
-    // "column profiles.id does not exist" и молча ничего не удаляло —
-    // при этом уведомление "Сотрудник удалён" показывалось в любом случае.
     const { error } = await supabase
-      .from('profiles')
-      .update({ deleted_at: new Date().toISOString() })
+      .from('profiles').update({ deleted_at: new Date().toISOString() })
       .eq('user_id', empUserId)
-    if (error) {
-      showNotification('Ошибка удаления: ' + error.message)
-      return
-    }
+    if (error) { showError('Ошибка удаления: ' + error.message); return }
+    showSuccess('Сотрудник удалён')
     loadData(companyId)
-    showNotification('Сотрудник удалён')
   }
 
   const canDelete = myProfile?.can_delete_employees || isCompanyAdmin(myProfile)
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  const getEmployeeLevel = (userId) => {
+    const energy = energyMap[userId] || 0
+    let current = null
+    levels.forEach(l => { if (energy >= l.energy_threshold) current = l })
+    return current || { name: '—', color: '#888' }
+  }
+
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      {notification.show && (
-        <div
-          className="fixed top-4 right-4 z-[1100] px-4 py-3 rounded-lg text-sm"
-          style={{ background: 'rgba(10,10,15,0.9)', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700' }}
-        >
-          {notification.message}
+    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+        <BackArrow href="/company-admin" title="Управление командой" />
+
+        {/* Кнопки действий */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setAddPositionOpen(true)}
+            style={ghostBtn}
+            onMouseEnter={hoverOn}
+            onMouseLeave={hoverOff}
+          >
+            Добавить должность
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            style={{
+              ...ghostBtn,
+              background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05))',
+              borderColor: 'rgba(255,215,0,0.5)',
+              color: '#FFD700'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = '#FFD700'
+              e.currentTarget.style.boxShadow = '0 0 18px rgba(255,215,0,0.35)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(255,215,0,0.5)'
+              e.currentTarget.style.boxShadow = 'none'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            Добавить сотрудника
+          </button>
+          <div style={{ marginLeft: 'auto', fontSize: 12, color: '#888', alignSelf: 'center' }}>
+            Всего сотрудников: {employees.length} · Должностей: {positions.length}
+          </div>
         </div>
-      )}
-      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление командой</h1>
 
-      <div className="flex items-center gap-2 mb-4">
-        <input
-          type="text"
-          className="input-field w-48"
-          placeholder="Новая должность"
-          value={newPositionTitle}
-          onChange={e => setNewPositionTitle(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
-        />
-        <button onClick={handleAddPosition} className="btn-outline text-sm px-3 py-2">Добавить должность</button>
-        <button onClick={() => setShowAddModal(true)} className="btn-gold text-sm px-4 py-2 ml-auto">Добавить сотрудника</button>
-      </div>
-
-      <div className="pastel-card overflow-auto max-h-[70vh]">
-        <table className="w-full text-left text-sm">
-          <thead className="text-gray-400 border-b border-gray-700">
-            <tr>
-              <th className="py-2 pr-4">Имя</th>
-              <th className="py-2 pr-4">Email</th>
-              <th className="py-2 pr-4">Должность</th>
-              <th className="py-2 pr-4">Роль</th>
-              <th className="py-2">Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map(emp => (
-              <tr key={emp.user_id} className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onClick={() => handleEditEmployee(emp)}>
-                <td className="py-3 pr-4">{emp.display_name || emp.email}</td>
-                <td className="py-3 pr-4 text-gray-400">{emp.email}</td>
-                <td className="py-3 pr-4">{emp.positions?.title || '—'}</td>
-                <td className="py-3 pr-4">{roleLabel(emp)}</td>
-                <td className="py-3" onClick={e => e.stopPropagation()}>
+        {/* Список сотрудников */}
+        <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 18, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr auto', gap: 12, fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div>Сотрудник</div>
+            <div>Должность</div>
+            <div>Роль</div>
+            <div>Уровень</div>
+            <div>Энергия</div>
+            <div></div>
+          </div>
+          {employees.length === 0 && (
+            <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>
+              В команде пока нет сотрудников
+            </div>
+          )}
+          {employees.map(emp => {
+            const lvl = getEmployeeLevel(emp.user_id)
+            return (
+              <div
+                key={emp.user_id}
+                onClick={() => handleEditEmployee(emp)}
+                style={{
+                  padding: '16px 24px',
+                  display: 'grid',
+                  gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr auto',
+                  gap: 12,
+                  alignItems: 'center',
+                  borderTop: '1px solid rgba(255,255,255,0.04)',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                  e.currentTarget.style.transform = 'translateX(2px)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.transform = 'translateX(0)'
+                }}
+              >
+                <div>
+                  <div style={{ color: '#fff', fontWeight: 500, fontSize: 14 }}>
+                    {[emp.first_name, emp.last_name].filter(Boolean).join(' ') || emp.display_name || emp.email}
+                  </div>
+                  <div style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{emp.email}</div>
+                </div>
+                <div style={{ color: '#ccc', fontSize: 13 }}>{emp.positions?.title || '—'}</div>
+                <div style={{ color: '#aaa', fontSize: 12 }}>{roleLabel(emp)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: lvl.color, boxShadow: `0 0 8px ${lvl.color}88` }} />
+                  <span style={{ color: lvl.color, fontSize: 12, fontWeight: 500 }}>{lvl.name}</span>
+                </div>
+                <div style={{ color: '#FFD700', fontSize: 13, fontWeight: 600 }}>{energyMap[emp.user_id] || 0}</div>
+                <div onClick={e => e.stopPropagation()}>
                   {canDelete && (
-                    <button onClick={() => handleDeleteEmployee(emp.user_id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                    <button
+                      onClick={() => handleDeleteEmployee(emp.user_id)}
+                      style={{
+                        background: 'rgba(244,67,54,0.08)',
+                        border: '1px solid rgba(244,67,54,0.3)',
+                        borderRadius: 8,
+                        padding: '5px 12px',
+                        color: '#f87171',
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#f87171'; e.currentTarget.style.boxShadow = '0 0 10px rgba(244,67,54,0.3)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,67,54,0.3)'; e.currentTarget.style.boxShadow = 'none' }}
+                    >
+                      Удалить
+                    </button>
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
 
-      {pendingInvites.length > 0 && (
-        <div className="pastel-card mt-6 p-4">
-          <h3 className="text-sm text-gray-400 mb-3">Ожидают активации ({pendingInvites.length})</h3>
-          <ul className="space-y-2">
-            {pendingInvites.map(inv => (
-              <li key={inv.id} className="flex justify-between items-center text-sm text-gray-400">
-                <span>{inv.email}</span>
-                <span className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500">
-                    приглашён {new Date(inv.created_at).toLocaleDateString('ru')}
-                  </span>
+        {/* Ожидающие приглашения */}
+        {pendingInvites.length > 0 && (
+          <div style={{ marginTop: 28, background: 'rgba(15,20,35,0.8)', borderRadius: 18, border: '1px solid rgba(255,255,255,0.08)', padding: 24 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 14 }}>
+              Ожидают активации ({pendingInvites.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {pendingInvites.map(inv => (
+                <div key={inv.id} style={{
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ color: '#fff', fontSize: 13 }}>{inv.email}</div>
+                    <div style={{ color: '#666', fontSize: 11, marginTop: 2 }}>
+                      приглашён {new Date(inv.created_at).toLocaleDateString('ru')}
+                    </div>
+                  </div>
                   <button
                     onClick={() => cancelInvite(inv.id)}
-                    className="text-xs text-red-400 hover:text-red-300"
+                    style={{
+                      background: 'none',
+                      border: '1px solid rgba(244,67,54,0.3)',
+                      borderRadius: 8,
+                      padding: '5px 14px',
+                      color: '#f87171',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#f87171' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,67,54,0.3)' }}
                   >
                     Отменить
                   </button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Добавление сотрудника — раньше состояние (showAddModal, newEmployee)
-          существовало и обновлялось по клику, но JSX самой модалки не было
-          дописано, поэтому кнопка "Добавить сотрудника" ничего не показывала. */}
-      <PremiumModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Добавить сотрудника" showCloseButton={false}>
-        <div className="space-y-3 text-left">
+      {/* Модалка добавления должности */}
+      <PremiumModal isOpen={addPositionOpen} onClose={() => { setAddPositionOpen(false); setNewPositionTitle('') }} title="Новая должность" showCloseButton={false}>
+        <div style={{ textAlign: 'left' }}>
+          <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название должности</label>
           <input
-            type="email"
-            className="input-field w-full"
-            placeholder="Email сотрудника"
-            value={newEmployee.email}
-            onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })}
+            type="text"
+            className="input-field"
+            style={{ width: '100%', marginBottom: 16 }}
+            placeholder="Например, Старший менеджер"
+            value={newPositionTitle}
+            onChange={e => setNewPositionTitle(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddPosition()}
+            autoFocus
           />
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="input-field w-full"
-              placeholder="Имя"
-              value={newEmployee.first_name}
-              onChange={e => setNewEmployee({ ...newEmployee, first_name: e.target.value })}
-            />
-            <input
-              type="text"
-              className="input-field w-full"
-              placeholder="Фамилия"
-              value={newEmployee.last_name}
-              onChange={e => setNewEmployee({ ...newEmployee, last_name: e.target.value })}
-            />
-          </div>
-          <select
-            className="input-field w-full"
-            value={newEmployee.position_id}
-            onChange={e => setNewEmployee({ ...newEmployee, position_id: e.target.value })}
-          >
-            <option value="">Без должности</option>
-            {positions.map(pos => (
-              <option key={pos.id} value={pos.id}>{pos.title}</option>
-            ))}
-          </select>
-          <select
-            className="input-field w-full"
-            value={newEmployee.role_id}
-            onChange={e => setNewEmployee({ ...newEmployee, role_id: e.target.value })}
-          >
-            <option value="">Без роли</option>
-            {companyRoles.map(role => (
-              <option key={role.id} value={role.id}>{role.name}</option>
-            ))}
-          </select>
-          <div className="space-y-1 pt-1">
-            {PERMISSION_FIELDS.map(field => (
-              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-400">
-                <input
-                  type="checkbox"
-                  checked={!!newEmployee[field.key]}
-                  onChange={e => setNewEmployee({ ...newEmployee, [field.key]: e.target.checked })}
-                />
-                {field.label}
-              </label>
-            ))}
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button onClick={() => setShowAddModal(false)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
-            <button onClick={handleAddEmployee} className="btn-gold text-sm px-4 py-2 flex-1">Пригласить</button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => { setAddPositionOpen(false); setNewPositionTitle('') }} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+            <button onClick={handleAddPosition} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Добавить</button>
           </div>
         </div>
       </PremiumModal>
 
-      {/* Редактирование сотрудника — та же ситуация: состояние (editingEmployee,
-          editForm) уже было готово, модалки не было. */}
+      {/* Модалка добавления сотрудника */}
+      <PremiumModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Пригласить сотрудника" showCloseButton={false}>
+        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Email сотрудника</label>
+            <input type="email" className="input-field" style={{ width: '100%' }} placeholder="email@company.ru"
+              value={newEmployee.email} onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Имя</label>
+              <input type="text" className="input-field" style={{ width: '100%' }} placeholder="Иван"
+                value={newEmployee.first_name} onChange={e => setNewEmployee({ ...newEmployee, first_name: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Фамилия</label>
+              <input type="text" className="input-field" style={{ width: '100%' }} placeholder="Иванов"
+                value={newEmployee.last_name} onChange={e => setNewEmployee({ ...newEmployee, last_name: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Должность</label>
+              <select className="input-field" style={{ width: '100%' }}
+                value={newEmployee.position_id} onChange={e => setNewEmployee({ ...newEmployee, position_id: e.target.value })}>
+                <option value="">Без должности</option>
+                {positions.map(pos => <option key={pos.id} value={pos.id}>{pos.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Роль</label>
+              <select className="input-field" style={{ width: '100%' }}
+                value={newEmployee.role_id} onChange={e => setNewEmployee({ ...newEmployee, role_id: e.target.value })}>
+                <option value="">Без роли</option>
+                {companyRoles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ paddingTop: 8 }}>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Дополнительные доступы</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {PERMISSION_FIELDS.map(field => (
+                <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={!!newEmployee[field.key]}
+                    onChange={e => setNewEmployee({ ...newEmployee, [field.key]: e.target.checked })}
+                    style={{ accentColor: '#FFD700' }} />
+                  {field.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button onClick={() => setShowAddModal(false)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+            <button onClick={handleAddEmployee} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пригласить</button>
+          </div>
+        </div>
+      </PremiumModal>
+
+      {/* Модалка редактирования сотрудника */}
       <PremiumModal isOpen={!!editingEmployee} onClose={() => setEditingEmployee(null)} title="Редактировать сотрудника" showCloseButton={false}>
-        <div className="space-y-3 text-left">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="input-field w-full"
-              placeholder="Имя"
-              value={editForm.first_name}
-              onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
-            />
-            <input
-              type="text"
-              className="input-field w-full"
-              placeholder="Фамилия"
-              value={editForm.last_name}
-              onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
-            />
+        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Имя</label>
+              <input type="text" className="input-field" style={{ width: '100%' }}
+                value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Фамилия</label>
+              <input type="text" className="input-field" style={{ width: '100%' }}
+                value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })} />
+            </div>
           </div>
-          <select
-            className="input-field w-full"
-            value={editForm.position_id}
-            onChange={e => setEditForm({ ...editForm, position_id: e.target.value })}
-          >
-            <option value="">Без должности</option>
-            {positions.map(pos => (
-              <option key={pos.id} value={pos.id}>{pos.title}</option>
-            ))}
-          </select>
-          <select
-            className="input-field w-full"
-            value={editForm.role_id}
-            onChange={e => setEditForm({ ...editForm, role_id: e.target.value })}
-          >
-            <option value="">Без роли</option>
-            {companyRoles.map(role => (
-              <option key={role.id} value={role.id}>{role.name}</option>
-            ))}
-          </select>
-          <div className="space-y-1 pt-1">
-            {PERMISSION_FIELDS.map(field => (
-              <label key={field.key} className="flex items-center gap-2 text-sm text-gray-400">
-                <input
-                  type="checkbox"
-                  checked={!!editForm[field.key]}
-                  onChange={e => setEditForm({ ...editForm, [field.key]: e.target.checked })}
-                />
-                {field.label}
-              </label>
-            ))}
+          <div>
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Email</label>
+            <input type="email" className="input-field" style={{ width: '100%' }}
+              value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} />
           </div>
-          <div className="flex gap-2 pt-2">
-            <button onClick={() => setEditingEmployee(null)} className="btn-outline text-sm px-4 py-2 flex-1">Отмена</button>
-            <button onClick={handleSaveEdit} className="btn-gold text-sm px-4 py-2 flex-1">Сохранить</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Должность</label>
+              <select className="input-field" style={{ width: '100%' }}
+                value={editForm.position_id} onChange={e => setEditForm({ ...editForm, position_id: e.target.value })}>
+                <option value="">Без должности</option>
+                {positions.map(pos => <option key={pos.id} value={pos.id}>{pos.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Роль</label>
+              <select className="input-field" style={{ width: '100%' }}
+                value={editForm.role_id} onChange={e => setEditForm({ ...editForm, role_id: e.target.value })}>
+                <option value="">Без роли</option>
+                {companyRoles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ paddingTop: 8 }}>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Дополнительные доступы</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {PERMISSION_FIELDS.map(field => (
+                <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={!!editForm[field.key]}
+                    onChange={e => setEditForm({ ...editForm, [field.key]: e.target.checked })}
+                    style={{ accentColor: '#FFD700' }} />
+                  {field.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button onClick={() => setEditingEmployee(null)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+            <button onClick={handleSaveEdit} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сохранить</button>
           </div>
         </div>
       </PremiumModal>
