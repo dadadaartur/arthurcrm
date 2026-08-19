@@ -2,16 +2,19 @@ import { createContext, useContext, useCallback } from 'react'
 
 const ActionFeedbackContext = createContext(null)
 
-window.__showSuccess = (message = 'Успешно') => {
-  window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'success', message } }))
-}
-window.__showError = (message = 'Ошибка') => {
-  window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'error', message } }))
-}
-
 export function ActionFeedbackProvider({ children }) {
-  const showSuccess = useCallback((msg) => window.__showSuccess(msg), [])
-  const showError = useCallback((msg) => window.__showError(msg), [])
+  const showSuccess = useCallback((msg = 'Успешно') => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'success', message: msg } }))
+    }
+  }, [])
+
+  const showError = useCallback((msg = 'Ошибка') => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'error', message: msg } }))
+    }
+  }, [])
+
   return (
     <ActionFeedbackContext.Provider value={{ showSuccess, showError }}>
       {children}
@@ -21,6 +24,8 @@ export function ActionFeedbackProvider({ children }) {
 
 export const useFeedback = () => {
   const ctx = useContext(ActionFeedbackContext)
-  if (!ctx) throw new Error('useFeedback must be used within ActionFeedbackProvider')
+  if (!ctx) {
+    return { showSuccess: () => {}, showError: () => {} }
+  }
   return ctx
 }
