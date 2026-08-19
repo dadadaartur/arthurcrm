@@ -1,0 +1,99 @@
+import { createClient } from '@supabase/supabase-js'
+import { bandFor, BAND_RANK } from '../../../lib/kpi'
+
+export default async function handler(req, res) {
+  const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const now = new Date()
+  const soon = new Date(now.getTime() + 24 * 3600 * 1000)
+  const today = now.toISOString().slice(0, 10)
+
+  // 1) Напоминания (дедлайн в течение 24ч, ещё не напоминали)
+  const { data: remind } = await a.from('task_assignments')
+    .select('id, task_id, user_id, deadline_at, tasks(title, company_id)')
+    .in('status', ['assigned', 'in_progress'])
+    .not('deadline_at', 'is', null)
+    .is('deadline_reminded_at', null)
+    .lte('deadline_at', soon.toISOString()).gte('deadline_at', now.toISOString())
+  for (const r of remind || []) {
+    await a.from('notifications').insert([
+      { user_id: r.user_id, message: `Скоро истекает срок задания «${r.tasks?.title}» — успейте выполнить!`, link: '/tasks' },
+    ])
+    const { data: admins } = await a.from('profiles').select('user_id')
+      .eq('company_id', r.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
+    if (admins?.length) {
+      await a.from('notifications').insert(admins.map(ad => ({
+        user_id: ad.user_id, message: `У сотрудника скоро истекает срок задания «${r.tasks?.title}»`, link: '/company-admin/review'
+      })))
+    }
+    await a.from('task_assignments').update({ deadline_reminded_at: now.toISOString() }).eq('id', r.id)
+  }
+
+  // 2) Архив просроченных
+  const { data: overdue } = await a.from('task_assignments')
+    .select('id, task_id, user_id, tasks(title, company_id)')
+    .in('status', ['assigned', 'in_progress'])
+    .not('deadline_at', 'is', null)
+    .lt('deadline_at', now.toISOString())
+  for (const o of overdue || []) {
+    await a.from('task_assignments').update({ status: 'archived' }).eq('id', o.id)
+    await a.from('notifications').insert({
+      user_id: o.user_id,
+      message: `Срок задания «${o.tasks?.title}» истёк — оно ушло в архив. Руководитель может восстановить его с новым сроком.`,
+      link: '/tasks'
+    })
+    const { data: admins } = await a.from('profiles').select('user_id')
+      .eq('company_id', o.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
+    if (admins?.length) {
+      await a.from('notifications').insert(admins.map(ad => ({
+        user_id: ad.user_id, message: `Задание «${o.tasks?.title}» не выполнено в срок и ушло в архив`, link: '/company-admin/tasks'
+      })))
+    }
+  }
+
+  // 3) Авто-зачёт по целям (проверяем сегодняшний день)
+  const { data: autoTasks } = await a.from('tasks').select('*')
+    .eq('is_auto_goal', true).eq('is_active', true).eq('is_archived', false)
+  for (const t of autoTasks || []) {
+    const { data: emps } = await a.from('profiles').select('user_id')
+      .eq('company_id', t.company_id).eq('is_company_admin', false).is('deleted_at', null)
+    const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', t.company_id).eq('is_active', true)
+    for (const emp of emps || []) {
+      const { data: granted } = await a.from('task_auto_grants').select('task_id')
+        .eq('task_id', t.id).eq('user_id', emp.user_id).eq('grant_date', today).maybeSingle()
+      if (granted) continue
+      const { data: entries } = await a.from('kpi_entries').select('metric_id, value')
+        .eq('user_id', emp.user_id).eq('entry_date', today)
+      if (!entries?.length) continue
+      const bandByMetric = {}
+      entries.forEach(e => {
+        const m = (metrics || []).find(x => x.id === e.metric_id)
+        if (m) bandByMetric[e.metric_id] = bandFor(e.value, m)
+      })
+      const bands = Object.values(bandByMetric)
+      if (!bands.length) continue
+      let ok = false
+      if (t.auto_goal_condition === 'all_min') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.min)
+      if (t.auto_goal_condition === 'all_mid') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.mid)
+      if (t.auto_goal_condition === 'any_one') ok = bands.some(b => BAND_RANK[b] >= BAND_RANK.min)
+      if (!ok) continue
+      // Начисляем награду
+      await a.from('task_auto_grants').insert({ task_id: t.id, user_id: emp.user_id, grant_date: today })
+      if (t.reward_karma > 0) {
+        const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', emp.user_id).maybeSingle()
+        await a.from('karma_balance').upsert({ user_id: emp.user_id, balance: (bal?.balance || 0) + t.reward_karma }, { onConflict: 'user_id' })
+        await a.from('karma_transactions').insert({ user_id: emp.user_id, amount: t.reward_karma, type: 'task_reward', description: `Авто-зачёт: «${t.title}»` })
+      }
+      if (t.auto_energy > 0) {
+        const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', emp.user_id).maybeSingle()
+        await a.from('kpi_energy').upsert({ user_id: emp.user_id, energy: (en?.energy || 0) + t.auto_energy, updated_at: now.toISOString() }, { onConflict: 'user_id' })
+      }
+      await a.from('notifications').insert({
+        user_id: emp.user_id,
+        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${t.auto_energy} энергии`,
+        link: '/history'
+      })
+    }
+  }
+
+  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdue || []).length })
+}
