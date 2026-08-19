@@ -31,7 +31,7 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-// ============ КОЛОКОЛЬЧИК УВЕДОМЛЕНИЙ (портал в body, поверх всего) ============
+// ============ КОЛОКОЛЬЧИК УВЕДОМЛЕНИЙ ============
 function NotificationBell() {
   const { user } = useProfile()
   const router = useRouter()
@@ -44,21 +44,17 @@ function NotificationBell() {
 
   const load = async () => {
     if (!user) return
-    const { data } = await supabase
-      .from('notifications').select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false }).limit(50)
+    const { data } = await supabase.from('notifications').select('*')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(50)
     setItems(data || [])
     setUnread((data || []).filter(n => !n.is_read).length)
   }
-
   useEffect(() => {
     if (!user) return
     load()
     const t = setInterval(load, 30000)
     return () => clearInterval(t)
   }, [user])
-
   useEffect(() => {
     if (!open) return
     const onDown = (e) => {
@@ -75,7 +71,6 @@ function NotificationBell() {
     setUnread(0)
     setItems(p => p.map(n => ({ ...n, is_read: true })))
   }
-
   const clickItem = async (n) => {
     if (!n.is_read) {
       await supabase.from('notifications').update({ is_read: true }).eq('id', n.id)
@@ -85,7 +80,6 @@ function NotificationBell() {
     setOpen(false)
     if (n.link) router.push(n.link)
   }
-
   const toggle = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
@@ -96,48 +90,20 @@ function NotificationBell() {
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={toggle}
-        title="Уведомления"
-        style={{
-          position: 'relative', cursor: 'pointer',
-          width: 36, height: 36, borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: open ? 'rgba(255,215,0,0.15)' : 'rgba(255,215,0,0.08)',
-          border: '1px solid rgba(255,215,0,0.3)',
-          color: '#FFD700', transition: 'all 0.3s ease',
-        }}
+      <button ref={btnRef} onClick={toggle} title="Уведомления"
+        style={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(255,215,0,0.15)' : 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', transition: 'all 0.3s ease' }}
         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.45)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}
-      >
+        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 5px rgba(255,215,0,0.7))' }}>
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{
-            position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, padding: '0 5px',
-            borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #f97316)',
-            color: '#0a1628', fontSize: 11, fontWeight: 700,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(255,215,0,.7)'
-          }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #f97316)', color: '#0a1628', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(255,215,0,.7)' }}>{unread}</span>
         )}
       </button>
-
       {open && createPortal(
-        <div
-          ref={boxRef}
-          style={{
-            position: 'fixed', top: pos.top, right: pos.right,
-            width: 330, maxHeight: 420, overflowY: 'auto',
-            zIndex: 99999, padding: 14,
-            background: 'rgba(12,17,32,0.97)', backdropFilter: 'blur(14px)',
-            border: '1px solid rgba(255,215,0,0.2)', borderRadius: 14,
-            boxShadow: '0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(255,215,0,0.08)',
-          }}
-        >
+        <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: 'rgba(12,17,32,0.97)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 14, boxShadow: '0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(255,215,0,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
             {items.length > 0 && (
@@ -148,18 +114,10 @@ function NotificationBell() {
             <p style={{ fontSize: 13, color: '#777', textAlign: 'center', padding: '18px 0' }}>Пока нет уведомлений</p>
           ) : (
             items.map(n => (
-              <div
-                key={n.id}
-                onClick={() => clickItem(n)}
-                style={{
-                  padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6,
-                  background: n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)',
-                  borderLeft: n.is_read ? '2px solid transparent' : '2px solid #FFD700',
-                  transition: 'background 0.2s',
-                }}
+              <div key={n.id} onClick={() => clickItem(n)}
+                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #FFD700', transition: 'background 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.16)'}
-                onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)'}
-              >
+                onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)'}>
                 <p style={{ fontSize: 13, color: '#eee', margin: 0 }}>{n.message}</p>
                 <p style={{ fontSize: 11, color: '#777', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
               </div>
@@ -187,7 +145,6 @@ export default function Layout({ children }) {
           .then(d => setIsPlatformStaff(!!d.isPlatformStaff))
           .catch(() => {})
       })
-
       supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (!session?.access_token || !session?.refresh_token) return
         try {
@@ -202,7 +159,6 @@ export default function Layout({ children }) {
         } catch (e) {}
       })
     }
-
     if (profile?.company_id && !companyName) {
       supabase.from('companies').select('name').eq('id', profile.company_id).single()
         .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
@@ -306,6 +262,9 @@ export default function Layout({ children }) {
             )}
             {isCompanyAdmin && (
               <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+            )}
+            {isCompanyAdmin && (
+              <Link href="/company-admin/results" className="action-btn !py-1.5 !px-4 !text-xs">Результаты</Link>
             )}
           </nav>
         </div>
