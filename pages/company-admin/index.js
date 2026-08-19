@@ -44,10 +44,12 @@ function CompanyAdminDashboard() {
     { title: 'Покупки', value: stats.pendingPurchases, sub: 'на согласовании', href: '/company-admin/purchases', color: '#ffb3c6', alert: stats.pendingPurchases > 0 },
     { title: 'Товары', value: stats.rewards, sub: 'в магазине', href: '/company-admin/rewards', color: '#4ade80' },
     { title: 'Цели и мастерство', value: null, sub: 'KPI, пороги, тренинги', href: '/company-admin/mastery', color: '#c084fc' },
+    { title: 'Глобальные цели', value: null, sub: 'цели на период', href: '/company-admin/goals', color: '#FFD700' },
     { title: 'Результаты', value: null, sub: 'аналитика команды', href: '/company-admin/results', color: '#a0e9ff' },
+    { title: 'Уровни прогресса', value: null, sub: 'архитектура роста', href: '/company-admin/progress', color: '#c084fc' },
     { title: 'Ресурсы', value: null, sub: 'фонд и тарифы', href: '/company-admin/resources', color: '#FFD700' },
     { title: 'Фонд компании', value: null, sub: 'эмиссия', href: '/company-admin/karma', color: '#FFD700' },
-    { title: 'Адаптация', value: null, sub: 'планы', href: '/company-admin/onboarding', color: '#4ade80' },
+    { title: 'Адаптация', value: null, sub: 'планы новичков', href: '/company-admin/adaptation', color: '#4ade80' },
   ]
 
   return (
@@ -57,7 +59,7 @@ function CompanyAdminDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
           {cards.map(c => (
             <div key={c.title} onClick={() => router.push(c.href)}
-              style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 22, cursor: 'pointer', position: 'relative', border: `1px solid ${c.alert ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.1)'}`, transition: 'all 0.25s ease' }}
+              style={{ background: 'rgba(15,20,35,0.8)', backdropFilter: 'blur(10px)', borderRadius: 16, padding: 20, cursor: 'pointer', position: 'relative', border: `1px solid ${c.alert ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.1)'}`, transition: 'all 0.25s ease' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = c.color; e.currentTarget.style.boxShadow = `0 0 18px ${c.color}44`; e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = c.alert ? 'rgba(249,115,22,0.5)' : 'rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none' }}>
               {c.value !== null && <div style={{ fontSize: 30, fontWeight: 700, color: c.color }}>{c.value}</div>}
