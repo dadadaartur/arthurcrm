@@ -7,14 +7,14 @@ import ActionFeedback from '../components/ActionFeedback'
 import { useState, useEffect } from 'react'
 
 function FeedbackOverlay() {
-  const [state, setState] = useState({ visible: false, type: 'success', message: '' })
+  const [state, setState] = useState({ open: false, type: 'success', message: '', nonce: 0 })
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const handler = (e) => setState(e.detail)
-    window.addEventListener('af:show', handler)
-    return () => window.removeEventListener('af:show', handler)
+    const h = (e) => setState({ open: true, ...e.detail })
+    window.addEventListener('af:show', h)
+    return () => window.removeEventListener('af:show', h)
   }, [])
-  return <ActionFeedback visible={state.visible} type={state.type} message={state.message} />
+  const close = () => setState(s => ({ ...s, open: false }))
+  return <ActionFeedback state={state} onClose={close} />
 }
 
 export default function App({ Component, pageProps }) {
