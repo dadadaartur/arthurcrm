@@ -6,14 +6,14 @@ const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
 async function progress(a, planId) {
-  const { data } = await a.from('adaptation_plan_events').select('id, status, is_mandatory, rating').eq('plan_id', planId)
+  const { data } = await a.from('adaptation_plan_events').select('id, status, is_mandatory, rating, day_number').eq('plan_id', planId)
   const list = data || []
   const done = list.filter(e => e.status === 'done')
   const mand = list.filter(e => e.is_mandatory)
   const mandDone = mand.filter(e => e.status === 'done')
   const rated = list.filter(e => e.rating != null)
   const avg = rated.length ? rated.reduce((s, e) => s + e.rating, 0) / rated.length : 0
-  return { total: list.length, done: done.length, mandatoryTotal: mand.length, mandatoryDone: mandDone.length, avgRating: Math.round(avg * 10) / 10 }
+  return { total: list.length, done: done.length, mandatoryTotal: mand.length, mandatoryDone: mandDone.length, avgRating: Math.round(avg * 10) / 10, events: list }
 }
 async function log(a, body) { await a.from('adaptation_history').insert(body) }
 async function notify(a, userId, message, link) { await a.from('notifications').insert({ user_id: userId, message, link }) }
@@ -40,7 +40,8 @@ export default async function handler(req, res) {
     const out = []
     for (const p of data || []) {
       const { data: emp } = await a.from('profiles').select('display_name, email, first_name, last_name').eq('user_id', p.employee_id).maybeSingle()
-      out.push({ ...p, employee_name: emp ? ([emp.first_name, emp.last_name].filter(Boolean).join(' ') || emp.display_name || emp.email) : '—', progress: await progress(a, p.id) })
+      const pr = await progress(a, p.id)
+      out.push({ ...p, employee_name: emp ? ([emp.first_name, emp.last_name].filter(Boolean).join(' ') || emp.display_name || emp.email) : '—', progress: { total: pr.total, done: pr.done, mandatoryTotal: pr.mandatoryTotal, mandatoryDone: pr.mandatoryDone, avgRating: pr.avgRating } })
     }
     return res.status(200).json(out)
   }
@@ -96,10 +97,11 @@ export default async function handler(req, res) {
     const enriched = (events || []).map(e => ({ ...e, event_date: addDays(plan.start_date, e.day_number - 1) }))
     const today = todayISO()
     const current = enriched.find(e => e.status === 'pending' && e.event_date <= today) || null
-    return res.status(200).json({ plan, events: enriched, progress: await progress(a, plan.id), currentEvent: current })
+    const pr = await progress(a, plan.id)
+    return res.status(200).json({ plan, events: enriched, progress: { total: pr.total, done: pr.done, mandatoryTotal: pr.mandatoryTotal, mandatoryDone: pr.mandatoryDone, avgRating: pr.avgRating }, currentEvent: current })
   }
 
-  // ===== СОТРУДНИК: ВЫПОЛНИТЬ =====
+  // ===== СОТРУДНИК: ВЫПОЛНИТЬ СОБЫТИЕ =====
   if (action === 'complete' && req.method === 'POST') {
     const { eventId, feedback } = req.body
     const { data: ev } = await a.from('adaptation_plan_events').select('*, adaptation_plans(employee_id, manager_id)').eq('id', eventId).maybeSingle()
@@ -110,7 +112,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true })
   }
 
-  // ===== РОП: УТВЕРДИТЬ =====
+  // ===== РОП: УТВЕРДИТЬ СОБЫТИЕ С ОЦЕНКОЙ =====
   if (action === 'approve' && req.method === 'POST') {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { eventId, rating, feedback } = req.body
@@ -127,7 +129,7 @@ export default async function handler(req, res) {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { planId, eventId, description, dayNumber, title } = req.body
     const { data: hist } = await a.from('adaptation_history').insert({ plan_id: planId, event_id: eventId || null, manager_id: ctx.user.id, type: 'correction', description: description || 'Корректировка', author_role: 'manager' }).select().single()
-    if (title) await a.from('adaptation_plan_events').insert({ plan_id: planId, day_number: dayNumber || 1, title, event_type: 'rework', description, is_mandatory: true })
+    if (title) await a.from('adaptation_plan_events').insert({ plan_id: planId, day_number: dayNumber || 1, title, description, event_type: 'rework', is_mandatory: true })
     const { data: plan } = await a.from('adaptation_plans').select('employee_id').eq('id', planId).maybeSingle()
     if (plan) await notify(a, plan.employee_id, 'РОП добавил корректировку в ваш план адаптации.', '/onboarding')
     return res.status(200).json({ success: true })
@@ -151,11 +153,16 @@ export default async function handler(req, res) {
     const { data: corr } = await a.from('adaptation_history').select('id').eq('plan_id', planId).eq('type', 'correction')
     const corrections = (corr || []).length
     const pct = pr.mandatoryTotal ? Math.round((pr.mandatoryDone / pr.mandatoryTotal) * 100) : 0
+    const first = pr.events.filter(e => e.rating != null && e.day_number <= 7)
+    const last = pr.events.filter(e => e.rating != null && e.day_number >= 15)
+    const avgOf = arr => arr.length ? arr.reduce((s, e) => s + e.rating, 0) / arr.length : null
+    const firstAvg = avgOf(first), lastAvg = avgOf(last)
+    const dynamics = firstAvg != null && lastAvg != null ? lastAvg - firstAvg : 0
     let recommendation, color
-    if (pct >= 90 && pr.avgRating >= 4.5) { recommendation = 'Рекомендован к дальнейшей работе'; color = '#4ade80' }
+    if (pct >= 90 && pr.avgRating >= 4.5 && dynamics >= 0) { recommendation = 'Рекомендован к дальнейшей работе'; color = '#4ade80' }
     else if (pct >= 70 && pr.avgRating >= 3.5) { recommendation = 'Требует доработки'; color = '#FFD700' }
     else { recommendation = 'Не рекомендован'; color = '#f87171' }
-    return res.status(200).json({ ...pr, pct, corrections, recommendation, color })
+    return res.status(200).json({ ...pr, pct, corrections, dynamics: Math.round(dynamics * 10) / 10, recommendation, color })
   }
 
   res.status(404).json({ error: 'Unknown action' })
