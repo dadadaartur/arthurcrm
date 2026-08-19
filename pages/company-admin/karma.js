@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import BackArrow from '../../components/BackArrow'
 import { withAuth } from '../../components/withAuth'
+
+const goldBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '10px 24px', color: '#fff', cursor: 'pointer', fontSize: 14, transition: 'all .25s' }
 
 function CompanyKarma() {
   const [loading, setLoading] = useState(true)
@@ -15,15 +17,12 @@ function CompanyKarma() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) { setError('Нет сессии'); setLoading(false); return }
     try {
-      const res = await fetch('/api/company-admin/karma', {
-        headers: { Authorization: `Bearer ${session.access_token}` }
-      })
+      const res = await fetch('/api/company-admin/karma', { headers: { Authorization: `Bearer ${session.access_token}` } })
       if (res.ok) setData(await res.json())
       else { const e = await res.json(); setError(e.error || 'Ошибка загрузки') }
     } catch (e) { setError('Сетевая ошибка') }
     setLoading(false)
   }
-
   useEffect(() => { load() }, [])
 
   const handleEmit = async () => {
@@ -32,137 +31,87 @@ function CompanyKarma() {
     try {
       const res = await fetch('/api/central-bank/emit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ companyId: data.account?.company_id })
       })
       const result = await res.json()
-      if (res.ok) {
-        setEmitMsg(`Эмиссия выполнена: +${result.emitted} кармиков в казну. Остаток Центробанка: ${result.new_bank_balance}`)
-        await load()
-      } else {
-        setEmitMsg('Ошибка: ' + (result.error || 'не удалось выполнить эмиссию'))
-      }
+      if (res.ok) { setEmitMsg(`Эмиссия выполнена: +${result.emitted} кармиков в фонд компании.`); await load() }
+      else setEmitMsg('Ошибка: ' + (result.error || 'не удалось выполнить эмиссию'))
     } catch (e) { setEmitMsg('Сетевая ошибка') }
     setEmitting(false)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner /></div>
-  if (error) return <div className="max-w-4xl mx-auto px-6 py-8"><p className="text-red-400">{error}</p></div>
-
-  const { account, tariff, employees, circulation, central_bank, emissions } = data
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (error) return <div style={{ padding: '40px 32px', color: '#f87171' }}>{error}</div>
+  const { account, tariff, employees, circulation, emissions } = data
   const fundBalance = account?.balance ?? 0
   const validUntil = account?.valid_until ? new Date(account.valid_until).toLocaleDateString('ru') : '—'
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>Казна компании</h1>
+    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+        <BackArrow href="/company-admin" title="Фонд компании" />
 
-      {/* Центробанк */}
-      <div className="premium-card mb-6" style={{ borderColor: 'rgba(212,175,55,0.4)' }}>
-        <div className="flex justify-between items-center flex-wrap gap-4">
+        <div style={{ background: 'rgba(15,20,35,0.8)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 18, padding: 24, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Кармический Центробанк</h3>
-            <p className="text-xs text-gray-500">Регулятор эмиссии кармиков</p>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-gray-400">Капитал Центробанка</div>
-            <div className="text-2xl font-bold" style={{ color: '#FFD700' }}>{central_bank?.balance ?? 0}</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 mt-4 text-sm">
-          <div className="flex justify-between border-b border-gray-800 pb-2">
-            <span className="text-gray-400">Стартовый капитал</span>
-            <span className="text-white">{central_bank?.starting_capital ?? 0}</span>
-          </div>
-          <div className="flex justify-between border-b border-gray-800 pb-2">
-            <span className="text-gray-400">Всего эмитировано</span>
-            <span className="text-white">{central_bank?.total_issued ?? 0}</span>
-          </div>
-          <div className="flex justify-between border-b border-gray-800 pb-2">
-            <span className="text-gray-400">Всего отработано (списано)</span>
-            <span className="text-white">{central_bank?.total_utilized ?? 0}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Эмиссия */}
-      <div className="premium-card mb-6">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Эмиссия по тарифу</h3>
-            <p className="text-xs text-gray-500">
-              Центробанк перечислит в казну {tariff?.karma_per_employee ?? 0} кармиков за каждого сотрудника
-              и спишет эту сумму из своего капитала.
+            <h3 style={{ fontSize: 17, fontWeight: 600, color: '#fff', margin: 0 }}>Эмиссия по тарифу</h3>
+            <p style={{ fontSize: 13, color: '#888', margin: '6px 0 0' }}>
+              Центробанк перечислит {tariff?.karma_per_employee ?? 0} кармиков за каждого сотрудника в фонд компании.
             </p>
           </div>
-          <button onClick={handleEmit} disabled={emitting} className="btn-gold" style={{ opacity: emitting ? 0.6 : 1 }}>
+          <button onClick={handleEmit} disabled={emitting} style={{ ...goldBtn, opacity: emitting ? 0.5 : 1 }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 16px rgba(255,215,0,0.3)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
             {emitting ? 'Выполняем…' : 'Выполнить эмиссию'}
           </button>
         </div>
-        {emitMsg && (
-          <p className="text-sm mt-3" style={{ color: emitMsg.startsWith('Ошибка') ? '#f87171' : '#4ade80' }}>{emitMsg}</p>
-        )}
-      </div>
+        {emitMsg && <p style={{ fontSize: 13, marginBottom: 20, color: emitMsg.startsWith('Ошибка') ? '#f87171' : '#4ade80' }}>{emitMsg}</p>}
 
-      {/* Главные цифры */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="premium-card text-center">
-          <div className="text-sm text-gray-400 mb-1">Фонд компании</div>
-          <div className="text-3xl font-bold" style={{ color: '#FFD700' }}>{fundBalance}</div>
-          <div className="text-xs text-gray-500">кармиков доступно</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 24 }}>
+          {[
+            { l: 'Фонд компании', v: fundBalance, c: '#FFD700', s: 'кармиков доступно' },
+            { l: 'В обороте у сотрудников', v: circulation, c: '#c084fc', s: 'кармиков накоплено' },
+            { l: 'Тариф', v: tariff?.name || '—', c: '#fff', s: tariff ? `${tariff.karma_per_employee} карм./сотр. в мес` : '' },
+            { l: 'Действует до', v: validUntil, c: '#fff', s: 'окончание тарифа' },
+          ].map((m, i) => (
+            <div key={i} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 20, textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>{m.l}</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: m.c }}>{m.v}</div>
+              <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>{m.s}</div>
+            </div>
+          ))}
         </div>
-        <div className="premium-card text-center">
-          <div className="text-sm text-gray-400 mb-1">В обороте у сотрудников</div>
-          <div className="text-3xl font-bold" style={{ color: '#c084fc' }}>{circulation}</div>
-          <div className="text-xs text-gray-500">кармиков накоплено</div>
-        </div>
-        <div className="premium-card text-center">
-          <div className="text-sm text-gray-400 mb-1">Тариф</div>
-          <div className="text-2xl font-bold text-white">{tariff?.name || '—'}</div>
-          <div className="text-xs text-gray-500">{tariff ? `${tariff.karma_per_employee} карм./сотр. в мес` : ''}</div>
-        </div>
-        <div className="premium-card text-center">
-          <div className="text-sm text-gray-400 mb-1">Действует до</div>
-          <div className="text-2xl font-bold text-white">{validUntil}</div>
-          <div className="text-xs text-gray-500">окончание тарифа</div>
-        </div>
-      </div>
 
-      {/* История эмиссий */}
-      <div className="premium-card mb-6">
-        <h3 className="text-lg font-semibold mb-3 text-white">История эмиссий компании</h3>
-        {emissions.length === 0 ? (
-          <p className="text-gray-500 text-sm">Эмиссий ещё не было — нажмите «Выполнить эмиссию»</p>
-        ) : (
-          <div className="space-y-2">
-            {emissions.map(em => (
-              <div key={em.id} className="flex justify-between items-center p-2 rounded bg-gray-800 text-sm">
-                <span className="text-gray-300">{new Date(em.created_at).toLocaleString('ru')}</span>
-                <span className="font-semibold" style={{ color: '#FFD700' }}>+{em.amount}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 22, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 14 }}>История эмиссий</h3>
+            {emissions.length === 0 ? <p style={{ color: '#777', fontSize: 13 }}>Эмиссий ещё не было</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 380, overflowY: 'auto' }}>
+                {emissions.map(em => (
+                  <div key={em.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 13 }}>
+                    <span style={{ color: '#aaa' }}>{new Date(em.created_at).toLocaleString('ru')}</span>
+                    <span style={{ color: '#FFD700', fontWeight: 700 }}>+{em.amount}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Кто сколько накопил */}
-      <div className="premium-card">
-        <h3 className="text-lg font-semibold mb-4 text-white">Кто сколько накопил</h3>
-        {employees.length === 0 ? (
-          <p className="text-gray-500 text-sm">Сотрудников пока нет</p>
-        ) : (
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-            {employees.map(e => (
-              <div key={e.user_id} className="flex justify-between items-center p-2 rounded bg-gray-800">
-                <span className="text-white text-sm">{e.name}</span>
-                <span className="font-semibold text-sm" style={{ color: '#FFD700' }}>{e.balance} кармиков</span>
+          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 22, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 14 }}>Кто сколько накопил</h3>
+            {employees.length === 0 ? <p style={{ color: '#777', fontSize: 13 }}>Сотрудников пока нет</p> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 380, overflowY: 'auto' }}>
+                {employees.map(e => (
+                  <div key={e.user_id} style={{ display: 'flex', justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 13 }}>
+                    <span style={{ color: '#fff' }}>{e.name}</span>
+                    <span style={{ color: '#FFD700', fontWeight: 700 }}>{e.balance} карм.</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
-
 export default withAuth(CompanyKarma, { anyStaff: true })
