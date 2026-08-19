@@ -1,31 +1,19 @@
 import { createContext, useContext, useCallback } from 'react'
 
-const ActionFeedbackContext = createContext(null)
+const Ctx = createContext(null)
 
 export function ActionFeedbackProvider({ children }) {
-  const showSuccess = useCallback((msg = 'Успешно') => {
+  const show = useCallback((type, message) => {
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'success', message: msg } }))
+      window.dispatchEvent(new CustomEvent('af:show', {
+        detail: { type, message, nonce: Date.now() + Math.random() }
+      }))
     }
   }, [])
-
-  const showError = useCallback((msg = 'Ошибка') => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('af:show', { detail: { visible: true, type: 'error', message: msg } }))
-    }
-  }, [])
-
-  return (
-    <ActionFeedbackContext.Provider value={{ showSuccess, showError }}>
-      {children}
-    </ActionFeedbackContext.Provider>
-  )
+  const showSuccess = useCallback((m = 'Успешно') => show('success', m), [show])
+  const showError = useCallback((m = 'Ошибка') => show('error', m), [show])
+  return <Ctx.Provider value={{ showSuccess, showError }}>{children}</Ctx.Provider>
 }
 
-export const useFeedback = () => {
-  const ctx = useContext(ActionFeedbackContext)
-  if (!ctx) {
-    return { showSuccess: () => {}, showError: () => {} }
-  }
-  return ctx
-}
+export const useFeedback = () =>
+  useContext(Ctx) || { showSuccess: () => {}, showError: () => {} }
