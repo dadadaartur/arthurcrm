@@ -56,11 +56,6 @@ function MasteryAdmin() {
     setNewParam({ label: '', unit: 'шт' })
     return key
   }
-  const ensureParam = (label) => {
-    const key = slug(label)
-    if (!pool.find(p => p.key === key)) { const np = { key, label, unit: 'шт' }; setPool(p => [...p, np]); return np }
-    return pool.find(p => p.key === key)
-  }
 
   const createMetric = async (e) => {
     e.preventDefault()
@@ -99,7 +94,6 @@ function MasteryAdmin() {
     setMsg('Видео загружено с устройства')
   }
 
-  // ===== Ручной контроль =====
   const sharedCols = pool
   const directCols = metrics.filter(m => !m.formula).map(m => ({ key: 'm' + m.id, label: m.name, unit: m.unit }))
   const cols = [...sharedCols, ...directCols]
@@ -125,7 +119,6 @@ function MasteryAdmin() {
     setMsg(res.ok ? 'Результаты сохранены — энергия и кармики начислены' : 'Ошибка сохранения')
   }
 
-  // ===== Импорт Excel / Google =====
   const applyRows = (rows) => {
     if (!rows?.length) return 'Пустые данные'
     const header = rows[0].map(h => (h || '').trim())
@@ -168,7 +161,6 @@ function MasteryAdmin() {
         <BackArrow href="/company-admin" title="Управление целями и мастерством" />
         {msg && <div style={{ marginBottom: 16, padding: 12, borderRadius: 12, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 13 }}>{msg}</div>}
 
-        {/* Новый показатель */}
         <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 24, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 16 }}>Новый показатель</h3>
           <form onSubmit={createMetric} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
@@ -215,7 +207,6 @@ function MasteryAdmin() {
           </form>
         </div>
 
-        {/* Ручной контроль */}
         <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 24, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
             <h3 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Ручной контроль (результаты за день)</h3>
@@ -253,7 +244,6 @@ function MasteryAdmin() {
           </div>
         </div>
 
-        {/* Показатели + тренинги */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {metrics.map(m => (
             <div key={m.id} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -303,7 +293,6 @@ function MasteryAdmin() {
         </div>
       </div>
 
-      {/* Модалка инструкции по импорту */}
       {importOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setImportOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ width: 640, maxHeight: '85vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26 }}>
@@ -324,7 +313,7 @@ function MasteryAdmin() {
             )}
             {importTab === 'google' && (
               <>
-                <input className="input-field" style={{ width: '100%' }} placeholder="https://docs.google.com/spreadsheets/d/…" value={gUrl} onChange={e => setGUrl(e.target.value })} />
+                <input className="input-field" style={{ width: '100%' }} placeholder="https://docs.google.com/spreadsheets/d/…" value={gUrl} onChange={e => setGUrl(e.target.value)} />
                 <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>Таблица должна быть открыта «по ссылке». Настройте один раз — дальше просто обновляйте цифры.</p>
                 <button onClick={fetchGoogle} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Забрать данные</button>
               </>
