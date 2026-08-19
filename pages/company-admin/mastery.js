@@ -3,8 +3,9 @@ import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import BackArrow from '../../components/BackArrow'
 import DatePicker from '../../components/DatePicker'
+import LevelPathModal from '../../components/LevelPathModal'
 import { withAuth } from '../../components/withAuth'
-import { BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
+import { BAND_LABELS, BAND_COLORS, TYPE_LABELS } from '../../lib/kpi'
 
 const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '_').replace(/^_+|_+$/g, '')
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 20px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
@@ -18,9 +19,10 @@ function MasteryAdmin() {
   const [pool, setPool] = useState([])
   const [msg, setMsg] = useState('')
   const [expanded, setExpanded] = useState(null)
+  const [levelsOpen, setLevelsOpen] = useState(false)
   const [trainings, setTrainings] = useState({})
   const [tForm, setTForm] = useState({ title: '', type: 'video', url: '', content: '', test_questions: '', recommend_below: 'all' })
-  const [form, setForm] = useState({ name: '', unit: '%', mode: 'formula', thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, energy_min: 10, energy_mid: 20, energy_top: 30, energy_ultra: 50, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100 })
+  const [form, setForm] = useState({ name: '', unit: '%', mode: 'formula', kpi_type: 'cumulative', thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, energy_min: 10, energy_mid: 20, energy_top: 30, energy_ultra: 50, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100 })
   const [newParam, setNewParam] = useState({ label: '', unit: 'шт' })
   const [date, setDate] = useState('')
   const [values, setValues] = useState({})
@@ -30,7 +32,6 @@ function MasteryAdmin() {
   const [gUrl, setGUrl] = useState('')
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
-
   const load = async () => {
     const h = await auth()
     const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
@@ -54,9 +55,7 @@ function MasteryAdmin() {
     const key = slug(newParam.label)
     if (!pool.find(p => p.key === key)) setPool(p => [...p, { key, label: newParam.label.trim(), unit: newParam.unit || 'шт' }])
     setNewParam({ label: '', unit: 'шт' })
-    return key
   }
-
   const createMetric = async (e) => {
     e.preventDefault()
     let inputs = [], formula = null
@@ -74,7 +73,6 @@ function MasteryAdmin() {
     load()
   }
   const delMetric = async id => { const h = await auth(); await fetch('/api/company-admin/kpi/metrics', { method: 'DELETE', headers: h, body: JSON.stringify({ id }) }); load() }
-
   const loadTrainings = async mid => { const h = await auth(); const r = await fetch(`/api/company-admin/kpi/trainings?metricId=${mid}`, { headers: h }); if (r.ok) { const d = await r.json(); setTrainings(t => ({ ...t, [mid]: d })) } }
   const addTraining = async mid => {
     const h = await auth(); let tq = null
@@ -158,16 +156,27 @@ function MasteryAdmin() {
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/company-admin" title="Управление целями и мастерством" />
+        <BackArrow href="/company-admin" title="Управление целями и мастерством" extra={
+          <button onClick={() => setLevelsOpen(true)} style={{ marginLeft: 'auto', ...ghostBtn }}>Уровни прогресса</button>
+        } />
         {msg && <div style={{ marginBottom: 16, padding: 12, borderRadius: 12, background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 13 }}>{msg}</div>}
 
         <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 24, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 16 }}>Новый показатель</h3>
           <form onSubmit={createMetric} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-            <div><label style={{ fontSize: 12, color: '#888' }}>Название</label><input className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Конверсия лид → встреча" required /></div>
-            <div><label style={{ fontSize: 12, color: '#888' }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option></select></div>
+            <div><label style={{ fontSize: 12, color: '#888' }}>Название (до 24 символов)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Конверсия лид → встреча" required /></div>
+            <div><label style={{ fontSize: 12, color: '#888' }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Тип расчёта</label>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Тип расчёта за период</label>
+              <select className="input-field" style={{ width: '100%' }} value={form.kpi_type} onChange={e => setForm({ ...form, kpi_type: e.target.value })}>
+                {Object.entries(TYPE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+              <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>
+                Среднее и доля не зависят от числа дней в диапазоне; накопительное масштабируется по дням с данными; инверсия — «меньше — лучше» (АНТ); «минимум в днях» требует выполнения порога каждый день.
+              </p>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Источник значения</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[['formula', 'Формула (авто из параметров)'], ['direct', 'Прямое значение']].map(([k, l]) => (
                   <button key={k} type="button" onClick={() => setForm({ ...form, mode: k })}
@@ -178,9 +187,9 @@ function MasteryAdmin() {
             {form.mode === 'formula' && (
               <div style={{ gridColumn: '1 / -1', padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: 10 }}>
-                  <div><label style={{ fontSize: 12, color: '#888' }}>Числитель (например, встречи)</label>
+                  <div><label style={{ fontSize: 12, color: '#888' }}>Числитель (встречи)</label>
                     <select className="input-field" style={{ width: '100%' }} value={form.num} onChange={e => setForm({ ...form, num: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
-                  <div><label style={{ fontSize: 12, color: '#888' }}>Знаменатель (например, звонки)</label>
+                  <div><label style={{ fontSize: 12, color: '#888' }}>Знаменатель (звонки)</label>
                     <select className="input-field" style={{ width: '100%' }} value={form.den} onChange={e => setForm({ ...form, den: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
                   <div><label style={{ fontSize: 12, color: '#888' }}>Множитель</label><input type="number" className="input-field" style={{ width: '100%' }} value={form.mult} onChange={e => setForm({ ...form, mult: e.target.value })} /></div>
                 </div>
@@ -189,7 +198,6 @@ function MasteryAdmin() {
                   <input className="input-field" style={{ width: 80 }} placeholder="шт" value={newParam.unit} onChange={e => setNewParam({ ...newParam, unit: e.target.value })} />
                   <button type="button" onClick={addParam} style={ghostBtn}>Добавить параметр</button>
                 </div>
-                <p style={{ fontSize: 11, color: '#666', marginTop: 8 }}>Параметр вводится один раз и используется всеми показателями, где он нужен.</p>
               </div>
             )}
             <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
@@ -251,7 +259,8 @@ function MasteryAdmin() {
                 <div>
                   <h3 style={{ color: '#fff', fontWeight: 600, margin: 0 }}>{m.name}</h3>
                   <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                    {m.formula ? `Формула: ${pool.find(p => p.key === m.formula.num)?.label || m.formula.num} / ${pool.find(p => p.key === m.formula.den)?.label || m.formula.den} × ${m.formula.mult}` : 'Прямое значение'} ·
+                    {TYPE_LABELS[m.kpi_type || 'cumulative']} ·
+                    {m.formula ? ` Формула: ${pool.find(p => p.key === m.formula.num)?.label || m.formula.num} / ${pool.find(p => p.key === m.formula.den)?.label || m.formula.den} × ${m.formula.mult} ·` : ''}
                     <span style={{ color: BAND_COLORS.min }}> мин {m.thr_min}</span> ·<span style={{ color: BAND_COLORS.mid }}> средн {m.thr_mid}</span> ·<span style={{ color: BAND_COLORS.top }}> топ {m.thr_top}</span> ·<span style={{ color: BAND_COLORS.ultra }}> ультра {m.thr_ultra}{m.unit}</span>
                   </p>
                 </div>
@@ -293,12 +302,14 @@ function MasteryAdmin() {
         </div>
       </div>
 
+      <LevelPathModal open={levelsOpen} onClose={() => setLevelsOpen(false)} energy={0} canEdit />
+
       {importOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setImportOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ width: 640, maxHeight: '85vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26 }}>
             <h3 style={{ fontSize: 19, fontWeight: 600, margin: '0 0 12px', background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Импорт результатов (Excel / Google)</h3>
             <p style={{ fontSize: 13, color: '#aaa', lineHeight: 1.6, marginBottom: 14 }}>
-              Правила таблицы: первая строка — заголовки. Обязательная колонка <b style={{ color: '#fff' }}>Email</b>. Остальные заголовки должны точно совпадать с названиями параметров: {cols.map(c => `«${c.label}»`).join(', ') || '—'}. Дата отчёта выбирается в календаре на странице.
+              Первая строка — заголовки. Обязательная колонка <b style={{ color: '#fff' }}>Email</b>. Остальные заголовки должны совпадать с названиями параметров: {cols.map(c => `«${c.label}»`).join(', ') || '—'}.
             </p>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               {[['paste', 'Вставить из Excel'], ['google', 'Google-таблица']].map(([k, l]) => (
@@ -314,7 +325,7 @@ function MasteryAdmin() {
             {importTab === 'google' && (
               <>
                 <input className="input-field" style={{ width: '100%' }} placeholder="https://docs.google.com/spreadsheets/d/…" value={gUrl} onChange={e => setGUrl(e.target.value)} />
-                <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>Таблица должна быть открыта «по ссылке». Настройте один раз — дальше просто обновляйте цифры.</p>
+                <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>Таблица должна быть открыта «по ссылке».</p>
                 <button onClick={fetchGoogle} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Забрать данные</button>
               </>
             )}
