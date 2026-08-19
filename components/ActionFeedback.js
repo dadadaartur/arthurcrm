@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 
-// Кинематографичная анимация: две кометы летят навстречу, сталкиваются,
-// взрыв частиц, внутри появляется галочка (успех) или крестик (провал).
 export default function ActionFeedback({ visible, type, message }) {
-  const [stage, setStage] = useState('idle') // idle | flying | explode | show | fade
+  const [stage, setStage] = useState('idle')
 
   useEffect(() => {
     if (!visible) { setStage('idle'); return }
@@ -28,7 +26,6 @@ export default function ActionFeedback({ visible, type, message }) {
       opacity: stage === 'fade' ? 0 : 1,
       transition: 'opacity 0.4s ease-out',
     }}>
-      {/* Затемнение фона */}
       <div style={{
         position: 'absolute', inset: 0,
         background: 'radial-gradient(circle at center, rgba(0,0,0,0.45), rgba(0,0,0,0.75))',
@@ -37,7 +34,6 @@ export default function ActionFeedback({ visible, type, message }) {
         transition: 'opacity 0.3s',
       }} />
 
-      {/* Комета 1 — слева */}
       <div style={{
         position: 'absolute',
         left: stage === 'flying' ? '50%' : '-15%',
@@ -49,7 +45,6 @@ export default function ActionFeedback({ visible, type, message }) {
         <Comet color={accent} />
       </div>
 
-      {/* Комета 2 — справа */}
       <div style={{
         position: 'absolute',
         right: stage === 'flying' ? '50%' : '-15%',
@@ -61,7 +56,6 @@ export default function ActionFeedback({ visible, type, message }) {
         <Comet color={accent2} />
       </div>
 
-      {/* Взрыв частиц */}
       {(stage === 'explode' || stage === 'show') && (
         <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
           {Array.from({ length: 28 }).map((_, i) => {
@@ -81,7 +75,6 @@ export default function ActionFeedback({ visible, type, message }) {
               }} />
             )
           })}
-          {/* Центральная вспышка */}
           <div className="af-flash" style={{
             position: 'absolute', left: '50%', top: '50%',
             transform: 'translate(-50%, -50%)',
@@ -92,7 +85,6 @@ export default function ActionFeedback({ visible, type, message }) {
         </div>
       )}
 
-      {/* Итоговая иконка + сообщение */}
       <div style={{
         position: 'relative', zIndex: 2,
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
@@ -172,21 +164,18 @@ export default function ActionFeedback({ visible, type, message }) {
 function Comet({ color }) {
   return (
     <div style={{ position: 'relative', width: 260, height: 6 }}>
-      {/* Хвост */}
       <div style={{
         position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
         width: 220, height: 4, borderRadius: 2,
         background: `linear-gradient(90deg, transparent 0%, ${color}30 40%, ${color}80 80%, ${color} 100%)`,
         filter: `blur(1.5px) drop-shadow(0 0 8px ${color})`,
       }} />
-      {/* Шлейф шире */}
       <div style={{
         position: 'absolute', left: 40, top: '50%', transform: 'translateY(-50%)',
         width: 180, height: 14, borderRadius: 7,
         background: `linear-gradient(90deg, transparent, ${color}15, ${color}40, ${color}80)`,
         filter: 'blur(5px)',
       }} />
-      {/* Голова кометы */}
       <div style={{
         position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
         width: 12, height: 12, borderRadius: '50%',
