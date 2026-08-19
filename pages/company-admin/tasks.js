@@ -3,47 +3,44 @@ import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import BackArrow from '../../components/BackArrow'
+import DatePicker from '../../components/DatePicker'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = {
   background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
   border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
-  padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13,
-  transition: 'all .25s', letterSpacing: 0.3
+  padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => {
-  e.currentTarget.style.borderColor = '#FFD700'
-  e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'
-  e.currentTarget.style.transform = 'translateY(-1px)'
-}
-const hoverOff = e => {
-  e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'
-  e.currentTarget.style.boxShadow = 'none'
-  e.currentTarget.style.transform = 'translateY(0)'
-}
-
+const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pillTab = a => ({
   padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
   background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
   border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
-  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400,
-  transition: 'all 0.2s'
+  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
+const AUTO_LABELS = {
+  all_min: 'Выполнить ВСЕ цели за день не ниже «мин»',
+  all_mid: 'Выполнить ВСЕ цели за день не ниже «средн»',
+  any_one: 'Выполнить хотя бы одну цель за день',
+}
 
 function TasksPage() {
   const router = useRouter()
   const { showSuccess, showError } = useFeedback()
   const [companyId, setCompanyId] = useState(null)
   const [tasks, setTasks] = useState([])
+  const [archived, setArchived] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('create') // create | active
+  const [tab, setTab] = useState('create')
+  const [restoreId, setRestoreId] = useState(null)
+  const [restoreDate, setRestoreDate] = useState('')
   const [form, setForm] = useState({
     title: '', description: '', reward_karma: 10,
     task_type: 'one_time', frequency: 'once', target_role: 'all',
-    min_energy_level: 0, requires_review: true, requires_proof: false,
-    proof_type: 'any', deadline_datetime: '',
-    is_auto: false, crm_action_type: '', crm_target_count: 0,
+    requires_review: true, requires_proof: false, proof_type: 'any',
+    deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 5,
     image_file: null
   })
   const [creating, setCreating] = useState(false)
@@ -52,91 +49,80 @@ function TasksPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: profileData } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-      if (!profileData) { router.push('/'); return }
-      const compId = profileData.company_id
-      setCompanyId(compId)
-      await loadData(compId)
+      const { data: p } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+      if (!p) { router.push('/'); return }
+      setCompanyId(p.company_id)
+      await loadData(p.company_id)
       setLoading(false)
     }
     init()
   }, [router])
 
-  const loadData = async (compId) => {
-    const { data } = await supabase
-      .from('tasks').select('*').eq('company_id', compId).eq('is_active', true)
-      .order('created_at', { ascending: false })
-    setTasks(data || [])
-  }
-
-  const uploadImage = async (file) => {
-    if (!file) return null
-    const fileExt = file.name.split('.').pop()
-    const fileName = `task-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const { error } = await supabase.storage.from('avatars').upload(`public/${fileName}`, file)
-    if (error) { showError('Ошибка загрузки изображения: ' + error.message); return null }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(`public/${fileName}`)
-    return data?.publicUrl || null
+  const loadData = async (cid) => {
+    const [a, b] = await Promise.all([
+      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_active', true).eq('is_archived', false).order('created_at', { ascending: false }),
+      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false })
+    ])
+    setTasks(a.data || [])
+    setArchived(b.data || [])
   }
 
   const handleCreateTask = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) { showError('Укажите название задания'); return }
     if (!form.reward_karma || form.reward_karma <= 0) { showError('Укажите награду больше 0'); return }
-
     setCreating(true)
     let imageUrl = null
     if (form.image_file) {
-      imageUrl = await uploadImage(form.image_file)
-      if (!imageUrl) { setCreating(false); return }
+      const ext = form.image_file.name.split('.').pop()
+      const path = `public/task-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.image_file)
+      if (!upErr) imageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     }
-    const deadlineAt = form.deadline_datetime ? new Date(form.deadline_datetime).toISOString() : null
+    const deadlineAt = form.deadline_date ? new Date(form.deadline_date + 'T23:59:59').toISOString() : null
+    const { data: task, error } = await supabase.from('tasks').insert({
+      company_id: companyId, title: form.title, description: form.description,
+      reward_karma: form.reward_karma, task_type: form.is_auto_goal ? 'auto_goal' : form.task_type,
+      frequency: form.frequency, target_role: form.target_role,
+      requires_review: form.is_auto_goal ? false : form.requires_review,
+      requires_proof: form.requires_proof, proof_type: form.requires_proof ? form.proof_type : null,
+      deadline_at: deadlineAt, is_active: true,
+      is_auto_goal: form.is_auto_goal, auto_goal_condition: form.is_auto_goal ? form.auto_goal_condition : null,
+      auto_energy: form.is_auto_goal ? form.auto_energy : 0,
+      image_url: imageUrl
+    }).select().single()
+    if (error) { showError('Ошибка создания: ' + error.message); setCreating(false); return }
 
-    const { data: task, error: taskError } = await supabase
-      .from('tasks').insert({
-        company_id: companyId, title: form.title, description: form.description,
-        reward_karma: form.reward_karma, task_type: form.task_type, frequency: form.frequency,
-        target_role: form.target_role, min_energy_level: form.min_energy_level,
-        requires_review: form.requires_review, requires_proof: form.requires_proof,
-        proof_type: form.requires_proof ? form.proof_type : null,
-        deadline_at: deadlineAt, is_active: true, is_auto: form.is_auto,
-        crm_action_type: form.crm_action_type, crm_target_count: form.crm_target_count,
-        image_url: imageUrl
-      }).select().single()
-
-    if (taskError) { showError('Ошибка создания: ' + taskError.message); setCreating(false); return }
-
-    const { data: employeesList } = await supabase
-      .from('profiles').select('user_id').eq('company_id', companyId)
-      .eq('is_company_admin', false).is('deleted_at', null)
-
-    if (employeesList && employeesList.length > 0) {
-      const assignments = employeesList.map(emp => ({
-        task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt
-      }))
-      const { error: assignError } = await supabase.from('task_assignments').insert(assignments)
-      if (assignError) {
-        await supabase.from('tasks').delete().eq('id', task.id)
-        showError('Ошибка назначения: ' + assignError.message); setCreating(false); return
-      }
-      showSuccess(`Задание создано и назначено ${employeesList.length} сотрудникам`)
+    const { data: emps } = await supabase.from('profiles').select('user_id')
+      .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
+    if (emps?.length) {
+      const { error: asErr } = await supabase.from('task_assignments').insert(
+        emps.map(emp => ({ task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt }))
+      )
+      if (asErr) { showError('Ошибка назначения: ' + asErr.message); setCreating(false); return }
+      showSuccess(`Задание создано и назначено ${emps.length} сотрудникам`)
     } else {
-      showSuccess('Задание создано (в компании пока нет сотрудников)')
+      showSuccess('Задание создано')
     }
-
-    setForm({
-      title: '', description: '', reward_karma: 10, task_type: 'one_time', frequency: 'once',
-      target_role: 'all', min_energy_level: 0, requires_review: true, requires_proof: false,
-      proof_type: 'any', deadline_datetime: '', is_auto: false,
-      crm_action_type: '', crm_target_count: 0, image_file: null
-    })
+    setForm({ ...form, title: '', description: '', image_file: null, deadline_date: '' })
     setCreating(false)
     loadData(companyId)
   }
 
-  const handleDelete = async (taskId) => {
-    await supabase.from('tasks').update({ is_active: false }).eq('id', taskId)
+  const handleDelete = async (id) => {
+    await supabase.from('tasks').update({ is_active: false }).eq('id', id)
     showSuccess('Задание удалено')
+    loadData(companyId)
+  }
+
+  const handleRestore = async (taskId) => {
+    if (!restoreDate) { showError('Выберите новый срок выполнения'); return }
+    const newDeadline = new Date(restoreDate + 'T23:59:59').toISOString()
+    await supabase.from('tasks').update({ is_archived: false, archived_at: null, deadline_at: newDeadline }).eq('id', taskId)
+    await supabase.from('task_assignments').update({ status: 'assigned', deadline_at: newDeadline, deadline_reminded_at: null })
+      .eq('task_id', taskId).eq('status', 'archived')
+    showSuccess('Задание восстановлено с новым сроком')
+    setRestoreId(null); setRestoreDate('')
     loadData(companyId)
   }
 
@@ -146,139 +132,82 @@ function TasksPage() {
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление заданиями" extra={
-          <div style={{ marginLeft: 'auto', fontSize: 12, color: '#888', alignSelf: 'center' }}>
-            Всего активных заданий: <b style={{ color: '#FFD700' }}>{tasks.length}</b>
-          </div>
+          <div style={{ marginLeft: 'auto', fontSize: 12, color: '#888', alignSelf: 'center' }}>Активных: <b style={{ color: '#FFD700' }}>{tasks.length}</b></div>
         } />
 
-        {/* Табы */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
           <button onClick={() => setTab('create')} style={pillTab(tab === 'create')}>Новое задание</button>
-          <button onClick={() => setTab('active')} style={pillTab(tab === 'active')}>Активные задания</button>
+          <button onClick={() => setTab('active')} style={pillTab(tab === 'active')}>Активные</button>
+          <button onClick={() => setTab('archived')} style={pillTab(tab === 'archived')}>Архив · {archived.length}</button>
         </div>
 
         {tab === 'create' && (
-          <div style={{
-            background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)',
-            borderRadius: 20, padding: 32, border: '1px solid rgba(255,255,255,0.08)'
-          }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: '#fff' }}>Создать задание</h3>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 24, maxWidth: 700, lineHeight: 1.5 }}>
-              Задание автоматически назначится всем сотрудникам компании. После создания изменить его будет нельзя — удалите и создайте новое.
-            </p>
-
+          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: '1px solid rgba(255,255,255,0.08)', maxWidth: 980 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: '#fff' }}>Создать задание</h3>
             <form onSubmit={handleCreateTask}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 18 }}>
-                {/* Левая колонка: основное */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название задания</label>
-                    <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену"
-                      value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
-                    <textarea className="input-field" style={{ width: '100%' }} rows={3}
-                      placeholder="Что конкретно должен сделать сотрудник"
-                      value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
-                    <input type="datetime-local" className="input-field" style={{ width: '100%' }}
-                      value={form.deadline_datetime} onChange={e => setForm({...form, deadline_datetime: e.target.value})} />
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
+                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
+                  <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
+                  <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн (фирменный календарь)</label>
+                  <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Для кого</label>
+                  <select className="input-field" style={{ width: '100%' }} value={form.target_role} onChange={e => setForm({ ...form, target_role: e.target.value })}>
+                    <option value="all">Все сотрудники</option>
+                    <option value="new">Новые (&lt; 1 мес.)</option>
+                    <option value="experienced">Опытные (&gt; 1 мес.)</option>
+                  </select>
                 </div>
 
-                {/* Правая колонка: параметры */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
-                      <input type="number" className="input-field" style={{ width: '100%' }} min="1"
-                        value={form.reward_karma} onChange={e => setForm({...form, reward_karma: parseInt(e.target.value) || 0})} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Тип</label>
-                      <select className="input-field" style={{ width: '100%' }}
-                        value={form.task_type} onChange={e => setForm({...form, task_type: e.target.value})}>
-                        <option value="one_time">Разовое</option>
-                        <option value="recurring">Регулярное</option>
-                        <option value="auto_crm">Авто из CRM</option>
+                {/* Авто-зачёт по целям */}
+                <div style={{ gridColumn: 'span 2', padding: 16, borderRadius: 14, background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#c084fc', cursor: 'pointer', marginBottom: 10 }}>
+                    <input type="checkbox" checked={form.is_auto_goal} onChange={e => setForm({ ...form, is_auto_goal: e.target.checked })} style={{ accentColor: '#c084fc' }} />
+                    Авто-зачёт по целям (система проверяет сама)
+                  </label>
+                  {form.is_auto_goal && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+                      <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
+                        {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                       </select>
-                    </div>
-                  </div>
-
-                  {form.task_type === 'recurring' && (
-                    <div>
-                      <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Периодичность</label>
-                      <select className="input-field" style={{ width: '100%' }}
-                        value={form.frequency} onChange={e => setForm({...form, frequency: e.target.value})}>
-                        <option value="daily">Ежедневно</option>
-                        <option value="weekly">Еженедельно</option>
-                        <option value="monday">По понедельникам</option>
-                      </select>
+                      <div>
+                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
+                        <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                      </div>
                     </div>
                   )}
+                </div>
 
-                  <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Для кого</label>
-                    <select className="input-field" style={{ width: '100%' }}
-                      value={form.target_role} onChange={e => setForm({...form, target_role: e.target.value})}>
-                      <option value="all">Все сотрудники</option>
-                      <option value="new">Новые (менее 1 мес.)</option>
-                      <option value="experienced">Опытные (более 1 мес.)</option>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                    Требуется проверка
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({ ...form, requires_proof: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                    Медиа-подтверждение
+                  </label>
+                  {form.requires_proof && (
+                    <select className="input-field" value={form.proof_type} onChange={e => setForm({ ...form, proof_type: e.target.value })}>
+                      <option value="any">Фото или видео</option><option value="photo">Только фото</option><option value="video">Только видео</option>
                     </select>
-                  </div>
-
-                  {/* Флаги */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 6 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.requires_review}
-                        onChange={e => setForm({...form, requires_review: e.target.checked})}
-                        style={{ accentColor: '#FFD700' }} />
-                      Требуется проверка руководителем
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={form.requires_proof}
-                        onChange={e => setForm({...form, requires_proof: e.target.checked})}
-                        style={{ accentColor: '#FFD700' }} />
-                      Нужно медиа-подтверждение
-                    </label>
-                    {form.requires_proof && (
-                      <div style={{ display: 'flex', gap: 14, marginLeft: 26, marginTop: 4 }}>
-                        {[{v:'photo',l:'Фото'},{v:'video',l:'Видео'},{v:'any',l:'Любое'}].map(opt => (
-                          <label key={opt.v} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#aaa', cursor: 'pointer' }}>
-                            <input type="radio" name="proof_type" value={opt.v}
-                              checked={form.proof_type === opt.v}
-                              onChange={() => setForm({...form, proof_type: opt.v})}
-                              style={{ accentColor: '#FFD700' }} />
-                            {opt.l}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Загрузка изображения */}
-                  <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Аватар задания (необязательно)</label>
-                    <label style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                      borderRadius: 10, border: '1px dashed rgba(255,215,0,0.3)',
-                      background: 'rgba(255,255,255,0.02)', cursor: 'pointer', fontSize: 13, color: '#aaa'
-                    }}>
-                      <span style={{ color: '#FFD700' }}>+</span>
-                      {form.image_file ? form.image_file.name : 'Выбрать изображение'}
-                      <input type="file" accept="image/*" style={{ display: 'none' }}
-                        onChange={e => setForm({...form, image_file: e.target.files[0]})} />
-                    </label>
-                  </div>
+                  )}
                 </div>
               </div>
-
-              <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <button type="submit" disabled={creating} style={{ ...ghostBtn, opacity: creating ? 0.5 : 1 }}
-                  onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <button type="submit" disabled={creating} style={{ ...ghostBtn, opacity: creating ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
                   {creating ? 'Создаём...' : 'Создать задание'}
                 </button>
               </div>
@@ -287,59 +216,49 @@ function TasksPage() {
         )}
 
         {tab === 'active' && (
-          <div>
-            {tasks.length === 0 ? (
-              <div style={{
-                background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60,
-                textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)'
-              }}>
-                Нет активных заданий
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+            {tasks.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Нет активных заданий</div>}
+            {tasks.map(t => (
+              <div key={t.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{t.title}</div>
+                  <span style={{ color: '#FFD700', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
+                  {t.is_auto_goal ? `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}` : (t.description?.slice(0, 70) || 'Без описания')}
+                </div>
+                {t.deadline_at && <div style={{ fontSize: 11, color: '#a0e9ff', marginTop: 6 }}>Дедлайн: {new Date(t.deadline_at).toLocaleDateString('ru')}</div>}
+                <div style={{ marginTop: 12 }}>
+                  <button onClick={() => handleDelete(t.id)} style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 8, padding: '5px 14px', color: '#f87171', fontSize: 11, cursor: 'pointer' }}>Удалить</button>
+                </div>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
-                {tasks.map((task, i) => (
-                  <div key={task.id} style={{
-                    background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)',
-                    borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)',
-                    opacity: 0, animation: `fadeUp 0.5s ${i * 0.04}s ease-out forwards`,
-                    transition: 'border-color 0.25s, box-shadow 0.25s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)'; e.currentTarget.style.boxShadow = '0 0 18px rgba(255,215,0,0.15)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.boxShadow = 'none' }}>
-                    <div style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
-                      {task.image_url && <img src={task.image_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: '#fff', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</div>
-                        <div style={{ color: '#888', fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {task.description?.slice(0, 60) || 'Без описания'}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, color: '#FFD700', fontWeight: 600 }}>+{task.reward_karma} кармиков</span>
-                      <button onClick={() => handleDelete(task.id)} style={{
-                        background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)',
-                        borderRadius: 8, padding: '5px 14px', color: '#f87171', fontSize: 11,
-                        cursor: 'pointer', transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#f87171'; e.currentTarget.style.boxShadow = '0 0 10px rgba(244,67,54,0.3)' }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,67,54,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
-                        Удалить
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
 
-        <style jsx>{`
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-        `}</style>
+        {tab === 'archived' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {archived.length === 0 && <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Архив пуст</div>}
+            {archived.map(t => (
+              <div key={t.id} style={{ background: 'rgba(15,20,35,0.7)', borderRadius: 14, padding: 16, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: '#ccc', fontWeight: 500 }}>{t.title}</div>
+                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>В архиве с {t.archived_at ? new Date(t.archived_at).toLocaleDateString('ru') : '—'} · срок истёк</div>
+                </div>
+                {restoreId === t.id ? (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div style={{ width: 180 }}><DatePicker value={restoreDate} onChange={setRestoreDate} placeholder="Новый срок" /></div>
+                    <button onClick={() => handleRestore(t.id)} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Восстановить</button>
+                  </div>
+                ) : (
+                  <button onClick={() => { setRestoreId(t.id); setRestoreDate('') }} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Восстановить</button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
