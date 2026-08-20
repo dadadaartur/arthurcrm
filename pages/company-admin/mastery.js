@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import BackArrow from '../../components/BackArrow'
+import DatePicker from '../../components/DatePicker'
+import DateRangePicker from '../../components/DateRangePicker'
 import TrainingVideoModal from '../../components/TrainingVideoModal'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
@@ -15,17 +17,18 @@ const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)
 const AUTO_ENERGY = { energy_min: 5, energy_mid: 10, energy_top: 15, energy_ultra: 20 }
 
 const TYPE_META = [
-  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки' },
-  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи' },
-  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, SLA' },
-  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча' },
-  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Ниже значение — выше уровень.', ex: 'SLA лида, время, жалобы' },
-  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля выполненных условий.', ex: 'Скрипт, подтверждение' },
-  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма, если минимум каждый день.', ex: 'Стабильность, посещаемость' },
-  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж' },
-  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам' },
-  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI' },
+  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки', color: '#FFD700' },
+  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи', color: '#a0e9ff' },
+  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, SLA', color: '#4ade80' },
+  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча', color: '#c084fc' },
+  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Ниже значение — выше уровень.', ex: 'SLA лида, время, жалобы', color: '#ffb3c6' },
+  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля выполненных условий.', ex: 'Скрипт, подтверждение', color: '#FFD700' },
+  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма, если минимум каждый день.', ex: 'Стабильность, посещаемость', color: '#a0e9ff' },
+  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж', color: '#4ade80' },
+  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам', color: '#c084fc' },
+  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI', color: '#ffb3c6' },
 ]
+
 const THRESH_NORMAL = [
   { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
   { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '10' },
@@ -39,17 +42,6 @@ const THRESH_INVERSE = [
   { k: 'thr_min', label: 'Мин — допустимый (больше всего)', color: BAND_COLORS.min, ph: '15' },
 ]
 
-const PencilIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke="#a0e9ff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M13.5 6.5l3 3" stroke="#a0e9ff" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
-)
-const DeleteIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" stroke="#f87171" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
 const CloseX = ({ onClick }) => (
   <button onClick={onClick} className="mx-close" title="Закрыть">
     <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
@@ -64,11 +56,21 @@ function MasteryAdmin() {
   const { showSuccess, showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState([])
+  const [employees, setEmployees] = useState([])
   const [pool, setPool] = useState([])
   const [companyKarma, setCompanyKarma] = useState(0)
   const [createOpen, setCreateOpen] = useState(false)
   const [editMetric, setEditMetric] = useState(null)
   const [materialsMetric, setMaterialsMetric] = useState(null)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [fillMode, setFillMode] = useState('day')
+  const [date, setDate] = useState('')
+  const [range, setRange] = useState({ from: '', to: '' })
+  const [values, setValues] = useState({})
+  const [importOpen, setImportOpen] = useState(false)
+  const [importTab, setImportTab] = useState('paste')
+  const [pasteText, setPasteText] = useState('')
+  const [gUrl, setGUrl] = useState('')
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
 
@@ -78,6 +80,8 @@ function MasteryAdmin() {
     const h = await auth()
     const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
     if (r.ok) { const m = await r.json(); setMetrics(m); const p = {}; (m || []).forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i })); setPool(Object.values(p)) }
+    const { data: emps } = await supabase.from('profiles').select('user_id, display_name, email, first_name, last_name').eq('company_id', prof.company_id).is('deleted_at', null).eq('is_company_admin', false)
+    setEmployees(emps || [])
     const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
     setCompanyKarma(acc?.balance || 0)
     setLoading(false)
@@ -96,63 +100,157 @@ function MasteryAdmin() {
 
   const delMetric = async id => { const h = await auth(); await fetch('/api/company-admin/kpi/metrics', { method: 'DELETE', headers: h, body: JSON.stringify({ id }) }); showSuccess('Показатель удалён'); load() }
 
+  const sharedCols = pool
+  const directCols = metrics.filter(m => !m.formula).map(m => ({ key: 'm' + m.id, label: m.name, unit: m.unit, inverse: m.kpi_type === 'inverse' }))
+  const cols = [...sharedCols.map(c => ({ ...c, inverse: false })), ...directCols]
+  const formulaMetrics = metrics.filter(m => m.formula)
+
+  const computeValue = (m, uid) => {
+    if (m.formula) { const den = Number(values[uid]?.[m.formula.den]) || 0, num = Number(values[uid]?.[m.formula.num]) || 0; return den > 0 ? Math.round((num / den) * (m.formula.mult || 100) * 10) / 10 : null }
+    const v = values[uid]?.['m' + m.id]; return v === '' || v == null ? null : Number(v)
+  }
+
+  const datesInRange = () => { if (!range.from || !range.to) return []; const out = [], d = new Date(range.from + 'T00:00:00'), end = new Date(range.to + 'T00:00:00'); while (d <= end) { out.push(d.toISOString().slice(0, 10)); d.setDate(d.getDate() + 1) } return out }
+
+  const saveFill = async () => {
+    const dates = fillMode === 'day' ? (date ? [date] : []) : datesInRange()
+    if (!dates.length) { showError(fillMode === 'day' ? 'Выберите дату' : 'Выберите период'); return }
+    const h = await auth(); const entries = []
+    employees.forEach(emp => metrics.forEach(m => { const raw = computeValue(m, emp.user_id); if (raw == null) return; const perDay = dates.length > 1 ? Math.round((raw / dates.length) * 10) / 10 : raw; dates.forEach(d => entries.push({ metricId: m.id, userId: emp.user_id, value: perDay, date: d })) }))
+    if (!entries.length) { showError('Нет заполненных значений'); return }
+    const res = await fetch('/api/company-admin/kpi/entries-bulk', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ entries }) })
+    if (res.ok) { showSuccess(`Сохранено: ${entries.length} записей`); setManualOpen(false) } else showError('Ошибка сохранения')
+  }
+
+  const applyRows = rows => { if (!rows?.length) return 'Пустые данные'; const header = rows[0].map(h => (h || '').trim()); const emailIdx = header.findIndex(h => /email|почта/i.test(h)); if (emailIdx < 0) return 'Не найдена колонка «Email»'; const ltk = {}; cols.forEach(c => ltk[c.label.toLowerCase()] = c.key); const colMap = header.map((h, i) => ({ i, key: ltk[h.toLowerCase()] })).filter(x => x.key); let applied = 0; const next = { ...values }; rows.slice(1).forEach(r => { const email = (r[emailIdx] || '').trim().toLowerCase(); const emp = employees.find(e => (e.email || '').toLowerCase() === email); if (!emp) return; next[emp.user_id] = { ...(next[emp.user_id] || {}) }; colMap.forEach(({ i, key }) => { const v = parseFloat(String(r[i]).replace(',', '.')); if (!isNaN(v)) { next[emp.user_id][key] = v; applied++ } }) }); setValues(next); return `Применено значений: ${applied}` }
+
+  const parseText = t => { const d = t.includes('\t') ? '\t' : (t.split(';').length > t.split(',').length ? ';' : ','); return t.split(/\r?\n/).filter(l => l.trim()).map(l => l.split(d)) }
+
+  const fetchGoogle = async () => { const id = (gUrl.match(/\/d\/([\w-]+)/) || [])[1]; if (!id) { showError('Неверная ссылка'); return } try { const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`); const msg = applyRows(parseText(await r.text())); if (msg.startsWith('Применено')) { showSuccess(msg); setImportOpen(false) } else showError(msg) } catch (e) { showError('Не удалось скачать') } }
+
+  const copyTemplate = async () => { const header = ['Email', ...cols.map(c => c.label)]; const ex = ['ivanov@company.ru', ...cols.map(() => '0')]; try { await navigator.clipboard.writeText([header.join('\t'), ex.join('\t')].join('\n')); showSuccess('Шаблон скопирован — вставьте в таблицу Ctrl+V') } catch (e) { showError('Не удалось скопировать') } }
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+
+  const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
+  const gridTemplate = `200px repeat(${cols.length}, 120px) repeat(${formulaMetrics.length}, 120px)`
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление целями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ fontSize: 11, color: '#888', padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,215,0,0.25)', background: 'rgba(255,215,0,0.06)' }}>Баланс: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм.</span>
+            <Link href="/company-admin/tests" style={{ ...ghostBtn, textDecoration: 'none' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Тесты</Link>
             <button onClick={() => setCreateOpen(true)} style={{ ...ghostBtn, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
           </div>
         } />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '28px 40px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '24px 32px', alignItems: 'start', marginBottom: 28 }}>
           {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
           {metrics.map(m => (
-            <div key={m.id} style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <div style={{ minWidth: 0, fontSize: 16, fontWeight: 600, lineHeight: 1.4, wordBreak: 'break-word', color: '#fff', textShadow: '0 0 14px rgba(255,255,255,0.15)' }}>{m.name}</div>
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0, paddingTop: 2 }}>
-                  <button className="mx-icon mx-edit" onClick={() => setEditMetric(m)} title="Редактировать"><PencilIcon /></button>
-                  <button className="mx-icon mx-del" onClick={() => delMetric(m.id)} title="Удалить"><DeleteIcon /></button>
-                </div>
+            <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s', display: 'flex', flexDirection: 'column', gap: 12 }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</div>
+                <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
               </div>
-              <div style={{ marginTop: 4, fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</div>
-              {m.kpi_type === 'inverse' && <div style={{ marginTop: 3, fontSize: 10, color: '#a0e9ff' }}>меньше значение = выше уровень</div>}
-
-              <div style={{ marginTop: 12, position: 'relative', paddingLeft: 20 }}>
-                <div style={{ position: 'absolute', left: 4, top: 6, bottom: 6, width: 1.5, borderRadius: 2, background: 'linear-gradient(180deg, #c084fc, #4ade80, #FFD700, #f97316)', opacity: 0.35 }} />
-                {['ultra', 'top', 'mid', 'min'].map(b => (
-                  <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: BAND_COLORS[b], boxShadow: `0 0 8px ${BAND_COLORS[b]}`, marginLeft: -20, flexShrink: 0 }} />
-                    <span style={{ width: 64, fontSize: 12, color: b === 'ultra' ? '#c084fc' : 'rgba(255,255,255,0.6)' }}>{BAND_LABELS[b]}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: BAND_COLORS[b], textShadow: `0 0 12px ${BAND_COLORS[b]}55` }}>{m['thr_' + b]}{m.unit}</span>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {['min', 'mid', 'top', 'ultra'].map(b => <span key={b} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${BAND_COLORS[b]}12`, color: BAND_COLORS[b], border: `1px solid ${BAND_COLORS[b]}33` }}>{BAND_LABELS[b]} {m['thr_' + b]}{m.unit}</span>)}
               </div>
-
-              <button onClick={() => setMaterialsMetric(m)} style={{ marginTop: 12, background: 'none', border: 'none', padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', letterSpacing: 0.3, transition: 'color .2s', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: 3 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#a0e9ff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}>
-                связанные тесты и тренинги
-              </button>
+              <div style={{ display: 'flex', gap: 8, marginTop: 'auto', flexWrap: 'wrap' }}>
+                <button onClick={() => setMaterialsMetric(m)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
+                <button onClick={() => setEditMetric(m)} style={{ ...ghostBtn, borderColor: 'rgba(160,233,255,0.4)', color: '#a0e9ff' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Редактировать</button>
+                <button onClick={() => delMetric(m.id)} style={{ ...ghostBtn, borderColor: 'rgba(244,67,54,0.3)', color: '#f87171' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Удалить</button>
+              </div>
             </div>
           ))}
+        </div>
+
+        <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Заполнить показатели</h3>
+            <div style={{ display: 'flex', gap: 8 }}><Seg active={fillMode === 'day'} onClick={() => setFillMode('day')}>За день</Seg><Seg active={fillMode === 'period'} onClick={() => setFillMode('period')}>За период</Seg></div>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {fillMode === 'day' ? <div style={{ width: 180 }}><DatePicker value={date} onChange={setDate} placeholder="Дата" /></div> : <DateRangePicker from={range.from} to={range.to} onChange={setRange} />}
+              <button onClick={() => setImportOpen(true)} style={{ ...ghostBtn, borderColor: 'rgba(160,233,255,0.4)', color: '#a0e9ff' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Импорт</button>
+              <button onClick={() => setManualOpen(true)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Вручную</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <GoalFormModal open={createOpen || !!editMetric} initial={editMetric} pool={pool} setPool={setPool} companyKarma={companyKarma} onClose={() => { setCreateOpen(false); setEditMetric(null) }} onSave={saveMetric} />
       <MaterialsModal metric={materialsMetric} onClose={() => setMaterialsMetric(null)} />
 
-      <style jsx global>{`
-        .mx-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .25s;padding:0}
-        .mx-edit:hover{background:rgba(160,233,255,.12);border-color:rgba(160,233,255,.5);box-shadow:0 0 12px rgba(160,233,255,.35);transform:translateY(-1px)}
-        .mx-del:hover{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);box-shadow:0 0 12px rgba(248,113,113,.35);transform:translateY(-1px)}
-      `}</style>
+      {manualOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ width: 'min(1240px, 96vw)', height: '88vh', background: 'linear-gradient(150deg, rgba(24,30,54,0.98), rgba(10,14,28,0.99))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <CloseX onClick={() => setManualOpen(false)} />
+            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 14px', color: '#fff' }}>Ручное заполнение {fillMode === 'day' ? `за ${date || 'день'}` : 'за период'}</h3>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <div style={{ width: 'fit-content', margin: '0 auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: gridTemplate, gap: 8, marginBottom: 8, position: 'sticky', top: 0, background: 'rgba(10,14,28,0.98)', padding: '6px 0', zIndex: 2 }}>
+                  <div style={{ fontSize: 11, color: '#888', alignSelf: 'center' }}>Сотрудник</div>
+                  {cols.map(c => (
+                    <div key={c.key} style={{ textAlign: 'center', padding: '4px 6px', borderRadius: 8, background: c.inverse ? 'rgba(160,233,255,0.06)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: 11, color: '#a0e9ff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.label}>{c.label}</div>
+                      <div style={{ fontSize: 9, color: '#666' }}>{c.inverse ? 'меньше = лучше' : (c.unit || '')}</div>
+                    </div>
+                  ))}
+                  {formulaMetrics.map(m => (
+                    <div key={m.id} style={{ textAlign: 'center', padding: '4px 6px', borderRadius: 8, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)' }}>
+                      <div style={{ fontSize: 11, color: '#FFD700', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                      <div style={{ fontSize: 9, color: '#666' }}>авто</div>
+                    </div>
+                  ))}
+                </div>
+                {employees.map(emp => (
+                  <div key={emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridTemplate, gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                    <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: 190 }} title={empName(emp)}>{empName(emp)}</div>
+                    {cols.map(c => (
+                      <input key={c.key} type="number" step="0.1" value={values[emp.user_id]?.[c.key] ?? ''}
+                        onChange={ev => setValues(v => ({ ...v, [emp.user_id]: { ...v[emp.user_id], [c.key]: ev.target.value } }))}
+                        className="input-field" style={{ width: '100%', textAlign: 'center', padding: '9px 4px' }} />
+                    ))}
+                    {formulaMetrics.map(m => { const v = computeValue(m, emp.user_id); return <div key={m.id} style={{ fontSize: 13, color: v != null ? '#FFD700' : '#555', fontWeight: 600, textAlign: 'center' }}>{v != null ? v + m.unit : '—'}</div> })}
+                  </div>
+                ))}
+                {employees.length === 0 && <p style={{ color: '#777', fontSize: 13 }}>Нет сотрудников</p>}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button onClick={() => setManualOpen(false)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+              <button onClick={saveFill} style={{ ...ghostBtn, flex: 1, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сохранить</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {importOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ width: 620, maxHeight: '80vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <CloseX onClick={() => setImportOpen(false)} />
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px', background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Импорт результатов</h3>
+            <button onClick={copyTemplate} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, marginBottom: 14 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Шаблон для Excel / Google</button>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}><Seg active={importTab === 'paste'} onClick={() => setImportTab('paste')}>Вставить</Seg><Seg active={importTab === 'google'} onClick={() => setImportTab('google')}>Ссылка</Seg></div>
+            {importTab === 'paste' ? (<>
+              <textarea className="input-field" style={{ width: '100%' }} rows={7} placeholder={'Email\tКол-во звонков\nivanov@co.ru\t120'} value={pasteText} onChange={e => setPasteText(e.target.value)} />
+              <button onClick={() => { const msg = applyRows(parseText(pasteText)); if (msg.startsWith('Применено')) { showSuccess(msg); setImportOpen(false) } else showError(msg) }} style={{ ...ghostBtn, marginTop: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Применить</button>
+            </>) : (<>
+              <input className="input-field" style={{ width: '100%' }} placeholder="https://docs.google.com/spreadsheets/d/…" value={gUrl} onChange={e => setGUrl(e.target.value)} />
+              <button onClick={fetchGoogle} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Забрать</button>
+            </>)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
+  <button onClick={onClick} style={{ padding: '8px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.25s ease' }}>{children}</button>
+)
 
 function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, onSave }) {
   const [step, setStep] = useState('type')
@@ -187,15 +285,16 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
 
         {step === 'type' ? (
           <>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Выберите тип расчёта</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 18px', color: '#fff' }}>Выберите тип показателя</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
-                  style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, textAlign: 'left', padding: '12px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
-                  <span style={{ color: '#FFD700', fontWeight: 600, fontSize: 13 }}>{t.label}</span>
-                  <span style={{ color: '#999', fontSize: 12, lineHeight: 1.4 }}>{t.hint} <span style={{ color: '#666' }}>Примеры: {t.ex}</span></span>
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', padding: '18px 20px', borderRadius: 14, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `3px solid ${t.color}`, transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = `${t.color}66`; e.currentTarget.style.borderLeftColor = t.color }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderLeftColor = t.color }}>
+                  <span style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{t.label}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
+                  <span style={{ color: t.color, fontSize: 11, opacity: 0.8 }}>Примеры: {t.ex}</span>
                 </button>
               ))}
             </div>
@@ -203,22 +302,11 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
         ) : (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
-            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
+            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому). SLA: ультра 5 мин → мин 15 мин.</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 100)</label>
-                <input maxLength={100} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-              </div>
-              <div>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label>
-                <select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
-                  <option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label>
-                <button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button>
-              </div>
+              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
+              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
               {form.kpi_type === 'ratio' && (<>
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Числитель</label><select className="input-field" style={{ width: '100%' }} value={form.num} onChange={e => setForm({ ...form, num: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Знаменатель</label><select className="input-field" style={{ width: '100%' }} value={form.den} onChange={e => setForm({ ...form, den: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
