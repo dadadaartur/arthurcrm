@@ -1,92 +1,31 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth, canAccessCompany } from '../../../lib/auth'
+import { requireAuth, hasPermission } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-
-  const ctx = await requireAuth(req, res, { permission: 'can_review_tasks' })
+  const ctx = await requireAuth(req, res, {})
   if (!ctx) return
+  if (!hasPermission(ctx.profile, 'can_review_tasks') && !ctx.profile?.is_company_admin) return res.status(403).json({ error: 'Недостаточно прав' })
+  const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const { assignmentId, action, comment } = req.body || {}
+  if (!assignmentId || !['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'Некорректные параметры' })
 
-  const { assignmentId, action } = req.body
-  const numericId = parseInt(assignmentId, 10)
+  const { data: asg } = await a.from('task_assignments').select('*, tasks(*)').eq('id', assignmentId).maybeSingle()
+  if (!asg) return res.status(404).json({ error: 'Назначение не найдено' })
+  if (asg.status !== 'pending_review') return res.status(400).json({ error: 'Задание не на проверке' })
 
-  if (!numericId || !['approve', 'reject'].includes(action)) {
-    return res.status(400).json({ error: 'Неверные параметры' })
-  }
-
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-
-  const { data: assignment, error: fetchError } = await supabaseAdmin
-    .from('task_assignments')
-    .select('id, user_id, task_id, status, tasks( id, title, reward_karma, company_id )')
-    .eq('id', numericId)
-    .single()
-
-  if (fetchError || !assignment) {
-    return res.status(404).json({ error: 'Назначение не найдено' })
-  }
-
-  if (assignment.status !== 'pending_review') {
-    return res.status(400).json({ error: 'Задание уже обработано' })
-  }
-
-  if (!canAccessCompany(ctx.profile, assignment.tasks?.company_id)) {
-    return res.status(403).json({ error: 'Доступ запрещён: другая компания' })
-  }
-
-  const newStatus = action === 'approve' ? 'completed' : 'in_progress'
-
-  const { data: updatedRows, error: updateError } = await supabaseAdmin
-    .from('task_assignments')
-    .update({
-      status: newStatus,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: ctx.user.id
-    })
-    .eq('id', numericId)
-    .eq('status', 'pending_review')
-    .select('id')
-
-  if (updateError) {
-    return res.status(500).json({ error: 'Ошибка обновления: ' + updateError.message })
-  }
-  if (!updatedRows || updatedRows.length === 0) {
-    return res.status(409).json({ error: 'Задание уже обработано другим запросом' })
-  }
-
-  if (action === 'approve' && assignment.tasks.reward_karma > 0) {
-    const reward = assignment.tasks.reward_karma
-
-    const { error: transactionError } = await supabaseAdmin
-      .from('karma_transactions')
-      .insert({
-        user_id: assignment.user_id,
-        amount: reward,
-        type: 'task_reward',
-        description: 'Выполнено задание: ' + assignment.tasks.title
-      })
-
-    if (transactionError) {
-      return res.status(500).json({ error: 'Ошибка транзакции: ' + transactionError.message })
+  if (action === 'approve') {
+    await a.from('task_assignments').update({ status: 'completed', comment: comment || null, completed_at: new Date().toISOString() }).eq('id', assignmentId)
+    const k = Number(asg.tasks?.reward_karma) || 0
+    if (k > 0) {
+      const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', asg.user_id).maybeSingle()
+      await a.from('karma_balance').upsert({ user_id: asg.user_id, balance: (bal?.balance || 0) + k }, { onConflict: 'user_id' })
+      await a.from('karma_transactions').insert({ user_id: asg.user_id, amount: k, type: 'task_reward', description: `Задание «${asg.tasks?.title}» одобрено` })
     }
-
-    await supabaseAdmin.from('notifications').insert({
-      user_id: assignment.user_id,
-      message: `Вам начислено ${reward} кармиков за выполнение задания "${assignment.tasks.title}"`,
-      link: '/tasks'
-    })
+    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено! +${k} кармиков`, link: '/history' })
+  } else {
+    await a.from('task_assignments').update({ status: 'rejected', comment: comment || null }).eq('id', assignmentId)
+    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» отклонено.${comment ? ' Причина: ' + comment : ''}`, link: '/tasks' })
   }
-
-  await supabaseAdmin.from('audit_logs').insert({
-    user_id: ctx.user.id,
-    action: action === 'approve' ? 'task_approved' : 'task_rejected',
-    entity_type: 'task',
-    entity_id: assignmentId.toString(),
-    details: { target_user_id: assignment.user_id, reward: assignment.tasks.reward_karma }
-  })
-
-  res.status(200).json({ result: 'OK' })
+  res.status(200).json({ success: true })
 }
