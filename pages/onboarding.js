@@ -1,238 +1,130 @@
-import { useEffect, useState, useRef } from 'react'
-import BackArrow from '../components/BackArrow'
-import Spinner from '../components/Spinner'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import Spinner from '../components/Spinner'
+import BackArrow from '../components/BackArrow'
+import ProgressBar3D from '../components/ProgressBar3D'
+import { useFeedback } from '../context/ActionFeedbackContext'
 
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 20px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }
+const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '8px 16px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 
-const TYPE_ICONS = {
-  meeting: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#a0e9ff" strokeWidth="1.3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#a0e9ff" strokeWidth="1.3"/></svg>,
-  training: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v10H2z" stroke="#FFD700" strokeWidth="1.3"/><path d="M5 1v2M11 1v2M2 7h12" stroke="#FFD700" strokeWidth="1.3"/></svg>,
-  coaching: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 13L8 4l4 9M5.5 10h5" stroke="#c084fc" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
-  practice: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  feedback: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v8H6l-4 3v-3H2z" stroke="#FFD700" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
-  test: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#a0e9ff" strokeWidth="1.3"/><path d="M5 8l2 2 4-4" stroke="#a0e9ff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  rework: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 8a4 4 0 1 1 4 4M8 12l-2 2 2 2" stroke="#f97316" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-}
-
-function Timer({ event }) {
-  const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  if (!event?.event_time || !event?.event_date) return null
-  const target = new Date(`${event.event_date}T${event.event_time}:00`).getTime()
-  const diff = target - now
-  if (diff < 0) return null
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  return (
-    <div style={{ fontSize: 11, color: diff < 900000 ? '#f87171' : '#888', fontFamily: 'monospace' }}>
-      до начала {String(h).padStart(2,'0')}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
-    </div>
-  )
-}
-
-export default function OnboardingPage() {
+export default function MyOnboarding() {
+  const { showSuccess, showError } = useFeedback()
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState(null)
-  const [expanded, setExpanded] = useState(null)
-  const [feedback, setFeedback] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [history, setHistory] = useState([])
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const feedbackRef = useRef(null)
+  const [plan, setPlan] = useState(null)
+  const [template, setTemplate] = useState(null)
+  const [events, setEvents] = useState([])
+  const [feedback, setFeedback] = useState({})
+  const [openDay, setOpenDay] = useState(null)
 
-  const auth = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    return { Authorization: `Bearer ${session.access_token}` }
-  }
-  const load = async () => {
-    const h = await auth()
-    const r = await fetch('/api/adaptation/my', { headers: h })
-    if (r.ok) setData(await r.json())
-    setLoading(false)
-  }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/login'; return }
+      const { data: p } = await supabase.from('adaptation_plans').select('*')
+        .eq('employee_id', user.id).in('status', ['active', 'completed']).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      setPlan(p)
+      if (p) {
+        const { data: evs } = await supabase.from('adaptation_plan_events').select('*').eq('plan_id', p.id).order('day_number').order('event_time')
+        setEvents(evs || [])
+        if (p.template_id) {
+          const { data: tpl } = await supabase.from('adaptation_templates').select('*').eq('id', p.template_id).maybeSingle()
+          setTemplate(tpl)
+        }
+      }
+      setLoading(false)
+    }
+    init()
+  }, [])
 
-  const loadHistory = async () => {
-    if (!data?.plan) return
-    const h = await auth()
-    const r = await fetch(`/api/adaptation/history?planId=${data.plan.id}`, { headers: h })
-    if (r.ok) setHistory(await r.json())
-  }
-  useEffect(() => { if (historyOpen && data?.plan) loadHistory() }, [historyOpen, data?.plan])
-
-  const handleComplete = async () => {
-    if (!data?.currentEvent) return
-    setSubmitting(true)
-    const h = await auth()
-    await fetch('/api/adaptation/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...h },
-      body: JSON.stringify({ eventId: data.currentEvent.id, feedback })
-    })
-    setFeedback('')
-    setExpanded(null)
-    await load()
-    setSubmitting(false)
+  const completeEvent = async (ev) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('adaptation_plan_events').update({
+      status: 'done', employee_confirmed_at: new Date().toISOString(), employee_feedback: feedback[ev.id] || null
+    }).eq('id', ev.id)
+    if (error) { showError('Ошибка: ' + error.message); return }
+    if (plan?.manager_id) await supabase.from('notifications').insert({ user_id: plan.manager_id, message: `Сотрудник выполнил событие «${ev.title}» (день ${ev.day_number}). Подтвердите в адаптации.`, link: '/company-admin/adaptation' })
+    showSuccess('Событие выполнено, руководитель уведомлён')
+    const { data: evs } = await supabase.from('adaptation_plan_events').select('*').eq('plan_id', plan.id).order('day_number').order('event_time')
+    setEvents(evs || [])
   }
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
-  if (!data) return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/" title="Моя адаптация" />
-        <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 40, textAlign: 'center', color: '#888' }}>
-          План адаптации вам пока не назначен. Руководитель скоро это сделает.
-        </div>
-      </div>
-    </div>
-  )
 
-  const { plan, events, progress, currentEvent } = data
-  const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 0
-  const days = Array.from(new Set(events.map(e => e.day_number))).sort((a, b) => a - b)
+  const done = events.filter(e => e.status === 'done').length
+  const days = [...new Set(events.map(e => e.day_number))].sort((a, b) => a - b)
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/" title="Моя адаптация" extra={
-          <button onClick={() => setHistoryOpen(!historyOpen)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-            onMouseEnter={e => e.currentTarget.style.color = '#FFD700'} onMouseLeave={e => e.currentTarget.style.color = '#888'}>
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2"/><path d="M8 4.5V8l2.3 1.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            История взаимодействий
-          </button>
-        } />
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <BackArrow href="/" title="Моя адаптация" />
 
-        {/* Прогресс + текущее событие */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 28 }}>
-          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 22, border: '1px solid rgba(255,215,0,0.3)' }}>
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Прогресс плана</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#FFD700' }}>{pct}%</div>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', marginTop: 10 }}>
-              <div style={{ height: '100%', borderRadius: 2, width: pct + '%', background: 'linear-gradient(90deg, rgba(255,215,0,0.4), #FFD700)', boxShadow: '0 0 8px rgba(255,215,0,0.5)', transition: 'width .6s' }} />
-            </div>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 6 }}>Выполнено {progress.done} из {progress.total} событий</div>
+        {!plan ? (
+          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>
+            План адаптации вам пока не назначен.
           </div>
-
-          {currentEvent && (
-            <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 22, border: '1px solid rgba(74,222,128,0.4)', gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        ) : (
+          <>
+            <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 24, border: '1px solid rgba(255,215,0,0.2)', marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: '#4ade80', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Текущее событие</div>
-                  <div style={{ fontSize: 18, fontWeight: 600, color: '#fff' }}>{currentEvent.title}</div>
-                  <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
-                    День {currentEvent.day_number} · {currentEvent.event_time || '—'}
-                    {currentEvent.event_date && ` · ${new Date(currentEvent.event_date).toLocaleDateString('ru', { day: 'numeric', month: 'long' })}`}
-                  </div>
+                  <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>План адаптации</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{template?.name || 'Индивидуальный план'}</div>
                 </div>
-                <Timer event={currentEvent} />
+                <span style={{ fontSize: 11, padding: '3px 14px', borderRadius: 20, fontWeight: 700, background: plan.status === 'completed' ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.12)', color: plan.status === 'completed' ? '#4ade80' : '#FFD700', border: `1px solid ${plan.status === 'completed' ? 'rgba(74,222,128,0.4)' : 'rgba(255,215,0,0.4)'}` }}>{plan.status === 'completed' ? 'Завершена' : 'В процессе'}</span>
               </div>
-              <button onClick={() => setExpanded(expanded === currentEvent.id ? null : currentEvent.id)}
-                style={{ ...ghostBtn, marginTop: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-                Подробнее
-              </button>
+              <ProgressBar3D value={done} marks={[{ key: 't', value: events.length }]} height={12} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 6 }}>
+                <span>Выполнено: {done} из {events.length}</span>
+                <span>{events.length ? Math.round(done / events.length * 100) : 0}%</span>
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* План по дням */}
-        {days.map(d => {
-          const dayEvents = events.filter(e => e.day_number === d)
-          const startDate = new Date(plan.start_date + 'T00:00:00')
-          startDate.setDate(startDate.getDate() + d - 1)
-          const dayDate = startDate.toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })
-          return (
-            <div key={d} style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#a0e9ff', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(160,233,255,0.1)', border: '1px solid rgba(160,233,255,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#a0e9ff' }}>{d}</span>
-                {dayDate}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {dayEvents.map(ev => {
-                  const isDone = ev.status === 'done'
-                  const isCurrent = currentEvent?.id === ev.id
-                  return (
-                    <div key={ev.id} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 12, padding: 14, border: `1px solid ${isCurrent ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.08)'}`, opacity: isDone ? 0.7 : 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          {isDone ? (
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          ) : (TYPE_ICONS[ev.event_type] || TYPE_ICONS.practice)}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>{ev.title}</div>
-                          <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-                            {ev.event_time || '—'}
-                            {ev.duration_minutes && ` · ${ev.duration_minutes} мин`}
-                            {ev.is_mandatory && ' · обязательно'}
-                          </div>
-                        </div>
-                        {!isDone && ev.event_type !== 'feedback' && (
-                          <button onClick={() => setExpanded(expanded === ev.id ? null : ev.id)}
-                            style={{ ...ghostBtn, padding: '6px 14px', fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-                            {isCurrent ? 'Выполнить' : 'Детали'}
-                          </button>
-                        )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {days.map(d => {
+                const dayEvents = events.filter(e => e.day_number === d)
+                const allDone = dayEvents.every(e => e.status === 'done')
+                const isOpen = openDay === d
+                return (
+                  <div key={d} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, border: `1px solid ${allDone ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.08)'}`, overflow: 'hidden' }}>
+                    <div onClick={() => setOpenDay(isOpen ? null : d)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, background: allDone ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.1)', color: allDone ? '#4ade80' : '#FFD700', border: `1px solid ${allDone ? 'rgba(74,222,128,0.4)' : 'rgba(255,215,0,0.3)'}` }}>{d}</span>
+                        <span style={{ color: '#fff', fontWeight: 600 }}>День {d}</span>
                       </div>
-
-                      {expanded === ev.id && (
-                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                          {ev.required_action && <div style={{ fontSize: 13, color: '#ccc', marginBottom: 8 }}><b style={{ color: '#a0e9ff' }}>Что нужно сделать:</b> {ev.required_action}</div>}
-                          {ev.expected_result && <div style={{ fontSize: 13, color: '#ccc', marginBottom: 8 }}><b style={{ color: '#4ade80' }}>Ожидаемый результат:</b> {ev.expected_result}</div>}
-                          {ev.materials && <div style={{ fontSize: 13, color: '#ccc', marginBottom: 8 }}><b style={{ color: '#FFD700' }}>Материалы:</b> {ev.materials}</div>}
-                          {ev.employee_feedback && <div style={{ fontSize: 12, color: '#888', marginTop: 8, padding: 8, borderRadius: 8, background: 'rgba(255,255,255,0.03)' }}>Ваш фидбек: {ev.employee_feedback}</div>}
-                          {ev.manager_feedback && <div style={{ fontSize: 12, color: '#FFD700', marginTop: 6, padding: 8, borderRadius: 8, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)' }}>ОС руководителя: {ev.manager_feedback}{ev.rating ? ` · Оценка: ${ev.rating}/5` : ''}</div>}
-                          {!isDone && (
-                            <div style={{ marginTop: 12 }}>
-                              <textarea ref={feedbackRef} value={feedback} onChange={e => setFeedback(e.target.value)} placeholder="Ваш фидбек (необязательно)" className="input-field" style={{ width: '100%' }} rows={2} />
-                              <button onClick={handleComplete} disabled={submitting} style={{ ...ghostBtn, marginTop: 8, opacity: submitting ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-                                {submitting ? 'Отправляем…' : 'Отметить выполненным'}
-                              </button>
+                      <span style={{ fontSize: 11, color: '#888' }}>{dayEvents.filter(e => e.status === 'done').length}/{dayEvents.length}</span>
+                    </div>
+                    {isOpen && (
+                      <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {dayEvents.map(ev => (
+                          <div key={ev.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>{ev.event_time && <span style={{ color: '#a0e9ff', marginRight: 8 }}>{ev.event_time}</span>}{ev.title}</div>
+                                {ev.required_action && <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{ev.required_action}</div>}
+                                {ev.materials && <div style={{ fontSize: 11, color: '#c084fc', marginTop: 4 }}>Материалы: {ev.materials}</div>}
+                              </div>
+                              <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', background: ev.status === 'done' ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)', color: ev.status === 'done' ? '#4ade80' : '#aaa' }}>{ev.status === 'done' ? 'Выполнено' : 'К выполнению'}</span>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Модалка истории */}
-      {historyOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setHistoryOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 640, maxHeight: '85vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>История взаимодействий</h3>
-              <button onClick={() => setHistoryOpen(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-              </button>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {history.length === 0 ? <p style={{ color: '#777', textAlign: 'center', padding: 20 }}>История пуста</p> : (
-                history.map(h => (
-                  <div key={h.id} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#888', marginBottom: 4 }}>
-                      <span>{h.author_role === 'manager' ? 'РОП' : h.author_role === 'system' ? 'Система' : 'Вы'}</span>
-                      <span>{new Date(h.created_at).toLocaleString('ru')}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#fff' }}>{h.description}</div>
+                            {ev.status !== 'done' && (
+                              <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <input className="input-field" style={{ flex: 1, minWidth: 180 }} placeholder="Комментарий (необязательно)" value={feedback[ev.id] || ''} onChange={e => setFeedback(f => ({ ...f, [ev.id]: e.target.value }))} />
+                                <button onClick={() => completeEvent(ev)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Выполнено</button>
+                              </div>
+                            )}
+                            {ev.status === 'done' && ev.manager_confirmed_at && <div style={{ fontSize: 11, color: '#4ade80', marginTop: 8 }}>Подтверждено руководителем</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))
-              )}
+                )
+              })}
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
