@@ -5,7 +5,7 @@ import Spinner from '../../components/Spinner'
 import { withAuth } from '../../components/withAuth'
 
 const CARDS = [
-  { key: 'goals', title: 'Управление целями', sub: 'KPI, пороги, тренинги', href: '/company-admin/mastery', color: '#FFD700', accent: '#c084fc', primary: true },
+  { key: 'goals', title: 'Управление целями', sub: 'KPI, пороги, тренинги, типы расчёта', href: '/company-admin/mastery', color: '#FFD700', accent: '#c084fc', primary: true },
   { key: 'tasks', title: 'Управление заданиями', sub: 'Создание, назначение, награды', href: '/company-admin/tasks', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'employees', title: 'Команда', sub: 'Сотрудники, должности, доступы', href: '/company-admin/employees', color: '#a0e9ff', accent: '#FFD700', primary: true },
   { key: 'review', title: 'Задания на проверке', sub: 'Одобрение и отклонение', href: '/company-admin/review', color: '#ffb3c6', accent: '#FFD700', badge: 'pendingReviews' },
@@ -14,6 +14,8 @@ const CARDS = [
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
   { key: 'global', title: 'Глобальные цели', sub: 'Стратегические цели компании', href: '/company-admin/global-goals', color: '#FFD700', accent: '#ffb3c6' },
   { key: 'results', title: 'Результаты команды', sub: 'Аналитика и динамика', href: '/company-admin/results', color: '#a0e9ff', accent: '#4ade80' },
+  { key: 'analytics', title: 'Аналитика показателей', sub: 'Дашборды, динамика, тревоги', href: '/company-admin/analytics', color: '#4ade80', accent: '#FFD700' },
+  { key: 'learn', title: 'Обучение', sub: 'Тренинги и тесты, превью', href: '/company-admin/learn', color: '#c084fc', accent: '#4ade80' },
   { key: 'levels', title: 'Уровни прогресса', sub: 'Архитектура роста', href: '/company-admin/progress', color: '#c084fc', accent: '#ffb3c6' },
   { key: 'resources', title: 'Ресурсы', sub: 'Фонд, тариф, пополнение', href: '/company-admin/resources', color: '#FFD700', accent: '#a0e9ff' },
   { key: 'adapt', title: 'Адаптация', sub: 'Планы онбординга', href: '/company-admin/adaptation', color: '#86efac', accent: '#a0e9ff', badge: 'activeAdaptations' },
@@ -120,7 +122,6 @@ function CompanyAdminDashboard() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <h1 style={{ fontSize: 38, fontWeight: 700, margin: '0 0 36px', letterSpacing: -0.5, background: 'linear-gradient(135deg, #fff 0%, #a0e9ff 45%, #FFD700 85%, #ffb3c6 100%)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'titleShift 12s ease-in-out infinite alternate' }}>Управление компанией</h1>
 
-        {/* Кликабельные метрики */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 36 }}>
           <StatTile label="Активных заданий" value={stats.tasks} color="#c084fc" delay={0.05} onClick={() => router.push('/company-admin/tasks')} />
           <StatTile label="Сотрудников" value={stats.employees} color="#a0e9ff" delay={0.12} onClick={() => router.push('/company-admin/employees')} />
