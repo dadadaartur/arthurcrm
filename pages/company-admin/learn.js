@@ -21,7 +21,7 @@ function LearnAdmin() {
   const [tab, setTab] = useState('active')
   const [video, setVideo] = useState(null)
   const [preview, setPreview] = useState(null)
-  const [edit, setEdit] = useState(null) // training being edited or {} for new
+  const [edit, setEdit] = useState(null)
   const [progressOpen, setProgressOpen] = useState(null)
 
   const load = async () => {
@@ -38,9 +38,16 @@ function LearnAdmin() {
   const empName = id => { const e = employees.find(x => x.user_id === id); return e ? ([e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email) : '—' }
 
   const saveTraining = async () => {
-    if (!edit.title?.trim()) { showError('Укажите название'); return }
-    const payload = { title: edit.title, type: edit.type || 'video', url: edit.url || null, content: edit.content || null, recommend_below: edit.recommend_below || 'all', metric_id: edit.metric_id || null, assign_type: edit.assign_type || 'all', assign_positions: edit.assign_positions || null, assign_users: edit.assign_users || null, is_archived: !!edit.is_archived }
-    const { error } = edit.id ? await supabase.from('kpi_trainings').update(payload).eq('id', edit.id') : await supabase.from('kpi_trainings').insert(payload)
+    if (!edit.title || !edit.title.trim()) { showError('Укажите название'); return }
+    const payload = {
+      title: edit.title, type: edit.type || 'video', url: edit.url || null, content: edit.content || null,
+      recommend_below: edit.recommend_below || 'all', metric_id: edit.metric_id || null,
+      assign_type: edit.assign_type || 'all', assign_positions: edit.assign_positions || null,
+      assign_users: edit.assign_users || null, is_archived: !!edit.is_archived
+    }
+    let error = null
+    if (edit.id) { const r = await supabase.from('kpi_trainings').update(payload).eq('id', edit.id); error = r.error }
+    else { const r = await supabase.from('kpi_trainings').insert(payload); error = r.error }
     if (error) { showError('Ошибка: ' + error.message); return }
     showSuccess(edit.id ? 'Тренинг обновлён' : 'Тренинг создан')
     setEdit(null); load()
@@ -55,11 +62,19 @@ function LearnAdmin() {
   }
   const archive = async (t, val) => { await supabase.from('kpi_trainings').update({ is_archived: val }).eq('id', t.id); showSuccess(val ? 'Тренинг в архиве' : 'Тренинг восстановлен'); load() }
   const del = async t => { await supabase.from('kpi_trainings').delete().eq('id', t.id); showSuccess('Тренинг удалён'); load() }
+  const openPreview = async id => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const r = await fetch(`/api/kpi/tests?action=get&id=${id}&mode=edit`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (r.ok) setPreview(await r.json())
+  }
 
   const watchStats = t => {
     const list = views.filter(v => v.training_id === t.id)
     const byUser = {}
-    list.forEach(v => { const cur = byUser[v.user_id] || { watched: 0, duration: 0, completed: false }; byUser[v.user_id] = { watched: Math.max(cur.watched, v.watched_seconds || 0), duration: Math.max(cur.duration, v.duration || 0), completed: cur.completed || v.completed } })
+    list.forEach(v => {
+      const cur = byUser[v.user_id] || { watched: 0, duration: 0, completed: false }
+      byUser[v.user_id] = { watched: Math.max(cur.watched, v.watched_seconds || 0), duration: Math.max(cur.duration, v.duration || 0), completed: cur.completed || v.completed }
+    })
     return Object.entries(byUser).map(([uid, s]) => ({ uid, ...s, pct: s.duration ? Math.min(100, Math.round(s.watched / s.duration * 100)) : (s.completed ? 100 : 0) }))
   }
 
@@ -72,8 +87,8 @@ function LearnAdmin() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Обучение: тренинги и тесты" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button onClick={() => setTab('active')} style={{ ...ghostBtn, color: tab === 'active' ? '#FFD700' : '#fff', borderColor: tab === 'active' ? 'rgba(255,215,0,0.6)' : undefined }}>Активные</button>
-            <button onClick={() => setTab('archive')} style={{ ...ghostBtn, color: tab === 'archive' ? '#FFD700' : '#fff', borderColor: tab === 'archive' ? 'rgba(255,215,0,0.6)' : undefined }}>Архив</button>
+            <button onClick={() => setTab('active')} style={{ ...ghostBtn, color: tab === 'active' ? '#FFD700' : '#fff', borderColor: tab === 'active' ? 'rgba(255,215,0,0.6)' : 'rgba(255,215,0,0.3)' }}>Активные</button>
+            <button onClick={() => setTab('archive')} style={{ ...ghostBtn, color: tab === 'archive' ? '#FFD700' : '#fff', borderColor: tab === 'archive' ? 'rgba(255,215,0,0.6)' : 'rgba(255,215,0,0.3)' }}>Архив</button>
             <button onClick={() => setEdit({ type: 'video', assign_type: 'all', recommend_below: 'all' })} style={{ ...ghostBtn, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }}>Новый тренинг</button>
           </div>
         } />
@@ -88,7 +103,7 @@ function LearnAdmin() {
               <div style={{ fontSize: 11, color: '#888' }}>Показатель: {t.kpi_metrics?.name || '—'} · {t.type === 'video' ? 'видео' : 'текст'}</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 'auto' }}>
                 {t.type === 'video' && <button onClick={() => setVideo(t)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Видео</button>}
-                {t.test_id && <button onClick={async () => { const { data: { session } } = await supabase.auth.getSession(); const r = await fetch(`/api/kpi/tests?action=get&id=${t.test_id}&mode=edit`, { headers: { Authorization: `Bearer ${session.access_token}` } }); if (r.ok) setPreview(await r.json()) }} style={{ ...ghostBtn, borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }}>Тест</button>}
+                {t.test_id && <button onClick={() => openPreview(t.test_id)} style={{ ...ghostBtn, borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }}>Тест</button>}
                 <button onClick={() => setProgressOpen(progressOpen === t.id ? null : t.id)} style={ghostBtn}>Просмотры</button>
                 <button onClick={() => setEdit({ ...t })} style={ghostBtn}>Изменить</button>
                 <button onClick={() => archive(t, !t.is_archived)} style={ghostBtn}>{t.is_archived ? 'Вернуть' : 'В архив'}</button>
@@ -117,7 +132,7 @@ function LearnAdmin() {
             <div key={t.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 14, padding: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{t.title}</div>
               <div style={{ fontSize: 11, color: '#888', margin: '6px 0' }}>Порог {t.passing_score}% · {t.karma_reward} карм.</div>
-              <button onClick={async () => { const { data: { session } } = await supabase.auth.getSession(); const r = await fetch(`/api/kpi/tests?action=get&id=${t.id}&mode=edit`, { headers: { Authorization: `Bearer ${session.access_token}` } }); if (r.ok) setPreview(await r.json()) }} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Предпросмотр</button>
+              <button onClick={() => openPreview(t.id)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Предпросмотр</button>
             </div>
           ))}
         </div>
@@ -134,7 +149,7 @@ function LearnAdmin() {
               <div key={q.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 10 }}>
                 <div style={{ fontSize: 13, color: '#fff', marginBottom: 8 }}>{i + 1}. {q.text}</div>
                 {(q.options || []).map((o, oi) => (
-                  <div key={oi} style={{ fontSize: 12, padding: '6px 10px', borderRadius: 8, marginBottom: 4, background: o.is_correct ? 'rgba(74,222,128,0.12)' : 'rgba(255,255,255,0.02)', color: o.is_correct ? '#4ade80' : '#aaa', border: `1px solid ${o.is_correct ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.06)'` }}>{o.text}{o.is_correct && ' · верно'}</div>
+                  <div key={oi} style={{ fontSize: 12, padding: '6px 10px', borderRadius: 8, marginBottom: 4, background: o.is_correct ? 'rgba(74,222,128,0.12)' : 'rgba(255,255,255,0.02)', color: o.is_correct ? '#4ade80' : '#aaa', border: '1px solid ' + (o.is_correct ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.06)') }}>{o.text}{o.is_correct && ' · верно'}</div>
                 ))}
                 {q.type === 'fill' && <div style={{ fontSize: 12, color: '#4ade80' }}>Ответ: {q.correct_text}</div>}
               </div>
@@ -152,14 +167,15 @@ function LearnAdmin() {
               <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название</label><input className="input-field" style={{ width: '100%' }} value={edit.title || ''} onChange={e => setEdit({ ...edit, title: e.target.value })} /></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label><select className="input-field" style={{ width: '100%' }} value={edit.type} onChange={e => setEdit({ ...edit, type: e.target.value })}><option value="video">Видео</option><option value="text">Текст</option></select></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Рекомендация</label><select className="input-field" style={{ width: '100%' }} value={edit.recommend_below} onChange={e => setEdit({ ...edit, recommend_below: e.target.value })}><option value="all">Всем</option><option value="min">Ниже «мин»</option><option value="mid">Ниже «средн»</option><option value="top">Ниже «топ»</option></select></div>
-              {edit.type === 'video' && (<>
-                <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Видео (URL или файл)</label>
+              {edit.type === 'video' && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Видео (URL или файл)</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input className="input-field" style={{ flex: 1 }} placeholder="URL" value={edit.url || ''} onChange={e => setEdit({ ...edit, url: e.target.value })} />
                     <label style={{ ...ghostBtn, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>Файл<input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => uploadVideo(e.target.files[0])} /></label>
                   </div>
                 </div>
-              </>)}
+              )}
               {edit.type === 'text' && <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Текст</label><textarea className="input-field" style={{ width: '100%' }} rows={4} value={edit.content || ''} onChange={e => setEdit({ ...edit, content: e.target.value })} /></div>}
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кому назначить</label><select className="input-field" style={{ width: '100%' }} value={edit.assign_type} onChange={e => setEdit({ ...edit, assign_type: e.target.value })}><option value="all">Всем</option><option value="position">По должности</option><option value="individual">Индивидуально</option></select></div>
               {edit.assign_type === 'position' && (
