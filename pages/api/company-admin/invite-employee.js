@@ -1,158 +1,26 @@
 import { createClient } from '@supabase/supabase-js'
-import { randomUUID } from 'crypto'
-import { requireAuth } from '../../../lib/auth'
-
-// Новый, безопасный флоу приглашения сотрудника.
-//
-// Раньше (см. историю коммитов): company-admin/employees.js вставлял
-// строку прямо в profiles, без user_id и без записи в invitations —
-// сотрудник физически не мог войти в систему. А отдельная ветка кода в
-// login.js/invite.js читала invitations.temp_password (пароль в открытом
-// виде) напрямую с клиента — но эти записи никто и никогда не создавал.
-//
-// Теперь: используем встроенный механизм Supabase Auth
-// (auth.admin.inviteUserByEmail) — он сам создаёт пользователя, генерирует
-// криптографически стойкую одноразовую ссылку с ограниченным сроком жизни
-// и отправляет письмо через настроенный в проекте почтовый шаблон
-// "Invite user". Никакой пароль нигде в открытом виде не хранится и не
-// передаётся через таблицы.
-//
-// Строка в invitations остаётся только как бухгалтерская запись (какая
-// роль/права должны достаться этому email при первом входе) — её читает
-// только сервер (service_role) в pages/api/invitations/accept.js.
+import { requireAuth, hasPermission } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
+  const ctx = await requireAuth(req, res, {})
+  if (!ctx) return
+  if (!hasPermission(ctx.profile, 'can_manage_employees') && !ctx.profile?.is_company_admin) return res.status(403).json({ error: 'Недостаточно прав' })
+  const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const { email, firstName, lastName, positionId, roleId, permissions } = req.body || {}
+  const clean = String(email || '').trim().toLowerCase()
+  if (!/^\S+@\S+\.\S+$/.test(clean)) return res.status(400).json({ error: 'Некорректный email' })
 
-  try {
-    const ctx = await requireAuth(req, res, { permission: 'can_manage_employees' })
-    if (!ctx) return
+  const { data: existing } = await a.from('profiles').select('user_id').eq('company_id', ctx.profile.company_id).eq('email', clean).is('deleted_at', null).maybeSingle()
+  if (existing) return res.status(400).json({ error: 'Сотрудник уже в компании' })
+  const { data: pend } = await a.from('invitations').select('id').eq('company_id', ctx.profile.company_id).eq('email', clean).eq('status', 'pending').maybeSingle()
+  if (pend) return res.status(400).json({ error: 'Приглашение уже отправлено' })
 
-    const { email, firstName, lastName, positionId, roleId, permissions } = req.body
-    if (!email || !email.trim()) {
-      return res.status(400).json({ error: 'Нет email' })
-    }
-    if (!ctx.profile.company_id) {
-      return res.status(400).json({ error: 'У вас нет компании' })
-    }
-
-    const normalizedEmail = email.trim().toLowerCase()
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!supabaseUrl || !serviceKey) {
-      console.error('[invite-employee] отсутствуют переменные окружения', { hasUrl: !!supabaseUrl, hasService: !!serviceKey })
-      return res.status(500).json({ error: 'Server configuration error' })
-    }
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey)
-
-    // Не приглашаем повторно, если уже есть активный сотрудник с этим email
-    // в этой же компании.
-    const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
-      .from('profiles')
-      .select('user_id, company_id')
-      .eq('email', normalizedEmail)
-      .maybeSingle()
-
-    if (existingProfileError) {
-      console.error('[invite-employee] ошибка select profiles', existingProfileError)
-      return res.status(500).json({ error: 'Ошибка проверки email: ' + existingProfileError.message })
-    }
-
-    if (existingProfile?.company_id) {
-      return res.status(409).json({
-        error: existingProfile.company_id === ctx.profile.company_id
-          ? 'Этот сотрудник уже есть в вашей компании'
-          : 'Этот email уже привязан к другой компании'
-      })
-    }
-
-    // Закрываем предыдущие незавершённые приглашения на этот email в этой
-    // компании, чтобы не плодить дубли.
-    const { error: supersedeError } = await supabaseAdmin
-      .from('invitations')
-      .update({ status: 'superseded' })
-      .eq('email', normalizedEmail)
-      .eq('company_id', ctx.profile.company_id)
-      .eq('status', 'pending')
-
-    if (supersedeError) {
-      console.error('[invite-employee] ошибка update invitations (supersede)', supersedeError)
-      // Не блокируем процесс из-за этого — не критично, продолжаем
-    }
-
-    const allowedPermissionFlags = ['can_create_tasks', 'can_review_tasks', 'can_manage_employees', 'can_delete_employees']
-    const safePermissions = {}
-    for (const flag of allowedPermissionFlags) {
-      safePermissions[flag] = !!(permissions && permissions[flag])
-    }
-
-    // role_id в invitations обязателен (NOT NULL), а в форме можно было
-    // оставить "Без роли" — раньше это приводило к сырой ошибке БД вместо
-    // понятного сообщения. Подставляем разумный дефолт: сначала пробуем
-    // роль "Сотрудник" этой компании (её создаёт create-company.js для
-    // новых компаний), иначе — любую не-админскую роль компании, и только
-    // если вообще ни одной роли нет — просим админа сначала завести роль.
-    let effectiveRoleId = roleId || null
-    if (!effectiveRoleId) {
-      const { data: fallbackRole } = await supabaseAdmin
-        .from('roles')
-        .select('id, name')
-        .eq('company_id', ctx.profile.company_id)
-        .order('name', { ascending: true })
-        .limit(20)
-
-      const preferred = fallbackRole?.find(r => r.name === 'Сотрудник') || fallbackRole?.[0]
-      if (!preferred) {
-        return res.status(400).json({ error: 'В компании ещё нет ни одной роли — создайте роль перед приглашением сотрудника' })
-      }
-      effectiveRoleId = preferred.id
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${req.headers.host}`
-
-    const { data: inviteResult, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      normalizedEmail,
-      {
-        redirectTo: `${siteUrl}/invite-callback`,
-        data: {
-          invited_by: ctx.user.id,
-          company_id: ctx.profile.company_id
-        }
-      }
-    )
-
-    if (inviteError) {
-      if (!/already registered|already exists/i.test(inviteError.message || '')) {
-        console.error('[invite-employee] ошибка inviteUserByEmail', inviteError)
-        return res.status(500).json({ error: 'Ошибка приглашения: ' + inviteError.message })
-      }
-    }
-
-    const { error: insertError } = await supabaseAdmin.from('invitations').insert({
-      email: normalizedEmail,
-      company_id: ctx.profile.company_id,
-      role_id: effectiveRoleId,
-      status: 'pending',
-      // token — реликт старой схемы приглашений по ссылке (до перехода на
-      // supabase.auth.admin.inviteUserByEmail, который сам генерирует
-      // безопасную одноразовую ссылку). Нигде в коде не читается, но
-      // колонка в БД NOT NULL без дефолта — подставляем случайное
-      // значение просто чтобы удовлетворить схему.
-      token: randomUUID(),
-      permissions: { ...safePermissions, first_name: firstName || null, last_name: lastName || null, position_id: positionId || null },
-      created_by: ctx.user.id,
-      invited_user_id: inviteResult?.user?.id || null
-    })
-
-    if (insertError) {
-      console.error('[invite-employee] ошибка insert invitations', insertError)
-      return res.status(500).json({ error: 'Ошибка сохранения приглашения: ' + insertError.message })
-    }
-
-    res.status(200).json({ success: true })
-  } catch (e) {
-    console.error('[invite-employee] необработанная ошибка', e)
-    res.status(500).json({ error: 'Внутренняя ошибка сервера: ' + (e?.message || String(e)) })
-  }
+  const { error } = await a.from('invitations').insert({
+    company_id: ctx.profile.company_id, email: clean,
+    payload: { firstName, lastName, positionId, roleId, permissions },
+    status: 'pending', invited_by: ctx.user.id
+  })
+  if (error) return res.status(500).json({ error: error.message })
+  res.status(200).json({ success: true })
 }
