@@ -38,14 +38,16 @@ export default function GoalsPage() {
   const [data, setData] = useState(null)
   const [levels, setLevels] = useState([])
   const [oldGoals, setOldGoals] = useState([])
-  const [expanded, setExpanded] = useState(null)
   const [pathOpen, setPathOpen] = useState(false)
   const [tipsOpen, setTipsOpen] = useState(false)
   const [mode, setMode] = useState('today')
   const [customDay, setCustomDay] = useState(todayISO)
   const [videoTraining, setVideoTraining] = useState(null)
+  const [detailsMetric, setDetailsMetric] = useState(null)
   const [activeTest, setActiveTest] = useState(null)
   const [testResult, setTestResult] = useState(null)
+  const [myTests, setMyTests] = useState([])
+  const [myViews, setMyViews] = useState([])
 
   useEffect(() => {
     const init = async () => {
@@ -58,6 +60,11 @@ export default function GoalsPage() {
       if (r2.ok) setLevels(await r2.json())
       const { data: g } = await supabase.from('goals').select('*').eq('user_id', user.id).eq('is_active', true)
       setOldGoals(g || [])
+      // Личная статистика
+      const { data: tr } = await supabase.from('test_attempts').select('*').eq('user_id', user.id).order('completed_at', { ascending: false })
+      const { data: vw } = await supabase.from('training_views').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      setMyTests(tr || [])
+      setMyViews(vw || [])
       setLoading(false)
     }
     init()
@@ -71,7 +78,12 @@ export default function GoalsPage() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ trainingId: activeTest.training.id, answers: activeTest.answers })
     })
-    if (r.ok) setTestResult(await r.json())
+    if (r.ok) {
+      const result = await r.json()
+      setTestResult(result)
+      const { data: newTests } = await supabase.from('test_attempts').select('*').eq('user_id', (await supabase.auth.getUser()).data.user.id).order('completed_at', { ascending: false })
+      setMyTests(newTests || [])
+    }
   }
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
@@ -120,7 +132,6 @@ export default function GoalsPage() {
           </div>
         } />
 
-        {/* Уровень + советы/путь */}
         {cur && (
           <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 20, border: `1px solid ${cur.color}33`, marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -134,6 +145,11 @@ export default function GoalsPage() {
               </div>
             </div>
             {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={14} />}
+            {next && (
+              <div style={{ textAlign: 'center', marginTop: 10, fontSize: 14, fontWeight: 600, color: '#FFD700', textShadow: '0 0 14px rgba(255,215,0,0.5)', letterSpacing: 0.3 }}>
+                До «{next.name}» осталось {remaining} энергии — держи темп!
+              </div>
+            )}
             {tipsOpen && next && (
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
@@ -147,7 +163,6 @@ export default function GoalsPage() {
           </div>
         )}
 
-        {/* Фильтр даты */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
           <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
@@ -158,67 +173,28 @@ export default function GoalsPage() {
           <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
         </div>
 
-        {/* Показатели мастерства */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 16, marginBottom: 40 }}>
           {data.metrics.map(m => {
             const { value, band, sm } = metricView(m)
             return (
-              <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`}
-                onMouseLeave={e => e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`}>
-                <div onClick={() => setExpanded(expanded === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
-                  </div>
-                  <ProgressBar3D value={value ?? 0} marks={[{ key: 'min', value: sm.thr_min }, { key: 'mid', value: sm.thr_mid }, { key: 'top', value: sm.thr_top }, { key: 'ultra', value: sm.thr_ultra }]} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 10 }}>
-                    <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}</span>
-                    <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44`, whiteSpace: 'nowrap', flexShrink: 0 }}>{BAND_LABELS[band]}</span>
-                  </div>
+              <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                 </div>
-                {expanded === m.id && (
-                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    {m.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {m.description}</p>}
-                    {m.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#4ade80' }}>Советы:</b> {m.advice}</p>}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '12px 0' }}>
-                      {['min', 'mid', 'top', 'ultra'].map(b => (
-                        <div key={b} style={{ padding: 10, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: BAND_COLORS[b] }}>{BAND_LABELS[b]}</div>
-                          <div style={{ fontSize: 14, color: '#fff', marginTop: 2 }}>{m['thr_' + b]}{m.unit}</div>
-                          <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>+{energyFor(m, b)} эн. · +{karmaFor(m, b)} к.</div>
-                        </div>
-                      ))}
-                    </div>
-                    <h4 style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: '0 0 8px' }}>Материалы для роста</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {(m.trainings || []).map(t => {
-                        const recommended = t.recommend_below === 'all' || BAND_RANK[band] < BAND_RANK[t.recommend_below]
-                        return (
-                          <div key={t.id} style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: recommended ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 13, color: '#fff' }}>{t.title}</span>
-                              {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
-                            </div>
-                            {t.type === 'video' && (t.url || t.video_path) && (
-                              <button onClick={() => setVideoTraining(t)} style={{ ...ghostBtn, marginTop: 8 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Смотреть в плеере</button>
-                            )}
-                            {t.type === 'text' && t.content && <p style={{ fontSize: 12, color: '#aaa', margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{t.content}</p>}
-                            {t.type === 'test' && <button onClick={() => { setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 8 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пройти тест</button>}
-                          </div>
-                        )
-                      })}
-                      {(m.trainings || []).length === 0 && <p style={{ fontSize: 12, color: '#666' }}>Материалов пока нет</p>}
-                    </div>
-                  </div>
-                )}
+                <ProgressBar3D value={value ?? 0} marks={[{ key: 'min', value: sm.thr_min }, { key: 'mid', value: sm.thr_mid }, { key: 'top', value: sm.thr_top }, { key: 'ultra', value: sm.thr_ultra }]} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 10 }}>
+                  <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}</span>
+                  <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44`, whiteSpace: 'nowrap', flexShrink: 0 }}>{BAND_LABELS[band]}</span>
+                </div>
               </div>
             )
           })}
           {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
         </div>
 
-        {/* Глобальные цели на период */}
         {oldGoals.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Глобальные цели на период</h2>
@@ -244,14 +220,91 @@ export default function GoalsPage() {
             </div>
           </>
         )}
+
+        {(myTests.length > 0 || myViews.length > 0) && (
+          <div style={{ marginTop: 40 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 14 }}>Мои результаты</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              {myTests.filter(t => t.completed_at).map(t => (
+                <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(15,20,35,0.85)', border: `1px solid ${t.is_passed ? 'rgba(74,222,128,0.3)' : 'rgba(244,67,54,0.3)'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 500 }}>Тест #{t.test_id}</span>
+                    <span style={{ color: t.is_passed ? '#4ade80' : '#f87171', fontWeight: 700 }}>{t.score}%</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 6 }}>
+                    <span>{new Date(t.completed_at).toLocaleDateString('ru')}</span>
+                    <span>{t.is_passed ? 'сдан' : 'не сдан'}</span>
+                  </div>
+                </div>
+              ))}
+              {myViews.filter(v => v.completed).map(v => (
+                <div key={v.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(15,20,35,0.85)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                  <div style={{ color: '#4ade80', fontSize: 13, fontWeight: 500 }}>Тренинг просмотрен</div>
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>{new Date(v.created_at).toLocaleDateString('ru')}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <LevelPathModal open={pathOpen} onClose={() => setPathOpen(false)} energy={energy} />
       {videoTraining && <TrainingVideoModal training={videoTraining} onClose={() => setVideoTraining(null)} />}
 
+      {/* Модалка деталей показателя */}
+      {detailsMetric && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setDetailsMetric(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(780px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <button onClick={() => setDetailsMetric(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer', transition: 'transform 0.3s' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+              <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+                <circle cx="17" cy="17" r="15" stroke="#f87171" strokeOpacity="0.5" strokeWidth="1" strokeDasharray="4 5" style={{ transformOrigin: '17px 17px', animation: 'mxSpin 6s linear infinite' }} />
+                <path d="M12 12 L22 22 M22 12 L12 22" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 14px', paddingRight: 40 }}>{detailsMetric.name}</h3>
+            {detailsMetric.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 8px' }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {detailsMetric.description}</p>}
+            {detailsMetric.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 16px' }}><b style={{ color: '#4ade80' }}>Советы:</b> {detailsMetric.advice}</p>}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, margin: '0 0 20px' }}>
+              {['min', 'mid', 'top', 'ultra'].map(b => (
+                <div key={b} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: BAND_COLORS[b] }}>{BAND_LABELS[b]}</div>
+                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{detailsMetric['thr_' + b]}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{energyFor(detailsMetric, b)} эн. · +{karmaFor(detailsMetric, b)} к.</div>
+                </div>
+              ))}
+            </div>
+            <h4 style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>Материалы для роста</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(detailsMetric.trainings || []).map(t => {
+                const { band } = metricView(detailsMetric)
+                const recommended = t.recommend_below === 'all' || BAND_RANK[band] < BAND_RANK[t.recommend_below]
+                return (
+                  <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: recommended ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>{t.title}</span>
+                      {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
+                    </div>
+                    {t.type === 'video' && (t.url || t.video_path) && (
+                      <button onClick={() => { setDetailsMetric(null); setVideoTraining(t) }} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Смотреть в плеере</button>
+                    )}
+                    {t.type === 'text' && t.content && <p style={{ fontSize: 12, color: '#aaa', margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{t.content}</p>}
+                    {t.type === 'test' && <button onClick={() => { setDetailsMetric(null); setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 10, borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пройти тест</button>}
+                  </div>
+                )
+              })}
+              {(detailsMetric.trainings || []).length === 0 && <p style={{ fontSize: 12, color: '#666' }}>Материалов пока нет</p>}
+            </div>
+          </div>
+          <style jsx>{`@keyframes mxSpin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      )}
+
       {activeTest && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !testResult && setActiveTest(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <button onClick={() => setActiveTest(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 18px', background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{activeTest.training.title}</h3>
             {(activeTest.training.test_questions || []).map((q, qi) => (
               <div key={qi} style={{ marginBottom: 16 }}>
