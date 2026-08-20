@@ -15,16 +15,16 @@ const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)
 const AUTO_ENERGY = { energy_min: 5, energy_mid: 10, energy_top: 15, energy_ultra: 20 }
 
 const TYPE_META = [
-  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки', color: '#FFD700' },
-  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи', color: '#a0e9ff' },
-  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, SLA', color: '#4ade80' },
-  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча', color: '#c084fc' },
-  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Ниже значение — выше уровень.', ex: 'SLA лида, время, жалобы', color: '#ffb3c6' },
-  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля выполненных условий.', ex: 'Скрипт, подтверждение', color: '#FFD700' },
-  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма, если минимум каждый день.', ex: 'Стабильность, посещаемость', color: '#a0e9ff' },
-  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж', color: '#4ade80' },
-  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам', color: '#c084fc' },
-  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI', color: '#ffb3c6' },
+  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки' },
+  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи' },
+  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, SLA' },
+  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча' },
+  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Ниже значение — выше уровень.', ex: 'SLA лида, время, жалобы' },
+  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля выполненных условий.', ex: 'Скрипт, подтверждение' },
+  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма, если минимум каждый день.', ex: 'Стабильность, посещаемость' },
+  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж' },
+  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам' },
+  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI' },
 ]
 const THRESH_NORMAL = [
   { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
@@ -40,13 +40,14 @@ const THRESH_INVERSE = [
 ]
 
 const PencilIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke="#a0e9ff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M13.5 6.5l3 3" stroke="#a0e9ff" strokeWidth="1.7" strokeLinecap="round" />
   </svg>
 )
 const DeleteIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" stroke="#f87171" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 const CloseX = ({ onClick }) => (
@@ -95,10 +96,10 @@ function MasteryAdmin() {
 
   const delMetric = async id => { const h = await auth(); await fetch('/api/company-admin/kpi/metrics', { method: 'DELETE', headers: h, body: JSON.stringify({ id }) }); showSuccess('Показатель удалён'); load() }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'transparent' }}><Spinner /></div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление целями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -107,44 +108,33 @@ function MasteryAdmin() {
           </div>
         } />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '28px 48px', alignItems: 'start' }}>
-          {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '28px 40px', alignItems: 'start' }}>
+          {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
           {metrics.map(m => (
-            <div key={m.id} style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 16, lineHeight: 1.35, wordBreak: 'break-word' }}>{m.name}</div>
-                  <div style={{ marginTop: 4, fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</div>
-                </div>
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <div key={m.id} style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <div style={{ minWidth: 0, fontSize: 16, fontWeight: 600, lineHeight: 1.4, wordBreak: 'break-word', color: '#fff', textShadow: '0 0 14px rgba(255,255,255,0.15)' }}>{m.name}</div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0, paddingTop: 2 }}>
                   <button className="mx-icon mx-edit" onClick={() => setEditMetric(m)} title="Редактировать"><PencilIcon /></button>
                   <button className="mx-icon mx-del" onClick={() => delMetric(m.id)} title="Удалить"><DeleteIcon /></button>
                 </div>
               </div>
+              <div style={{ marginTop: 4, fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</div>
+              {m.kpi_type === 'inverse' && <div style={{ marginTop: 3, fontSize: 10, color: '#a0e9ff' }}>меньше значение = выше уровень</div>}
 
-              <div style={{ marginTop: 14, position: 'relative', paddingLeft: 20 }}>
+              <div style={{ marginTop: 12, position: 'relative', paddingLeft: 20 }}>
                 <div style={{ position: 'absolute', left: 4, top: 6, bottom: 6, width: 1.5, borderRadius: 2, background: 'linear-gradient(180deg, #c084fc, #4ade80, #FFD700, #f97316)', opacity: 0.35 }} />
                 {['ultra', 'top', 'mid', 'min'].map(b => (
                   <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: BAND_COLORS[b], boxShadow: `0 0 8px ${BAND_COLORS[b]}`, marginLeft: -20, flexShrink: 0 }} />
-                    <span style={{
-                      width: 60, fontSize: 12, fontWeight: b === 'ultra' ? 700 : 500,
-                      color: b === 'ultra' ? 'transparent' : 'rgba(255,255,255,0.6)',
-                      background: b === 'ultra' ? 'linear-gradient(90deg,#c084fc,#FFD700,#ffb3c6,#a0e9ff,#c084fc)' : 'none',
-                      backgroundSize: b === 'ultra' ? '300% 100%' : 'auto',
-                      WebkitBackgroundClip: b === 'ultra' ? 'text' : 'border-box',
-                      backgroundClip: b === 'ultra' ? 'text' : 'border-box',
-                      WebkitTextFillColor: b === 'ultra' ? 'transparent' : 'inherit',
-                      animation: b === 'ultra' ? 'mxUltraShift 4s linear infinite' : 'none'
-                    }}>{BAND_LABELS[b]}</span>
+                    <span style={{ width: 64, fontSize: 12, color: b === 'ultra' ? '#c084fc' : 'rgba(255,255,255,0.6)' }}>{BAND_LABELS[b]}</span>
                     <span style={{ fontSize: 14, fontWeight: 600, color: BAND_COLORS[b], textShadow: `0 0 12px ${BAND_COLORS[b]}55` }}>{m['thr_' + b]}{m.unit}</span>
                   </div>
                 ))}
               </div>
 
               <button onClick={() => setMaterialsMetric(m)} style={{ marginTop: 12, background: 'none', border: 'none', padding: 0, color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer', letterSpacing: 0.3, transition: 'color .2s', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: 3 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#a0e9ff'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}>
+                onMouseEnter={e => e.currentTarget.style.color = '#a0e9ff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}>
                 связанные тесты и тренинги
               </button>
             </div>
@@ -156,12 +146,9 @@ function MasteryAdmin() {
       <MaterialsModal metric={materialsMetric} onClose={() => setMaterialsMetric(null)} />
 
       <style jsx global>{`
-        .mx-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .25s cubic-bezier(.22,1,.36,1);padding:0}
-        .mx-edit{color:#a0e9ff}
-        .mx-edit:hover{background:rgba(160,233,255,.12);border-color:rgba(160,233,255,.5);box-shadow:0 0 14px rgba(160,233,255,.35);transform:translateY(-1px) rotate(-8deg) scale(1.08)}
-        .mx-del{color:#f87171}
-        .mx-del:hover{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);box-shadow:0 0 14px rgba(248,113,113,.35);transform:translateY(-1px) rotate(8deg) scale(1.08)}
-        @keyframes mxUltraShift{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+        .mx-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .25s;padding:0}
+        .mx-edit:hover{background:rgba(160,233,255,.12);border-color:rgba(160,233,255,.5);box-shadow:0 0 12px rgba(160,233,255,.35);transform:translateY(-1px)}
+        .mx-del:hover{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.5);box-shadow:0 0 12px rgba(248,113,113,.35);transform:translateY(-1px)}
       `}</style>
     </div>
   )
@@ -197,18 +184,18 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
       <div style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
         <CloseX onClick={onClose} />
         <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия авто (5/10/15/20)</div>
+
         {step === 'type' ? (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Выберите тип расчёта</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', padding: '16px 20px', borderRadius: 14, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `3px solid ${t.color}`, transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = `${t.color}66`; e.currentTarget.style.borderLeftColor = t.color }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderLeftColor = t.color }}>
-                  <span style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{t.label}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
-                  <span style={{ color: t.color, fontSize: 11, opacity: 0.8 }}>Примеры: {t.ex}</span>
+                  style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, textAlign: 'left', padding: '12px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
+                  <span style={{ color: '#FFD700', fontWeight: 600, fontSize: 13 }}>{t.label}</span>
+                  <span style={{ color: '#999', fontSize: 12, lineHeight: 1.4 }}>{t.hint} <span style={{ color: '#666' }}>Примеры: {t.ex}</span></span>
                 </button>
               ))}
             </div>
@@ -216,11 +203,22 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
         ) : (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
-            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому). SLA: ультра 5 мин → мин 15 мин.</div>}
+            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 100)</label>
+                <input maxLength={100} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label>
+                <select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
+                  <option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label>
+                <button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button>
+              </div>
               {form.kpi_type === 'ratio' && (<>
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Числитель</label><select className="input-field" style={{ width: '100%' }} value={form.num} onChange={e => setForm({ ...form, num: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Знаменатель</label><select className="input-field" style={{ width: '100%' }} value={form.den} onChange={e => setForm({ ...form, den: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
