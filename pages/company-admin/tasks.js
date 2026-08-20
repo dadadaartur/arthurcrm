@@ -51,7 +51,7 @@ function TasksPage() {
   const [companyId, setCompanyId] = useState(null)
   const [tasks, setTasks] = useState([])
   const [archived, setArchived] = useState([])
-  const [metrics, setMetrics] = useState([]) // <-- список KPI
+  const [metrics, setMetrics] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('create')
   const [restoreId, setRestoreId] = useState(null)
@@ -69,8 +69,8 @@ function TasksPage() {
     deadline_date: '',
     is_auto_goal: false,
     auto_goal_condition: 'all_min',
-    auto_metric_id: '',   // <-- новая метрика
-    auto_required_band: '', // <-- новый уровень (min/mid/top/ultra)
+    auto_metric_id: '',   // будет числом (ID метрики) или пустой строкой
+    auto_required_band: '',
     auto_energy: 5,
     image_file: null
   })
@@ -105,7 +105,6 @@ function TasksPage() {
     if (!form.title.trim()) { showError('Укажите название задания'); return }
     if (!form.reward_karma || form.reward_karma <= 0) { showError('Укажите награду больше 0'); return }
 
-    // Проверка для авто-задания с конкретной метрикой
     if (form.is_auto_goal && form.auto_metric_id && !form.auto_required_band) {
       showError('Укажите требуемый уровень для авто-задания')
       return
@@ -125,20 +124,17 @@ function TasksPage() {
     }
     const deadlineAt = form.deadline_date ? new Date(form.deadline_date + 'T23:59:59').toISOString() : null
 
-    // Определяем поля авто-зачёта
     let autoFields = {}
     if (form.is_auto_goal) {
       if (form.auto_metric_id) {
-        // Новый тип: привязка к конкретной метрике и уровню
         autoFields = {
           is_auto_goal: true,
-          auto_metric_id: form.auto_metric_id,
+          auto_metric_id: parseInt(form.auto_metric_id, 10) || null, // <-- преобразуем в число
           auto_required_band: form.auto_required_band,
-          auto_goal_condition: null, // не используется
+          auto_goal_condition: null,
           auto_energy: form.auto_energy
         }
       } else {
-        // Старый тип: общее условие по всем метрикам
         autoFields = {
           is_auto_goal: true,
           auto_metric_id: null,
@@ -172,7 +168,6 @@ function TasksPage() {
       return
     }
 
-    // Если это не авто-задание, назначаем сотрудникам
     if (!form.is_auto_goal) {
       const { data: emps } = await supabase.from('profiles').select('user_id')
         .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
@@ -190,7 +185,6 @@ function TasksPage() {
         showSuccess('Задание создано')
       }
     } else {
-      // Авто-задание – сотрудникам не назначается, система сама проверит
       showSuccess('Авто-задание создано, система будет проверять достижения')
     }
 
@@ -288,7 +282,7 @@ function TasksPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div>
                         <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Привязать к конкретной цели</label>
-                        <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id || ''} onChange={e => setForm({ ...form, auto_metric_id: e.target.value })}>
+                        <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id || ''} onChange={e => setForm({ ...form, auto_metric_id: e.target.value ? parseInt(e.target.value) : '' })}>
                           <option value="">— Все цели (общее условие) —</option>
                           {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </select>
