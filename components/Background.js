@@ -1,20 +1,72 @@
-// components/Background.js
-export default function Background() {
+import { useMemo } from 'react'
+
+function Comet({ left, top, angle, dist, dur, delay, scale = 0.55 }) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
-        backgroundColor: '#FFFFFF',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 1200'%3E%3Cdefs%3E%3ClinearGradient id='holo' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23D4AF37' stop-opacity='0.25'/%3E%3Cstop offset='30%25' stop-color='%23C0A0B0' stop-opacity='0.2'/%3E%3Cstop offset='60%25' stop-color='%23B0C0D0' stop-opacity='0.2'/%3E%3Cstop offset='100%25' stop-color='%23D4AF37' stop-opacity='0.25'/%3E%3C/linearGradient%3E%3ClinearGradient id='holo2' x1='100%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23C9A0DC' stop-opacity='0.2'/%3E%3Cstop offset='50%25' stop-color='%23D4AF37' stop-opacity='0.3'/%3E%3Cstop offset='100%25' stop-color='%23A0C0D0' stop-opacity='0.2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke-width='0.6'%3E%3C!-- Внешние кольца мандалы --%3E%3Ccircle cx='600' cy='600' r='500' stroke='url(%23holo)' stroke-dasharray='4 6' opacity='0.7'/%3E%3Ccircle cx='600' cy='600' r='480' stroke='url(%23holo2)' stroke-dasharray='2 8'/%3E%3Ccircle cx='600' cy='600' r='450' stroke='url(%23holo)' stroke-dasharray='0.5 12' opacity='0.8'/%3E%3Ccircle cx='600' cy='600' r='400' stroke='url(%23holo2)' stroke-dasharray='8 4'/%3E%3Ccircle cx='600' cy='600' r='340' stroke='url(%23holo)' stroke-dasharray='1 10'/%3E%3Ccircle cx='600' cy='600' r='270' stroke='url(%23holo2)' stroke-dasharray='6 6' opacity='0.9'/%3E%3Ccircle cx='600' cy='600' r='180' stroke='url(%23holo)' stroke-dasharray='3 9'/%3E%3C!-- Лучи-лепестки (звезда 24 конца) --%3E%3Cg stroke='url(%23holo)'%3E%3Cline x1='600' y1='100' x2='600' y2='1100' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='100' y1='600' x2='1100' y2='600' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='246' y1='246' x2='954' y2='954' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='954' y1='246' x2='246' y2='954' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='346' y1='154' x2='854' y2='1046' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='154' y1='346' x2='1046' y2='854' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='854' y1='154' x2='346' y2='1046' stroke-dasharray='2 6' opacity='0.3'/%3E%3Cline x1='1046' y1='346' x2='154' y2='854' stroke-dasharray='2 6' opacity='0.3'/%3E%3C/g%3E%3C!-- Сакральная спираль (архимедова, 8 витков) --%3E%3Cpath d='M600 600 m 0 -10 a 10 10 0 1 1 0 20 a 20 20 0 1 1 0 -40 a 30 30 0 1 1 0 60 a 40 40 0 1 1 0 -80 a 50 50 0 1 1 0 100 a 60 60 0 1 1 0 -120 a 70 70 0 1 1 0 140 a 80 80 0 1 1 0 -160 a 90 90 0 1 1 0 180 a 100 100 0 1 1 0 -200 a 110 110 0 1 1 0 220 a 120 120 0 1 1 0 -240 a 130 130 0 1 1 0 260 a 140 140 0 1 1 0 -280 a 150 150 0 1 1 0 300 a 160 160 0 1 1 0 -320' stroke='url(%23holo2)' stroke-dasharray='1 5' opacity='0.6'/%3E%3Cpath d='M600 600 m 0 -10 a 10 10 0 1 0 0 20 a 20 20 0 1 0 0 -40 a 30 30 0 1 0 0 60 a 40 40 0 1 0 0 -80 a 50 50 0 1 0 0 100 a 60 60 0 1 0 0 -120 a 70 70 0 1 0 0 140 a 80 80 0 1 0 0 -160 a 90 90 0 1 0 0 180 a 100 100 0 1 0 0 -200 a 110 110 0 1 0 0 220 a 120 120 0 1 0 0 -240 a 130 130 0 1 0 0 260 a 140 140 0 1 0 0 -280 a 150 150 0 1 0 0 300 a 160 160 0 1 0 0 -320' stroke='url(%23holo)' stroke-dasharray='1 5' opacity='0.6' transform='rotate(180 600 600)'/%3E%3C!-- Внутренний цветок жизни (7 кругов) --%3E%3Ccircle cx='600' cy='600' r='120' stroke='url(%23holo2)'/%3E%3Ccircle cx='480' cy='600' r='120' stroke='url(%23holo)'/%3E%3Ccircle cx='720' cy='600' r='120' stroke='url(%23holo)'/%3E%3Ccircle cx='600' cy='480' r='120' stroke='url(%23holo2)'/%3E%3Ccircle cx='600' cy='720' r='120' stroke='url(%23holo2)'/%3E%3Ccircle cx='515' cy='515' r='120' stroke='url(%23holo)'/%3E%3Ccircle cx='685' cy='685' r='120' stroke='url(%23holo)'/%3E%3C!-- Додекаграмма (12-лучевая звезда) --%3E%3Cg stroke='url(%23holo2)' stroke-dasharray='3 3' opacity='0.5'%3E%3Cpolygon points='600,200 700,400 900,400 760,540 820,740 600,620 380,740 440,540 300,400 500,400' /%3E%3Cpolygon points='600,1000 500,800 300,800 440,660 380,460 600,580 820,460 760,660 900,800 700,800' /%3E%3C/g%3E%3C!-- Орбитальные эллипсы --%3E%3Cellipse cx='600' cy='600' rx='300' ry='80' stroke='url(%23holo)' stroke-dasharray='1 8' opacity='0.4' transform='rotate(30 600 600)'/%3E%3Cellipse cx='600' cy='600' rx='300' ry='80' stroke='url(%23holo2)' stroke-dasharray='1 8' opacity='0.4' transform='rotate(-30 600 600)'/%3E%3Cellipse cx='600' cy='600' rx='80' ry='300' stroke='url(%23holo)' stroke-dasharray='1 8' opacity='0.4' transform='rotate(60 600 600)'/%3E%3Cellipse cx='600' cy='600' rx='80' ry='300' stroke='url(%23holo2)' stroke-dasharray='1 8' opacity='0.4' transform='rotate(-60 600 600)'/%3E%3C!-- Тонкая паутина соединительных линий --%3E%3Cg stroke='url(%23holo)' stroke-dasharray='0.5 4' opacity='0.35'%3E%3C!-- Соединения внутреннего цветка с внешними кольцами --%3E%3Cline x1='480' y1='600' x2='200' y2='600' /%3E%3Cline x1='720' y1='600' x2='1000' y2='600' /%3E%3Cline x1='600' y1='480' x2='600' y2='200' /%3E%3Cline x1='600' y1='720' x2='600' y2='1000' /%3E%3Cline x1='515' y1='515' x2='280' y2='280' /%3E%3Cline x1='685' y1='685' x2='920' y2='920' /%3E%3Cline x1='515' y1='685' x2='280' y2='920' /%3E%3Cline x1='685' y1='515' x2='920' y2='280' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundSize: 'cover'
-      }}
-    />
+    <div style={{ position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none', transform: `rotate(${angle}deg)`, '--dist': dist + 'px', filter: 'blur(0.6px)' }}>
+      <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0', position: 'relative', width: 0, height: 0 }}>
+        <div style={{ position: 'absolute', left: 0, top: -2, height: 4, width: dist, transformOrigin: '0 50%', borderRadius: 4, opacity: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(170,195,255,0.08) 40%, rgba(205,225,255,0.16) 80%, rgba(235,245,255,0.22) 100%)', animation: `bgCometSmoke ${dur}s linear ${delay}s infinite` }} />
+        <div style={{ position: 'absolute', left: 0, top: 0, opacity: 0, animation: `bgCometFly ${dur}s linear ${delay}s infinite` }}>
+          <div style={{ position: 'absolute', left: -140, top: -1, width: 140, height: 2, background: 'linear-gradient(90deg, transparent 0%, rgba(180,210,255,0.25) 55%, rgba(225,240,255,0.7) 88%, rgba(255,255,255,0.95) 100%)', borderRadius: 2, filter: 'blur(0.8px)' }} />
+          <div style={{ position: 'absolute', left: -120, top: -2.5, width: 120, height: 5, background: 'linear-gradient(90deg, transparent 0%, rgba(160,200,255,0.15) 60%, rgba(220,235,255,0.35) 100%)', borderRadius: 4, filter: 'blur(2.5px)' }} />
+          <div style={{ position: 'absolute', left: -3, top: -3, width: 6, height: 6, borderRadius: '50%', background: 'radial-gradient(circle, #fff 0%, rgba(225,240,255,0.9) 45%, transparent 100%)', boxShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 18px rgba(170,210,255,0.6), 0 0 30px rgba(140,190,255,0.35)' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Background() {
+  const stars = useMemo(() => {
+    const arr = []
+    const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
+    for (let i = 0; i < 140; i++) {
+      arr.push({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: Math.random() * 2.2 + 0.5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        op: Math.random() * 0.5 + 0.3,
+        dur: Math.random() * 18 + 10,
+        delay: Math.random() * 14
+      })
+    }
+    return arr
+  }, [])
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: -1, background: '#000', overflow: 'hidden', pointerEvents: 'none' }}>
+      {stars.map((s, i) => (
+        <div key={i} style={{ position: 'absolute', left: s.left + '%', top: s.top + '%', width: s.size + 'px', height: s.size + 'px', borderRadius: '50%', background: s.color, boxShadow: `0 0 ${s.size * 2}px ${s.color}`, opacity: s.op, animation: `bgTwinkle ${s.dur}s ease-in-out infinite`, animationDelay: s.delay + 's' }} />
+      ))}
+
+      <div style={{ position: 'absolute', top: '18%', left: '-4%', width: '38%', height: '38%', background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.06) 0%, transparent 70%)', filter: 'blur(55px)', animation: 'bgNebula1 220s ease-in-out infinite alternate' }} />
+      <div style={{ position: 'absolute', bottom: '18%', right: '-4%', width: '44%', height: '44%', background: 'radial-gradient(ellipse at center, rgba(255,150,200,0.045) 0%, transparent 70%)', filter: 'blur(60px)', animation: 'bgNebula2 260s ease-in-out infinite alternate' }} />
+
+      <Comet left="8%" top="22%" angle={-16} dist={560} dur={70} delay={6} scale={0.55} />
+      <Comet left="70%" top="10%" angle={158} dist={600} dur={80} delay={45} scale={0.45} />
+      <Comet left="12%" top="70%" angle={-30} dist={520} dur={75} delay={90} scale={0.5} />
+      <Comet left="85%" top="55%" angle={200} dist={560} dur={85} delay={130} scale={0.42} />
+
+      <div style={{ position: 'absolute', right: '-6%', bottom: '-10%', zIndex: 1, pointerEvents: 'none', width: '52%', height: '70%', background: 'radial-gradient(ellipse at 60% 70%, rgba(200,120,50,0.14) 0%, rgba(120,80,40,0.07) 45%, transparent 75%)', filter: 'blur(30px)', animation: 'bgPillars 22s ease-in-out infinite alternate' }} />
+      <div style={{ position: 'absolute', right: -30, bottom: -24, zIndex: 2, pointerEvents: 'none', width: 'min(46vw, 620px)', animation: 'bgPillars 22s ease-in-out infinite alternate' }}>
+        <img src="/pillars.png" alt="" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', display: 'block', mixBlendMode: 'screen', filter: 'blur(0.5px) saturate(1.15) brightness(1.02)', maskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)', WebkitMaskImage: 'radial-gradient(ellipse at 55% 60%, black 52%, transparent 96%)' }} />
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.16) 0%, rgba(255,100,50,0.07) 40%, transparent 75%)', filter: 'blur(18px)', animation: 'bgBreathe1 40s ease-in-out infinite alternate' }} />
+        <div style={{ position: 'absolute', bottom: 0, right: '-8%', width: '115%', height: '100%', background: 'radial-gradient(ellipse at 72% 100%, rgba(130,100,255,0.1) 0%, transparent 70%)', filter: 'blur(24px)', animation: 'bgBreathe2 56s ease-in-out infinite alternate' }} />
+      </div>
+
+      <style jsx global>{`
+        @keyframes bgTwinkle { 0%, 100% { opacity: 0.2; transform: scale(0.95); } 50% { opacity: 0.9; transform: scale(1.05); } }
+        @keyframes bgNebula1 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(6%,3%) scale(1.05); } }
+        @keyframes bgNebula2 { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-5%,-4%) scale(1.07); } }
+        @keyframes bgPillars { 0% { opacity: 0.75; } 100% { opacity: 1; } }
+        @keyframes bgBreathe1 { 0% { opacity: 0.6; transform: scaleY(1); } 100% { opacity: 1; transform: scaleY(1.08); } }
+        @keyframes bgBreathe2 { 0% { opacity: 0.4; transform: scaleY(1.05) translateX(1%); } 100% { opacity: 0.8; transform: scaleY(1.15) translateX(-1%); } }
+        @keyframes bgCometFly { 0% { transform: translateX(0); opacity: 0; } 2% { opacity: 0.85; } 12% { transform: translateX(var(--dist)); opacity: 0; } 100% { transform: translateX(var(--dist)); opacity: 0; } }
+        @keyframes bgCometSmoke { 0% { transform: scaleX(0) scaleY(1); opacity: 0; filter: blur(3px); } 2% { opacity: 0.25; } 12% { transform: scaleX(1) scaleY(1); opacity: 0.22; filter: blur(4px); } 45% { transform: scaleX(1) scaleY(2); opacity: 0.16; filter: blur(6px); } 75% { transform: scaleX(1) scaleY(3); opacity: 0.08; filter: blur(8px); } 95% { transform: scaleX(1) scaleY(3.6); opacity: 0; filter: blur(10px); } 100% { transform: scaleX(1) scaleY(3.6); opacity: 0; filter: blur(10px); } }
+      `}</style>
+    </div>
   )
 }
