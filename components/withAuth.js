@@ -6,29 +6,21 @@ import { isSuperAdmin, isCompanyAdmin, hasPermission, hasAnyAdminAccess } from '
 
 export function withAuth(Component, options = {}) {
   const check = buildCheck(options)
-
   return function ProtectedRoute(props) {
     const { profile, loading } = useProfile()
     const router = useRouter()
     const allowed = !loading && profile && check(profile)
-
     useEffect(() => {
       if (loading) return
-      if (!profile) {
-        router.push('/login')
-      } else if (!check(profile)) {
-        router.push('/')
-      }
+      if (!profile) { router.push('/login') } else if (!check(profile)) { router.push('/') }
     }, [loading, profile, router])
-
     if (loading || !profile) {
       return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Spinner size={72} />
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'transparent' }}>
+          <Spinner />
         </div>
       )
     }
-
     if (!allowed) return null
     return <Component {...props} />
   }
@@ -38,11 +30,10 @@ function buildCheck(options) {
   if (Array.isArray(options)) {
     const allowedRoles = options
     if (allowedRoles.length === 0) return () => true
-    return profile => allowedRoles.includes(profile.role_id)
+    return (profile) => allowedRoles.includes(profile.role_id)
   }
-
-  if (options.permission) return profile => hasPermission(profile, options.permission)
-  if (options.adminOnly) return profile => isSuperAdmin(profile) || isCompanyAdmin(profile)
-  if (options.anyStaff) return profile => hasAnyAdminAccess(profile)
+  if (options.permission) return (profile) => hasPermission(profile, options.permission)
+  if (options.adminOnly) return (profile) => isSuperAdmin(profile) || isCompanyAdmin(profile)
+  if (options.anyStaff) return (profile) => hasAnyAdminAccess(profile)
   return () => true
 }
