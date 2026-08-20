@@ -31,7 +31,6 @@ function StarsBackground() {
   return <div id="real-stars" className="stars-bg" />
 }
 
-// ============ КОЛОКОЛЬЧИК УВЕДОМЛЕНИЙ ============
 function NotificationBell() {
   const { user } = useProfile()
   const router = useRouter()
@@ -41,7 +40,6 @@ function NotificationBell() {
   const [pos, setPos] = useState({ top: 50, right: 20 })
   const btnRef = useRef(null)
   const boxRef = useRef(null)
-
   const load = async () => {
     if (!user) return
     const { data } = await supabase.from('notifications').select('*')
@@ -65,7 +63,6 @@ function NotificationBell() {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
-
   const markAll = async () => {
     await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false)
     setUnread(0)
@@ -87,7 +84,6 @@ function NotificationBell() {
     }
     setOpen(o => !o)
   }
-
   return (
     <>
       <button ref={btnRef} onClick={toggle} title="Уведомления"
@@ -103,7 +99,7 @@ function NotificationBell() {
         )}
       </button>
       {open && createPortal(
-        <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: 'rgba(12,17,32,0.97)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 14, boxShadow: '0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(255,215,0,0.08)' }}>
+        <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: 'rgba(12,17,32, 0.97)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 14, boxShadow: '0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(255,215,0,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
             {items.length > 0 && (
@@ -135,7 +131,6 @@ export default function Layout({ children }) {
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
   const [isPlatformStaff, setIsPlatformStaff] = useState(false)
-
   useEffect(() => {
     if (user) {
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -164,47 +159,43 @@ export default function Layout({ children }) {
         .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
     }
   }, [user, profile])
-
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
-
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
         <StarsBackground />
         <header className="flex justify-between items-center px-6 py-2 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"> </div>
             <div className="flex gap-2">
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"></div>
+              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"> </div>
+              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"> </div>
+              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"> </div>
+              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"> </div>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"></div>
-            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"></div>
+            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"> </div>
+            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"> </div>
+            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"> </div>
           </div>
         </header>
         <main className="flex-grow relative z-10">{children}</main>
       </div>
     )
   }
-
   const isSuperAdmin = checkIsSuperAdmin(profile)
   const isCompanyAdmin = checkIsCompanyAdmin(profile) || isSuperAdmin
   const companyStatus = profile?.companies?.status
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
-
   if (isBlockedByModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
         <div className="premium-card max-w-md text-center">
           <h1 className="text-xl font-bold text-red-400 mb-3">
             {companyStatus === 'suspended' ? 'Компания заблокирована' : 'Заявка компании отклонена'}
@@ -217,10 +208,9 @@ export default function Layout({ children }) {
       </div>
     )
   }
-
   if (isPendingModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a1628' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
         <div className="premium-card max-w-md text-center">
           <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
           <p className="text-gray-400 mb-4">
@@ -232,7 +222,6 @@ export default function Layout({ children }) {
       </div>
     )
   }
-
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
@@ -240,9 +229,8 @@ export default function Layout({ children }) {
     if (profile?.display_name) return profile.display_name.substring(0, 2).toUpperCase()
     return user?.email?.substring(0, 2).toUpperCase() || '?'
   }
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a1628' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
       <StarsBackground />
       <header className="flex justify-between items-center px-6 py-2 relative z-10">
         <div className="flex items-center gap-4">
