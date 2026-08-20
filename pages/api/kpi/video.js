@@ -8,25 +8,27 @@ export default async function handler(req, res) {
   const action = req.query.action
 
   if (action === 'sign' && req.method === 'GET') {
-    const id = req.query.id
-    const { data: t } = await a.from('kpi_trainings').select('*').eq('id', id).maybeSingle()
+    const { data: t } = await a.from('kpi_trainings').select('*').eq('id', req.query.id).maybeSingle()
     if (!t) return res.status(404).json({ error: 'Тренинг не найден' })
-    let path = t.video_path
+    let bucket = 'trainings', path = t.video_path
     if (!path && t.url) {
-      const m = t.url.match(/\/object\/(?:public|sign)\/trainings\/(.+)$/)
-      path = m ? m[1] : null
+      const m = t.url.match(/\/object\/(?:public|sign)\/([^/]+)\/(.+)$/)
+      if (m) { bucket = m[1]; path = m[2] }
     }
-    if (!path) return res.status(400).json({ error: 'У тренинга нет видео' })
-    const { data, error } = await a.storage.from('trainings').createSignedUrl(path, 3600)
-    if (error) return res.status(500).json({ error: error.message })
-    return res.status(200).json({ url: data.signedUrl })
+    if (path) {
+      const { data, error } = await a.storage.from(bucket).createSignedUrl(path, 3600)
+      if (!error) return res.status(200).json({ url: data.signedUrl })
+    }
+    // Фолбэк: легаси-публичная ссылка
+    if (t.url && /^https?:/.test(t.url)) return res.status(200).json({ url: t.url })
+    return res.status(400).json({ error: 'У тренинга нет видео' })
   }
 
   if (action === 'view' && req.method === 'POST') {
-    const { training_id, watched_seconds, completed } = req.body
+    const { training_id, watched_seconds, completed } = req.body || {}
+    if (!training_id) return res.status(400).json({ error: 'Нет training_id' })
     await a.from('training_views').insert({ training_id, user_id: ctx.user.id, watched_seconds: watched_seconds || 0, completed: !!completed })
     return res.status(200).json({ success: true })
   }
-
   res.status(404).json({ error: 'Unknown action' })
 }
