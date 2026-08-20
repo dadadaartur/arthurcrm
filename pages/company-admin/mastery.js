@@ -15,19 +15,17 @@ const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(1
 const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const AUTO_ENERGY = { energy_min: 5, energy_mid: 10, energy_top: 15, energy_ultra: 20 }
-
-// Порядок: частые — первыми
 const TYPE_META = [
-  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, среднее время обработки' },
-  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Число звонков, сумма продаж, закрытые задачи' },
-  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, соблюдение SLA' },
-  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча, доля успешных звонков' },
-  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Чем ниже значение, тем выше уровень. Ультра = самое низкое.', ex: 'SLA нового лида, время обработки, жалобы' },
-  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля случаев, где условие выполнено.', ex: 'Соблюдение скрипта, подтверждение клиента' },
-  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма засчитывается, только если минимум выполнен каждый день.', ex: 'Стабильная работа, посещаемость' },
-  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж, снижение времени' },
-  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль: доля обойдённых коллег.', ex: 'Топ-10 по продажам, квартиль по CSI' },
-  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI из нескольких показателей с весами.', ex: '0.5×продажи + 0.3×CSI + 0.2×конверсия' },
+  { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки' },
+  { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи' },
+  { key: 'plan', label: 'Процент выполнения плана', hint: 'Факт ÷ план × 100%.', ex: 'План продаж, SLA' },
+  { key: 'ratio', label: 'Доля / конверсия', hint: 'Успешные ÷ всего × 100, из двух параметров.', ex: 'Конверсия лид→встреча' },
+  { key: 'inverse', label: 'Инверсия (меньше — лучше)', hint: 'Ниже значение — выше уровень.', ex: 'SLA лида, время, жалобы' },
+  { key: 'binary', label: 'Бинарный (да/нет в %)', hint: 'Доля выполненных условий.', ex: 'Скрипт, подтверждение' },
+  { key: 'min_period', label: 'Накопит. с минимумом в днях', hint: 'Сумма, если минимум каждый день.', ex: 'Стабильность, посещаемость' },
+  { key: 'dynamics', label: 'Динамика (прирост)', hint: 'Изменение к прошлому периоду, %.', ex: 'Рост продаж' },
+  { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам' },
+  { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи+0.3×CSI' },
 ]
 const THRESH_NORMAL = [
   { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
@@ -41,6 +39,20 @@ const THRESH_INVERSE = [
   { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '11' },
   { k: 'thr_min', label: 'Мин — допустимый (больше всего)', color: BAND_COLORS.min, ph: '15' },
 ]
+const CloseX = ({ onClick }) => (
+  <button onClick={onClick} className="mx-close" title="Закрыть">
+    <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+      <circle cx="17" cy="17" r="15" stroke="#f87171" strokeOpacity="0.5" strokeWidth="1" strokeDasharray="4 5" className="mx-ring" />
+      <path d="M12 12 L22 22 M22 12 L12 22" stroke="#f87171" strokeWidth="2" strokeLinecap="round" className="mx-x" />
+    </svg>
+    <style jsx>{`
+      .mx-close{position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;padding:4px;transition:transform .4s cubic-bezier(.34,1.56,.64,1);z-index:5}
+      .mx-close:hover{transform:rotate(90deg) scale(1.12)}
+      .mx-ring{transform-origin:17px 17px;animation:mxSpin 6s linear infinite}
+      @keyframes mxSpin{to{transform:rotate(360deg)}}
+    `}</style>
+  </button>
+)
 
 function MasteryAdmin() {
   const { showSuccess, showError } = useFeedback()
@@ -88,7 +100,6 @@ function MasteryAdmin() {
   }
   const delMetric = async id => { const h = await auth(); await fetch('/api/company-admin/kpi/metrics', { method: 'DELETE', headers: h, body: JSON.stringify({ id }) }); showSuccess('Показатель удалён'); load() }
 
-  // ===== Заполнение =====
   const sharedCols = pool
   const directCols = metrics.filter(m => !m.formula).map(m => ({ key: 'm' + m.id, label: m.name, unit: m.unit, inverse: m.kpi_type === 'inverse' }))
   const cols = [...sharedCols.map(c => ({ ...c, inverse: false })), ...directCols]
@@ -114,7 +125,8 @@ function MasteryAdmin() {
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
-  const gridTemplate = `220px repeat(${cols.length}, minmax(96px, 1fr)) repeat(${formulaMetrics.length}, minmax(110px, 1fr))`
+  // Фиксированные ширины колонок — аккуратная таблица, ничего не тянется
+  const gridTemplate = `200px repeat(${cols.length}, 120px) repeat(${formulaMetrics.length}, 120px)`
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
@@ -127,7 +139,6 @@ function MasteryAdmin() {
           </div>
         } />
 
-        {/* Созданные цели наверху */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14, marginBottom: 28 }}>
           {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
           {metrics.map(m => (
@@ -149,7 +160,6 @@ function MasteryAdmin() {
           ))}
         </div>
 
-        {/* Заполнение отчётности */}
         <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Заполнить показатели</h3>
@@ -166,32 +176,32 @@ function MasteryAdmin() {
       <GoalFormModal open={createOpen || !!editMetric} initial={editMetric} pool={pool} setPool={setPool} companyKarma={companyKarma} onClose={() => { setCreateOpen(false); setEditMetric(null) }} onSave={saveMetric} />
       <MaterialsModal metric={materialsMetric} onClose={() => setMaterialsMetric(null)} />
 
-      {/* Ручное заполнение — большая модалка с подписанными ячейками */}
+      {/* Ручное заполнение — аккуратная таблица фикс-ширины */}
       {manualOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setManualOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 'min(1240px, 96vw)', height: '88vh', background: 'linear-gradient(150deg, rgba(24,30,54,0.98), rgba(10,14,28,0.99))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <button onClick={() => setManualOpen(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
-            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 14px', color: '#fff' }}>Ручное заполнение {fillMode === 'day' ? `за ${date || 'день'}` : `за период`}</h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ width: 'min(1240px, 96vw)', height: '88vh', background: 'linear-gradient(150deg, rgba(24,30,54,0.98), rgba(10,14,28,0.99))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <CloseX onClick={() => setManualOpen(false)} />
+            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 14px', color: '#fff' }}>Ручное заполнение {fillMode === 'day' ? `за ${date || 'день'}` : 'за период'}</h3>
             <div style={{ flex: 1, overflow: 'auto' }}>
-              <div style={{ minWidth: 220 + cols.length * 100 + formulaMetrics.length * 110 }}>
+              <div style={{ width: 'fit-content', margin: '0 auto' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: gridTemplate, gap: 8, marginBottom: 8, position: 'sticky', top: 0, background: 'rgba(10,14,28,0.98)', padding: '6px 0', zIndex: 2 }}>
                   <div style={{ fontSize: 11, color: '#888', alignSelf: 'center' }}>Сотрудник</div>
                   {cols.map(c => (
-                    <div key={c.key} style={{ textAlign: 'center', minWidth: 0, padding: '4px 6px', borderRadius: 8, background: c.inverse ? 'rgba(160,233,255,0.06)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ fontSize: 11, color: c.inverse ? '#a0e9ff' : '#a0e9ff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.label}>{c.label}</div>
+                    <div key={c.key} style={{ textAlign: 'center', padding: '4px 6px', borderRadius: 8, background: c.inverse ? 'rgba(160,233,255,0.06)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: 11, color: '#a0e9ff', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.label}>{c.label}</div>
                       <div style={{ fontSize: 9, color: '#666' }}>{c.inverse ? 'меньше = лучше' : (c.unit || '')}</div>
                     </div>
                   ))}
                   {formulaMetrics.map(m => (
-                    <div key={m.id} style={{ textAlign: 'center', minWidth: 0, padding: '4px 6px', borderRadius: 8, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)' }}>
+                    <div key={m.id} style={{ textAlign: 'center', padding: '4px 6px', borderRadius: 8, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)' }}>
                       <div style={{ fontSize: 11, color: '#FFD700', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                      <div style={{ fontSize: 9, color: '#666' }}>считается авто</div>
+                      <div style={{ fontSize: 9, color: '#666' }}>авто</div>
                     </div>
                   ))}
                 </div>
                 {employees.map(emp => (
                   <div key={emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridTemplate, gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={empName(emp)}>{empName(emp)}</div>
+                    <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: 190 }} title={empName(emp)}>{empName(emp)}</div>
                     {cols.map(c => (
                       <input key={c.key} type="number" step="0.1" value={values[emp.user_id]?.[c.key] ?? ''}
                         onChange={ev => setValues(v => ({ ...v, [emp.user_id]: { ...v[emp.user_id], [c.key]: ev.target.value } }))}
@@ -211,11 +221,10 @@ function MasteryAdmin() {
         </div>
       )}
 
-      {/* Импорт */}
       {importOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setImportOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 620, maxHeight: '80vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
-            <button onClick={() => setImportOpen(false)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ width: 620, maxHeight: '80vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <CloseX onClick={() => setImportOpen(false)} />
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px', background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Импорт результатов</h3>
             <button onClick={copyTemplate} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, marginBottom: 14 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Шаблон для Excel / Google</button>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}><Seg active={importTab === 'paste'} onClick={() => setImportTab('paste')}>Вставить</Seg><Seg active={importTab === 'google'} onClick={() => setImportTab('google')}>Ссылка</Seg></div>
@@ -259,11 +268,10 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
     onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula }, initial?.id)
   }
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия начисляется автоматически (5/10/15/20)</div>
-
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
+        <CloseX onClick={onClose} />
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия авто (5/10/15/20)</div>
         {step === 'type' ? (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Выберите тип расчёта</h3>
@@ -282,7 +290,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
         ) : (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
-            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (самого малого) значения к допустимому (самому большому). Например SLA: ультра 5 мин → мин 15 мин.</div>}
+            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому). SLA: ультра 5 мин → мин 15 мин.</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
@@ -317,17 +325,33 @@ function MaterialsModal({ metric, onClose }) {
   const { showSuccess, showError } = useFeedback()
   const [trainings, setTrainings] = useState([])
   const [tForm, setTForm] = useState({ title: '', type: 'video', url: '', content: '', recommend_below: 'all' })
+  const [file, setFile] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const [video, setVideo] = useState(null)
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
   useEffect(() => { if (metric) load(metric.id) }, [metric])
   const load = async mid => { const h = await auth(); const r = await fetch(`/api/company-admin/kpi/trainings?metricId=${mid}`, { headers: h }); if (r.ok) setTrainings(await r.json()) }
-  const add = async () => { const h = await auth(); await fetch('/api/company-admin/kpi/trainings', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ metric_id: metric.id, ...tForm }) }); showSuccess('Тренинг добавлен'); setTForm({ title: '', type: 'video', url: '', content: '', recommend_below: 'all' }); load(metric.id) }
-  const upload = async f => { if (!f) return; const path = `trainings/${Date.now()}_${f.name}`; const { error } = await supabase.storage.from('trainings').upload(path, f); if (error) { showError('Ошибка'); return } setTForm(t => ({ ...t, url: supabase.storage.from('trainings').getPublicUrl(path).data.publicUrl })); showSuccess('Видео загружено') }
+  const add = async () => {
+    if (!tForm.title.trim()) { showError('Укажите название'); return }
+    let url = tForm.url
+    if (tForm.type === 'video' && file) {
+      setUploading(true)
+      const path = `trainings/${Date.now()}_${file.name}`
+      const { error } = await supabase.storage.from('trainings').upload(path, file)
+      setUploading(false)
+      if (error) { showError('Ошибка загрузки видео'); return }
+      url = supabase.storage.from('trainings').getPublicUrl(path).data.publicUrl
+    }
+    const h = await auth()
+    const r = await fetch('/api/company-admin/kpi/trainings', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ metric_id: metric.id, ...tForm, url }) })
+    if (r.ok) { showSuccess('Тренинг добавлен'); setTForm({ title: '', type: 'video', url: '', content: '', recommend_below: 'all' }); setFile(null); load(metric.id) }
+    else showError('Ошибка создания тренинга')
+  }
   if (!metric) return null
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(880px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: 'min(880px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
+        <CloseX onClick={onClose} />
         <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Материалы: {metric.name}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
           {trainings.map(t => (
@@ -345,10 +369,18 @@ function MaterialsModal({ metric, onClose }) {
           <input className="input-field" placeholder="Название" value={tForm.title} onChange={e => setTForm({ ...tForm, title: e.target.value })} />
           <select className="input-field" value={tForm.type} onChange={e => setTForm({ ...tForm, type: e.target.value })}><option value="video">Видео</option><option value="text">Текст</option></select>
           {tForm.type === 'video' && (<>
-            <input className="input-field" placeholder="URL видео" value={tForm.url} onChange={e => setTForm({ ...tForm, url: e.target.value })} />
-            <label style={{ ...ghostBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', fontSize: 11 }}>С устройства<input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => upload(e.target.files[0])} /></label>
+            <input className="input-field" placeholder="Или URL видео" value={tForm.url} onChange={e => setTForm({ ...tForm, url: e.target.value })} />
+            <label style={{ ...ghostBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', fontSize: 11 }}>{file ? file.name : 'Загрузить файл'}<input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => setFile(e.target.files[0])} /></label>
           </>)}
-          <div style={{ gridColumn: '1 / -1' }}><button onClick={add} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Добавить тренинг</button></div>
+          {uploading && (
+            <div style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div className="up-bar" style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, #FFD700, #4ade80)', borderRadius: 3 }} />
+              <style jsx>{`.up-bar{animation:upMove 1.1s ease-in-out infinite}@keyframes upMove{0%{margin-left:-40%}100%{margin-left:100%}}`}</style>
+            </div>
+          )}
+          <div style={{ gridColumn: '1 / -1' }}>
+            <button onClick={add} disabled={uploading} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, opacity: uploading ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{uploading ? 'Загрузка видео…' : 'Добавить тренинг'}</button>
+          </div>
         </div>
       </div>
       {video && <TrainingVideoModal training={video} onClose={() => setVideo(null)} />}
