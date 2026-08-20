@@ -5,14 +5,33 @@ import BackArrow from '../components/BackArrow'
 import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
-import { BAND_LABELS, BAND_COLORS, BAND_RANK, bandFor, rangeValue, energyFor, karmaFor, TYPE_LABELS } from '../lib/kpi'
+import TrainingVideoModal from '../components/TrainingVideoModal'
+import { BAND_LABELS, BAND_COLORS, BAND_RANK, bandFor, rangeValue, energyFor, karmaFor } from '../lib/kpi'
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
 const shiftISO = n => { const d = new Date(); d.setDate(d.getDate() + n); return toISO(d) }
-const smallLink = { background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '7px 16px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const pill = a => ({ padding: '6px 14px', borderRadius: 20, fontSize: 11, cursor: 'pointer', background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`, color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400 })
+
+const ghostBtn = {
+  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
+  padding: '8px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s'
+}
+const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
+  <button onClick={onClick} style={{
+    padding: '8px 18px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400,
+    background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)',
+    border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`,
+    color: active ? color : '#999', transition: 'all 0.25s ease', backdropFilter: 'blur(8px)',
+    boxShadow: active ? `0 0 14px ${color}22` : 'none'
+  }}
+  onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.color = '#ddd' } }}
+  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#999' } }}>
+    {children}
+  </button>
+)
 
 export default function GoalsPage() {
   const [loading, setLoading] = useState(true)
@@ -22,10 +41,11 @@ export default function GoalsPage() {
   const [expanded, setExpanded] = useState(null)
   const [pathOpen, setPathOpen] = useState(false)
   const [tipsOpen, setTipsOpen] = useState(false)
-  const [activeTest, setActiveTest] = useState(null)
-  const [testResult, setTestResult] = useState(null)
   const [mode, setMode] = useState('today')
   const [customDay, setCustomDay] = useState(todayISO)
+  const [videoTraining, setVideoTraining] = useState(null)
+  const [activeTest, setActiveTest] = useState(null)
+  const [testResult, setTestResult] = useState(null)
 
   useEffect(() => {
     const init = async () => {
@@ -46,7 +66,11 @@ export default function GoalsPage() {
   const submitTest = async () => {
     if (!activeTest) return
     const { data: { session } } = await supabase.auth.getSession()
-    const r = await fetch('/api/kpi/test', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ trainingId: activeTest.training.id, answers: activeTest.answers }) })
+    const r = await fetch('/api/kpi/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ trainingId: activeTest.training.id, answers: activeTest.answers })
+    })
     if (r.ok) setTestResult(await r.json())
   }
 
@@ -61,8 +85,6 @@ export default function GoalsPage() {
     if (mode === '30d') return d >= shiftISO(-29) && d <= todayISO
     return true
   }
-  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
-
   const metricView = m => {
     const list = (m.history || []).filter(e => inRange(e.entry_date))
     const rv = rangeValue(m, list)
@@ -85,6 +107,7 @@ export default function GoalsPage() {
     }))
     forecast.sort((a, b) => a.days - b.days)
   }
+  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
@@ -97,19 +120,20 @@ export default function GoalsPage() {
           </div>
         } />
 
+        {/* Уровень + советы/путь */}
         {cur && (
-          <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 18, border: `1px solid ${cur.color}33`, marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 20, border: `1px solid ${cur.color}33`, marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: cur.color, textShadow: `0 0 10px ${cur.color}` }}>{cur.name}</span>
                 {next && <span style={{ fontSize: 12, color: '#888' }}>→ {next.name}</span>}
               </div>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <button onClick={() => setTipsOpen(o => !o)} style={smallLink}>советы по достижению</button>
-                <button onClick={() => setPathOpen(true)} style={smallLink}>путь прогресса</button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы по достижению</button>
+                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
               </div>
             </div>
-            {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={16} />}
+            {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={14} />}
             {tipsOpen && next && (
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
@@ -123,25 +147,30 @@ export default function GoalsPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-          {[['today', 'Сегодня'], ['yesterday', 'Вчера'], ['7d', '7 дней'], ['30d', '30 дней'], ['all', 'Всё время']].map(([k, l]) => (
-            <button key={k} onClick={() => setMode(k)} style={pill(mode === k)}>{l}</button>
-          ))}
-          <div style={{ width: 190 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
+        {/* Фильтр даты */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
+          <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
+          <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
+          <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
+          <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
+          <div style={{ width: 180 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
           <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
         </div>
 
+        {/* Показатели мастерства */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 16, marginBottom: 40 }}>
           {data.metrics.map(m => {
             const { value, band, sm } = metricView(m)
             return (
-              <div key={m.id} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33` }}>
+              <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`}
+                onMouseLeave={e => e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`}>
                 <div onClick={() => setExpanded(expanded === m.id ? null : m.id)} style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
                     <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
                     <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: '#777', marginBottom: 8 }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</div>
                   <ProgressBar3D value={value ?? 0} marks={[{ key: 'min', value: sm.thr_min }, { key: 'mid', value: sm.thr_mid }, { key: 'top', value: sm.thr_top }, { key: 'ultra', value: sm.thr_ultra }]} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 10 }}>
                     <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}</span>
@@ -151,6 +180,7 @@ export default function GoalsPage() {
                 {expanded === m.id && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     {m.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {m.description}</p>}
+                    {m.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6 }}><b style={{ color: '#4ade80' }}>Советы:</b> {m.advice}</p>}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '12px 0' }}>
                       {['min', 'mid', 'top', 'ultra'].map(b => (
                         <div key={b} style={{ padding: 10, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
@@ -170,9 +200,11 @@ export default function GoalsPage() {
                               <span style={{ fontSize: 13, color: '#fff' }}>{t.title}</span>
                               {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
                             </div>
-                            {t.type === 'video' && t.url && <a href={t.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#a0e9ff', display: 'inline-block', marginTop: 6 }}>Смотреть видео →</a>}
+                            {t.type === 'video' && (t.url || t.video_path) && (
+                              <button onClick={() => setVideoTraining(t)} style={{ ...ghostBtn, marginTop: 8 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Смотреть в плеере</button>
+                            )}
                             {t.type === 'text' && t.content && <p style={{ fontSize: 12, color: '#aaa', margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{t.content}</p>}
-                            {t.type === 'test' && <button onClick={() => { setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 8 }}>Пройти тест</button>}
+                            {t.type === 'test' && <button onClick={() => { setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 8 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пройти тест</button>}
                           </div>
                         )
                       })}
@@ -183,9 +215,10 @@ export default function GoalsPage() {
               </div>
             )
           })}
-          {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
+          {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
         </div>
 
+        {/* Глобальные цели на период */}
         {oldGoals.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Глобальные цели на период</h2>
@@ -195,14 +228,15 @@ export default function GoalsPage() {
                 const pct = Math.min(100, ((g.current_value || 0) / (g.target_value || 1)) * 100)
                 const done = pct >= 100
                 return (
-                  <div key={g.id} style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 14, padding: 18, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div key={g.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 14, padding: 18, border: '1px solid rgba(255,255,255,0.08)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
                       <span style={{ color: '#fff', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>{g.title || g.goal_type}</span>
                       <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0, background: done ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.12)', color: done ? '#4ade80' : '#FFD700' }}>{done ? 'Выполнено' : `${Math.round(pct)}%`}</span>
                     </div>
                     <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={12} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 5 }}>
-                      <span>Сейчас: {g.current_value ?? 0}</span><span>Цель: {g.target_value}</span>
+                      <span>Сейчас: {g.current_value ?? 0}</span>
+                      <span>Цель: {g.target_value}</span>
                     </div>
                   </div>
                 )
@@ -213,6 +247,7 @@ export default function GoalsPage() {
       </div>
 
       <LevelPathModal open={pathOpen} onClose={() => setPathOpen(false)} energy={energy} />
+      {videoTraining && <TrainingVideoModal training={videoTraining} onClose={() => setVideoTraining(null)} />}
 
       {activeTest && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !testResult && setActiveTest(null)}>
@@ -238,7 +273,7 @@ export default function GoalsPage() {
             )}
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setActiveTest(null)} className="btn-outline" style={{ flex: 1 }}>Закрыть</button>
-              <button onClick={submitTest} style={{ ...ghostBtn, flex: 1 }}>Ответить</button>
+              <button onClick={submitTest} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Ответить</button>
             </div>
           </div>
         </div>
