@@ -17,10 +17,10 @@ export default function VideoPlayer({ src, onProgress, onEnded }) {
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    const onT = () => { setTime(v.currentTime); onProgress && onProgress(v.currentTime) }
+    const onT = () => { setTime(v.currentTime); if (onProgress) onProgress(v.currentTime, v.duration) }
     const onD = () => setDur(v.duration || 0)
     const onP = () => setPlaying(!v.paused)
-    const onE = () => { setPlaying(false); onEnded && onEnded() }
+    const onE = () => { setPlaying(false); if (onEnded) onEnded() }
     v.addEventListener('timeupdate', onT); v.addEventListener('loadedmetadata', onD)
     v.addEventListener('play', onP); v.addEventListener('pause', onP); v.addEventListener('ended', onE)
     return () => { v.removeEventListener('timeupdate', onT); v.removeEventListener('loadedmetadata', onD); v.removeEventListener('play', onP); v.removeEventListener('pause', onP); v.removeEventListener('ended', onE) }
@@ -41,10 +41,8 @@ export default function VideoPlayer({ src, onProgress, onEnded }) {
           </div>
         </div>
       )}
-      {/* Панель управления */}
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '20px 14px 10px', background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.85))', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <input type="range" min="0" max="100" value={dur ? (time / dur) * 100 : 0} onChange={seek}
-          style={{ width: '100%', accentColor: '#FFD700', cursor: 'pointer', height: 4 }} />
+        <input type="range" min="0" max="100" value={dur ? (time / dur) * 100 : 0} onChange={seek} style={{ width: '100%', accentColor: '#FFD700', cursor: 'pointer', height: 4 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={toggle} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FFD700', display: 'flex', padding: 2 }}>
             {playing
@@ -62,9 +60,9 @@ export default function VideoPlayer({ src, onProgress, onEnded }) {
               </div>
             )}
           </div>
-          <button onClick={() => { setMuted(m => { const nm = !m; if (videoRef.current) videoRef.current.muted = nm; return nm }) }} style={{ background: 'none', border: 'none', color: '#ddd', cursor: 'pointer', display: 'flex', padding: 2 }}>
+          <button onClick={() => setMuted(m => { const nm = !m; if (videoRef.current) videoRef.current.muted = nm; return nm })} style={{ background: 'none', border: 'none', color: '#ddd', cursor: 'pointer', display: 'flex', padding: 2 }}>
             {muted || vol === 0
-              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3l3-3-1.5-1.5-3 3-3-3L10.5 9l3 3-3 3L12 16.5l3-3 3 3L19.5 18l-3-3z" opacity="0.5" /></svg>
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" opacity="0.5"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3l3-3-1.5-1.5-3 3-3-3L10.5 9l3 3-3 3L12 16.5l3-3 3 3L19.5 18l-3-3z" /></svg>
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05A4.5 4.5 0 0 0 16.5 12z" /></svg>}
           </button>
           <input type="range" min="0" max="1" step="0.05" value={muted ? 0 : vol} onChange={e => { const v = +e.target.value; setVol(v); setMuted(v === 0); if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = v === 0 } }} style={{ width: 60, accentColor: '#FFD700', cursor: 'pointer' }} />
