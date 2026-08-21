@@ -5,7 +5,8 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
-import LanguageSelector from './LanguageSelector'  // <-- добавлен импорт
+import LanguageSelector from './LanguageSelector'
+import { useLanguage } from '../context/LanguageContext'
 
 function StarsBackground() {
   useEffect(() => {
@@ -129,9 +130,11 @@ function NotificationBell() {
 
 export default function Layout({ children }) {
   const { user, profile, loading } = useProfile()
+  const { t } = useLanguage()
   const [companyName, setCompanyName] = useState('')
   const [crmUrl, setCrmUrl] = useState('#')
   const [isPlatformStaff, setIsPlatformStaff] = useState(false)
+
   useEffect(() => {
     if (user) {
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -160,10 +163,12 @@ export default function Layout({ children }) {
         .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
     }
   }, [user, profile])
+
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
   }
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
@@ -188,12 +193,14 @@ export default function Layout({ children }) {
       </div>
     )
   }
+
   const isSuperAdmin = checkIsSuperAdmin(profile)
   const isCompanyAdmin = checkIsCompanyAdmin(profile) || isSuperAdmin
   const companyStatus = profile?.companies?.status
   const isBlockedByModeration = !isSuperAdmin && !isPlatformStaff
     && companyStatus && ['suspended', 'rejected'].includes(companyStatus)
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
+
   if (isBlockedByModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
@@ -204,11 +211,12 @@ export default function Layout({ children }) {
           <p className="text-gray-400 mb-4">
             {profile.companies.status_reason || 'Обратитесь в поддержку Кармического банка для уточнения деталей.'}
           </p>
-          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
+          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">{t('nav_logout')}</button>
         </div>
       </div>
     )
   }
+
   if (isPendingModeration) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
@@ -218,11 +226,12 @@ export default function Layout({ children }) {
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
             Обычно это занимает немного времени — как только заявку одобрят, здесь появится полный доступ.
           </p>
-          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
+          <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">{t('nav_logout')}</button>
         </div>
       </div>
     )
   }
+
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return (profile.first_name[0] + profile.last_name[0]).toUpperCase()
@@ -230,36 +239,49 @@ export default function Layout({ children }) {
     if (profile?.display_name) return profile.display_name.substring(0, 2).toUpperCase()
     return user?.email?.substring(0, 2).toUpperCase() || '?'
   }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
       <StarsBackground />
       <header className="flex justify-between items-center px-6 py-2 relative z-10">
         <div className="flex items-center gap-4">
           <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
-            Кармический банк
+            {t('app_title')}
           </Link>
           <nav className="flex gap-2 text-xs font-medium">
-            <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
-            <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
-            <Link href="/goals" className="action-btn !py-1.5 !px-4 !text-xs">Мои цели</Link>
+            <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">
+              {t('nav_path_to_perfection')}
+            </Link>
+            <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">
+              {t('nav_healthcare')}
+            </Link>
+            <Link href="/goals" className="action-btn !py-1.5 !px-4 !text-xs">
+              {t('nav_goals')}
+            </Link>
             <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
-              CRM Лето
+              {t('nav_crm')}
             </a>
-            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
+            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">{t('nav_admin')}</Link>}
             {isPlatformStaff && (
-              <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">Модерация площадки</Link>
+              <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">
+                {t('nav_platform')}
+              </Link>
             )}
             {isCompanyAdmin && (
-              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
+              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">
+                {t('nav_company_admin')}
+              </Link>
             )}
             {isCompanyAdmin && (
-              <Link href="/company-admin/results" className="action-btn !py-1.5 !px-4 !text-xs">Результаты</Link>
+              <Link href="/company-admin/results" className="action-btn !py-1.5 !px-4 !text-xs">
+                {t('nav_results')}
+              </Link>
             )}
           </nav>
         </div>
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
-          <LanguageSelector />   {/* <-- вставлен компонент переключателя */}
+          <LanguageSelector />
           <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
@@ -271,12 +293,14 @@ export default function Layout({ children }) {
             )}
             <span>{profile?.display_name || user.email}</span>
           </Link>
-          <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
+          <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">
+            {t('nav_logout')}
+          </button>
         </div>
       </header>
       <main className="flex-grow relative z-10">{children}</main>
       <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
-        © {new Date().getFullYear()} Кармический банк
+        © {new Date().getFullYear()} {t('app_title')}
       </footer>
     </div>
   )
