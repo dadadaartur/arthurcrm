@@ -3,6 +3,7 @@ import Layout from '../components/Layout'
 import Background from '../components/Background'
 import { ProfileProvider } from '../context/ProfileContext'
 import { ActionFeedbackProvider } from '../context/ActionFeedbackContext'
+import { LanguageProvider } from '../context/LanguageContext'  // добавить
 import ActionFeedback from '../components/ActionFeedback'
 import { useState, useEffect } from 'react'
 
@@ -21,11 +22,13 @@ export default function App({ Component, pageProps }) {
   return (
     <ProfileProvider>
       <ActionFeedbackProvider>
-        <Background />
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-        <FeedbackOverlay />
+        <LanguageProvider>   {/* добавить обёртку */}
+          <Background />
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+          <FeedbackOverlay />
+        </LanguageProvider>
       </ActionFeedbackProvider>
     </ProfileProvider>
   )
