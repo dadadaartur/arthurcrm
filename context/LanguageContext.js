@@ -7,7 +7,6 @@ export function LanguageProvider({ children }) {
   const [translations, setTranslations] = useState({})
 
   useEffect(() => {
-    // Загружаем переводы при смене языка
     const loadTranslations = async () => {
       try {
         const res = await fetch(`/locales/${lang}.json`)
@@ -18,8 +17,6 @@ export function LanguageProvider({ children }) {
       }
     }
     loadTranslations()
-
-    // Сохраняем выбор языка в localStorage
     localStorage.setItem('lang', lang)
   }, [lang])
 
