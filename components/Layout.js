@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
+import LanguageSelector from './LanguageSelector'  // <-- добавлен импорт
 
 function StarsBackground() {
   useEffect(() => {
@@ -258,6 +259,7 @@ export default function Layout({ children }) {
         </div>
         <div className="flex items-center gap-4 text-xs font-medium">
           {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+          <LanguageSelector />   {/* <-- вставлен компонент переключателя */}
           <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
             {profile?.avatar_url ? (
