@@ -1,25 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '../../../lib/auth'
 
+// РАНЬШЕ этот файл не использовал requireAuth и дублировал проверку токена
+// вручную — из-за этого выпадала проверка profile.deleted_at, которую
+// requireAuth делает обязательной на каждый запрос (см. комментарий в
+// lib/auth.js). Итог: уволенный/деактивированный сотрудник продолжал
+// видеть список своих заданий через этот конкретный эндпоинт, пока не
+// истечёт его JWT. Приведено к единому стандарту.
 export default async function handler(req, res) {
-  // 1. Получаем токен из заголовка
-  const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Нет токена' })
-  }
-  const token = authHeader.split(' ')[1]
+  if (req.method !== 'GET') return res.status(405).end()
 
-  // 2. Проверяем токен и получаем пользователя (используем анонимный ключ)
-  const supabaseClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+  const ctx = await requireAuth(req, res, {})
+  if (!ctx) return
 
-  if (userError || !user) {
-    return res.status(401).json({ error: 'Токен недействителен' })
-  }
-
-  // 3. Получаем задания с помощью сервисного ключа (чтобы обойти RLS)
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -28,7 +21,7 @@ export default async function handler(req, res) {
   const { data: assignments, error: assignError } = await supabaseAdmin
     .from('task_assignments')
     .select('id, status, started_at, deadline_at, task_id')
-    .eq('user_id', user.id)
+    .eq('user_id', ctx.user.id)
     .in('status', ['assigned', 'in_progress', 'pending_review'])
     .limit(5)
 

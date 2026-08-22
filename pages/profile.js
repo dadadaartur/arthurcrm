@@ -67,8 +67,17 @@ export default function Profile() {
 
   const handleRemoveAvatar = async () => {
     if (!profile) return
-    const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', user.id)
-    if (!error) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({
+        first_name: profile.first_name, last_name: profile.last_name, phone: profile.phone,
+        hire_date: profile.hire_date, department_id: profile.department_id, position_id: profile.position_id,
+        avatar_url: null
+      })
+    })
+    if (res.ok) {
       setProfile({ ...profile, avatar_url: null })
       setForm({ ...form, avatar_file: null, preview_url: '' })
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -96,22 +105,28 @@ export default function Profile() {
     let avatarUrl = profile?.avatar_url || null
     if (form.avatar_file) avatarUrl = await uploadAvatar(form.avatar_file)
 
-    const updates = {
-      first_name: form.first_name,
-      last_name: form.last_name,
-      phone: form.phone,
-      hire_date: form.hire_date || null,
-      department_id: form.department_id ? parseInt(form.department_id) : null,
-      position_id: form.position_id ? parseInt(form.position_id) : null,
-      avatar_url: avatarUrl,
-      display_name: `${form.first_name} ${form.last_name}`.trim() || profile?.email
-    }
-
-    const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id)
-    if (error) setMessage({ type: 'error', text: 'Ошибка сохранения: ' + error.message })
+    // Раньше здесь был прямой supabase.from('profiles').update(...) с браузера —
+    // теперь запрос идёт через серверный роут с allowlist полей
+    // (pages/api/profile/update.js), см. комментарий там.
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        phone: form.phone,
+        hire_date: form.hire_date || null,
+        department_id: form.department_id || null,
+        position_id: form.position_id || null,
+        avatar_url: avatarUrl
+      })
+    })
+    const result = await res.json().catch(() => ({}))
+    if (!res.ok) setMessage({ type: 'error', text: 'Ошибка сохранения: ' + (result.error || res.statusText) })
     else {
       setMessage({ type: 'success', text: 'Профиль обновлён' })
-      setProfile({ ...profile, ...updates })
+      setProfile({ ...profile, ...result.profile })
     }
     setSaving(false)
   }

@@ -1,246 +1,123 @@
 import { createClient } from '@supabase/supabase-js'
 import { bandFor, BAND_RANK } from '../../../lib/kpi'
 
+// РАНЬШЕ: этот хендлер не проверял вообще ничего — vercel.json настраивает
+// только РАСПИСАНИЕ вызова, а сам URL /api/cron/check-deadlines оставался
+// публичным HTTP-эндпоинтом, который мог дёрнуть кто угодно, сколько
+// угодно раз. Теперь требуется секрет в заголовке Authorization — его
+// нужно задать в CRON_SECRET (.env) и в конфигурации Vercel Cron
+// (Vercel сам добавляет этот заголовок к своим вызовам по расписанию,
+// если он указан в vercel.json/настройках проекта).
 export default async function handler(req, res) {
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('[cron/check-deadlines] CRON_SECRET не задан на сервере')
+    return res.status(500).json({ error: 'Cron secret не настроен' })
+  }
+  if (req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
 
+  const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const now = new Date()
+  const soon = new Date(now.getTime() + 24 * 3600 * 1000)
   const today = now.toISOString().slice(0, 10)
 
-  // ========== 1. Архивация просроченных заданий ==========
-  const { data: overdueAssignments, error: findError } = await supabaseAdmin
-    .from('task_assignments')
-    .select('id, task_id, user_id')
+  // 1) Напоминания (дедлайн в течение 24ч, ещё не напоминали)
+  const { data: remind } = await a.from('task_assignments')
+    .select('id, task_id, user_id, deadline_at, tasks(title, company_id)')
+    .in('status', ['assigned', 'in_progress'])
+    .not('deadline_at', 'is', null)
+    .is('deadline_reminded_at', null)
+    .lte('deadline_at', soon.toISOString()).gte('deadline_at', now.toISOString())
+  for (const r of remind || []) {
+    await a.from('notifications').insert([
+      { user_id: r.user_id, message: `Скоро истекает срок задания «${r.tasks?.title}» — успейте выполнить!`, link: '/tasks' },
+    ])
+    const { data: admins } = await a.from('profiles').select('user_id')
+      .eq('company_id', r.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
+    if (admins?.length) {
+      await a.from('notifications').insert(admins.map(ad => ({
+        user_id: ad.user_id, message: `У сотрудника скоро истекает срок задания «${r.tasks?.title}»`, link: '/company-admin/review'
+      })))
+    }
+    await a.from('task_assignments').update({ deadline_reminded_at: now.toISOString() }).eq('id', r.id)
+  }
+
+  // 2) Архив просроченных
+  const { data: overdue } = await a.from('task_assignments')
+    .select('id, task_id, user_id, tasks(title, company_id)')
     .in('status', ['assigned', 'in_progress'])
     .not('deadline_at', 'is', null)
     .lt('deadline_at', now.toISOString())
-
-  if (findError) {
-    console.error('[check-deadlines] ошибка поиска просроченных:', findError)
-    return res.status(500).json({ error: findError.message })
-  }
-
-  if (overdueAssignments && overdueAssignments.length > 0) {
-    const assignmentIds = overdueAssignments.map(a => a.id)
-    await supabaseAdmin
-      .from('task_assignments')
-      .update({ status: 'archived' })
-      .in('id', assignmentIds)
-
-    // Архивация самих задач, если нет активных назначений
-    const taskIds = [...new Set(overdueAssignments.map(a => a.task_id))]
-    for (const taskId of taskIds) {
-      const { data: activeAssignments } = await supabaseAdmin
-        .from('task_assignments')
-        .select('id')
-        .eq('task_id', taskId)
-        .in('status', ['assigned', 'in_progress', 'pending_review'])
-        .limit(1)
-
-      if (!activeAssignments || activeAssignments.length === 0) {
-        await supabaseAdmin
-          .from('tasks')
-          .update({ is_archived: true, archived_at: now.toISOString() })
-          .eq('id', taskId)
-      }
-    }
-
-    // Уведомления
-    for (const assignment of overdueAssignments) {
-      const { data: task } = await supabaseAdmin
-        .from('tasks')
-        .select('title, company_id')
-        .eq('id', assignment.task_id)
-        .single()
-      if (task) {
-        await supabaseAdmin.from('notifications').insert({
-          user_id: assignment.user_id,
-          message: `Срок задания «${task.title}» истёк — оно ушло в архив. Руководитель может восстановить его с новым сроком.`,
-          link: '/tasks'
-        })
-        const { data: admins } = await supabaseAdmin
-          .from('profiles')
-          .select('user_id')
-          .eq('company_id', task.company_id)
-          .or('is_company_admin.eq.true,can_review_tasks.eq.true')
-        if (admins && admins.length) {
-          await supabaseAdmin.from('notifications').insert(
-            admins.map(admin => ({
-              user_id: admin.user_id,
-              message: `Задание «${task.title}» не выполнено в срок и ушло в архив.`,
-              link: '/company-admin/tasks'
-            }))
-          )
-        }
-      }
+  for (const o of overdue || []) {
+    await a.from('task_assignments').update({ status: 'archived' }).eq('id', o.id)
+    await a.from('notifications').insert({
+      user_id: o.user_id,
+      message: `Срок задания «${o.tasks?.title}» истёк — оно ушло в архив. Руководитель может восстановить его с новым сроком.`,
+      link: '/tasks'
+    })
+    const { data: admins } = await a.from('profiles').select('user_id')
+      .eq('company_id', o.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
+    if (admins?.length) {
+      await a.from('notifications').insert(admins.map(ad => ({
+        user_id: ad.user_id, message: `Задание «${o.tasks?.title}» не выполнено в срок и ушло в архив`, link: '/company-admin/tasks'
+      })))
     }
   }
 
-  // ========== 2. Авто-зачёт по целям ==========
-  // Получаем все активные авто-задания
-  const { data: autoTasks, error: autoError } = await supabaseAdmin
-    .from('tasks')
-    .select('*')
-    .eq('is_auto_goal', true)
-    .eq('is_active', true)
-    .eq('is_archived', false)
-
-  if (autoError) {
-    console.error('[check-deadlines] ошибка получения авто-заданий:', autoError)
-    return res.status(500).json({ error: autoError.message })
-  }
-
-  if (autoTasks && autoTasks.length > 0) {
-    // Группируем по компаниям для оптимизации
-    const companyIds = [...new Set(autoTasks.map(t => t.company_id))]
-    for (const companyId of companyIds) {
-      const companyTasks = autoTasks.filter(t => t.company_id === companyId)
-
-      // Получаем всех сотрудников компании (не админов)
-      const { data: employees } = await supabaseAdmin
-        .from('profiles')
-        .select('user_id')
-        .eq('company_id', companyId)
-        .eq('is_company_admin', false)
-        .is('deleted_at', null)
-
-      if (!employees || employees.length === 0) continue
-
-      // Получаем метрики компании
-      const { data: metrics } = await supabaseAdmin
-        .from('kpi_metrics')
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('is_active', true)
-
-      const metricMap = {}
-      metrics?.forEach(m => { metricMap[m.id] = m })
-
-      // Получаем сегодняшние записи KPI для всех сотрудников
-      const userIds = employees.map(e => e.user_id)
-      const { data: entries } = await supabaseAdmin
-        .from('kpi_entries')
-        .select('*')
-        .in('user_id', userIds)
-        .eq('entry_date', today)
-
-      // Группируем записи по user_id
-      const entriesByUser = {}
-      entries?.forEach(e => {
-        if (!entriesByUser[e.user_id]) entriesByUser[e.user_id] = []
-        entriesByUser[e.user_id].push(e)
+  // 3) Авто-зачёт по целям (проверяем сегодняшний день)
+  const { data: autoTasks } = await a.from('tasks').select('*')
+    .eq('is_auto_goal', true).eq('is_active', true).eq('is_archived', false)
+  for (const t of autoTasks || []) {
+    const { data: emps } = await a.from('profiles').select('user_id')
+      .eq('company_id', t.company_id).eq('is_company_admin', false).is('deleted_at', null)
+    const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', t.company_id).eq('is_active', true)
+    for (const emp of emps || []) {
+      const { data: granted } = await a.from('task_auto_grants').select('task_id')
+        .eq('task_id', t.id).eq('user_id', emp.user_id).eq('grant_date', today).maybeSingle()
+      if (granted) continue
+      const { data: entries } = await a.from('kpi_entries').select('metric_id, value')
+        .eq('user_id', emp.user_id).eq('entry_date', today)
+      if (!entries?.length) continue
+      const bandByMetric = {}
+      entries.forEach(e => {
+        const m = (metrics || []).find(x => x.id === e.metric_id)
+        if (m) bandByMetric[e.metric_id] = bandFor(e.value, m)
       })
-
-      // Для каждого авто-задания проверяем каждого сотрудника
-      for (const task of companyTasks) {
-        for (const emp of employees) {
-          const userId = emp.user_id
-          const userEntries = entriesByUser[userId] || []
-
-          // Проверяем, не было ли уже начисления сегодня для этого задания и пользователя
-          const { data: existingGrant } = await supabaseAdmin
-            .from('task_auto_grants')
-            .select('id')
-            .eq('task_id', task.id)
-            .eq('user_id', userId)
-            .eq('grant_date', today)
-            .maybeSingle()
-
-          if (existingGrant) continue // уже начислено сегодня
-
-          let conditionMet = false
-
-          if (task.auto_metric_id) {
-            // Новый тип: привязка к конкретной метрике и уровню
-            const metric = metricMap[task.auto_metric_id]
-            if (metric) {
-              const entry = userEntries.find(e => e.metric_id === task.auto_metric_id)
-              if (entry) {
-                const band = bandFor(entry.value, metric)
-                const requiredRank = BAND_RANK[task.auto_required_band] || 0
-                conditionMet = BAND_RANK[band] >= requiredRank
-              }
-            }
-          } else {
-            // Старый тип: общее условие по всем метрикам
-            const bands = userEntries.map(e => {
-              const m = metricMap[e.metric_id]
-              return m ? bandFor(e.value, m) : null
-            }).filter(Boolean)
-
-            if (task.auto_goal_condition === 'all_min') {
-              conditionMet = bands.every(b => BAND_RANK[b] >= BAND_RANK.min)
-            } else if (task.auto_goal_condition === 'all_mid') {
-              conditionMet = bands.every(b => BAND_RANK[b] >= BAND_RANK.mid)
-            } else if (task.auto_goal_condition === 'any_one') {
-              conditionMet = bands.some(b => BAND_RANK[b] >= BAND_RANK.min)
-            }
-          }
-
-          if (conditionMet) {
-            // Начисляем награду
-            const karmaReward = task.reward_karma || 0
-            const energyReward = task.auto_energy || 0
-
-            // Записываем факт начисления (уникальность по task+user+date)
-            await supabaseAdmin.from('task_auto_grants').insert({
-              task_id: task.id,
-              user_id: userId,
-              grant_date: today
-            })
-
-            // Начисляем кармики
-            if (karmaReward > 0) {
-              const { data: bal } = await supabaseAdmin
-                .from('karma_balance')
-                .select('balance')
-                .eq('user_id', userId)
-                .maybeSingle()
-              await supabaseAdmin
-                .from('karma_balance')
-                .upsert({
-                  user_id: userId,
-                  balance: (bal?.balance || 0) + karmaReward,
-                  updated_at: now.toISOString()
-                }, { onConflict: 'user_id' })
-              await supabaseAdmin.from('karma_transactions').insert({
-                user_id: userId,
-                amount: karmaReward,
-                type: 'task_reward',
-                description: `Авто-задание: «${task.title}»`
-              })
-            }
-
-            // Начисляем энергию
-            if (energyReward > 0) {
-              const { data: en } = await supabaseAdmin
-                .from('kpi_energy')
-                .select('energy')
-                .eq('user_id', userId)
-                .maybeSingle()
-              await supabaseAdmin
-                .from('kpi_energy')
-                .upsert({
-                  user_id: userId,
-                  energy: (en?.energy || 0) + energyReward,
-                  updated_at: now.toISOString()
-                }, { onConflict: 'user_id' })
-            }
-
-            // Уведомление сотруднику
-            await supabaseAdmin.from('notifications').insert({
-              user_id: userId,
-              message: `Авто-задание «${task.title}» выполнено! Получено +${karmaReward} кармиков и +${energyReward} энергии.`,
-              link: '/history'
-            })
-          }
-        }
+      const bands = Object.values(bandByMetric)
+      if (!bands.length) continue
+      let ok = false
+      if (t.auto_goal_condition === 'all_min') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.min)
+      if (t.auto_goal_condition === 'all_mid') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.mid)
+      if (t.auto_goal_condition === 'any_one') ok = bands.some(b => BAND_RANK[b] >= BAND_RANK.min)
+      if (!ok) continue
+      // Начисляем награду. В task_auto_grants есть unique-индекс на
+      // (task_id, user_id, grant_date) — это защищает от дублирования самой
+      // записи о гранте, НО раньше ошибка этого insert не проверялась,
+      // поэтому при гонке (несколько параллельных вызовов этого эндпоинта,
+      // что было возможно ровно потому, что он не был защищён — см. выше)
+      // код продолжал начислять кармики независимо от того, успела вставка
+      // или упала на дубликате. Теперь начисление идёт, только если именно
+      // ЭТОТ вызов реально создал запись о гранте.
+      const { error: grantError } = await a.from('task_auto_grants').insert({ task_id: t.id, user_id: emp.user_id, grant_date: today })
+      if (grantError) continue
+      if (t.reward_karma > 0) {
+        const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', emp.user_id).maybeSingle()
+        await a.from('karma_balance').upsert({ user_id: emp.user_id, balance: (bal?.balance || 0) + t.reward_karma }, { onConflict: 'user_id' })
+        await a.from('karma_transactions').insert({ user_id: emp.user_id, amount: t.reward_karma, type: 'task_reward', description: `Авто-зачёт: «${t.title}»` })
       }
+      if (t.auto_energy > 0) {
+        const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', emp.user_id).maybeSingle()
+        await a.from('kpi_energy').upsert({ user_id: emp.user_id, energy: (en?.energy || 0) + t.auto_energy, updated_at: now.toISOString() }, { onConflict: 'user_id' })
+      }
+      await a.from('notifications').insert({
+        user_id: emp.user_id,
+        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${t.auto_energy} энергии`,
+        link: '/history'
+      })
     }
   }
 
-  res.status(200).json({ ok: true })
+  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdue || []).length })
 }

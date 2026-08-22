@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
-
-const FOUNDER_EMAIL = 'arturgalkin.ru@mail.ru'
+import { requireAuth, isFounder } from '../../../lib/auth'
 
 // Дашборд Центробанка — только для основателя.
 // Возвращает: капитал, тарифы, компании с казной, журнал эмиссий,
@@ -10,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
-  if (ctx.user.email !== FOUNDER_EMAIL) {
+  if (!isFounder(ctx.user)) {
     return res.status(403).json({ error: 'Доступ только для основателя платформы' })
   }
 

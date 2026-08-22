@@ -1,9 +1,18 @@
 // karma.js
+//
+// РАНЬШЕ: requireAuth(req, res, {}) без permission — отдавал балансы ВСЕХ
+// сотрудников компании, историю эмиссий и список тарифов любому
+// авторизованному сотруднику этой компании, не только админам. Соседние
+// файлы в этой же папке (set-tariff.js, invite-employee.js) такую проверку
+// уже делали — здесь её просто не было.
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
+import { requireAuth, isCompanyAdmin, isSuperAdmin } from '../../../lib/auth'
 export default async function handler(req, res) {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
+  if (!isCompanyAdmin(ctx.profile) && !isSuperAdmin(ctx.profile)) {
+    return res.status(403).json({ error: 'Доступ только для админа компании' })
+  }
   const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const cid = ctx.profile.company_id
   const { data: account } = await a.from('company_karma_accounts').select('*').eq('company_id', cid).maybeSingle()

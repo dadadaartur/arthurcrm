@@ -73,10 +73,18 @@ export default function TasksPage() {
   }
 
   const handleStart = async (assignmentId) => {
+    // Доп. условие .eq('status', 'assigned') — defense in depth: основную
+    // защиту от недопустимых переходов статуса даёт триггер БД
+    // (trg_enforce_task_assignment_transition), но так запрос сразу же не
+    // находит строку и не долетает до триггера, если задание уже не в
+    // статусе "assigned" (например, двойной клик или устаревшие данные на
+    // экране) — вместо жёсткой ошибки из триггера получаем тихий no-op.
     const { error } = await supabase
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
       .eq('id', assignmentId)
+      .eq('user_id', user.id)
+      .eq('status', 'assigned')
 
     if (!error) {
       setNotification({ show: true, message: 'Задание принято в работу' })
@@ -100,6 +108,7 @@ export default function TasksPage() {
       })
       .eq('id', submitModal.assignmentId)
       .eq('user_id', user.id)
+      .eq('status', 'in_progress')
 
     if (!error) {
       setSubmitModal({ show: false, assignmentId: null, comment: '' })

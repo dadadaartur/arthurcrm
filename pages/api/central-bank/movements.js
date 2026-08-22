@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
-
-const FOUNDER_EMAIL = 'arturgalkin.ru@mail.ru'
+import { requireAuth, isFounder } from '../../../lib/auth'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
-  if (ctx.user.email !== FOUNDER_EMAIL) return res.status(403).json({ error: 'Доступ только для основателя' })
+  if (!isFounder(ctx.user)) return res.status(403).json({ error: 'Доступ только для основателя' })
 
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 

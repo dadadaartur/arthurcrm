@@ -8,36 +8,17 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = {
-  background: 'rgba(255,255,255,0.06)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,215,0,0.3)',
-  borderRadius: 12,
-  padding: '10px 22px',
-  color: '#fff',
-  cursor: 'pointer',
-  fontSize: 13,
-  transition: 'all .25s'
+  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
+  padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => {
-  e.currentTarget.style.borderColor = '#FFD700'
-  e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'
-  e.currentTarget.style.transform = 'translateY(-1px)'
-}
-const hoverOff = e => {
-  e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'
-  e.currentTarget.style.boxShadow = 'none'
-  e.currentTarget.style.transform = 'translateY(0)'
-}
+const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pillTab = a => ({
-  padding: '8px 18px',
-  borderRadius: 20,
-  fontSize: 12,
-  cursor: 'pointer',
+  padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
   background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
   border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
-  color: a ? '#FFD700' : '#aaa',
-  fontWeight: a ? 700 : 400,
-  transition: 'all 0.2s'
+  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 const AUTO_LABELS = {
   all_min: 'Выполнить ВСЕ цели за день не ниже «мин»',
@@ -51,27 +32,15 @@ function TasksPage() {
   const [companyId, setCompanyId] = useState(null)
   const [tasks, setTasks] = useState([])
   const [archived, setArchived] = useState([])
-  const [metrics, setMetrics] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('create')
   const [restoreId, setRestoreId] = useState(null)
   const [restoreDate, setRestoreDate] = useState('')
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    reward_karma: 10,
-    task_type: 'one_time',
-    frequency: 'once',
-    target_role: 'all',
-    requires_review: true,
-    requires_proof: false,
-    proof_type: 'any',
-    deadline_date: '',
-    is_auto_goal: false,
-    auto_goal_condition: 'all_min',
-    auto_metric_id: '',   // будет числом (ID метрики) или пустой строкой
-    auto_required_band: '',
-    auto_energy: 5,
+    title: '', description: '', reward_karma: 10,
+    task_type: 'one_time', frequency: 'once', target_role: 'all',
+    requires_review: true, requires_proof: false, proof_type: 'any',
+    deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 5,
     image_file: null
   })
   const [creating, setCreating] = useState(false)
@@ -90,30 +59,18 @@ function TasksPage() {
   }, [router])
 
   const loadData = async (cid) => {
-    const [a, b, m] = await Promise.all([
+    const [a, b] = await Promise.all([
       supabase.from('tasks').select('*').eq('company_id', cid).eq('is_active', true).eq('is_archived', false).order('created_at', { ascending: false }),
-      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false }),
-      supabase.from('kpi_metrics').select('id, name').eq('company_id', cid).eq('is_active', true)
+      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false })
     ])
     setTasks(a.data || [])
     setArchived(b.data || [])
-    setMetrics(m.data || [])
   }
 
   const handleCreateTask = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) { showError('Укажите название задания'); return }
     if (!form.reward_karma || form.reward_karma <= 0) { showError('Укажите награду больше 0'); return }
-
-    if (form.is_auto_goal && form.auto_metric_id && !form.auto_required_band) {
-      showError('Укажите требуемый уровень для авто-задания')
-      return
-    }
-    if (form.is_auto_goal && !form.auto_metric_id && !form.auto_goal_condition) {
-      showError('Выберите условие для авто-задания')
-      return
-    }
-
     setCreating(true)
     let imageUrl = null
     if (form.image_file) {
@@ -123,89 +80,31 @@ function TasksPage() {
       if (!upErr) imageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     }
     const deadlineAt = form.deadline_date ? new Date(form.deadline_date + 'T23:59:59').toISOString() : null
-
-    let autoFields = {}
-    if (form.is_auto_goal) {
-      if (form.auto_metric_id) {
-        autoFields = {
-          is_auto_goal: true,
-          auto_metric_id: parseInt(form.auto_metric_id, 10) || null, // <-- преобразуем в число
-          auto_required_band: form.auto_required_band,
-          auto_goal_condition: null,
-          auto_energy: form.auto_energy
-        }
-      } else {
-        autoFields = {
-          is_auto_goal: true,
-          auto_metric_id: null,
-          auto_required_band: null,
-          auto_goal_condition: form.auto_goal_condition,
-          auto_energy: form.auto_energy
-        }
-      }
-    }
-
     const { data: task, error } = await supabase.from('tasks').insert({
-      company_id: companyId,
-      title: form.title,
-      description: form.description,
-      reward_karma: form.reward_karma,
-      task_type: form.is_auto_goal ? 'auto_goal' : form.task_type,
-      frequency: form.frequency,
-      target_role: form.target_role,
+      company_id: companyId, title: form.title, description: form.description,
+      reward_karma: form.reward_karma, task_type: form.is_auto_goal ? 'auto_goal' : form.task_type,
+      frequency: form.frequency, target_role: form.target_role,
       requires_review: form.is_auto_goal ? false : form.requires_review,
-      requires_proof: form.requires_proof,
-      proof_type: form.requires_proof ? form.proof_type : null,
-      deadline_at: deadlineAt,
-      is_active: true,
-      image_url: imageUrl,
-      ...autoFields
+      requires_proof: form.requires_proof, proof_type: form.requires_proof ? form.proof_type : null,
+      deadline_at: deadlineAt, is_active: true,
+      is_auto_goal: form.is_auto_goal, auto_goal_condition: form.is_auto_goal ? form.auto_goal_condition : null,
+      auto_energy: form.is_auto_goal ? form.auto_energy : 0,
+      image_url: imageUrl
     }).select().single()
+    if (error) { showError('Ошибка создания: ' + error.message); setCreating(false); return }
 
-    if (error) {
-      showError('Ошибка создания: ' + error.message)
-      setCreating(false)
-      return
-    }
-
-    if (!form.is_auto_goal) {
-      const { data: emps } = await supabase.from('profiles').select('user_id')
-        .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
-      if (emps?.length) {
-        const { error: asErr } = await supabase.from('task_assignments').insert(
-          emps.map(emp => ({ task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt }))
-        )
-        if (asErr) {
-          showError('Ошибка назначения: ' + asErr.message)
-          setCreating(false)
-          return
-        }
-        showSuccess(`Задание создано и назначено ${emps.length} сотрудникам`)
-      } else {
-        showSuccess('Задание создано')
-      }
+    const { data: emps } = await supabase.from('profiles').select('user_id')
+      .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
+    if (emps?.length) {
+      const { error: asErr } = await supabase.from('task_assignments').insert(
+        emps.map(emp => ({ task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt }))
+      )
+      if (asErr) { showError('Ошибка назначения: ' + asErr.message); setCreating(false); return }
+      showSuccess(`Задание создано и назначено ${emps.length} сотрудникам`)
     } else {
-      showSuccess('Авто-задание создано, система будет проверять достижения')
+      showSuccess('Задание создано')
     }
-
-    setForm({
-      title: '',
-      description: '',
-      reward_karma: 10,
-      task_type: 'one_time',
-      frequency: 'once',
-      target_role: 'all',
-      requires_review: true,
-      requires_proof: false,
-      proof_type: 'any',
-      deadline_date: '',
-      is_auto_goal: false,
-      auto_goal_condition: 'all_min',
-      auto_metric_id: '',
-      auto_required_band: '',
-      auto_energy: 5,
-      image_file: null
-    })
+    setForm({ ...form, title: '', description: '', image_file: null, deadline_date: '' })
     setCreating(false)
     loadData(companyId)
   }
@@ -279,34 +178,12 @@ function TasksPage() {
                     Авто-зачёт по целям (система проверяет сама)
                   </label>
                   {form.is_auto_goal && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+                      <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
+                        {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                      </select>
                       <div>
-                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Привязать к конкретной цели</label>
-                        <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id || ''} onChange={e => setForm({ ...form, auto_metric_id: e.target.value ? parseInt(e.target.value) : '' })}>
-                          <option value="">— Все цели (общее условие) —</option>
-                          {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>
-                          {form.auto_metric_id ? 'Требуемый уровень для этой цели' : 'Условие для всех целей'}
-                        </label>
-                        {form.auto_metric_id ? (
-                          <select className="input-field" style={{ width: '100%' }} value={form.auto_required_band || ''} onChange={e => setForm({ ...form, auto_required_band: e.target.value })}>
-                            <option value="">Выберите уровень</option>
-                            <option value="min">Минимум</option>
-                            <option value="mid">Средний</option>
-                            <option value="top">Топ</option>
-                            <option value="ultra">Ультра</option>
-                          </select>
-                        ) : (
-                          <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
-                            {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                          </select>
-                        )}
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия за выполнение</label>
+                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
                         <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
                       </div>
                     </div>
@@ -350,15 +227,7 @@ function TasksPage() {
                   <span style={{ color: '#FFD700', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
-                  {t.is_auto_goal ? (
-                    t.auto_metric_id ? (
-                      `Авто: цель «${metrics.find(m => m.id === t.auto_metric_id)?.name || t.auto_metric_id}» ≥ ${t.auto_required_band}`
-                    ) : (
-                      `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}`
-                    )
-                  ) : (
-                    t.description?.slice(0, 70) || 'Без описания'
-                  )}
+                  {t.is_auto_goal ? `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}` : (t.description?.slice(0, 70) || 'Без описания')}
                 </div>
                 {t.deadline_at && <div style={{ fontSize: 11, color: '#a0e9ff', marginTop: 6 }}>Дедлайн: {new Date(t.deadline_at).toLocaleDateString('ru')}</div>}
                 <div style={{ marginTop: 12 }}>

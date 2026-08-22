@@ -1,15 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
-
-const FOUNDER_EMAIL = 'arturgalkin.ru@mail.ru'
+import { requireAuth, isFounder } from '../../../lib/auth'
 
 // Эмиссия кармиков из Центробанка в казну конкретной компании.
-// Только для основателя. Без RPC — прямые атомарные обновления через service_role.
+// Только для основателя.
+//
+// РАНЬШЕ комментарий здесь утверждал "прямые атомарные обновления через
+// service_role" — это было неточно: баланс central_bank читался, проверялся
+// в JS и писался отдельным запросом (read-then-write), то есть при двух
+// параллельных вызовах гонка была возможна точно так же, как раньше в
+// pages/api/transfer.js. Теперь списание с central_bank идёт через условный
+// UPDATE ... WHERE balance = <прочитанное значение> — если баланс успел
+// измениться между чтением и записью, affected будет пустым, и мы вернём
+// ошибку вместо того, чтобы молча затереть чужое изменение.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
-  if (ctx.user.email !== FOUNDER_EMAIL) {
+  if (!isFounder(ctx.user)) {
     return res.status(403).json({ error: 'Доступ только для основателя платформы' })
   }
 
@@ -54,11 +61,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Недостаточно капитала в Центробанке' })
   }
 
-  await sb.from('central_bank').update({
-    balance: Number(bank.balance) - emission,
-    total_issued: Number(bank.total_issued || 0) + emission,
-    updated_at: new Date().toISOString()
-  }).eq('id', 1)
+  // Условное списание: сработает, только если баланс central_bank не
+  // изменился с момента чтения выше (см. комментарий в начале файла).
+  const { data: bankUpdated, error: bankUpdErr } = await sb.from('central_bank')
+    .update({
+      balance: Number(bank.balance) - emission,
+      total_issued: Number(bank.total_issued || 0) + emission,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', 1)
+    .eq('balance', bank.balance)
+    .select('id')
+  if (bankUpdErr) return res.status(500).json({ error: bankUpdErr.message })
+  if (!bankUpdated || bankUpdated.length === 0) {
+    return res.status(409).json({ error: 'Баланс Центробанка изменился параллельно — повторите операцию' })
+  }
 
   const { error: updErr } = await sb.from('company_karma_accounts').update({
     balance: Number(acc.balance || 0) + emission,

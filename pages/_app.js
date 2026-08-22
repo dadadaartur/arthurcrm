@@ -3,7 +3,6 @@ import Layout from '../components/Layout'
 import Background from '../components/Background'
 import { ProfileProvider } from '../context/ProfileContext'
 import { ActionFeedbackProvider } from '../context/ActionFeedbackContext'
-import { LanguageProvider } from '../context/LanguageContext'
 import ActionFeedback from '../components/ActionFeedback'
 import { useState, useEffect } from 'react'
 
@@ -22,13 +21,11 @@ export default function App({ Component, pageProps }) {
   return (
     <ProfileProvider>
       <ActionFeedbackProvider>
-        <LanguageProvider>
-          <Background />
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-          <FeedbackOverlay />
-        </LanguageProvider>
+        <Background />
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+        <FeedbackOverlay />
       </ActionFeedbackProvider>
     </ProfileProvider>
   )
