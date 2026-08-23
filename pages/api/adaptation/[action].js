@@ -70,7 +70,8 @@ export default async function handler(req, res) {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { planId, updates = [], adds = [], deletes = [] } = req.body
     const { data: plan } = await a.from('adaptation_plans').select('*').eq('id', planId).maybeSingle()
-    if (!plan || plan.status !== 'draft') return res.status(400).json({ error: 'План уже активирован — правки запрещены' })
+    if (!plan || plan.company_id !== companyId) return res.status(404).json({ error: 'План не найден' })
+    if (plan.status !== 'draft') return res.status(400).json({ error: 'План уже активирован — правки запрещены' })
     for (const u of updates) { const { id, ...fields } = u; await a.from('adaptation_plan_events').update(fields).eq('id', id).eq('plan_id', planId) }
     if (adds.length) await a.from('adaptation_plan_events').insert(adds.map(x => ({ ...x, plan_id: planId, is_custom: true })))
     if (deletes.length) await a.from('adaptation_plan_events').delete().in('id', deletes).eq('plan_id', planId)
@@ -82,7 +83,8 @@ export default async function handler(req, res) {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { planId } = req.body
     const { data: plan } = await a.from('adaptation_plans').select('*').eq('id', planId).maybeSingle()
-    if (!plan || plan.status !== 'draft') return res.status(400).json({ error: 'Нельзя активировать' })
+    if (!plan || plan.company_id !== companyId) return res.status(404).json({ error: 'План не найден' })
+    if (plan.status !== 'draft') return res.status(400).json({ error: 'Нельзя активировать' })
     await a.from('adaptation_plans').update({ status: 'active' }).eq('id', planId)
     await log(a, { plan_id: planId, employee_id: plan.employee_id, manager_id: ctx.user.id, type: 'plan_meeting', description: 'План адаптации создан и активирован', author_role: 'system' })
     await notify(a, plan.employee_id, 'Ваш план адаптации активирован. Откройте раздел «Адаптация».', '/onboarding')
@@ -116,8 +118,8 @@ export default async function handler(req, res) {
   if (action === 'approve' && req.method === 'POST') {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { eventId, rating, feedback } = req.body
-    const { data: ev } = await a.from('adaptation_plan_events').select('*, adaptation_plans(employee_id)').eq('id', eventId).maybeSingle()
-    if (!ev) return res.status(404).json({ error: 'Событие не найдено' })
+    const { data: ev } = await a.from('adaptation_plan_events').select('*, adaptation_plans(employee_id, company_id)').eq('id', eventId).maybeSingle()
+    if (!ev || ev.adaptation_plans?.company_id !== companyId) return res.status(404).json({ error: 'Событие не найдено' })
     await a.from('adaptation_plan_events').update({ manager_confirmed_at: new Date().toISOString(), manager_feedback: feedback || null, rating: rating || null }).eq('id', eventId)
     await log(a, { plan_id: ev.plan_id, event_id: eventId, manager_id: ctx.user.id, type: 'feedback', description: `Обратная связь по «${ev.title}».${feedback ? ' ' + feedback : ''}`, author_role: 'manager', rating: rating || null })
     await notify(a, ev.adaptation_plans.employee_id, `РОП оставил обратную связь по «${ev.title}» (оценка ${rating || '—'}).`, '/onboarding')
@@ -128,16 +130,20 @@ export default async function handler(req, res) {
   if (action === 'correction' && req.method === 'POST') {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { planId, eventId, description, dayNumber, title } = req.body
+    const { data: plan } = await a.from('adaptation_plans').select('employee_id, company_id').eq('id', planId).maybeSingle()
+    if (!plan || plan.company_id !== companyId) return res.status(404).json({ error: 'План не найден' })
     const { data: hist } = await a.from('adaptation_history').insert({ plan_id: planId, event_id: eventId || null, manager_id: ctx.user.id, type: 'correction', description: description || 'Корректировка', author_role: 'manager' }).select().single()
     if (title) await a.from('adaptation_plan_events').insert({ plan_id: planId, day_number: dayNumber || 1, title, description, event_type: 'rework', is_mandatory: true })
-    const { data: plan } = await a.from('adaptation_plans').select('employee_id').eq('id', planId).maybeSingle()
-    if (plan) await notify(a, plan.employee_id, 'РОП добавил корректировку в ваш план адаптации.', '/onboarding')
+    await notify(a, plan.employee_id, 'РОП добавил корректировку в ваш план адаптации.', '/onboarding')
     return res.status(200).json({ success: true })
   }
 
   // ===== ИСТОРИЯ =====
   if (action === 'history' && req.method === 'GET') {
     const { planId, type, from, to } = req.query
+    const { data: plan } = await a.from('adaptation_plans').select('employee_id, company_id').eq('id', planId).maybeSingle()
+    if (!plan || plan.company_id !== companyId) return res.status(404).json({ error: 'План не найден' })
+    if (!isManager && plan.employee_id !== ctx.user.id) return res.status(403).json({ error: 'Недостаточно прав' })
     let q = a.from('adaptation_history').select('*').eq('plan_id', planId).order('created_at', { ascending: false })
     if (type) q = q.eq('type', type)
     if (from) q = q.gte('created_at', from)
@@ -148,7 +154,10 @@ export default async function handler(req, res) {
 
   // ===== ОТЧЁТ О ПЕРСПЕКТИВНОСТИ =====
   if (action === 'report' && req.method === 'GET') {
+    if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
     const { planId } = req.query
+    const { data: plan } = await a.from('adaptation_plans').select('company_id').eq('id', planId).maybeSingle()
+    if (!plan || plan.company_id !== companyId) return res.status(404).json({ error: 'План не найден' })
     const pr = await progress(a, planId)
     const { data: corr } = await a.from('adaptation_history').select('id').eq('plan_id', planId).eq('type', 'correction')
     const corrections = (corr || []).length

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../../lib/auth'
+import { requireAuth, hasPermission } from '../../../lib/auth'
 
 const sb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 const shuffle = a => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] } return r }
@@ -23,6 +23,7 @@ export default async function handler(req, res) {
   const a = sb()
   const action = req.query.action
   const companyId = ctx.profile?.company_id
+  const isAdmin = ctx.profile?.is_company_admin || hasPermission(ctx.profile, 'can_manage_employees')
 
   if (action === 'list' && req.method === 'GET') {
     const { data } = await a.from('tests').select('*').eq('company_id', companyId).eq('is_active', true).order('created_at', { ascending: false })
@@ -41,16 +42,31 @@ export default async function handler(req, res) {
     const mode = req.query.mode || 'take'
     const { data: t } = await a.from('tests').select('*').eq('id', id).maybeSingle()
     if (!t) return res.status(404).json({ error: 'Тест не найден' })
+    // РАНЬШЕ: 'edit' была единственной проверкой того, отдавать ли
+    // is_correct у вариантов ответа — но опции ниже НЕ исключали
+    // correct_text (правильный ответ для вопросов типа "fill"), он
+    // приезжал через {...q} в любом режиме, включая обычный запуск теста.
+    // Технически подкованный сотрудник видел правильный ответ на fill-
+    // вопросы в сетевом ответе ДО того, как пройдёт тест. Теперь
+    // correct_text тоже вырезается вне режима edit, а mode='edit' к тому
+    // же требует прав администратора (см. ниже).
+    if (mode === 'edit' && !isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
     const { data: qs } = await a.from('questions').select('*').eq('test_id', id).order('sort_order')
     const questions = []
     for (const q of qs || []) {
       const { data: opts } = await a.from('answer_options').select('*').eq('question_id', q.id).order('sort_order')
-      questions.push({ ...q, options: mode === 'edit' ? (opts || []) : (opts || []).map(o => ({ id: o.id, text: o.text, sort_order: o.sort_order })) })
+      if (mode === 'edit') {
+        questions.push({ ...q, options: opts || [] })
+      } else {
+        const { correct_text, ...safeQ } = q
+        questions.push({ ...safeQ, options: (opts || []).map(o => ({ id: o.id, text: o.text, sort_order: o.sort_order })) })
+      }
     }
     return res.status(200).json({ ...t, questions: mode === 'edit' ? questions : (t.is_random ? shuffle(questions) : questions) })
   }
 
   if (action === 'create' && req.method === 'POST') {
+    if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
     const b = req.body
     const { data: t, error } = await a.from('tests').insert({
       company_id: companyId, training_id: b.training_id || null, title: b.title, description: b.description || '',
@@ -67,6 +83,7 @@ export default async function handler(req, res) {
   }
 
   if (action === 'update' && req.method === 'PUT') {
+    if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
     const { id, questions, ...fields } = req.body
     await a.from('tests').update(fields).eq('id', id).eq('company_id', companyId)
     await a.from('questions').delete().eq('test_id', id)
@@ -75,6 +92,7 @@ export default async function handler(req, res) {
   }
 
   if (action === 'delete' && req.method === 'DELETE') {
+    if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
     await a.from('tests').update({ is_active: false }).eq('id', req.body.id).eq('company_id', companyId)
     return res.status(200).json({ success: true })
   }
@@ -141,6 +159,10 @@ export default async function handler(req, res) {
   }
 
   if (action === 'results' && req.method === 'GET') {
+    // Раньше — без проверки прав: любой сотрудник мог по id теста увидеть
+    // результаты И личные данные (имя, email) всех остальных, кто его
+    // проходил.
+    if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
     const id = req.query.id
     const { data: atts } = await a.from('test_attempts').select('*, profiles(display_name, first_name, last_name, email)').eq('test_id', id).order('completed_at', { ascending: false })
     const { data: qs } = await a.from('questions').select('*').eq('test_id', id)

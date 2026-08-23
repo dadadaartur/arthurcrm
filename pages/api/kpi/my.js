@@ -2,6 +2,21 @@ import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
 import { bandFor } from '../../../lib/kpi'
 
+// РАНЬШЕ: kpi_trainings запрашивался через .select('*') и отдавался
+// сотруднику как есть, вместе с test_questions — а каждый элемент
+// test_questions содержит поле correct (правильный вариант ответа), см.
+// pages/api/kpi/test.js, где по нему идёт проверка. Это означало, что
+// открыв вкладку сети или React DevTools ДО прохождения теста, сотрудник
+// мог увидеть правильные ответы и гарантированно "сдать" тест. Теперь
+// correct вырезается перед отправкой на клиент.
+function stripAnswers(training) {
+  if (!training?.test_questions) return training
+  return {
+    ...training,
+    test_questions: training.test_questions.map(({ correct, ...q }) => q)
+  }
+}
+
 export default async function handler(req, res) {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
@@ -16,7 +31,7 @@ export default async function handler(req, res) {
       a.from('kpi_trainings').select('*').in('metric_id', ids).order('sort_order')
     ])
     entries = e.data || []
-    trainings = t.data || []
+    trainings = (t.data || []).map(stripAnswers)
   }
   const out = (metrics || []).map(m => {
     const hist = entries.filter(e => e.metric_id === m.id)

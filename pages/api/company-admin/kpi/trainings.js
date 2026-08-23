@@ -6,12 +6,18 @@ export default async function handler(req, res) {
   if (!ctx) return
   const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const isAdmin = ctx.profile?.is_company_admin || hasPermission(ctx.profile, 'can_manage_employees')
+  // РАНЬШЕ: проверка isAdmin шла ПОСЛЕ ветки GET — то есть GET (полные
+  // данные тренинга, включая test_questions с правильными ответами)
+  // отдавался любому авторизованному сотруднику компании, хотя весь роут
+  // находится в неймспейсе /company-admin/ и вызывается только из
+  // pages/company-admin/mastery.js (админской страницы). Теперь права
+  // проверяются один раз, для всех методов.
+  if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
 
   if (req.method === 'GET') {
     const { data } = await a.from('kpi_trainings').select('*').eq('metric_id', req.query.metricId).order('sort_order')
     return res.status(200).json(data || [])
   }
-  if (!isAdmin) return res.status(403).json({ error: 'Недостаточно прав' })
   if (req.method === 'POST') {
     const b = req.body || {}
     if (!b.metric_id || !b.title) return res.status(400).json({ error: 'Нет metric_id или названия' })

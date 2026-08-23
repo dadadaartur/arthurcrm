@@ -1,6 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../lib/auth'
 
+// РАНЬШЕ: UPDATE на task_assignments фильтровался только по .eq('id', ...),
+// без повторной проверки статуса — тот же паттерн read-then-write, что и в
+// transfer.js/emit.js (см. аудит). Проверка asg.status !== 'pending_review'
+// шла отдельным чтением ДО апдейта, поэтому два одновременных запроса
+// (например, два ревьюера одобряют одно и то же задание почти одновременно,
+// или двойной клик) оба проходили проверку и оба начисляли кармики —
+// задание засчитывалось и оплачивалось дважды. Сосед этого файла,
+// tasks/submit.js, уже делал условный апдейт правильно — здесь просто не
+// было того же паттерна. Исправлено: апдейт статуса теперь атомарный
+// (WHERE status = 'pending_review'), и начисление идёт, только если именно
+// этот запрос реально сменил статус.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
   const ctx = await requireAuth(req, res, {})
@@ -15,7 +26,15 @@ export default async function handler(req, res) {
   if (asg.status !== 'pending_review') return res.status(400).json({ error: 'Задание не на проверке' })
 
   if (action === 'approve') {
-    await a.from('task_assignments').update({ status: 'completed', comment: comment || null, completed_at: new Date().toISOString() }).eq('id', assignmentId)
+    const { data: updated, error: updErr } = await a.from('task_assignments')
+      .update({ status: 'completed', comment: comment || null, completed_at: new Date().toISOString() })
+      .eq('id', assignmentId)
+      .eq('status', 'pending_review')
+      .select('id')
+    if (updErr) return res.status(500).json({ error: updErr.message })
+    if (!updated || updated.length === 0) {
+      return res.status(409).json({ error: 'Задание уже обработано другим запросом' })
+    }
     const k = Number(asg.tasks?.reward_karma) || 0
     if (k > 0) {
       const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', asg.user_id).maybeSingle()
@@ -24,7 +43,15 @@ export default async function handler(req, res) {
     }
     await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено! +${k} кармиков`, link: '/history' })
   } else {
-    await a.from('task_assignments').update({ status: 'rejected', comment: comment || null }).eq('id', assignmentId)
+    const { data: updated, error: updErr } = await a.from('task_assignments')
+      .update({ status: 'rejected', comment: comment || null })
+      .eq('id', assignmentId)
+      .eq('status', 'pending_review')
+      .select('id')
+    if (updErr) return res.status(500).json({ error: updErr.message })
+    if (!updated || updated.length === 0) {
+      return res.status(409).json({ error: 'Задание уже обработано другим запросом' })
+    }
     await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» отклонено.${comment ? ' Причина: ' + comment : ''}`, link: '/tasks' })
   }
   res.status(200).json({ success: true })
