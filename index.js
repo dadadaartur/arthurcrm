@@ -73,6 +73,7 @@ export default function Home() {
   const router = useRouter()
   const [balance, setBalance] = useState(0)
   const [pageLoading, setPageLoading] = useState(true)
+  const [planKind, setPlanKind] = useState('onboarding') // 'onboarding' | 'development' — см. п.8 ТЗ
   const [holo, setHolo] = useState(false)
   const [pulse, setPulse] = useState(0)
   const starsRef = useRef(null)
@@ -103,6 +104,11 @@ export default function Home() {
     const loadData = async () => {
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
+      // Пока сотрудник в периоде адаптации (есть активный план с kind='onboarding')
+      // — показываем кнопку «План адаптации», иначе — «План развития».
+      const { data: activeOnboarding } = await supabase.from('adaptation_plans').select('id')
+        .eq('employee_id', user.id).eq('kind', 'onboarding').eq('status', 'active').maybeSingle()
+      setPlanKind(activeOnboarding ? 'onboarding' : 'development')
       setPageLoading(false)
     }
     loadData()
@@ -151,7 +157,7 @@ export default function Home() {
     { title: 'Моя компания', sub: 'данные и новости', left: 77, top: 60, colors: ['#c084fc', '#F28B82'] },
     { title: 'Покупки', sub: 'мои награды', left: 58, top: 68, colors: ['#ffe29f', '#b3f0ff'] },
     { title: 'База знаний', sub: 'лучшие практики', left: 39, top: 60, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'План адаптации', sub: 'твой путь', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
+    { title: planKind === 'onboarding' ? 'План адаптации' : 'План развития', sub: planKind === 'onboarding' ? 'твой путь' : 'расти дальше', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
     { title: 'Цели', sub: 'твои победы', left: 39, top: 24, colors: ['#A3E0B0', '#d4af37'] },
   ]
   const beams = blocks.map(block => {
@@ -163,7 +169,7 @@ export default function Home() {
   })
   const routes = {
     'Чемпионат': '/leaderboard', 'Моя компания': '/company', 'База знаний': '/knowledge',
-    'План адаптации': '/onboarding', 'Цели': '/goals', 'Задания': '/tasks',
+    'План адаптации': '/onboarding', 'План развития': '/development', 'Цели': '/goals', 'Задания': '/tasks',
     'Магазин': '/shop', 'Покупки': '/my-purchases',
   }
 
