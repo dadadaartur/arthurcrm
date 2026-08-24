@@ -5,7 +5,7 @@ import BackArrow from '../../components/BackArrow'
 import FillReportModal from '../../components/FillReportModal'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
-import { bandFor, BAND_RANK, BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
+import { bandFor, bandRankOf, BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const shift = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return toISO(d) }
@@ -71,7 +71,14 @@ function AnalyticsAdmin() {
   const rows = employees.map(emp => {
     const cells = metrics.map(m => { const v = agg(m, cur.filter(e => e.user_id === emp.user_id && e.metric_id === m.id)); return { m, v, band: bandOf(m, v) } })
     const rated = cells.filter(c => c.band)
-    const overall = rated.length ? rated.reduce((s, c) => s + BAND_RANK[c.band], 0) / rated.length : -1
+    // bandRankOf(c.m, ...) — ранг именно в рамках показателя этой ячейки;
+    // для стандартных 4-уровневых показателей число совпадает со старым
+    // BAND_RANK[band] один в один. Если когда-нибудь в «Общий рейтинг»
+    // попадут вперемешку показатели с 4 уровнями и, например, с 6 кастомными
+    // — среднее будет слегка смещено в пользу показателей с большим числом
+    // уровней; для типичного случая (все показатели на стандартном шаблоне)
+    // разницы нет вообще.
+    const overall = rated.length ? rated.reduce((s, c) => s + bandRankOf(c.m, c.band), 0) / rated.length : -1
     const belowCount = cells.filter(c => c.band === 'none').length
     return { emp, cells, overall, belowCount, hasData: rated.length > 0 }
   }).filter(r => r.hasData)

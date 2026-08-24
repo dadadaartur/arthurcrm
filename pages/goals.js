@@ -6,7 +6,7 @@ import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
 import TrainingVideoModal from '../components/TrainingVideoModal'
-import { BAND_LABELS, BAND_COLORS, BAND_RANK, bandFor, rangeValue, energyFor, karmaFor } from '../lib/kpi'
+import { BAND_LABELS, BAND_COLORS, bandRankOf, bandFor, rangeValue, resolveThresholds } from '../lib/kpi'
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
@@ -100,10 +100,15 @@ export default function GoalsPage() {
   const metricView = m => {
     const list = (m.history || []).filter(e => inRange(e.entry_date))
     const rv = rangeValue(m, list)
-    if (!rv) return { value: null, band: 'none', sm: m }
-    const sm = { ...m, thr_min: m.thr_min * rv.scale, thr_mid: m.thr_mid * rv.scale, thr_top: m.thr_top * rv.scale, thr_ultra: m.thr_ultra * rv.scale }
+    if (!rv) return { value: null, band: 'none', thresholds: resolveThresholds(m) }
+    // Пороги растянуты под выбранный период (rv.scale) — раньше это делалось
+    // через 4 захардкоженных столбца, теперь — через произвольный список
+    // resolveThresholds(m), что одинаково работает и со стандартным
+    // 4-уровневым шаблоном, и с кастомными порогами.
+    const scaledThresholds = resolveThresholds(m).map(t => ({ ...t, value: t.value * rv.scale }))
+    const sm = { ...m, thresholds: scaledThresholds }
     const band = rv.gate === false ? 'none' : bandFor(rv.value, sm)
-    return { value: rv.value, band, sm }
+    return { value: rv.value, band, thresholds: scaledThresholds }
   }
 
   const energy = data.energy || 0
@@ -113,9 +118,9 @@ export default function GoalsPage() {
   const remaining = next ? next.energy_threshold - energy : 0
   const forecast = []
   if (next) {
-    data.metrics.forEach(m => ['min', 'mid', 'top', 'ultra'].forEach(b => {
-      const e = energyFor(m, b)
-      if (e > 0) forecast.push({ name: m.name, band: b, thr: m['thr_' + b], unit: m.unit, e, days: Math.ceil(remaining / e) })
+    data.metrics.forEach(m => resolveThresholds(m).forEach(t => {
+      const e = t.energy
+      if (e > 0) forecast.push({ name: m.name, band: t.key, thr: t.value, color: t.color, label: t.label, unit: m.unit, e, days: Math.ceil(remaining / e) })
     }))
     forecast.sort((a, b) => a.days - b.days)
   }
@@ -155,7 +160,7 @@ export default function GoalsPage() {
                 {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
                 {forecast.slice(0, 3).map((f, i) => (
                   <div key={i} style={{ fontSize: 12, color: '#ccc', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    Держать «{f.name}» ≥ <b style={{ color: BAND_COLORS[f.band] }}>{f.thr}{f.unit}</b> ({BAND_LABELS[f.band]}): +{f.e} эн./день → ≈ <b style={{ color: '#FFD700' }}>{f.days} дн.</b> до «{next.name}»
+                    Держать «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b> ({f.label}): +{f.e} эн./день → ≈ <b style={{ color: '#FFD700' }}>{f.days} дн.</b> до «{next.name}»
                   </div>
                 ))}
               </div>
@@ -175,18 +180,24 @@ export default function GoalsPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 16, marginBottom: 40 }}>
           {data.metrics.map(m => {
-            const { value, band, sm } = metricView(m)
+            const { value, band, thresholds } = metricView(m)
             return (
               <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }} title={m.name}>{m.name}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                 </div>
-                <ProgressBar3D value={value ?? 0} marks={[{ key: 'min', value: sm.thr_min }, { key: 'mid', value: sm.thr_mid }, { key: 'top', value: sm.thr_top }, { key: 'ultra', value: sm.thr_ultra }]} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 10 }}>
-                  <span style={{ fontSize: 10, color: '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>мин {sm.thr_min} · средн {sm.thr_mid} · топ {sm.thr_top} · ультра {sm.thr_ultra}{m.unit}</span>
+                <ProgressBar3D value={value ?? 0} marks={thresholds.map(t => ({ key: t.key, value: t.value }))} />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 10 }}>
+                  {thresholds.map(t => (
+                    <span key={t.key} style={{ fontSize: 10, fontWeight: t.key === band ? 700 : 500, padding: '3px 9px', borderRadius: 20, background: `${t.color}18`, color: t.color, border: `1px solid ${t.color}${t.key === band ? '88' : '2e'}` }}>
+                      {t.label} {t.value}{m.unit}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                   <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44`, whiteSpace: 'nowrap', flexShrink: 0 }}>{BAND_LABELS[band]}</span>
                 </div>
               </div>
@@ -266,12 +277,12 @@ export default function GoalsPage() {
             <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 14px', paddingRight: 40 }}>{detailsMetric.name}</h3>
             {detailsMetric.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 8px' }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {detailsMetric.description}</p>}
             {detailsMetric.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 16px' }}><b style={{ color: '#4ade80' }}>Советы:</b> {detailsMetric.advice}</p>}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, margin: '0 0 20px' }}>
-              {['min', 'mid', 'top', 'ultra'].map(b => (
-                <div key={b} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${BAND_COLORS[b]}0d`, border: `1px solid ${BAND_COLORS[b]}33` }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: BAND_COLORS[b] }}>{BAND_LABELS[b]}</div>
-                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{detailsMetric['thr_' + b]}{detailsMetric.unit}</div>
-                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{energyFor(detailsMetric, b)} эн. · +{karmaFor(detailsMetric, b)} к.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${resolveThresholds(detailsMetric).length}, 1fr)`, gap: 8, margin: '0 0 20px' }}>
+              {resolveThresholds(detailsMetric).map(t => (
+                <div key={t.key} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${t.color}0d`, border: `1px solid ${t.color}33` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.label}</div>
+                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
                 </div>
               ))}
             </div>
@@ -279,7 +290,7 @@ export default function GoalsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(detailsMetric.trainings || []).map(t => {
                 const { band } = metricView(detailsMetric)
-                const recommended = t.recommend_below === 'all' || BAND_RANK[band] < BAND_RANK[t.recommend_below]
+                const recommended = t.recommend_below === 'all' || bandRankOf(detailsMetric, band) < bandRankOf(detailsMetric, t.recommend_below)
                 return (
                   <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: recommended ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

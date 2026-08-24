@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../../lib/auth'
-import { bandFor, BAND_RANK, energyFor, karmaFor } from '../../../../lib/kpi'
+import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../../lib/kpi'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -22,9 +22,9 @@ export default async function handler(req, res) {
     await a.from('kpi_entries').upsert({
       metric_id: e.metricId, user_id: e.userId, company_id: metric.company_id,
       value: e.value, entry_date: e.date, source: 'manual', created_by: ctx.user.id,
-      granted_band: BAND_RANK[newBand] > BAND_RANK[oldBand] ? newBand : oldBand
+      granted_band: bandRankOf(metric, newBand) > bandRankOf(metric, oldBand) ? newBand : oldBand
     }, { onConflict: 'metric_id,user_id,entry_date' })
-    if (BAND_RANK[newBand] > BAND_RANK[oldBand]) {
+    if (bandRankOf(metric, newBand) > bandRankOf(metric, oldBand)) {
       const dEnergy = energyFor(metric, newBand) - energyFor(metric, oldBand)
       const dKarma = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
       if (dEnergy > 0) {

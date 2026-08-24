@@ -9,7 +9,7 @@ import TrainingVideoModal from '../../components/TrainingVideoModal'
 import PremiumModal from '../../components/PremiumModal'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
-import { BAND_LABELS, BAND_COLORS, TYPE_LABELS } from '../../lib/kpi'
+import { BAND_LABELS, BAND_COLORS, TYPE_LABELS, resolveThresholds } from '../../lib/kpi'
 
 const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, ' ').replace(/^ +|_+$/g, '')
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
@@ -40,6 +40,24 @@ const THRESH_INVERSE = [
   { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '11' },
   { k: 'thr_min', label: 'Мин — допустимый (больше всего)', color: BAND_COLORS.min, ph: '15' },
 ]
+// Палитра для кастомных уровней — те же цвета, что уже используются по
+// всему проекту, чтобы новые уровни не выбивались из общего стиля.
+const TIER_PALETTE = ['#f87171', '#f97316', '#FFD700', '#4ade80', '#a0e9ff', '#c084fc', '#ffb3c6', '#e2e8f0']
+const newTierKey = () => 'tier_' + Math.random().toString(36).slice(2, 8)
+// При первом переключении на «Свои уровни» — не начинаем с пустого места,
+// а конвертируем то, что админ уже заполнил в стандартном шаблоне (или
+// значения по умолчанию 5/10/15/20), чтобы не терять уже введённые данные.
+const toCustomTiers = (form, isInverse) => {
+  const order = isInverse ? ['ultra', 'top', 'mid', 'min'] : ['min', 'mid', 'top', 'ultra']
+  return order.map((b, i) => ({
+    key: newTierKey(),
+    label: BAND_LABELS[b],
+    value: Number(form['thr_' + b]) || 0,
+    karma: Number(form['karma_' + b]) || 0,
+    energy: [5, 10, 15, 20][isInverse ? order.length - 1 - i : i],
+    color: TIER_PALETTE[b === 'min' ? 1 : b === 'mid' ? 2 : b === 'top' ? 3 : 5],
+  }))
+}
 const CloseX = ({ onClick }) => (
   <button onClick={onClick} className="mx-close" title="Закрыть">
     <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
@@ -67,6 +85,36 @@ const TrashIcon = () => (
     <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 )
+
+// Одна строка кастомного порога: название, значение, кармики, энергия,
+// выбор цвета из палитры и удаление — всё через ту же стеклянную кнопочную
+// стилистику, что и остальной проект, без стандартных браузерных контролов.
+function TierRow({ tier, onChange, onDelete, canDelete }) {
+  const [colorOpen, setColorOpen] = useState(false)
+  const set = (k, v) => onChange({ ...tier, [k]: v })
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '30px 1.4fr 0.8fr 0.7fr 0.7fr 30px', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+      <button type="button" onClick={() => setColorOpen(o => !o)} title="Цвет уровня"
+        style={{ width: 20, height: 20, borderRadius: '50%', background: tier.color, border: '2px solid rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }} />
+      {colorOpen && (
+        <div style={{ position: 'absolute', top: 34, left: 8, zIndex: 10, display: 'flex', gap: 5, padding: 8, borderRadius: 10, background: '#1a1f2f', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 8px 20px rgba(0,0,0,0.5)' }}>
+          {TIER_PALETTE.map(c => (
+            <button key={c} type="button" onClick={() => { set('color', c); setColorOpen(false) }}
+              style={{ width: 18, height: 18, borderRadius: '50%', background: c, border: c === tier.color ? '2px solid #fff' : '2px solid transparent', cursor: 'pointer', padding: 0 }} />
+          ))}
+        </div>
+      )}
+      <input className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Название уровня" value={tier.label} onChange={e => set('label', e.target.value)} />
+      <input type="number" step="0.1" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Порог" value={tier.value} onChange={e => set('value', e.target.value)} />
+      <input type="number" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Кармики" value={tier.karma} onChange={e => set('karma', e.target.value)} />
+      <input type="number" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Энергия" value={tier.energy} onChange={e => set('energy', e.target.value)} />
+      <button type="button" onClick={onDelete} disabled={!canDelete} title={canDelete ? 'Удалить уровень' : 'Должен остаться хотя бы один уровень'}
+        style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 8, padding: 6, color: canDelete ? '#f87171' : '#555', cursor: canDelete ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <TrashIcon />
+      </button>
+    </div>
+  )
+}
 
 function MasteryAdmin() {
   const { showSuccess, showError } = useFeedback()
@@ -141,11 +189,11 @@ function MasteryAdmin() {
             <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }} title={m.name}>{m.name}</div>
                 <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                {['min', 'mid', 'top', 'ultra'].map(b => <span key={b} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${BAND_COLORS[b]}12`, color: BAND_COLORS[b], border: `1px solid ${BAND_COLORS[b]}33` }}>{BAND_LABELS[b]} {m['thr_' + b]}{m.unit}</span>)}
+                {resolveThresholds(m).map(t => <span key={t.key} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${t.color}12`, color: t.color, border: `1px solid ${t.color}33` }}>{t.label} {t.value}{m.unit}</span>)}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setMaterialsMetric(m)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
@@ -195,8 +243,9 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
 
   useEffect(() => {
     if (open) {
-      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100 }
-        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100 })
+      const hasCustom = Array.isArray(initial?.thresholds) && initial.thresholds.length > 0
+      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null }
+        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null })
       setStep(initial?.kpi_type ? 'form' : 'type')
     }
   }, [open, initial])
@@ -205,12 +254,34 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   const isInverse = form.kpi_type === 'inverse'
   const addParam = () => { if (!newParam.label.trim()) return; const key = slug(newParam.label); if (!pool.find(p => p.key === key)) setPool(p => [...p, { key, label: newParam.label.trim(), unit: newParam.unit || 'шт' }]); setNewParam({ label: '', unit: 'шт' }) }
 
+  const toggleCustom = () => {
+    if (!form.useCustom) {
+      // Включаем «Свои уровни» — если ещё не настраивали, стартуем не с
+      // пустого места, а с конвертации того, что уже введено в стандартном
+      // шаблоне (или значений по умолчанию).
+      setForm({ ...form, useCustom: true, customTiers: form.customTiers || toCustomTiers(form, isInverse) })
+    } else {
+      setForm({ ...form, useCustom: false })
+    }
+  }
+  const updateTier = (i, next) => setForm(f => ({ ...f, customTiers: f.customTiers.map((t, idx) => idx === i ? next : t) }))
+  const deleteTier = i => setForm(f => ({ ...f, customTiers: f.customTiers.filter((_, idx) => idx !== i) }))
+  const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
+
   const submit = () => {
     if (!form.name.trim()) return
     let inputs = [], formula = null
     if (form.kpi_type === 'ratio') { if (!form.num || !form.den) return; inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 } }
     const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
-    onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula }, initial?.id)
+    // Свои уровни — сортируем от мягкого к строгому с учётом направления,
+    // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
+    let thresholds = null
+    if (form.useCustom && form.customTiers?.length) {
+      thresholds = [...form.customTiers]
+        .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
+        .map(t => ({ key: t.key, label: t.label.trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
+    }
+    onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds }, initial?.id)
   }
 
   return (
@@ -237,7 +308,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
             {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
               <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
@@ -247,14 +318,48 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Множитель</label><input type="number" className="input-field" style={{ width: '100%' }} value={form.mult} onChange={e => setForm({ ...form, mult: e.target.value })} /></div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}><input className="input-field" style={{ flex: 1 }} placeholder="Новый параметр" value={newParam.label} onChange={e => setNewParam({ ...newParam, label: e.target.value })} /><button onClick={addParam} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11 }}>+</button></div>
               </>)}
-              {(isInverse ? THRESH_INVERSE : THRESH_NORMAL).map(t => (
-                <div key={t.k}><label style={{ fontSize: 11, color: t.color, display: 'block', marginBottom: 4 }}>{t.label}</label><input type="number" step="0.1" placeholder={t.ph} className="input-field" style={{ width: '100%' }} value={form[t.k]} onChange={e => setForm({ ...form, [t.k]: e.target.value })} /></div>
-              ))}
-              {['karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].map((k, i) => (
-                <div key={k}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кармики · {BAND_LABELS[['min', 'mid', 'top', 'ultra'][i]]}</label><input type="number" className="input-field" style={{ width: '100%' }} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
-              ))}
-              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Описание</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Советы</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.advice} onChange={e => setForm({ ...form, advice: e.target.value })} /></div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Пороги выполнения</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <Seg active={!form.useCustom} onClick={toggleCustom} color="#a0e9ff">Шаблон · 4 уровня</Seg>
+                <Seg active={form.useCustom} onClick={toggleCustom} color="#c084fc">Свои уровни</Seg>
+              </div>
+            </div>
+
+            {!form.useCustom ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                {(isInverse ? THRESH_INVERSE : THRESH_NORMAL).map(t => (
+                  <div key={t.k}><label style={{ fontSize: 11, color: t.color, display: 'block', marginBottom: 4 }}>{t.label}</label><input type="number" step="0.1" placeholder={t.ph} className="input-field" style={{ width: '100%' }} value={form[t.k]} onChange={e => setForm({ ...form, [t.k]: e.target.value })} /></div>
+                ))}
+                {['karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].map((k, i) => (
+                  <div key={k}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кармики · {BAND_LABELS[['min', 'mid', 'top', 'ultra'][i]]}</label><input type="number" className="input-field" style={{ width: '100%' }} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ marginBottom: 16 }}>
+                {isInverse && <div style={{ marginBottom: 10, padding: 10, borderRadius: 10, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 11 }}>Меньше — лучше: у самого строгого уровня должен быть самый маленький порог.</div>}
+                <div style={{ display: 'grid', gridTemplateColumns: '30px 1.4fr 0.8fr 0.7fr 0.7fr 30px', gap: 8, padding: '0 10px', marginBottom: 6 }}>
+                  <span />
+                  <span style={{ fontSize: 10, color: '#666' }}>Название</span>
+                  <span style={{ fontSize: 10, color: '#666' }}>Порог</span>
+                  <span style={{ fontSize: 10, color: '#666' }}>Кармики</span>
+                  <span style={{ fontSize: 10, color: '#666' }}>Энергия</span>
+                  <span />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(form.customTiers || []).map((t, i) => (
+                    <TierRow key={t.key} tier={t} onChange={next => updateTier(i, next)} onDelete={() => deleteTier(i)} canDelete={(form.customTiers || []).length > 1} />
+                  ))}
+                </div>
+                <button type="button" onClick={addTier} style={{ ...ghostBtn, marginTop: 10, fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>+ Добавить уровень</button>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Описание</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Советы</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.advice} onChange={e => setForm({ ...form, advice: e.target.value })} /></div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={onClose} className="btn-outline" style={{ flex: 1 }}>Отмена</button>

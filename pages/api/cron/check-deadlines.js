@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { bandFor, BAND_RANK } from '../../../lib/kpi'
+import { bandFor, bandRankOf } from '../../../lib/kpi'
 
 // РАНЬШЕ: этот хендлер не проверял вообще ничего — vercel.json настраивает
 // только РАСПИСАНИЕ вызова, а сам URL /api/cron/check-deadlines оставался
@@ -99,6 +99,11 @@ export default async function handler(req, res) {
     const { data: emps } = await a.from('profiles').select('user_id')
       .eq('company_id', t.company_id).eq('is_company_admin', false).is('deleted_at', null)
     const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', t.company_id).eq('is_active', true)
+    // Задание может быть привязано к ОДНОМУ конкретному показателю
+    // (t.auto_metric_id + t.auto_target_rank, см. migrations/005) — тогда
+    // условие «выполнить цель Х на уровне Y» проверяем только по нему, а
+    // не по всему набору показателей компании.
+    const targetMetric = t.auto_metric_id ? (metrics || []).find(m => m.id === t.auto_metric_id) : null
     for (const emp of emps || []) {
       const { data: granted } = await a.from('task_auto_grants').select('task_id')
         .eq('task_id', t.id).eq('user_id', emp.user_id).eq('grant_date', today).maybeSingle()
@@ -111,12 +116,31 @@ export default async function handler(req, res) {
         const m = (metrics || []).find(x => x.id === e.metric_id)
         if (m) bandByMetric[e.metric_id] = bandFor(e.value, m)
       })
-      const bands = Object.values(bandByMetric)
-      if (!bands.length) continue
       let ok = false
-      if (t.auto_goal_condition === 'all_min') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.min)
-      if (t.auto_goal_condition === 'all_mid') ok = bands.length === (metrics || []).length && bands.every(b => BAND_RANK[b] >= BAND_RANK.mid)
-      if (t.auto_goal_condition === 'any_one') ok = bands.some(b => BAND_RANK[b] >= BAND_RANK.min)
+      if (targetMetric) {
+        const band = bandByMetric[targetMetric.id]
+        ok = !!band && bandRankOf(targetMetric, band) >= (t.auto_target_rank || 1)
+      } else {
+        // Режимы «все показатели» / «любой один» — сравнение идёт через
+        // bandRankOf конкретного показателя, а не через статический
+        // BAND_RANK, чтобы корректно работать и с кастомными порогами.
+        // Примечание: 'min'/'mid' здесь используются как ключи стандартного
+        // 4-уровневого шаблона — для показателя с полностью кастомными
+        // порогами без уровня с таким ключом bandRankOf(m,'min') вернёт 0,
+        // и условие станет менее строгим. Для точного таргетинга кастомного
+        // показателя используйте привязку к конкретному показателю выше,
+        // это и есть её основное назначение.
+        const bands = Object.values(bandByMetric)
+        if (!bands.length) continue
+        const meetsRank = ([metricId, band], minKey) => {
+          const m = (metrics || []).find(x => x.id === metricId)
+          return m ? bandRankOf(m, band) >= bandRankOf(m, minKey) : false
+        }
+        const entriesArr = Object.entries(bandByMetric)
+        if (t.auto_goal_condition === 'all_min') ok = bands.length === (metrics || []).length && entriesArr.every(e => meetsRank(e, 'min'))
+        if (t.auto_goal_condition === 'all_mid') ok = bands.length === (metrics || []).length && entriesArr.every(e => meetsRank(e, 'mid'))
+        if (t.auto_goal_condition === 'any_one') ok = entriesArr.some(e => meetsRank(e, 'min'))
+      }
       if (!ok) continue
       // Начисляем награду. В task_auto_grants есть unique-индекс на
       // (task_id, user_id, grant_date) — это защищает от дублирования самой

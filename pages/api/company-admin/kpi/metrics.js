@@ -28,6 +28,10 @@ export default async function handler(req, res) {
       thr_min: Number(b.thr_min) || 0, thr_mid: Number(b.thr_mid) || 0, thr_top: Number(b.thr_top) || 0, thr_ultra: Number(b.thr_ultra) || 0,
       energy_min: Number(b.energy_min) || 0, energy_mid: Number(b.energy_mid) || 0, energy_top: Number(b.energy_top) || 0, energy_ultra: Number(b.energy_ultra) || 0,
       karma_min: Number(b.karma_min) || 0, karma_mid: Number(b.karma_mid) || 0, karma_top: Number(b.karma_top) || 0, karma_ultra: Number(b.karma_ultra) || 0,
+      // Гибкие пороги (см. migrations/005) — необязательный массив кастомных
+      // уровней. Если не передан (стандартный шаблон из 4 уровней выше) —
+      // остаётся null, показатель работает по старым 4 столбцам как раньше.
+      thresholds: Array.isArray(b.thresholds) && b.thresholds.length > 0 ? b.thresholds : null,
       description: b.description || null, advice: b.advice || null, inputs: b.inputs || null, formula: b.formula || null, is_active: true
     }).select().single()
     if (error) return res.status(500).json({ error: error.message })
@@ -39,6 +43,7 @@ export default async function handler(req, res) {
     const fields = clean(raw)
     if (fields.name) fields.name = String(fields.name).slice(0, 24)
     ;['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'energy_min', 'energy_mid', 'energy_top', 'energy_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => { if (fields[k] !== undefined) fields[k] = Number(fields[k]) || 0 })
+    if (fields.thresholds !== undefined) fields.thresholds = Array.isArray(fields.thresholds) && fields.thresholds.length > 0 ? fields.thresholds : null
     const { error } = await a.from('kpi_metrics').update(fields).eq('id', id).eq('company_id', companyId)
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json({ success: true })

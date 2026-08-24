@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
+import { resolveThresholds } from '../../lib/kpi'
 import BackArrow from '../../components/BackArrow'
 import DatePicker from '../../components/DatePicker'
 import { withAuth } from '../../components/withAuth'
@@ -25,6 +26,9 @@ const AUTO_LABELS = {
   all_mid: 'Выполнить ВСЕ цели за день не ниже «средн»',
   any_one: 'Выполнить хотя бы одну цель за день',
 }
+const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
+  <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.2s ease' }}>{children}</button>
+)
 
 function TasksPage() {
   const router = useRouter()
@@ -32,6 +36,7 @@ function TasksPage() {
   const [companyId, setCompanyId] = useState(null)
   const [tasks, setTasks] = useState([])
   const [archived, setArchived] = useState([])
+  const [metrics, setMetrics] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('create')
   const [restoreId, setRestoreId] = useState(null)
@@ -41,6 +46,7 @@ function TasksPage() {
     task_type: 'one_time', frequency: 'once', target_role: 'all',
     requires_review: true, requires_proof: false, proof_type: 'any',
     deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 5,
+    auto_mode: 'general', auto_metric_id: '', auto_target_rank: 1,
     image_file: null
   })
   const [creating, setCreating] = useState(false)
@@ -59,18 +65,21 @@ function TasksPage() {
   }, [router])
 
   const loadData = async (cid) => {
-    const [a, b] = await Promise.all([
+    const [a, b, m] = await Promise.all([
       supabase.from('tasks').select('*').eq('company_id', cid).eq('is_active', true).eq('is_archived', false).order('created_at', { ascending: false }),
-      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false })
+      supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false }),
+      supabase.from('kpi_metrics').select('*').eq('company_id', cid).eq('is_active', true).order('name')
     ])
     setTasks(a.data || [])
     setArchived(b.data || [])
+    setMetrics(m.data || [])
   }
 
   const handleCreateTask = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) { showError('Укажите название задания'); return }
     if (!form.reward_karma || form.reward_karma <= 0) { showError('Укажите награду больше 0'); return }
+    if (form.is_auto_goal && form.auto_mode === 'specific' && !form.auto_metric_id) { showError('Выберите показатель для точного авто-задания'); return }
     setCreating(true)
     let imageUrl = null
     if (form.image_file) {
@@ -87,8 +96,10 @@ function TasksPage() {
       requires_review: form.is_auto_goal ? false : form.requires_review,
       requires_proof: form.requires_proof, proof_type: form.requires_proof ? form.proof_type : null,
       deadline_at: deadlineAt, is_active: true,
-      is_auto_goal: form.is_auto_goal, auto_goal_condition: form.is_auto_goal ? form.auto_goal_condition : null,
+      is_auto_goal: form.is_auto_goal, auto_goal_condition: form.is_auto_goal && form.auto_mode === 'general' ? form.auto_goal_condition : null,
       auto_energy: form.is_auto_goal ? form.auto_energy : 0,
+      auto_metric_id: form.is_auto_goal && form.auto_mode === 'specific' && form.auto_metric_id ? form.auto_metric_id : null,
+      auto_target_rank: form.is_auto_goal && form.auto_mode === 'specific' ? form.auto_target_rank : null,
       image_url: imageUrl
     }).select().single()
     if (error) { showError('Ошибка создания: ' + error.message); setCreating(false); return }
@@ -178,15 +189,46 @@ function TasksPage() {
                     Авто-зачёт по целям (система проверяет сама)
                   </label>
                   {form.is_auto_goal && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
-                      <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
-                        {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                      </select>
-                      <div>
-                        <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
-                        <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                    <>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <Seg active={form.auto_mode === 'general'} onClick={() => setForm({ ...form, auto_mode: 'general' })} color="#c084fc">По всем целям</Seg>
+                        <Seg active={form.auto_mode === 'specific'} onClick={() => setForm({ ...form, auto_mode: 'specific' })} color="#c084fc">По одной цели</Seg>
                       </div>
-                    </div>
+                      {form.auto_mode === 'general' ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+                          <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
+                            {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                          </select>
+                          <div>
+                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
+                            <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr', gap: 12 }}>
+                          <div>
+                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Показатель</label>
+                            <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id} onChange={e => setForm({ ...form, auto_metric_id: e.target.value, auto_target_rank: 1 })}>
+                              <option value="">Выберите показатель…</option>
+                              {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Уровень (не ниже)</label>
+                            <select className="input-field" style={{ width: '100%' }} value={form.auto_target_rank} onChange={e => setForm({ ...form, auto_target_rank: parseInt(e.target.value) })} disabled={!form.auto_metric_id}>
+                              {form.auto_metric_id && resolveThresholds(metrics.find(m => m.id === form.auto_metric_id) || {}).map((t, i) => (
+                                <option key={t.key} value={i + 1}>{t.label} ({t.value}{metrics.find(m => m.id === form.auto_metric_id)?.unit})</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
+                            <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                          </div>
+                          {metrics.length === 0 && <p style={{ gridColumn: 'span 3', fontSize: 11, color: '#f87171', margin: 0 }}>В компании пока нет ни одного показателя — сначала создайте его в «Управлении целями».</p>}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -227,7 +269,11 @@ function TasksPage() {
                   <span style={{ color: '#FFD700', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
-                  {t.is_auto_goal ? `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}` : (t.description?.slice(0, 70) || 'Без описания')}
+                  {t.is_auto_goal
+                    ? (t.auto_metric_id
+                        ? `Авто: «${metrics.find(m => m.id === t.auto_metric_id)?.name || '?'}» — уровень ${t.auto_target_rank || 1}+`
+                        : `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}`)
+                    : (t.description?.slice(0, 70) || 'Без описания')}
                 </div>
                 {t.deadline_at && <div style={{ fontSize: 11, color: '#a0e9ff', marginTop: 6 }}>Дедлайн: {new Date(t.deadline_at).toLocaleDateString('ru')}</div>}
                 <div style={{ marginTop: 12 }}>
