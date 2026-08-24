@@ -68,7 +68,7 @@ export default function SuccessBurst({ show, message = 'Готово', onClose }
         <p
           className="mt-4 text-lg font-bold"
           style={{
-            background: 'linear-gradient(135deg, #f97316, #c084fc)',
+            background: 'linear-gradient(135deg, #FFD700, #a0e9ff, #c084fc)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', letterSpacing: 0.5,
           }}
         >

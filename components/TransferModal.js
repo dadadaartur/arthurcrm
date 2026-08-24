@@ -114,18 +114,18 @@ export default function TransferModal({ isOpen, onClose }) {
           overflow-y: auto;
           padding-right: 4px;
           scrollbar-width: thin;
-          scrollbar-color: rgba(249,115,22,0.4) transparent;
+          scrollbar-color: rgba(255,215,0,0.35) transparent;
         }
         .tm-colleagues-scroll::-webkit-scrollbar { width: 8px; }
         .tm-colleagues-scroll::-webkit-scrollbar-track { background: transparent; }
         .tm-colleagues-scroll::-webkit-scrollbar-thumb {
-          background: rgba(249,115,22,0.4);
+          background: rgba(255,215,0,0.35);
           border-radius: 10px;
           border: 2px solid transparent;
           background-clip: padding-box;
         }
         .tm-colleagues-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(249,115,22,0.65);
+          background: rgba(255,215,0,0.55);
           background-clip: padding-box;
         }
       `}</style>
@@ -139,7 +139,7 @@ export default function TransferModal({ isOpen, onClose }) {
           <h3
             className="text-xl font-bold"
             style={{
-              background: 'linear-gradient(135deg, #f97316, #c084fc)',
+              background: 'linear-gradient(135deg, #FFD700, #a0e9ff, #c084fc)',
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               color: 'transparent',
@@ -147,7 +147,9 @@ export default function TransferModal({ isOpen, onClose }) {
           >
             Перевести кармики
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
         </div>
 
         <label className="text-xs text-gray-400 mb-1 block">Найдите коллегу по имени</label>
@@ -175,7 +177,7 @@ export default function TransferModal({ isOpen, onClose }) {
               style={{
                 border: selected?.user_id === p.user_id
                   ? '1px solid rgba(212,175,55,.6)'
-                  : '1px solid rgba(249,115,22,.25)',
+                  : '1px solid rgba(255,215,0,.25)',
                 background: selected?.user_id === p.user_id
                   ? 'rgba(212,175,55,.08)'
                   : 'rgba(15,31,53,.6)',

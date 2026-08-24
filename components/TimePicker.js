@@ -59,9 +59,9 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
       onClick={onClick}
       className="rounded-lg text-xs py-1.5 transition-all duration-150"
       style={{
-        background: active ? 'linear-gradient(135deg, #f97316, #D4AF37)' : 'rgba(15,31,53,.6)',
+        background: active ? 'linear-gradient(135deg, #FFD700, #c084fc)' : 'rgba(15,31,53,.6)',
         color: active ? '#fff' : '#eaf0fb',
-        border: '1px solid rgba(249,115,22,.25)',
+        border: '1px solid rgba(255,215,0,.25)',
         fontWeight: active ? 700 : 400,
         boxShadow: active ? '0 0 10px rgba(212,175,55,.5)' : 'none',
       }}
@@ -83,7 +83,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
         {/* Тонкие золотые часы */}
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
           <circle cx="8" cy="8" r="6.5" stroke="#D4AF37" strokeWidth="1.2" />
-          <path d="M8 4.5V8l2.3 1.6" stroke="#f97316" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M8 4.5V8l2.3 1.6" stroke="#a0e9ff" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       </button>
 
@@ -94,7 +94,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
             position: 'fixed', top: pos.top, left: pos.left, zIndex: 2000, width: 300,
             background: 'linear-gradient(145deg, #152238 0%, #0a1628 100%)',
             border: '1px solid rgba(212,175,55,.35)', borderRadius: 20,
-            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(249,115,22,.15)', padding: 16,
+            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(255,215,0,.15)', padding: 16,
           }}
         >
           <div className="text-xs text-gray-400 mb-2">Часы</div>

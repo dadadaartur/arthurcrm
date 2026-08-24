@@ -95,7 +95,7 @@ function NotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #f97316)', color: '#0a1628', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(255,215,0,.7)' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #c084fc)', color: '#0a1628', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(255,215,0,.7)' }}>{unread}</span>
         )}
       </button>
       {open && createPortal(
@@ -129,7 +129,6 @@ function NotificationBell() {
 export default function Layout({ children }) {
   const { user, profile, loading } = useProfile()
   const [companyName, setCompanyName] = useState('')
-  const [crmUrl, setCrmUrl] = useState('#')
   const [isPlatformStaff, setIsPlatformStaff] = useState(false)
   useEffect(() => {
     if (user) {
@@ -139,19 +138,6 @@ export default function Layout({ children }) {
           .then(r => r.json())
           .then(d => setIsPlatformStaff(!!d.isPlatformStaff))
           .catch(() => {})
-      })
-      supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (!session?.access_token || !session?.refresh_token) return
-        try {
-          const res = await fetch('/api/crm-handoff/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-            body: JSON.stringify({ accessToken: session.access_token, refreshToken: session.refresh_token })
-          })
-          if (!res.ok) return
-          const { code } = await res.json()
-          setCrmUrl(`https://summercrm-git-main-dadadaarturs-projects.vercel.app/?handoff=${encodeURIComponent(code)}`)
-        } catch (e) {}
       })
     }
     if (profile?.company_id && !companyName) {
@@ -234,16 +220,11 @@ export default function Layout({ children }) {
       <StarsBackground />
       <header className="flex justify-between items-center px-6 py-2 relative z-10">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-base font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">
+          <Link href="/" className="brand-title text-base font-bold">
             Кармический банк
           </Link>
           <nav className="flex gap-2 text-xs font-medium">
-            <Link href="/path-to-perfection" className="action-btn !py-1.5 !px-4 !text-xs">Путь к совершенству</Link>
-            <Link href="/healthcare" className="action-btn !py-1.5 !px-4 !text-xs">Забота о здоровье</Link>
             <Link href="/goals" className="action-btn !py-1.5 !px-4 !text-xs">Мои цели</Link>
-            <a href={crmUrl} target="_blank" rel="noopener noreferrer" className="action-btn !py-1.5 !px-4 !text-xs">
-              CRM Лето
-            </a>
             {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
             {isPlatformStaff && (
               <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">Модерация площадки</Link>

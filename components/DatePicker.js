@@ -123,7 +123,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
           <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#D4AF37" strokeWidth="1.2" />
           <path d="M1.5 6h13" stroke="#D4AF37" strokeWidth="1.2" />
           <path d="M5 1v3M11 1v3" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-          <circle cx="5.5" cy="9.5" r="1" fill="#f97316" />
+          <circle cx="5.5" cy="9.5" r="1" fill="#a0e9ff" />
           <circle cx="8.5" cy="9.5" r="1" fill="#c084fc" />
         </svg>
       </button>
@@ -141,7 +141,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
             background: 'linear-gradient(145deg, #152238 0%, #0a1628 100%)',
             border: '1px solid rgba(212,175,55,.35)',
             borderRadius: 20,
-            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(249,115,22,.15)',
+            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(255,215,0,.15)',
             padding: 16,
           }}
         >
@@ -157,7 +157,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
               onClick={() => setView(view === 'days' ? 'years' : 'days')}
               className="text-sm font-semibold transition-opacity hover:opacity-75"
               style={{
-                background: 'linear-gradient(135deg, #f97316, #c084fc)',
+                background: 'linear-gradient(135deg, #FFD700, #a0e9ff, #c084fc)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}
             >
@@ -190,7 +190,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                       onClick={() => pickDay(d.iso)}
                       className="w-9 h-9 mx-auto rounded-full text-xs flex items-center justify-center transition-all duration-150 hover:bg-white/10"
                       style={{
-                        background: isSelected ? 'linear-gradient(135deg, #f97316, #D4AF37)' : undefined,
+                        background: isSelected ? 'linear-gradient(135deg, #FFD700, #c084fc)' : undefined,
                         color: isSelected ? '#fff' : d.inMonth ? '#eaf0fb' : 'rgba(234,240,251,.25)',
                         boxShadow: isSelected ? '0 0 12px rgba(212,175,55,.55)' : 'none',
                         border: isToday && !isSelected ? '1px solid rgba(212,175,55,.55)' : '1px solid transparent',
@@ -214,9 +214,9 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                     onClick={() => pickYear(y)}
                     className="py-2.5 rounded-xl text-xs transition-all duration-150 hover:bg-white/10"
                     style={{
-                      background: isSelected ? 'linear-gradient(135deg, #f97316, #D4AF37)' : 'rgba(15,31,53,.6)',
+                      background: isSelected ? 'linear-gradient(135deg, #FFD700, #c084fc)' : 'rgba(15,31,53,.6)',
                       color: isSelected ? '#fff' : '#eaf0fb',
-                      border: '1px solid rgba(249,115,22,.25)',
+                      border: '1px solid rgba(255,215,0,.25)',
                       fontWeight: isSelected ? 700 : 400,
                     }}
                   >

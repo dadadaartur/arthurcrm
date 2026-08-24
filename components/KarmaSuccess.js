@@ -119,7 +119,7 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
           border: '1px solid rgba(212,175,55,.35)',
           borderRadius: 28,
           padding: '40px 52px 34px',
-          boxShadow: '0 0 60px rgba(249,115,22,.25), 0 0 120px rgba(192,132,252,.12)',
+          boxShadow: '0 0 60px rgba(255,215,0,.25), 0 0 120px rgba(192,132,252,.12)',
         }}
       >
         <div className="relative mx-auto" style={{ width: 220, height: 220 }}>
@@ -223,7 +223,7 @@ export default function KarmaSuccess({ show, amount, recipientName, onClose }) {
           className="mt-2 font-bold"
           style={{
             fontSize: 22,
-            background: 'linear-gradient(135deg, #f97316, #c084fc)',
+            background: 'linear-gradient(135deg, #FFD700, #a0e9ff, #c084fc)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             color: 'transparent',

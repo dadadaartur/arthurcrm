@@ -93,7 +93,7 @@ export default function DateRangePicker({ from, to, onChange }) {
         className="flex items-center gap-2 transition-all"
         style={{
           background: '#0f1f35',
-          border: `1px solid ${open ? 'rgba(212,175,55,.7)' : 'rgba(249,115,22,.4)'}`,
+          border: `1px solid ${open ? 'rgba(212,175,55,.7)' : 'rgba(255,215,0,.4)'}`,
           borderRadius: 50,
           padding: '8px 18px',
           fontSize: 13,
@@ -106,7 +106,7 @@ export default function DateRangePicker({ from, to, onChange }) {
           <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#D4AF37" strokeWidth="1.2" />
           <path d="M1.5 6h13" stroke="#D4AF37" strokeWidth="1.2" />
           <path d="M5 1v3M11 1v3" stroke="#D4AF37" strokeWidth="1.2" strokeLinecap="round" />
-          <circle cx="5.5" cy="9.5" r="1" fill="#f97316" />
+          <circle cx="5.5" cy="9.5" r="1" fill="#a0e9ff" />
           <circle cx="8.5" cy="9.5" r="1" fill="#c084fc" />
         </svg>
         {label}
@@ -126,14 +126,14 @@ export default function DateRangePicker({ from, to, onChange }) {
             background: 'linear-gradient(145deg, #152238 0%, #0a1628 100%)',
             border: '1px solid rgba(212,175,55,.35)',
             borderRadius: 20,
-            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(249,115,22,.15)',
+            boxShadow: '0 12px 50px rgba(0,0,0,.6), 0 0 30px rgba(255,215,0,.15)',
             padding: 18,
             gap: 18,
           }}
         >
           {/* Пресеты */}
           <div className="flex sm:flex-col flex-wrap gap-1.5 sm:border-r sm:pr-4"
-            style={{ borderColor: 'rgba(249,115,22,.2)' }}>
+            style={{ borderColor: 'rgba(255,215,0,.2)' }}>
             {presets.map(p => (
               <button
                 key={p.label}
@@ -141,10 +141,10 @@ export default function DateRangePicker({ from, to, onChange }) {
                 className="text-left text-xs px-3 py-1.5 rounded-full transition-all hover:text-white"
                 style={{
                   color: '#9aa9c1',
-                  border: '1px solid rgba(249,115,22,.25)',
+                  border: '1px solid rgba(255,215,0,.25)',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,175,55,.6)'; e.currentTarget.style.color = '#FFD700' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(249,115,22,.25)'; e.currentTarget.style.color = '#9aa9c1' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,.25)'; e.currentTarget.style.color = '#9aa9c1' }}
               >
                 {p.label}
               </button>
@@ -161,7 +161,7 @@ export default function DateRangePicker({ from, to, onChange }) {
               </button>
               <div className="text-sm font-semibold"
                 style={{
-                  background: 'linear-gradient(135deg, #f97316, #c084fc)',
+                  background: 'linear-gradient(135deg, #FFD700, #a0e9ff, #c084fc)',
                   WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
                 }}>
                 {MONTHS[view.m]} {view.y}
@@ -193,7 +193,7 @@ export default function DateRangePicker({ from, to, onChange }) {
                     className="w-9 h-9 rounded-full text-xs flex items-center justify-center transition-all duration-150 hover:bg-white/10"
                     style={{
                       background: isSelected
-                        ? 'linear-gradient(135deg, #f97316, #D4AF37)'
+                        ? 'linear-gradient(135deg, #FFD700, #c084fc)'
                         : inRange ? 'rgba(192,132,252,.18)' : undefined,
                       color: isSelected ? '#fff' : d.inMonth ? '#eaf0fb' : 'rgba(234,240,251,.25)',
                       boxShadow: isSelected ? '0 0 12px rgba(212,175,55,.55)' : 'none',

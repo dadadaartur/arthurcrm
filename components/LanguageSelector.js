@@ -29,7 +29,13 @@ export default function LanguageSelector() {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {lang === 'ru' ? '🇦🇲 Հայերեն' : '🇷🇺 Русский'}
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        minWidth: 20, height: 16, padding: '0 4px', marginRight: 6,
+        borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: 0.3,
+        background: 'rgba(255,215,0,0.15)', color: '#FFD700', verticalAlign: 'middle'
+      }}>{lang === 'ru' ? 'AM' : 'RU'}</span>
+      {lang === 'ru' ? 'Հայերեն' : 'Русский'}
     </button>
   )
 }
