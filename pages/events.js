@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useFeedback } from '../context/ActionFeedbackContext'
+import BackArrow from '../components/BackArrow'
 
 export default function Events() {
+  const { showError } = useFeedback()
   const [user, setUser] = useState(null)
   const [events, setEvents] = useState([])
   const [description, setDescription] = useState('')
@@ -46,13 +49,13 @@ export default function Events() {
       setIsSignificant(false)
       fetchEvents(user.id)
     } else {
-      alert('Ошибка создания события')
+      showError('Ошибка создания события')
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-deep-blue mb-6">Журнал событий</h1>
+      <BackArrow href="/" title="Журнал событий" />
 
       <div className="premium-card mb-8">
         <h2 className="text-xl font-semibold mb-4">Зафиксировать новое событие</h2>

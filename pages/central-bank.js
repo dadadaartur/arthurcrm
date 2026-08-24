@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
 
 export default function CentralBank() {
   const [access, setAccess] = useState('checking')
@@ -66,7 +66,7 @@ export default function CentralBank() {
     setEmittingId(null)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   if (access === 'denied') {
     return (

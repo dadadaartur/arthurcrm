@@ -60,7 +60,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-4">Вход в Кармический банк</h1>
+        <h1 className="text-2xl font-bold text-white mb-4">Вход в Кармический банк</h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />

@@ -1,14 +1,17 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 import PremiumModal from '../../components/PremiumModal'
+import BackArrow from '../../components/BackArrow'
+import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const PROOF_LABELS = { photo: 'фотографию', video: 'видео', any: 'файл' }
 const PROOF_ACCEPT = { photo: 'image/*', video: 'video/*', any: 'image/*,video/*,application/pdf' }
 
 export default function TaskDetail() {
   const router = useRouter()
+  const { showError } = useFeedback()
   const { id } = router.query
   const [user, setUser] = useState(null)
   const [assignment, setAssignment] = useState(null)
@@ -78,7 +81,7 @@ export default function TaskDetail() {
     if (!assignment || !user) return
     const requiresProof = assignment.tasks?.requires_proof
     if (requiresProof && proofFiles.length === 0) {
-      alert(`Загрузите ${PROOF_LABELS[assignment.tasks?.proof_type || 'any']} перед отправкой`)
+      showError(`Загрузите ${PROOF_LABELS[assignment.tasks?.proof_type || 'any']} перед отправкой`)
       return
     }
     setSubmitting(true)
@@ -99,24 +102,28 @@ export default function TaskDetail() {
         setProofFiles([])
         setAssignment({ ...assignment, status: 'pending_review', proof_urls: urls })
       } else {
-        alert('Ошибка отправки: ' + error.message)
+        showError('Ошибка отправки: ' + error.message)
       }
     } catch (e) {
-      alert(e.message)
+      showError(e.message)
     }
     setSubmitting(false)
   }
 
-  if (loading || !assignment) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading || !assignment) return <LoadingScreen />
   const t = assignment.tasks
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <button onClick={() => router.push('/tasks')} className="text-gray-400 hover:text-white mb-6 text-sm">← Назад к заданиям</button>
+      <BackArrow href="/tasks" title="Задание" />
 
       <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139,92,246,0.3)' }}>
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-3xl">{t.icon || '📋'}</span>
+          {t.icon ? <span className="text-3xl">{t.icon}</span> : (
+            <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
+            </span>
+          )}
           <h1 className="text-2xl font-bold text-white">{t.title}</h1>
         </div>
 
@@ -138,7 +145,7 @@ export default function TaskDetail() {
         {/* Значок "нужно медиа" */}
         {t.requires_proof && (
           <div className="mb-4 px-4 py-2 rounded-xl text-sm flex items-center gap-2"
-            style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316' }}>
+            style={{ background: 'rgba(160,233,255,0.08)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff' }}>
             Для выполнения нужно загрузить {PROOF_LABELS[t.proof_type || 'any']}
           </div>
         )}
@@ -176,7 +183,9 @@ export default function TaskDetail() {
                       ? <img src={url} alt="" className="w-20 h-20 object-cover" />
                       : <div className="w-20 h-20 flex items-center justify-center text-2xl"
                           style={{ background: 'rgba(255,255,255,0.05)' }}>
-                          {isVideo ? '🎬' : '📎'}
+                          {isVideo
+                            ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>
+                            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
                         </div>
                     }
                   </a>
@@ -202,7 +211,12 @@ export default function TaskDetail() {
 
         {(assignment.status === 'completed' || assignment.status === 'rejected') && (
           <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-            {assignment.status === 'completed' ? '✅ Задание выполнено' : '❌ Задание отклонено'}
+            <div className="flex items-center justify-center gap-2">
+              {assignment.status === 'completed'
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>}
+              <span>{assignment.status === 'completed' ? 'Задание выполнено' : 'Задание отклонено'}</span>
+            </div>
             {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
           </div>
         )}
@@ -222,7 +236,7 @@ export default function TaskDetail() {
             <div>
               <p className="text-sm text-gray-400 mb-2">
                 Прикрепите {PROOF_LABELS[t.proof_type || 'any']}
-                <span className="text-orange-400 ml-1">*</span>
+                <span className="text-red-400 ml-1">*</span>
               </p>
 
               <div className="space-y-2">
@@ -235,8 +249,8 @@ export default function TaskDetail() {
                       {isImage && (
                         <img src={URL.createObjectURL(f)} alt="" className="w-12 h-12 object-cover rounded" />
                       )}
-                      {isVideo && <span className="text-2xl">🎬</span>}
-                      {!isImage && !isVideo && <span className="text-2xl">📎</span>}
+                      {isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>}
+                      {!isImage && !isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white truncate">{f.name}</p>
                         <p className="text-xs text-gray-500">{(f.size / 1024 / 1024).toFixed(1)} МБ</p>
@@ -253,12 +267,12 @@ export default function TaskDetail() {
 
               <button onClick={() => fileRef.current?.click()}
                 className="mt-2 w-full py-2 rounded-xl text-sm text-gray-300 transition-all"
-                style={{ border: '1px dashed rgba(249,115,22,0.4)', background: 'rgba(249,115,22,0.06)' }}>
+                style={{ border: '1px dashed rgba(255,215,0,0.4)', background: 'rgba(255,215,0,0.06)' }}>
                 + Добавить {PROOF_LABELS[t.proof_type || 'any']}
               </button>
 
               {uploadProgress && (
-                <p className="text-sm text-orange-400 text-center">{uploadProgress}</p>
+                <p className="text-sm text-[#a0e9ff] text-center">{uploadProgress}</p>
               )}
             </div>
           )}

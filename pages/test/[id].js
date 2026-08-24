@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
@@ -64,13 +64,13 @@ export default function TestTake() {
     } else showError(d.error || 'Ошибка отправки')
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <BackArrow href="/goals" title={result ? 'Результат' : test?.title || 'Тест'} extra={
           !result && <div style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 700, color: seconds < 60 ? '#f87171' : '#a0e9ff', fontVariantNumeric: 'tabular-nums' }}>{mm}:{ss}</div>

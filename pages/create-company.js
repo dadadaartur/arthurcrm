@@ -123,7 +123,7 @@ export default function CreateCompany() {
     return (
       <div className="max-w-md mx-auto px-4 py-12">
         <div className="premium-card text-center">
-          <h1 className="text-2xl font-bold text-deep-blue mb-4">Почти готово</h1>
+          <h1 className="text-2xl font-bold text-white mb-4">Почти готово</h1>
           <p className="text-gray-400 mb-2">
             Мы отправили письмо для подтверждения на <b>{form.email.trim().toLowerCase()}</b>.
           </p>
@@ -140,7 +140,7 @@ export default function CreateCompany() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-2">Регистрация компании</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">Регистрация компании</h1>
         <p className="text-sm text-gray-400 mb-4">
           Эта форма — для руководителя, который заводит компанию с нуля.
           Если вас пригласили как сотрудника — используйте ссылку из письма-приглашения, а не эту форму.

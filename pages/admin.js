@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
 import PremiumModal from '../components/PremiumModal'
+import BackArrow from '../components/BackArrow'
 
 const COLORS = {
   red: { label: 'Срочный фикс', bg: 'rgba(239, 68, 68, 0.85)', border: 'rgba(239, 68, 68, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(239, 68, 68, 0.5)' },
@@ -120,10 +121,11 @@ export default function Admin() {
 
   // ... (остальные функции для компаний, сотрудников, модалок – оставляем без изменений)
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      <BackArrow href="/" title="Админ" />
       {/* Вкладки */}
       <div className="flex gap-4 mb-8">
         <button onClick={() => setTab('backlog')} className={`filter-pill ${tab === 'backlog' ? 'active' : ''}`}>
@@ -164,10 +166,9 @@ export default function Admin() {
                 <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Опишите задачу или идею..." className="input-field" rows={3} required />
                 <div className="flex gap-3 items-center">
                   <select value={color} onChange={e => setColor(e.target.value)} className="input-field w-auto">
-                    <option value="red">🔴 Срочный фикс</option>
-                    <option value="yellow">🟡 Срочно, но есть время</option>
-                    <option value="green">🟢 Идея на будущее</option>
-                    <option value="blue">🔵 Путь проекта</option>
+                    {Object.entries(COLORS).map(([key, c]) => (
+                      <option key={key} value={key} style={{ color: c.border }}>● {c.label}</option>
+                    ))}
                   </select>
                   <button type="submit" className="btn-gold">Создать</button>
                 </div>

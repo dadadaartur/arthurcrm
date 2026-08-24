@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
+import LoadingScreen from '../components/LoadingScreen'
 import { supabase } from '../lib/supabaseClient'
+import { useFeedback } from '../context/ActionFeedbackContext'
+import BackArrow from '../components/BackArrow'
 
 export default function Confirm() {
+  const { showError } = useFeedback()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [pendingEvents, setPendingEvents] = useState([])
@@ -48,16 +52,16 @@ export default function Confirm() {
     if (!error) {
       fetchPending(profile.company_id)
     } else {
-      alert('Ошибка: недостаточно прав или событие уже обработано')
+      showError('Ошибка: недостаточно прав или событие уже обработано')
     }
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><div className="spinner" /></div>
+  if (loading) return <LoadingScreen />
 
   if (!profile || ![1,2,4].includes(profile.role_id)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-deep-blue mb-6">Подтверждение событий</h1>
+        <BackArrow href="/" title="Подтверждение событий" />
         <p className="text-gray-400">У вас нет прав для подтверждения событий.</p>
       </div>
     )
@@ -65,7 +69,7 @@ export default function Confirm() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-deep-blue mb-6">Подтверждение значимых событий</h1>
+      <BackArrow href="/" title="Подтверждение значимых событий" />
       {pendingEvents.length === 0 ? (
         <p className="text-gray-500">Нет событий, ожидающих подтверждения</p>
       ) : (

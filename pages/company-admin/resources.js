@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
 import DateRangePicker from '../../components/DateRangePicker'
 import { withAuth } from '../../components/withAuth'
@@ -167,7 +167,7 @@ function CompanyResources() {
     setProcessing(false)
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
   if (error) return <div style={{ padding: '40px 32px', color: '#f87171' }}>{error}</div>
 
   const filteredEmployees = (employees || []).filter(e => !employeeSearch || e.name.toLowerCase().includes(employeeSearch.toLowerCase()))
@@ -180,7 +180,7 @@ function CompanyResources() {
   const topupRub = Math.round((topupKarma / TOPUP_RATE.karma) * TOPUP_RATE.rub)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление ресурсами" extra={
           <button onClick={() => setShowHistoryModal(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}

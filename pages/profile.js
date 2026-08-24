@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
+import BackArrow from '../components/BackArrow'
 
 export default function Profile() {
   const router = useRouter()
@@ -131,7 +132,7 @@ export default function Profile() {
     setSaving(false)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   const initials = profile?.first_name && profile?.last_name
     ? (profile.first_name[0] + profile.last_name[0]).toUpperCase()
@@ -139,58 +140,101 @@ export default function Profile() {
       ? profile.display_name.substring(0, 2).toUpperCase()
       : user?.email?.substring(0, 2).toUpperCase() || '?'
 
+  const sectionStyle = {
+    background: 'rgba(15,20,35,0.75)',
+    backdropFilter: 'blur(14px)',
+    WebkitBackdropFilter: 'blur(14px)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+  }
+  const sectionTitleStyle = { fontSize: 13, fontWeight: 600, color: '#a0e9ff', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 18 }
+  const fieldLabelStyle = { fontSize: 12, color: '#8a94a8', display: 'block', marginBottom: 6 }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold text-white mb-8">Мой профиль</h1>
+      <BackArrow href="/" title="Мой профиль" />
 
       {message.text && (
-        <div className={`mb-4 p-3 rounded-lg ${message.type === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+        <div
+          className="mb-6"
+          style={{
+            padding: '12px 16px',
+            borderRadius: 14,
+            background: message.type === 'success' ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)',
+            border: `1px solid ${message.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
+            color: message.type === 'success' ? '#4ade80' : '#f87171',
+            fontSize: 14,
+          }}
+        >
           {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-800">
-            {form.preview_url ? (
-              <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-semibold">{initials}</div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" id="avatar-upload" />
-            <label htmlFor="avatar-upload" className="action-btn text-xs px-4 py-2 cursor-pointer text-center">
-              Загрузить фото
-            </label>
-            {profile?.avatar_url && (
-              <button type="button" onClick={handleRemoveAvatar} className="text-xs text-red-400 hover:text-red-300 transition-colors">
-                Удалить фото
-              </button>
-            )}
+      <form onSubmit={handleSubmit}>
+        {/* Аватар */}
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>Фото профиля</div>
+          <div className="flex items-center gap-5">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0" style={{ border: '1px solid rgba(255,215,0,0.3)', background: 'rgba(255,255,255,0.05)' }}>
+              {form.preview_url ? (
+                <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl font-semibold">{initials}</div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 items-start">
+              <input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" id="avatar-upload" />
+              <label htmlFor="avatar-upload" className="file-upload-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                Загрузить фото
+              </label>
+              {profile?.avatar_url && (
+                <button type="button" onClick={handleRemoveAvatar} className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                  Удалить фото
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Остальные поля без изменений */}
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm text-gray-400">Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
-          <div><label className="text-sm text-gray-400">Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
+        {/* Контакты */}
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>Контакты</div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div><label style={fieldLabelStyle}>Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+            <div><label style={fieldLabelStyle}>Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
+          </div>
+          <div><label style={fieldLabelStyle}>Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+7 ___ ___-__-__" /></div>
         </div>
-        <div><label className="text-sm text-gray-400">Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-        <div><label className="text-sm text-gray-400">Дата трудоустройства</label><input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} /></div>
-        <div><label className="text-sm text-gray-400">Отдел</label>
-          <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
-            <option value="">Не выбран</option>
-            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-sm text-gray-400">Должность</label>
-          <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
-            <option value="">Не выбрана</option>
-            {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
-          {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1">Должность может изменить только администратор</p>}
+
+        {/* Рабочая информация */}
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>Рабочая информация</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label style={fieldLabelStyle}>Дата трудоустройства</label>
+              <input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} />
+            </div>
+            <div>
+              <label style={fieldLabelStyle}>Отдел</label>
+              <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                <option value="">Не выбран</option>
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label style={fieldLabelStyle}>Должность</label>
+              <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
+                <option value="">Не выбрана</option>
+                {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+              </select>
+              {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1.5">Должность может изменить только администратор</p>}
+            </div>
+          </div>
         </div>
 
         <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>

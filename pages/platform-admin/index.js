@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
+import { useFeedback } from '../../context/ActionFeedbackContext'
+import BackArrow from '../../components/BackArrow'
 
 const STATUS_LABELS = {
   pending: { label: 'На модерации', color: '#eab308' },
@@ -10,6 +13,7 @@ const STATUS_LABELS = {
 }
 
 export default function PlatformAdmin() {
+  const { showError } = useFeedback()
   const [access, setAccess] = useState('checking') // checking | denied | granted
   const [me, setMe] = useState(null)
   const [companies, setCompanies] = useState([])
@@ -88,7 +92,7 @@ export default function PlatformAdmin() {
       body: JSON.stringify({ email: newModEmail, displayName: newModName, permissions })
     })
     const result = await res.json()
-    if (!res.ok) { alert(result.error); return }
+    if (!res.ok) { showError(result.error || 'Ошибка добавления модератора'); return }
     setNewModEmail(''); setNewModName(''); setNewModPerms({ approve_companies: false, suspend_companies: false, moderate_content: false })
     loadModerators()
   }
@@ -108,7 +112,7 @@ export default function PlatformAdmin() {
   }, [tab, me])
 
   if (access === 'checking') {
-    return <div className="flex justify-center items-center py-8"><Spinner /></div>
+    return <LoadingScreen />
   }
 
   if (access === 'denied') {
@@ -124,10 +128,9 @@ export default function PlatformAdmin() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-2" style={{ color: '#d4af37' }}>Кабинет модератора площадки</h1>
-      <p className="text-sm text-gray-400 mb-8">
-        {me?.isSuperAdmin ? 'Супер-админ' : `Модератор · права: ${me?.permissions?.join(', ') || '—'}`}
-      </p>
+      <BackArrow href="/" title="Кабинет модератора площадки" extra={
+        <span className="text-sm text-gray-400">{me?.isSuperAdmin ? 'Супер-админ' : `Модератор · права: ${me?.permissions?.join(', ') || '—'}`}</span>
+      } />
 
       <div className="flex gap-4 mb-6 border-b border-gray-700">
         <button

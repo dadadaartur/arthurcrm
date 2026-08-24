@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
 import BackArrow from '../components/BackArrow'
 import ProgressBar3D from '../components/ProgressBar3D'
 import { useFeedback } from '../context/ActionFeedbackContext'
@@ -50,13 +50,13 @@ export default function MyOnboarding() {
     setEvents(evs || [])
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   const done = events.filter(e => e.status === 'done').length
   const days = [...new Set(events.map(e => e.day_number))].sort((a, b) => a - b)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <BackArrow href="/" title="Моя адаптация" />
 

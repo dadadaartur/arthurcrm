@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
+import BackArrow from '../../components/BackArrow'
 import { withAuth } from '../../components/withAuth'
 
 function OnboardingAdmin() {
@@ -92,19 +92,11 @@ function OnboardingAdmin() {
     notify('План адаптации назначен. Задания первого шага выданы сотруднику.')
   }
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner size={52} /></div>
+  if (loading) return <LoadingScreen size={52} />
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/company-admin" className="group flex items-center text-gray-400 hover:text-white transition-colors">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="transition-transform group-hover:-translate-x-1">
-            <circle cx="14" cy="14" r="13" stroke="rgba(249,115,22,.4)" strokeWidth="0.8" />
-            <path d="M17 8l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <h1 className="text-2xl font-bold" style={{ color: '#d4af37' }}>Планы адаптации</h1>
-      </div>
+      <BackArrow href="/company-admin" title="Планы адаптации" />
 
       {/* Создание плана */}
       <div className="premium-card mb-6">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 
 const TYPE_LABELS = {
   emission: 'Эмиссия', topup: 'Оплата (ЮKassa)', utilization: 'Списание (магазин)',
@@ -26,7 +26,7 @@ export default function Movements() {
     setLoading(false)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-24"><Spinner /></div>
+  if (loading) return <LoadingScreen />
   if (access === 'denied') return (
     <div className="max-w-2xl mx-auto px-8 py-24"><div className="premium-card text-center">
       <h1 className="text-2xl font-bold text-red-400">Доступ запрещён</h1>

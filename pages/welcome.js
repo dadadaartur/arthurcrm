@@ -81,7 +81,7 @@ export default function Welcome() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 text-center">
       <div className="premium-card">
-        <h1 className="text-3xl font-bold text-deep-blue mb-4">Добро пожаловать в экосистему</h1>
+        <h1 className="text-3xl font-bold text-white mb-4">Добро пожаловать в экосистему</h1>
         <p className="text-gray-400 mb-6">
           Ваш аккаунт ещё не привязан к компании. Обратитесь к администратору для получения приглашения.
         </p>

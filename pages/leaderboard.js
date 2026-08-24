@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import BackArrow from '../components/BackArrow'
 
 export default function Leaderboard() {
   const [leaders, setLeaders] = useState([])
@@ -20,8 +21,8 @@ export default function Leaderboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <BackArrow href="/" title="Таблица лидеров" />
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-6">Таблица лидеров</h1>
         {loading ? (
           <p className="text-gray-500">Загрузка...</p>
         ) : leaders.length === 0 ? (

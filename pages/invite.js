@@ -22,7 +22,7 @@ export default function InviteDeprecated() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card text-center">
-        <h1 className="text-2xl font-bold text-deep-blue mb-4">Ссылка устарела</h1>
+        <h1 className="text-2xl font-bold text-white mb-4">Ссылка устарела</h1>
         <p className="text-gray-400 mb-6">
           Формат приглашений изменился. Попросите администратора вашей компании отправить приглашение заново —
           новое письмо будет содержать актуальную защищённую ссылку.

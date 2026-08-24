@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
 import TrainingVideoModal from '../../components/TrainingVideoModal'
 import { withAuth } from '../../components/withAuth'
@@ -90,10 +91,10 @@ function TestsAdmin() {
   const setQ = (i, patch) => setQuestions(qs => qs.map((q, idx) => idx === i ? { ...q, ...patch } : q))
   const setOpt = (i, oi, patch) => setQuestions(qs => qs.map((q, idx) => idx === i ? { ...q, options: q.options.map((o, j) => j === oi ? { ...o, ...patch } : o) } : q))
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin/mastery" title="Тесты и срезы знаний" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -201,7 +202,7 @@ function TestsAdmin() {
         {view === 'analytics' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <button onClick={() => setView('list')} style={{ ...ghostBtn, alignSelf: 'flex-start', padding: '8px 16px', fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>К списку</button>
-            {!analytics ? <Spinner /> : (
+            {!analytics ? <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}><Spinner /></div> : (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
                   <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 20, border: '1px solid rgba(255,215,0,0.2)' }}><div style={{ fontSize: 11, color: '#888' }}>Средний балл</div><div style={{ fontSize: 30, fontWeight: 700, color: '#FFD700' }}>{analytics.avg}%</div></div>

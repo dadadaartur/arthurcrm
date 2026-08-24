@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
+import BackArrow from '../components/BackArrow'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -96,69 +96,19 @@ export default function Shop() {
     setLoading(false)
   }
 
-  if (initialLoading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spinner /></div>
+  if (initialLoading) return <LoadingScreen />
 
   return (
-    <div style={{ width: '100vw', minHeight: '100vh', background: '#000', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ width: '100vw', minHeight: '100vh', background: 'transparent', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
-
-      {/* Звёзды */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        {Array.from({ length: 100 }).map((_, i) => {
-          const size = Math.random() * 2.5 + 0.5
-          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-          const color = colors[Math.floor(Math.random() * colors.length)]
-          return (
-            <div key={i} style={{
-              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-              boxShadow: `0 0 ${size * 2}px ${color}`,
-              opacity: Math.random() * 0.5 + 0.3,
-              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
-              animationDelay: Math.random() * 10 + 's'
-            }} />
-          )
-        })}
-      </div>
-
-      {/* Переливы */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
-        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
-      </div>
 
       {/* Контент */}
       <div style={{ position: 'relative', zIndex: 2, padding: '24px 30px 0', height: '100vh', overflowY: 'auto' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Верхняя строка: стрелка назад + заголовок + баланс */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {/* Маленькая градиентная стрелка */}
-              <Link href="/" style={{
-                fontSize: 28,
-                fontWeight: 400,
-                background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textDecoration: 'none',
-                lineHeight: 1,
-                transition: 'opacity 0.2s',
-                opacity: 0.8
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8'; }}
-              >
-                ←
-              </Link>
-              <h1 style={{
-                fontSize: 24,
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                margin: 0
-              }}>
-                Магазин
-              </h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ marginBottom: 0 }}>
+              <BackArrow href="/" title="Магазин" />
             </div>
             <div style={{
               background: 'rgba(255,255,255,0.03)',
@@ -302,7 +252,7 @@ export default function Shop() {
               cursor: 'pointer',
               padding: 0,
               lineHeight: 1
-            }}>✕</button>
+            }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg></button>
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
               {selectedReward.image_url && (
@@ -386,14 +336,6 @@ export default function Shop() {
       </PremiumModal>
 
       <style jsx global>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.95); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        @keyframes breathe1 {
-          0% { opacity: 0.7; transform: scaleY(1); }
-          100% { opacity: 1; transform: scaleY(1.15); }
-        }
         @keyframes subtleGlow {
           0% { box-shadow: 0 0 5px rgba(0,255,100,0.2); }
           50% { box-shadow: 0 0 12px rgba(0,255,100,0.4); }

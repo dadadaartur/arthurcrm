@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import LoadingScreen from '../components/LoadingScreen'
 import Head from 'next/head'
-import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import PremiumModal from '../components/PremiumModal'
+import BackArrow from '../components/BackArrow'
 
 function getKarmikWord(n) {
   const lastDigit = n % 10
@@ -107,49 +108,17 @@ export default function MyPurchases() {
     }
   }
 
-  if (loading) return <div style={{ background: '#000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+  if (loading) return <LoadingScreen />
 
   const filteredPurchases = filterType === 'all' ? purchases : purchases.filter(p => p.status === filterType)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '20px', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '20px', position: 'relative' }}>
       <Head><title>Мои покупки | Кармический банк</title></Head>
-      {/* Звёзды */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        {Array.from({ length: 80 }).map((_, i) => {
-          const size = Math.random() * 2 + 0.5
-          const colors = ['#ffffff', '#ffe0d0', '#ffddaa', '#d0e0ff', '#ffffdd', '#ffe4c4']
-          const color = colors[Math.floor(Math.random() * colors.length)]
-          return (
-            <div key={i} style={{
-              position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%',
-              width: size + 'px', height: size + 'px', borderRadius: '50%', background: color,
-              boxShadow: `0 0 ${size * 2}px ${color}`,
-              opacity: Math.random() * 0.5 + 0.3,
-              animation: `twinkle ${Math.random() * 10 + 5}s ease-in-out infinite`,
-              animationDelay: Math.random() * 10 + 's'
-            }} />
-          )
-        })}
-      </div>
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        <div style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,100,50,0.5) 0%, rgba(255,100,50,0.2) 40%, transparent 75%)', animation: 'breathe1 12s ease-in-out infinite alternate' }} />
-      </div>
 
       <div style={{ position: 'relative', zIndex: 1, margin: '0 auto' }}>
         {/* Верхняя строка: Назад + заголовок */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-          <Link href="/" style={{
-            display: 'flex', alignItems: 'center', gap: 4,
-            fontSize: 14, color: '#aaa', textDecoration: 'none',
-            transition: 'color 0.2s'
-          }}>
-            <span style={{ fontSize: 18 }}>←</span> Назад
-          </Link>
-          <h1 style={{ fontSize: 28, margin: 0, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Мои покупки
-          </h1>
-        </div>
+        <BackArrow href="/" title="Мои покупки" />
 
         {/* Фильтры */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -262,16 +231,6 @@ export default function MyPurchases() {
       <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Уведомление">
         <p style={{ color: '#fff' }}>{notification.message}</p>
       </PremiumModal>
-      <style jsx global>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.95); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        @keyframes breathe1 {
-          0% { opacity: 0.7; transform: scaleY(1); }
-          100% { opacity: 1; transform: scaleY(1.15); }
-        }
-      `}</style>
     </div>
   )
 }

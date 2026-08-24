@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
-import PremiumModal from '../components/PremiumModal'
+import LoadingScreen from '../components/LoadingScreen'
+import BackArrow from '../components/BackArrow'
+import { useFeedback } from '../context/ActionFeedbackContext'
 
 export default function TasksPage() {
   const router = useRouter()
+  const { showSuccess, showError } = useFeedback()
   const [user, setUser] = useState(null)
   const [activeTasks, setActiveTasks] = useState([])
   const [history, setHistory] = useState([])
@@ -24,7 +26,6 @@ export default function TasksPage() {
 
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
-  const [notification, setNotification] = useState({ show: false, message: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -87,10 +88,10 @@ export default function TasksPage() {
       .eq('status', 'assigned')
 
     if (!error) {
-      setNotification({ show: true, message: 'Задание принято в работу' })
+      showSuccess('Задание принято в работу')
       loadTasks(user.id)
     } else {
-      setNotification({ show: true, message: 'Ошибка при начале задания' })
+      showError('Ошибка при начале задания')
     }
   }
 
@@ -112,10 +113,10 @@ export default function TasksPage() {
 
     if (!error) {
       setSubmitModal({ show: false, assignmentId: null, comment: '' })
-      setNotification({ show: true, message: 'Задание отправлено на проверку' })
+      showSuccess('Задание отправлено на проверку')
       loadTasks(user.id)
     } else {
-      setNotification({ show: true, message: 'Ошибка отправки' })
+      showError('Ошибка отправки')
     }
     setSubmitting(false)
   }
@@ -134,19 +135,11 @@ export default function TasksPage() {
     filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => router.push('/')} className="text-gray-400 hover:text-white transition-colors p-1" title="На главную">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <h1 className="text-2xl font-bold text-white">Мои задания</h1>
-        <div className="ml-auto text-sm text-gray-400">{user?.email}</div>
-      </div>
+      <BackArrow href="/" title="Мои задания" extra={<span className="ml-auto text-sm text-gray-400">{user?.email}</span>} />
 
       <div className="flex gap-4 mb-6">
         {[
@@ -163,7 +156,7 @@ export default function TasksPage() {
               <span
                 className={`ml-2 inline-flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold
                   ${tab.key === 'new' && activeTab !== 'new'
-                    ? 'bg-orange-500 text-white animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]'
+                    ? 'bg-[#FFD700] text-[#0a1628] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]'
                     : 'bg-gray-700 text-gray-300'
                   }`}
                 style={{ padding: '0 6px', fontSize: 11 }}
@@ -285,15 +278,6 @@ export default function TasksPage() {
           </div>
         </div>
       )}
-
-      {/* Уведомления вместо alert */}
-      <PremiumModal
-        isOpen={notification.show}
-        onClose={() => setNotification({ show: false, message: '' })}
-        title="Информация"
-      >
-        <p className="text-white">{notification.message}</p>
-      </PremiumModal>
     </div>
   )
 }

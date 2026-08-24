@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import Spinner from '../components/Spinner'
+import LoadingScreen from '../components/LoadingScreen'
 import BackArrow from '../components/BackArrow'
 import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
@@ -86,7 +86,7 @@ export default function GoalsPage() {
     }
   }
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
   if (!data) return <div style={{ padding: '40px 32px', color: '#777' }}>Нет данных</div>
 
   const inRange = d => {
@@ -122,7 +122,7 @@ export default function GoalsPage() {
   const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/" title="Мои цели" extra={
           <div style={{ marginLeft: 'auto', textAlign: 'right' }}>

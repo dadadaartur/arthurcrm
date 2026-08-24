@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
+import BackArrow from '../../components/BackArrow'
 import { withAuth } from '../../components/withAuth'
 
 function HistoryPage() {
@@ -86,12 +86,11 @@ function HistoryPage() {
     }
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-8" style={{ color: '#d4af37' }}>История заданий</h1>
+      <BackArrow href="/company-admin" title="История заданий" />
       <div className="dash-card">
         <div className="flex flex-wrap gap-4 mb-4">
           <select className="input-field w-auto" value={filter.status} onChange={e => setFilter({...filter, status: e.target.value})}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import BackArrow from '../components/BackArrow'
 
 export default function History() {
   const [user, setUser] = useState(null)
@@ -53,7 +54,7 @@ export default function History() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="premium-card mb-6">
-        <h1 className="text-2xl font-bold text-white mb-4">История операций</h1>
+        <BackArrow href="/" title="История операций" />
         <div className="flex gap-2 flex-wrap">
           {['all', 'income', 'expense', 'transfer'].map(f => (
             <button key={f} onClick={() => { setFilter(f); setPage(0) }} className={`filter-pill ${filter === f ? 'active' : ''}`}>

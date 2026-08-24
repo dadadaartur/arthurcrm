@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
+import BackArrow from '../../components/BackArrow'
 import { withAuth } from '../../components/withAuth'
 
 function GoalsPage() {
@@ -126,12 +126,11 @@ function GoalsPage() {
     loadData(companyId)
   }
 
-  if (loading) return <div className="flex justify-center items-center py-8"><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
     <div className="max-w-full mx-auto px-6 py-8">
-      <Link href="/company-admin" className="text-gray-400 hover:text-white text-sm mb-6 inline-block">← Назад</Link>
-      <h1 className="text-2xl font-bold mb-6" style={{ color: '#d4af37' }}>Управление целями</h1>
+      <BackArrow href="/company-admin" title="Управление целями" />
 
       <div className="pastel-card mb-8">
         <h3 className="text-lg font-semibold mb-4">Новая цель</h3>

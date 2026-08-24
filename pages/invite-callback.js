@@ -71,7 +71,7 @@ export default function InviteCallback() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-deep-blue mb-4">Активация приглашения</h1>
+        <h1 className="text-2xl font-bold text-white mb-4">Активация приглашения</h1>
 
         {status === 'checking' && <p className="text-gray-400">Проверяем ссылку...</p>}
 

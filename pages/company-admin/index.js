@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { supabase } from '../../lib/supabaseClient'
-import Spinner from '../../components/Spinner'
+import LoadingScreen from '../../components/LoadingScreen'
 import { withAuth } from '../../components/withAuth'
 
 const CARDS = [
@@ -115,12 +116,20 @@ function CompanyAdminDashboard() {
     init()
   }, [router])
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000' }}><Spinner /></div>
+  if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '48px 40px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '48px 40px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 38, fontWeight: 700, margin: '0 0 36px', letterSpacing: -0.5, background: 'linear-gradient(135deg, #fff 0%, #a0e9ff 45%, #FFD700 85%, #ffb3c6 100%)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'titleShift 12s ease-in-out infinite alternate' }}>Управление компанией</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 36 }}>
+          <Link href="/"
+            style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(255,215,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .25s', flexShrink: 0, background: 'rgba(255,255,255,0.03)' }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 12px rgba(255,215,0,0.35)'; e.currentTarget.style.borderColor = 'rgba(255,215,0,0.7)' }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#D4AF37" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </Link>
+          <h1 style={{ fontSize: 38, fontWeight: 700, margin: 0, letterSpacing: -0.5, background: 'linear-gradient(135deg, #fff 0%, #a0e9ff 45%, #FFD700 85%, #ffb3c6 100%)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'titleShift 12s ease-in-out infinite alternate' }}>Управление компанией</h1>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 36 }}>
           <StatTile label="Активных заданий" value={stats.tasks} color="#c084fc" delay={0.05} onClick={() => router.push('/company-admin/tasks')} />
