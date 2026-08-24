@@ -28,13 +28,15 @@ export default async function handler(req, res) {
 
   // ===== ШАБЛОНЫ =====
   if (action === 'templates' && req.method === 'GET') {
-    const { data } = await a.from('adaptation_templates').select('*').eq('is_active', true).order('id')
+    const kind = req.query.kind === 'development' ? 'development' : 'onboarding'
+    const { data } = await a.from('adaptation_templates').select('*').eq('is_active', true).eq('kind', kind).order('id')
     return res.status(200).json(data || [])
   }
 
   // ===== СПИСОК ПЛАНОВ =====
   if (action === 'plans' && req.method === 'GET') {
-    let q = a.from('adaptation_plans').select('*').eq('company_id', companyId).order('created_at', { ascending: false })
+    const kind = req.query.kind === 'development' ? 'development' : 'onboarding'
+    let q = a.from('adaptation_plans').select('*').eq('company_id', companyId).eq('kind', kind).order('created_at', { ascending: false })
     if (!isManager) q = q.eq('employee_id', ctx.user.id)
     const { data } = await q
     const out = []
@@ -49,11 +51,12 @@ export default async function handler(req, res) {
   // ===== СОЗДАНИЕ ЧЕРНОВИКА =====
   if (action === 'plans' && req.method === 'POST') {
     if (!isManager) return res.status(403).json({ error: 'Недостаточно прав' })
-    const { employeeId, templateId, startDate } = req.body
+    const { employeeId, templateId, startDate, kind } = req.body
+    const planKind = kind === 'development' ? 'development' : 'onboarding'
     if (!employeeId || !templateId || !startDate) return res.status(400).json({ error: 'Нет данных' })
     const { data: tpl } = await a.from('adaptation_templates').select('*').eq('id', templateId).maybeSingle()
     if (!tpl) return res.status(404).json({ error: 'Шаблон не найден' })
-    const { data: plan, error } = await a.from('adaptation_plans').insert({ company_id: companyId, employee_id: employeeId, manager_id: ctx.user.id, template_id: templateId, start_date: startDate, end_date: addDays(startDate, 27), status: 'draft' }).select().single()
+    const { data: plan, error } = await a.from('adaptation_plans').insert({ company_id: companyId, employee_id: employeeId, manager_id: ctx.user.id, template_id: templateId, kind: planKind, start_date: startDate, end_date: addDays(startDate, 27), status: 'draft' }).select().single()
     if (error) return res.status(500).json({ error: error.message })
     const rows = []
     ;(tpl.days || []).forEach(d => (d.events || []).forEach(ev => rows.push({
@@ -93,7 +96,8 @@ export default async function handler(req, res) {
 
   // ===== МОЙ ПЛАН (сотрудник) =====
   if (action === 'my' && req.method === 'GET') {
-    const { data: plan } = await a.from('adaptation_plans').select('*').eq('employee_id', ctx.user.id).eq('company_id', companyId).in('status', ['active', 'draft']).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const kind = req.query.kind === 'development' ? 'development' : 'onboarding'
+    const { data: plan } = await a.from('adaptation_plans').select('*').eq('employee_id', ctx.user.id).eq('company_id', companyId).eq('kind', kind).in('status', ['active', 'draft']).order('created_at', { ascending: false }).limit(1).maybeSingle()
     if (!plan) return res.status(200).json(null)
     const { data: events } = await a.from('adaptation_plan_events').select('*').eq('plan_id', plan.id).order('day_number').order('event_time')
     const enriched = (events || []).map(e => ({ ...e, event_date: addDays(plan.start_date, e.day_number - 1) }))
@@ -135,6 +139,21 @@ export default async function handler(req, res) {
     const { data: hist } = await a.from('adaptation_history').insert({ plan_id: planId, event_id: eventId || null, manager_id: ctx.user.id, type: 'correction', description: description || 'Корректировка', author_role: 'manager' }).select().single()
     if (title) await a.from('adaptation_plan_events').insert({ plan_id: planId, day_number: dayNumber || 1, title, description, event_type: 'rework', is_mandatory: true })
     await notify(a, plan.employee_id, 'РОП добавил корректировку в ваш план адаптации.', '/onboarding')
+    return res.status(200).json({ success: true })
+  }
+
+  // ===== СОТРУДНИК: ОЦЕНИТЬ ПОЛУЧЕННУЮ ОБРАТНУЮ СВЯЗЬ =====
+  // Отдельно от adaptation_plan_events.rating (это оценка руководителем
+  // сотрудника) — здесь сотрудник оценивает качество/полезность самой
+  // обратной связи, которую ему оставили (запись журнала типа 'feedback').
+  if (action === 'rate-feedback' && req.method === 'POST') {
+    const { historyId, employeeRating } = req.body
+    if (!historyId || !employeeRating) return res.status(400).json({ error: 'Нет данных' })
+    const { data: entry } = await a.from('adaptation_history').select('*, adaptation_plans(employee_id, manager_id)').eq('id', historyId).maybeSingle()
+    if (!entry || entry.adaptation_plans?.employee_id !== ctx.user.id) return res.status(403).json({ error: 'Не ваша запись' })
+    if (entry.type !== 'feedback') return res.status(400).json({ error: 'Оценить можно только запись обратной связи' })
+    await a.from('adaptation_history').update({ employee_rating: employeeRating }).eq('id', historyId)
+    if (entry.manager_id) await notify(a, entry.manager_id, `Сотрудник оценил вашу обратную связь: ${employeeRating}/5.`, '/company-admin/adaptation')
     return res.status(200).json({ success: true })
   }
 

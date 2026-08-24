@@ -170,7 +170,37 @@ export default async function handler(req, res) {
     }
   }
 
-  // 4) Авто-сбор показателей с внешним источником (п.7 ТЗ).
+  // 4) Уведомления о наступлении события плана адаптации/развития (п.8 ТЗ).
+  // Раньше сотрудник узнавал о событии, только если сам зашёл на страницу —
+  // никакого проактивного напоминания не было. Текст уведомления немного
+  // отличается по типу события (тестирование/встреча-ОС/обычное), чтобы
+  // сразу было понятно, к чему готовиться.
+  const EVENT_NOTICE = {
+    test: 'У вас запланировано тестирование',
+    feedback: 'Сегодня время обратной связи с руководителем',
+    meeting: 'У вас запланирована встреча',
+    training: 'Сегодня у вас обучение',
+  }
+  const { data: activePlans } = await a.from('adaptation_plans').select('id, employee_id, start_date, kind').eq('status', 'active')
+  let planEventsNotified = 0
+  for (const plan of activePlans || []) {
+    const { data: pendingEvents } = await a.from('adaptation_plan_events').select('id, day_number, event_time, title, event_type')
+      .eq('plan_id', plan.id).eq('status', 'pending').is('reminded_at', null)
+    for (const ev of pendingEvents || []) {
+      const evDate = new Date(plan.start_date + 'T00:00:00')
+      evDate.setDate(evDate.getDate() + (ev.day_number - 1))
+      const [h, m] = (ev.event_time || '09:00').split(':').map(Number)
+      evDate.setHours(h || 9, m || 0, 0, 0)
+      if (evDate > now) continue
+      const notice = EVENT_NOTICE[ev.event_type] || 'Наступило событие плана'
+      const planLabel = plan.kind === 'development' ? '/development' : '/onboarding'
+      await a.from('notifications').insert({ user_id: plan.employee_id, message: `${notice}: «${ev.title}»`, link: planLabel })
+      await a.from('adaptation_plan_events').update({ reminded_at: now.toISOString() }).eq('id', ev.id)
+      planEventsNotified++
+    }
+  }
+
+  // 5) Авто-сбор показателей с внешним источником (п.7 ТЗ).
   // pullAutoValues() была написана заранее, но раньше её нигде не вызывали
   // — источник 'auto' был настроен номинально и никогда сам не срабатывал.
   // Логика начисления — та же, что и при ручном вводе KPI (см.
@@ -209,5 +239,5 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length, autoGranted })
+  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length, planEventsNotified, autoGranted })
 }
