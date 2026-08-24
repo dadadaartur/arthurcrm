@@ -44,24 +44,50 @@ export default async function handler(req, res) {
     await a.from('task_assignments').update({ deadline_reminded_at: now.toISOString() }).eq('id', r.id)
   }
 
-  // 2) Архив просроченных
-  const { data: overdue } = await a.from('task_assignments')
-    .select('id, task_id, user_id, tasks(title, company_id)')
-    .in('status', ['assigned', 'in_progress'])
+  // 2) Архив просроченных заданий.
+  // БЫЛО: архивировались только строки task_assignments — сама запись в
+  // tasks (is_archived/archived_at) не трогалась вообще. Из-за этого
+  // уведомление «задание ушло в архив» уходило всем, а на панели
+  // администратора (company-admin/tasks.js, вкладки «Активные»/«Архив», и
+  // счётчик активных заданий на дашборде company-admin/index.js) задание
+  // как было в «Активных», так там и оставалось — эти места фильтруют
+  // именно по tasks.is_archived, а не по статусам назначений. Это и есть
+  // баг «уведомление про архив приходит, а задание по факту доступно».
+  // Заодно это делало недостижимой кнопку «Восстановить» в архиве — вкладка
+  // «Архив» тоже читает tasks.is_archived и была всегда пустой.
+  // СТАЛО: источник истины один — дедлайн самой задачи (tasks.deadline_at).
+  // Архивируется сразу и задача, и все её ещё не сданные назначения.
+  const { data: overdueTasks } = await a.from('tasks')
+    .select('id, title, company_id')
+    .eq('is_active', true)
+    .eq('is_archived', false)
     .not('deadline_at', 'is', null)
     .lt('deadline_at', now.toISOString())
-  for (const o of overdue || []) {
-    await a.from('task_assignments').update({ status: 'archived' }).eq('id', o.id)
-    await a.from('notifications').insert({
-      user_id: o.user_id,
-      message: `Срок задания «${o.tasks?.title}» истёк — оно ушло в архив. Руководитель может восстановить его с новым сроком.`,
-      link: '/tasks'
-    })
+
+  for (const task of overdueTasks || []) {
+    await a.from('tasks').update({ is_archived: true, archived_at: now.toISOString() }).eq('id', task.id)
+
+    const { data: openAssignments } = await a.from('task_assignments')
+      .select('id, user_id')
+      .eq('task_id', task.id)
+      .in('status', ['assigned', 'in_progress'])
+
+    if (openAssignments?.length) {
+      await a.from('task_assignments')
+        .update({ status: 'archived' })
+        .in('id', openAssignments.map(x => x.id))
+      await a.from('notifications').insert(openAssignments.map(o => ({
+        user_id: o.user_id,
+        message: `Срок задания «${task.title}» истёк — оно ушло в архив. Руководитель может восстановить его с новым сроком.`,
+        link: '/tasks'
+      })))
+    }
+
     const { data: admins } = await a.from('profiles').select('user_id')
-      .eq('company_id', o.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
+      .eq('company_id', task.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
     if (admins?.length) {
       await a.from('notifications').insert(admins.map(ad => ({
-        user_id: ad.user_id, message: `Задание «${o.tasks?.title}» не выполнено в срок и ушло в архив`, link: '/company-admin/tasks'
+        user_id: ad.user_id, message: `Задание «${task.title}» не выполнено в срок и ушло в архив`, link: '/company-admin/tasks'
       })))
     }
   }
@@ -119,5 +145,5 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdue || []).length })
+  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length })
 }
