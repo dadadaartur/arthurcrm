@@ -147,16 +147,80 @@ function TasksPage() {
         } />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
-          <button onClick={() => setTab('create')} style={pillTab(tab === 'create')}>Новое задание</button>
+          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: false })); setTab('create') }} style={pillTab(tab === 'create')}>Новое задание</button>
+          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true })); setTab('create-auto') }} style={pillTab(tab === 'create-auto')}>Автозадание по цели</button>
           <button onClick={() => setTab('active')} style={pillTab(tab === 'active')}>Активные</button>
           <button onClick={() => setTab('archived')} style={pillTab(tab === 'archived')}>Архив · {archived.length}</button>
         </div>
 
+        {tab === 'create-auto' && (
+          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: '1px solid rgba(192,132,252,0.3)' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: '#fff' }}>Автозадание по цели</h3>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>Система сама проверяет выполнение показателя и начисляет награду — без ручной проверки.</p>
+            <form onSubmit={handleCreateTask}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
+                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: Звонки на уровень Ультра" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
+                  <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
+                  <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <Seg active={form.auto_mode === 'general'} onClick={() => setForm({ ...form, auto_mode: 'general' })} color="#c084fc">По всем целям</Seg>
+                <Seg active={form.auto_mode === 'specific'} onClick={() => setForm({ ...form, auto_mode: 'specific' })} color="#c084fc">По одной цели</Seg>
+              </div>
+              {form.auto_mode === 'general' ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 20 }}>
+                  <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
+                    {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                  </select>
+                  <div>
+                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
+                    <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr', gap: 12, marginBottom: 20 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Показатель</label>
+                    <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id} onChange={e => setForm({ ...form, auto_metric_id: e.target.value, auto_target_rank: 1 })}>
+                      <option value="">Выберите показатель…</option>
+                      {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Уровень (не ниже)</label>
+                    <select className="input-field" style={{ width: '100%' }} value={form.auto_target_rank} onChange={e => setForm({ ...form, auto_target_rank: parseInt(e.target.value) })} disabled={!form.auto_metric_id}>
+                      {form.auto_metric_id && resolveThresholds(metrics.find(m => m.id === form.auto_metric_id) || {}).map((t, i) => (
+                        <option key={t.key} value={i + 1}>{t.label} ({t.value}{metrics.find(m => m.id === form.auto_metric_id)?.unit})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
+                    <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  {metrics.length === 0 && <p style={{ gridColumn: 'span 3', fontSize: 11, color: '#f87171', margin: 0 }}>В компании пока нет ни одного показателя — сначала создайте его в «Управлении целями».</p>}
+                </div>
+              )}
+              <button type="submit" className="btn-gold">Создать автозадание</button>
+            </form>
+          </div>
+        )}
+
         {tab === 'create' && (
-          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: '1px solid rgba(255,255,255,0.08)', maxWidth: 980 }}>
+          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: '1px solid rgba(255,255,255,0.08)' }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: '#fff' }}>Создать задание</h3>
             <form onSubmit={handleCreateTask}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                 <div>
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
                   <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
@@ -180,56 +244,6 @@ function TasksPage() {
                     <option value="new">Новые (&lt; 1 мес.)</option>
                     <option value="experienced">Опытные (&gt; 1 мес.)</option>
                   </select>
-                </div>
-
-                {/* Авто-зачёт по целям */}
-                <div style={{ gridColumn: 'span 2', padding: 16, borderRadius: 14, background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#c084fc', cursor: 'pointer', marginBottom: 10 }}>
-                    <input type="checkbox" checked={form.is_auto_goal} onChange={e => setForm({ ...form, is_auto_goal: e.target.checked })} style={{ accentColor: '#c084fc' }} />
-                    Авто-зачёт по целям (система проверяет сама)
-                  </label>
-                  {form.is_auto_goal && (
-                    <>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                        <Seg active={form.auto_mode === 'general'} onClick={() => setForm({ ...form, auto_mode: 'general' })} color="#c084fc">По всем целям</Seg>
-                        <Seg active={form.auto_mode === 'specific'} onClick={() => setForm({ ...form, auto_mode: 'specific' })} color="#c084fc">По одной цели</Seg>
-                      </div>
-                      {form.auto_mode === 'general' ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
-                          <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
-                            {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                          </select>
-                          <div>
-                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
-                            <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr', gap: 12 }}>
-                          <div>
-                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Показатель</label>
-                            <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id} onChange={e => setForm({ ...form, auto_metric_id: e.target.value, auto_target_rank: 1 })}>
-                              <option value="">Выберите показатель…</option>
-                              {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Уровень (не ниже)</label>
-                            <select className="input-field" style={{ width: '100%' }} value={form.auto_target_rank} onChange={e => setForm({ ...form, auto_target_rank: parseInt(e.target.value) })} disabled={!form.auto_metric_id}>
-                              {form.auto_metric_id && resolveThresholds(metrics.find(m => m.id === form.auto_metric_id) || {}).map((t, i) => (
-                                <option key={t.key} value={i + 1}>{t.label} ({t.value}{metrics.find(m => m.id === form.auto_metric_id)?.unit})</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
-                            <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
-                          </div>
-                          {metrics.length === 0 && <p style={{ gridColumn: 'span 3', fontSize: 11, color: '#f87171', margin: 0 }}>В компании пока нет ни одного показателя — сначала создайте его в «Управлении целями».</p>}
-                        </div>
-                      )}
-                    </>
-                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>

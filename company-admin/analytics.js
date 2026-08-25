@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
@@ -121,9 +122,9 @@ function AnalyticsAdmin() {
         {/* Тонкая строка периода */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'rgba(15,20,35,0.85)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 18 }}>
           <span style={{ fontSize: 12, color: '#888' }}>Период</span>
-          <input type="date" value={from} onChange={e => { setFrom(e.target.value); setP('') }} style={dateInput} />
+          <DatePicker value={from} onChange={v => { setFrom(v); setP('') }} placeholder="С даты" />
           <span style={{ color: '#555' }}>—</span>
-          <input type="date" value={to} onChange={e => { setTo(e.target.value); setP('') }} style={dateInput} />
+          <DatePicker value={to} onChange={v => { setTo(v); setP('') }} placeholder="По дату" />
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => applyPreset('yesterday')} style={tiny(p === 'yesterday')}>Вчера</button>
             <button onClick={() => applyPreset('week')} style={tiny(p === 'week')}>Неделя</button>

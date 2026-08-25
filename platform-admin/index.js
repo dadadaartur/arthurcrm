@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker'
 import { supabase } from '../../lib/supabaseClient'
 import Spinner from '../../components/Spinner'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -281,7 +282,7 @@ export default function PlatformAdmin() {
 
             <div className="mb-3">
               <label className="text-xs text-gray-500 block mb-1">Срок выполнения (необязательно)</label>
-              <input type="date" className="input-field" style={{ maxWidth: 200 }} value={ptForm.deadlineDate} onChange={e => setPtForm({ ...ptForm, deadlineDate: e.target.value })} />
+              <div style={{ maxWidth: 200 }}><DatePicker value={ptForm.deadlineDate} onChange={v => setPtForm({ ...ptForm, deadlineDate: v })} placeholder="Без срока" /></div>
             </div>
 
             <div className="mb-4">

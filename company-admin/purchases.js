@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import PremiumModal from '../../components/PremiumModal'
@@ -328,8 +329,7 @@ function PurchasesAdmin() {
                   </label>
                 </div>
                 {dateOption === 'specific' && (
-                  <input type="date" value={specificDate} onChange={e => setSpecificDate(e.target.value)}
-                    className="input-field" style={{ width: '100%', marginTop: 10 }} />
+                  <div style={{ marginTop: 10 }}><DatePicker value={specificDate} onChange={setSpecificDate} placeholder="Выберите дату" /></div>
                 )}
               </div>
 

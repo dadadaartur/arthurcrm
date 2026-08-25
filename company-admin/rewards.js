@@ -194,10 +194,13 @@ export default function RewardsAdmin() {
                     Требуется согласование
                   </label>
                 </div>
-                <div style={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, padding: 14, borderRadius: 12, background: 'rgba(192,132,252,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
-                  <div style={{ gridColumn: 'span 4', fontSize: 11, color: '#c084fc', textTransform: 'uppercase', letterSpacing: 0.5 }}>Витрина и партнёрка (пп. 11-12)</div>
+                <div style={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, padding: 16, borderRadius: 12, background: 'rgba(192,132,252,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
+                  <div style={{ gridColumn: 'span 4' }}>
+                    <div style={{ fontSize: 12, color: '#c084fc', fontWeight: 600, marginBottom: 4 }}>Лента наверху магазина и партнёрские категории</div>
+                    <div style={{ fontSize: 11, color: '#888', lineHeight: 1.5 }}>Товар попадёт в горизонтальную ленту вверху магазина, если заполнить промо-метку или включить «Показывать в ленте». Поле «Партнёр» создаёт отдельную вкладку-категорию в магазине — она появится автоматически, как только у товара будет заполнено это поле.</div>
+                  </div>
                   <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Партнёр</label>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Партнёр (категория в магазине)</label>
                     <input className="input-field" style={{ width: '100%' }} placeholder="напр. МТС" value={form.partner_name} onChange={e => setForm({ ...form, partner_name: e.target.value })} />
                   </div>
                   <div>
@@ -205,13 +208,13 @@ export default function RewardsAdmin() {
                     <input className="input-field" style={{ width: '100%' }} placeholder="совпадает с заданием" value={form.requires_unlock} onChange={e => setForm({ ...form, requires_unlock: e.target.value })} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Промо-метка</label>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Промо-метка (попадёт в ленту)</label>
                     <input className="input-field" style={{ width: '100%' }} placeholder="напр. Скидка 20%" value={form.promo_label} onChange={e => setForm({ ...form, promo_label: e.target.value })} />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+                    <label onClick={() => setForm({ ...form, is_featured: !form.is_featured })} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: form.is_featured ? '#FFD700' : '#ccc', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 12, background: form.is_featured ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)', border: `1px solid ${form.is_featured ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.1)'}`, transition: 'all 0.2s' }}>
                       <input type="checkbox" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} style={{ accentColor: '#FFD700' }} />
-                      Топ-товар (в ленте)
+                      Показывать в ленте
                     </label>
                   </div>
                 </div>

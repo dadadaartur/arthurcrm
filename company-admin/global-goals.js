@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../../components/DatePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
@@ -135,7 +136,7 @@ function GlobalGoals() {
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
-                <input type="date" className="input-field" style={{ width: '100%' }} value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
+                <DatePicker value={form.deadline} onChange={v => setForm({ ...form, deadline: v })} placeholder="Без срока" />
               </div>
               <div style={{ gridColumn: 'span 3' }}>
                 <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>

@@ -20,7 +20,7 @@ const CARDS = [
   { key: 'levels', title: 'Уровни прогресса', sub: 'Архитектура роста', href: '/company-admin/progress', color: '#c084fc', accent: '#ffb3c6' },
   { key: 'resources', title: 'Ресурсы', sub: 'Фонд, тариф, пополнение', href: '/company-admin/resources', color: '#FFD700', accent: '#a0e9ff' },
   { key: 'adapt', title: 'Адаптация и развитие', sub: 'Онбординг новичков и рост опытных', href: '/company-admin/adaptation', color: '#86efac', accent: '#a0e9ff', badge: 'activeAdaptations' },
-  { key: 'sandbox', title: 'Тест-стенд автозачёта', sub: 'Проверка интеграции с внешним источником', href: '/company-admin/crm-sandbox', color: '#4ade80', accent: '#a0e9ff' },
+  { key: 'sandbox', title: 'Тест-стенд автозачёта', sub: 'Проверка интеграции с внешним источником', href: '/company-admin/crm-sandbox', color: '#4ade80', accent: '#a0e9ff', primary: true },
 ]
 
 function StatTile({ label, value, color, delay, onClick }) {
