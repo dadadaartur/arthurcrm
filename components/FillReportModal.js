@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from './DatePicker'
 import { supabase } from '../lib/supabaseClient'
 import { useFeedback } from '../context/ActionFeedbackContext'
 
@@ -83,8 +84,8 @@ export default function FillReportModal({ open, onClose, onSaved }) {
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginLeft: 'auto' }}>
             {fillMode === 'day'
-              ? <input type="date" value={date} onChange={e => setDate(e.target.value)} style={dateInput} />
-              : <><input type="date" value={from} onChange={e => setFrom(e.target.value)} style={dateInput} /><span style={{ color: '#555' }}>—</span><input type="date" value={to} onChange={e => setTo(e.target.value)} style={dateInput} /></>}
+              ? <DatePicker value={date} onChange={setDate} placeholder="Дата" />
+              : <><DatePicker value={from} onChange={setFrom} placeholder="С" /><span style={{ color: '#555' }}>—</span><DatePicker value={to} onChange={setTo} placeholder="По" /></>}
           </div>
         </div>
         <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(255,215,0,0.07)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', fontSize: 11, marginBottom: 10 }}>{dateBanner}</div>
