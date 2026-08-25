@@ -32,6 +32,7 @@ export default function Shop() {
   const [selectedReward, setSelectedReward] = useState(null)
   const [initialLoading, setInitialLoading] = useState(true)
   const [unlockedKeys, setUnlockedKeys] = useState([])
+  const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
     const init = async () => {
@@ -103,6 +104,10 @@ export default function Shop() {
 
   if (initialLoading) return <LoadingScreen />
 
+  const featuredRewards = rewards.filter(r => r.is_featured || r.promo_label)
+  const partnerNames = [...new Set(rewards.filter(r => r.partner_name).map(r => r.partner_name))]
+  const visibleRewards = activeCategory === 'all' ? rewards : rewards.filter(r => r.partner_name === activeCategory)
+
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: 'transparent', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
       <Head><title>Магазин | Кармический банк</title></Head>
@@ -141,7 +146,48 @@ export default function Shop() {
             </div>
           </div>
 
+          {/* Лента акций и топ-товаров — как в маркетплейсах (п.12 ТЗ) */}
+          {featuredRewards.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" /></svg>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Акции и топ товары</span>
+              </div>
+              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x mandatory' }}>
+                {featuredRewards.map(reward => (
+                  <div key={reward.id} onClick={() => setSelectedReward(reward)} style={{
+                    flex: '0 0 240px', scrollSnapAlign: 'start', cursor: 'pointer', borderRadius: 18, overflow: 'hidden',
+                    background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)', transition: 'transform 0.25s'
+                  }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)' }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}>
+                    <div style={{ height: 120, position: 'relative' }}>
+                      {reward.image_url ? <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />}
+                      {reward.promo_label && <span style={{ position: 'absolute', top: 10, left: 10, background: 'linear-gradient(135deg, #f87171, #c084fc)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>{reward.promo_label}</span>}
+                    </div>
+                    <div style={{ padding: 14 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reward.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#FFD700' }}>{reward.cost} {getKarmikWord(reward.cost)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Категории от партнёров (п.11-12 ТЗ) */}
+          {partnerNames.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+              <button onClick={() => setActiveCategory('all')} className={`filter-pill ${activeCategory === 'all' ? 'active' : ''}`}>Все товары</button>
+              {partnerNames.map(name => (
+                <button key={name} onClick={() => setActiveCategory(name)} className={`filter-pill ${activeCategory === name ? 'active' : ''}`}>{name}</button>
+              ))}
+            </div>
+          )}
+
           {/* Сетка карточек */}
+          {visibleRewards.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#777', padding: '60px 0' }}>В этой категории пока нет товаров</div>
+          ) : (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -149,7 +195,7 @@ export default function Shop() {
             marginTop: 16,
             paddingBottom: 40
           }}>
-            {rewards.map(reward => {
+            {visibleRewards.map(reward => {
               const word = getKarmikWord(reward.cost)
               const isLocked = !!reward.requires_unlock && !unlockedKeys.includes(reward.requires_unlock)
               return (
@@ -235,6 +281,7 @@ export default function Shop() {
               )
             })}
           </div>
+          )}
         </div>
       </div>
 

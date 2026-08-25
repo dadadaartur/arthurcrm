@@ -31,8 +31,32 @@ export default function History() {
     const { data: pr } = await supabase.from('purchases')
       .select('*').eq('user_id', userId).order('created_at', { ascending: false })
 
+    // Кто отправил/кому ушёл перевод (п.14 ТЗ) — отдельными запросами, а не
+    // through PostgREST-эмбеддинг по FK, чтобы не зависеть от точного имени
+    // связи в схеме (не проверял его напрямую, а после пары эпизодов с
+    // непроверенными предположениями о схеме в этой сессии лишний раз не
+    // рискую — простой список ID безопаснее).
+    const counterpartIds = [...new Set((tr || []).map(t => t.from_user_id === userId ? t.to_user_id : t.from_user_id).filter(Boolean))]
+    let profilesById = {}
+    if (counterpartIds.length) {
+      const { data: profs } = await supabase.from('profiles')
+        .select('user_id, first_name, last_name, display_name, email, department_id')
+        .in('user_id', counterpartIds)
+      const deptIds = [...new Set((profs || []).map(p => p.department_id).filter(Boolean))]
+      let deptsById = {}
+      if (deptIds.length) {
+        const { data: deps } = await supabase.from('departments').select('id, name').in('id', deptIds)
+        deptsById = Object.fromEntries((deps || []).map(d => [d.id, d.name]))
+      }
+      profilesById = Object.fromEntries((profs || []).map(p => [p.user_id, {
+        name: [p.first_name, p.last_name].filter(Boolean).join(' ') || p.display_name || p.email,
+        email: p.email, department: p.department_id ? deptsById[p.department_id] : null
+      }]))
+    }
+    const trWithCounterpart = (tr || []).map(t => ({ ...t, counterpart: profilesById[t.from_user_id === userId ? t.to_user_id : t.from_user_id] || null }))
+
     setTransactions(tx || [])
-    setTransfers(tr || [])
+    setTransfers(trWithCounterpart)
     setPurchases(pr || [])
   }
 
@@ -77,6 +101,12 @@ export default function History() {
                   op.description
                 )}
               </p>
+              {op.type === 'transfer' && op.counterpart && (
+                <p className="text-sm mt-1" style={{ color: '#a0e9ff' }}>
+                  {op.from_user_id === user.id ? 'Кому: ' : 'От: '}{op.counterpart.name}
+                  <span className="text-gray-500"> · {op.counterpart.email}{op.counterpart.department ? ` · ${op.counterpart.department}` : ''}</span>
+                </p>
+              )}
               <p className="text-sm text-gray-400">{new Date(op.created_at).toLocaleString('ru')}</p>
             </div>
             <span className={`font-semibold ${(op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id) ? 'text-green-400' : 'text-red-400'}`}>

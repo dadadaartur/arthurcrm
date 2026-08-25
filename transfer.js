@@ -142,7 +142,8 @@ export default function Transfer() {
         setShowModal(true)
       }
     } catch (err) {
-      setError('Сетевая ошибка')
+      console.error('[transfer] client error', err)
+      setError('Сетевая ошибка: ' + (err?.message || 'не удалось связаться с сервером'))
     }
     setLoading(false)
   }
