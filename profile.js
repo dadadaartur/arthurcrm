@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import LoadingScreen from '../components/LoadingScreen'
 import BackArrow from '../components/BackArrow'
+import DatePicker from '../components/DatePicker'
 
 export default function Profile() {
   const router = useRouter()
@@ -153,7 +154,7 @@ export default function Profile() {
   const fieldLabelStyle = { fontSize: 12, color: '#8a94a8', display: 'block', marginBottom: 6 }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-4 py-12">
       <BackArrow href="/" title="Мой профиль" />
 
       {message.text && (
@@ -172,19 +173,19 @@ export default function Profile() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        {/* Аватар */}
+      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
+        {/* Аватар — узкая колонка слева, а не растянутая на всю ширину строка */}
         <div style={sectionStyle}>
           <div style={sectionTitleStyle}>Фото профиля</div>
-          <div className="flex items-center gap-5">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0" style={{ border: '1px solid rgba(255,215,0,0.3)', background: 'rgba(255,255,255,0.05)' }}>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="relative w-28 h-28 rounded-full overflow-hidden flex-shrink-0" style={{ border: '1px solid rgba(255,215,0,0.3)', background: 'rgba(255,255,255,0.05)' }}>
               {form.preview_url ? (
                 <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl font-semibold">{initials}</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-semibold">{initials}</div>
               )}
             </div>
-            <div className="flex flex-col gap-2 items-start">
+            <div className="flex flex-col gap-2 items-center">
               <input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" id="avatar-upload" />
               <label htmlFor="avatar-upload" className="file-upload-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -201,43 +202,46 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Контакты */}
-        <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>Контакты</div>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div><label style={fieldLabelStyle}>Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
-            <div><label style={fieldLabelStyle}>Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
-          </div>
-          <div><label style={fieldLabelStyle}>Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+7 ___ ___-__-__" /></div>
-        </div>
-
-        {/* Рабочая информация */}
-        <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>Рабочая информация</div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label style={fieldLabelStyle}>Дата трудоустройства</label>
-              <input type="date" className="input-field" value={form.hire_date} onChange={e => setForm({ ...form, hire_date: e.target.value })} />
+        {/* Правая колонка — контакты и рабочая информация, поля разумной ширины внутри сетки на 2 столбца */}
+        <div>
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>Контакты</div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div><label style={fieldLabelStyle}>Имя</label><input type="text" className="input-field" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+              <div><label style={fieldLabelStyle}>Фамилия</label><input type="text" className="input-field" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
             </div>
-            <div>
-              <label style={fieldLabelStyle}>Отдел</label>
-              <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
-                <option value="">Не выбран</option>
-                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label style={fieldLabelStyle}>Должность</label>
-              <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
-                <option value="">Не выбрана</option>
-                {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-              </select>
-              {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1.5">Должность может изменить только администратор</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div><label style={fieldLabelStyle}>Телефон</label><input type="text" className="input-field" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+7 ___ ___-__-__" /></div>
             </div>
           </div>
-        </div>
 
-        <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>Рабочая информация</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label style={fieldLabelStyle}>Дата трудоустройства</label>
+                <DatePicker value={form.hire_date} onChange={v => setForm({ ...form, hire_date: v })} placeholder="Не указана" />
+              </div>
+              <div>
+                <label style={fieldLabelStyle}>Отдел</label>
+                <select className="input-field" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                  <option value="">Не выбран</option>
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label style={fieldLabelStyle}>Должность</label>
+                <select className="input-field" value={form.position_id} onChange={e => setForm({ ...form, position_id: e.target.value })} disabled={profile?.role_id !== 1 && profile?.role_id !== 2}>
+                  <option value="">Не выбрана</option>
+                  {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+                {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1.5">Должность может изменить только администратор</p>}
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
       </form>
     </div>
   )

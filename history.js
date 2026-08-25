@@ -76,7 +76,7 @@ export default function History() {
   const paginated = filtered.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE)
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-4 py-10">
       <div className="premium-card mb-6">
         <BackArrow href="/" title="История операций" />
         <div className="flex gap-2 flex-wrap">

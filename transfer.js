@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
-import PremiumModal from '../components/PremiumModal'
 import BackArrow from '../components/BackArrow'
+import { useFeedback } from '../context/ActionFeedbackContext'
 
 // РАНЬШЕ получатель выбирался вводом email вручную. Теперь — поиск по
 // коллегам из своей же компании (имя/фамилия/email) с выпадающим списком.
@@ -10,6 +10,7 @@ import BackArrow from '../components/BackArrow'
 // view colleagues" на profiles уже разрешает видеть всех сотрудников своей
 // компании, отдельный API-роут для этого не нужен.
 export default function Transfer() {
+  const { showSuccess, showError } = useFeedback()
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
@@ -21,7 +22,6 @@ export default function Transfer() {
   const [amount, setAmount] = useState('')
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
-  const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const wrapRef = useRef(null)
 
@@ -139,7 +139,7 @@ export default function Transfer() {
         clearSelection()
         setAmount('')
         setComment('')
-        setShowModal(true)
+        showSuccess('Перевод выполнен')
       }
     } catch (err) {
       console.error('[transfer] client error', err)
@@ -149,96 +149,116 @@ export default function Transfer() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10">
+    <div className="max-w-lg mx-auto px-4 py-10">
       <BackArrow href="/" title="Перевод кармиков" />
-      <div className="premium-card">
-        <div className="text-sm text-gray-400 mb-4">
-          Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
+      <div className="premium-card" style={{ padding: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '14px 18px', borderRadius: 16, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)' }}>
+          <span style={{ fontSize: 12, color: '#999' }}>Ваш баланс</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{balance} кармиков</span>
         </div>
-        <form onSubmit={handleTransfer} className="space-y-4">
-          <div className="relative" ref={wrapRef}>
-            <input
-              type="text"
-              placeholder={colleaguesLoading ? 'Загрузка коллег...' : 'Начните вводить имя или email'}
-              value={search}
-              disabled={colleaguesLoading}
-              onChange={e => {
-                setSearch(e.target.value)
-                setSelected(null)
-                setDropdownOpen(true)
-              }}
-              onFocus={() => setDropdownOpen(true)}
-              className="input-field"
-              autoComplete="off"
-              required
-            />
-            {selected && (
-              <button
-                type="button"
-                onClick={clearSelection}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-sm"
-                title="Очистить выбор"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-              </button>
-            )}
-            {dropdownOpen && !colleaguesLoading && (
-              <div
-                className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-xl"
-              >
-                {filteredColleagues.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-500">Никого не найдено</div>
+
+        <form onSubmit={handleTransfer} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Кому</label>
+            {selected ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.3)' }}>
+                {selected.avatar_url ? (
+                  <img src={selected.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 ) : (
-                  filteredColleagues.map(c => (
-                    <button
-                      type="button"
-                      key={c.user_id}
-                      onClick={() => selectColleague(c)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-800 transition-colors"
-                    >
-                      {c.avatar_url ? (
-                        <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] text-gray-300">
-                          {colleagueName(c).charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-sm text-white truncate">{colleagueName(c)}</div>
-                        {c.email && <div className="text-xs text-gray-500 truncate">{c.email}</div>}
-                      </div>
-                    </button>
-                  ))
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(160,233,255,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#a0e9ff', fontWeight: 600 }}>
+                    {colleagueName(selected).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14, color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(selected)}</div>
+                  {selected.email && <div style={{ fontSize: 12, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.email}</div>}
+                </div>
+                <button type="button" onClick={clearSelection} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0, padding: 4 }} title="Выбрать другого">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+            ) : (
+              <div className="relative" ref={wrapRef}>
+                <input
+                  type="text"
+                  placeholder={colleaguesLoading ? 'Загрузка коллег...' : 'Начните вводить имя или email'}
+                  value={search}
+                  disabled={colleaguesLoading}
+                  onChange={e => {
+                    setSearch(e.target.value)
+                    setSelected(null)
+                    setDropdownOpen(true)
+                  }}
+                  onFocus={() => setDropdownOpen(true)}
+                  className="input-field"
+                  autoComplete="off"
+                  required
+                />
+                {dropdownOpen && !colleaguesLoading && (
+                  <div style={{ position: 'absolute', zIndex: 20, marginTop: 6, width: '100%', maxHeight: 260, overflowY: 'auto', borderRadius: 14, border: '1px solid rgba(255,215,0,0.25)', background: 'rgba(20,25,45,0.97)', backdropFilter: 'blur(16px)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
+                    {filteredColleagues.length === 0 ? (
+                      <div style={{ padding: '10px 14px', fontSize: 13, color: '#777' }}>Никого не найдено</div>
+                    ) : (
+                      filteredColleagues.map(c => (
+                        <button
+                          type="button"
+                          key={c.user_id}
+                          onClick={() => selectColleague(c)}
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,215,0,0.08)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                        >
+                          {c.avatar_url ? (
+                            <img src={c.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                          ) : (
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,215,0,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#FFD700' }}>
+                              {colleagueName(c).charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(c)}</div>
+                            {c.email && <div style={{ fontSize: 11, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          <input
-            type="number"
-            placeholder="Сумма"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            className="input-field"
-            min="1"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Комментарий"
-            value={comment}
-            onChange={e => setComment(e.target.value)}
-            className="input-field"
-          />
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <div>
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Сумма</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              className="input-field"
+              style={{ fontSize: 18, fontWeight: 600 }}
+              min="1"
+              required
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Комментарий (необязательно)</label>
+            <input
+              type="text"
+              placeholder="За помощь с отчётом"
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              className="input-field"
+            />
+          </div>
+
+          {error && <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>{error}</p>}
           <button type="submit" className="btn-gold w-full" disabled={loading || !selected}>
             {loading ? 'Отправка...' : 'Отправить'}
           </button>
         </form>
       </div>
-      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Перевод выполнен!">
-        <p className="text-white">Операция записана в историю.</p>
-      </PremiumModal>
     </div>
   )
 }
