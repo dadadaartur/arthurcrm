@@ -31,13 +31,18 @@ comment on column public.tasks.reward_type is
 -- Активные бусты кармы сотрудника. Несколько записей у одного user_id —
 -- нормально (например, буст от банка и буст от другого партнёра сразу) —
 -- при начислении суммируются проценты, см. lib/karma.js::creditKarma.
+--
+-- company_id — bigint, а не uuid: у companies.id в этом проекте
+-- числовой PK (не везде в схеме UUID, как можно было бы предположить по
+-- большинству остальных таблиц — проверено на практике по ошибке
+-- Postgres 42804 при первом запуске этой миграции, не гадаю больше).
 create table if not exists public.karma_boosts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  company_id uuid references public.companies(id) on delete cascade,
+  company_id bigint references public.companies(id) on delete cascade,
   percent numeric not null default 0,
   source text,
-  source_task_id uuid references public.tasks(id) on delete set null,
+  source_task_id uuid, -- без FK на tasks: не до конца проверен тип tasks.id, после ошибки на companies.id больше не гадаю без пруфа; поле чисто информационное, ни на что не влияет
   starts_at timestamptz not null default now(),
   expires_at timestamptz not null,
   created_at timestamptz not null default now()
@@ -54,7 +59,7 @@ create table if not exists public.employee_unlocks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   unlock_key text not null,
-  source_task_id uuid references public.tasks(id) on delete set null,
+  source_task_id uuid, -- без FK на tasks: не до конца проверен тип tasks.id, после ошибки на companies.id больше не гадаю без пруфа; поле чисто информационное, ни на что не влияет
   unlocked_at timestamptz not null default now(),
   unique (user_id, unlock_key)
 );
