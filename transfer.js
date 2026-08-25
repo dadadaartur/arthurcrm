@@ -1,104 +1,243 @@
-import { createClient } from '@supabase/supabase-js'
-import { requireAuth } from '../../lib/auth'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
+import PremiumModal from '../components/PremiumModal'
+import BackArrow from '../components/BackArrow'
 
-// Раньше этот файл не использовал requireAuth и дублировал логику
-// извлечения токена — теперь приведён к единому стандарту.
-//
-// История правок баланса:
-// 1) Изначально вызывался RPC transfer_karma() — падал с "Could not find
-//    function in schema cache" (PostgREST не видел функцию после её
-//    создания — нужен reload schema cache, см. transfer_karma.sql).
-// 2) Временный фикс заменил RPC на ручной read-then-write через
-//    service-role (update balance = balance - amount, посчитанное в JS).
-//    Это завело гонку: при двух параллельных переводах от одного юзера
-//    оба запроса читают один и тот же баланс до того, как кто-либо из них
-//    его запишет — итог: списание срабатывает дважды, баланс уходит в
-//    минус, хотя проверка "баланс >= сумма" вроде бы проходила. Плюс
-//    полностью пропускалась проверка активности компании (RLS-политика
-//    my_company_is_active не действует — service-role обходит RLS целиком).
-// 3) Возвращаемся к RPC, но с function-level блокировкой строк
-//    (SELECT ... FOR UPDATE внутри transfer_karma, см. миграцию) — это
-//    и решает гонку, и восстанавливает проверку активности компании.
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end()
+// РАНЬШЕ получатель выбирался вводом email вручную. Теперь — поиск по
+// коллегам из своей же компании (имя/фамилия/email) с выпадающим списком.
+// Список коллег читается напрямую с клиента: RLS-политика "Company members
+// view colleagues" на profiles уже разрешает видеть всех сотрудников своей
+// компании, отдельный API-роут для этого не нужен.
+export default function Transfer() {
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const [balance, setBalance] = useState(0)
+  const [colleagues, setColleagues] = useState([])
+  const [colleaguesLoading, setColleaguesLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [selected, setSelected] = useState(null) // { user_id, display_name, email, avatar_url }
+  const [amount, setAmount] = useState('')
+  const [comment, setComment] = useState('')
+  const [error, setError] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const wrapRef = useRef(null)
 
-  const ctx = await requireAuth(req, res, {})
-  if (!ctx) return
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      setUser(user)
 
-  const { recipientEmail, amount, comment } = req.body
-  const transferAmount = Number.isInteger(amount) ? amount : parseInt(amount, 10)
+      const { data: balData } = await supabase
+        .from('karma_balance')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+      if (balData) setBalance(balData.balance)
 
-  if (!recipientEmail || !Number.isInteger(transferAmount) || transferAmount <= 0) {
-    return res.status(400).json({ error: 'Неверные параметры' })
-  }
-  if (!ctx.profile.company_id) {
-    return res.status(400).json({ error: 'У вас нет компании' })
-  }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single()
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+      if (profile?.company_id) {
+        const { data: colleaguesData, error: colError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, email, avatar_url')
+          .eq('company_id', profile.company_id)
+          .is('deleted_at', null)
+          .neq('user_id', user.id)
+          .order('first_name', { ascending: true })
 
-  const normalEmail = recipientEmail.trim().toLowerCase()
-
-  // Поиск получателя — не критичен к гонкам, читается один раз, id уходит
-  // в атомарную функцию ниже, которая сама перепроверит компанию и статус.
-  const { data: recipient, error: recipError } = await supabaseAdmin
-    .from('profiles')
-    .select('user_id, email, company_id')
-    .eq('email', normalEmail)
-    .is('deleted_at', null)
-    .maybeSingle()
-
-  if (recipError) {
-    console.error('[transfer] ошибка поиска получателя', recipError)
-    return res.status(500).json({ error: 'Ошибка поиска получателя: ' + recipError.message })
-  }
-  if (!recipient) return res.status(404).json({ error: 'Получатель не найден' })
-  if (recipient.user_id === ctx.user.id) {
-    return res.status(400).json({ error: 'Нельзя перевести самому себе' })
-  }
-
-  // Сам перевод — атомарно, одной SQL-функцией с блокировкой строк.
-  // p_from_user_id берём из проверенного requireAuth токена, а не из
-  // тела запроса — клиент не может подставить чужой id отправителя.
-  const { data: result, error: transferError } = await supabaseAdmin
-    .rpc('transfer_karma', {
-      p_from_user_id: ctx.user.id,
-      p_to_user_id: recipient.user_id,
-      p_amount: transferAmount,
-      p_comment: comment || null
-    })
-    .single()
-
-  if (transferError) {
-    console.error('[transfer] ошибка перевода', transferError)
-    // Сообщения из RAISE EXCEPTION (недостаточно кармиков, другая компания,
-    // компания неактивна и т.д.) долетают в transferError.message как есть —
-    // их можно показать пользователю напрямую.
-    const status = /не найден|недоступн|неактивна|другой компании|самому себе|Недостаточно/.test(transferError.message)
-      ? 400
-      : 500
-    return res.status(status).json({ error: transferError.message })
-  }
-
-  // Уведомления — best-effort, не должны рушить успешно завершённый перевод.
-  const { error: notifyError } = await supabaseAdmin.from('notifications').insert([
-    {
-      user_id: ctx.user.id,
-      message: `Вы перевели ${transferAmount} кармиков → ${normalEmail}${comment ? '. ' + comment : ''}`,
-      link: '/history'
-    },
-    {
-      user_id: recipient.user_id,
-      message: `Вам перевели ${transferAmount} кармиков от ${ctx.profile.email || ctx.user.email}${comment ? '. Комментарий: ' + comment : ''}`,
-      link: '/history'
+        if (!colError) setColleagues(colleaguesData || [])
+      }
+      setColleaguesLoading(false)
     }
-  ])
-  if (notifyError) {
-    console.error('[transfer] перевод прошёл, но уведомления не создались', notifyError)
+    init()
+  }, [])
+
+  // Закрываем выпадающий список по клику снаружи
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  const colleagueName = (c) =>
+    c.display_name || [c.first_name, c.last_name].filter(Boolean).join(' ') || c.email || 'Без имени'
+
+  const filteredColleagues = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return colleagues
+    return colleagues.filter(c => {
+      const haystack = [c.display_name, c.first_name, c.last_name, c.email]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return haystack.includes(q)
+    })
+  }, [colleagues, search])
+
+  const selectColleague = (c) => {
+    setSelected(c)
+    setSearch(colleagueName(c))
+    setDropdownOpen(false)
+    setError('')
   }
 
-  res.status(200).json({ newBalance: result.new_sender_balance })
+  const clearSelection = () => {
+    setSelected(null)
+    setSearch('')
+  }
+
+  const handleTransfer = async (e) => {
+    e.preventDefault()
+    setError('')
+    const transferAmount = parseInt(amount, 10)
+    if (!selected || !transferAmount || transferAmount <= 0) {
+      setError('Выберите коллегу и укажите сумму')
+      return
+    }
+    if (transferAmount > balance) {
+      setError('Недостаточно кармиков')
+      return
+    }
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const accessToken = session?.access_token
+      if (!accessToken) {
+        setError('Не удалось получить токен доступа')
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ recipientId: selected.user_id, amount: transferAmount, comment })
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setError(result.error || 'Ошибка перевода')
+      } else {
+        setBalance(result.newBalance)
+        clearSelection()
+        setAmount('')
+        setComment('')
+        setShowModal(true)
+      }
+    } catch (err) {
+      setError('Сетевая ошибка')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-10">
+      <BackArrow href="/" title="Перевод кармиков" />
+      <div className="premium-card">
+        <div className="text-sm text-gray-400 mb-4">
+          Ваш баланс: <span className="text-gold font-semibold">{balance}</span> кармиков
+        </div>
+        <form onSubmit={handleTransfer} className="space-y-4">
+          <div className="relative" ref={wrapRef}>
+            <input
+              type="text"
+              placeholder={colleaguesLoading ? 'Загрузка коллег...' : 'Начните вводить имя или email'}
+              value={search}
+              disabled={colleaguesLoading}
+              onChange={e => {
+                setSearch(e.target.value)
+                setSelected(null)
+                setDropdownOpen(true)
+              }}
+              onFocus={() => setDropdownOpen(true)}
+              className="input-field"
+              autoComplete="off"
+              required
+            />
+            {selected && (
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-sm"
+                title="Очистить выбор"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            )}
+            {dropdownOpen && !colleaguesLoading && (
+              <div
+                className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-xl"
+              >
+                {filteredColleagues.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">Никого не найдено</div>
+                ) : (
+                  filteredColleagues.map(c => (
+                    <button
+                      type="button"
+                      key={c.user_id}
+                      onClick={() => selectColleague(c)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-800 transition-colors"
+                    >
+                      {c.avatar_url ? (
+                        <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] text-gray-300">
+                          {colleagueName(c).charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm text-white truncate">{colleagueName(c)}</div>
+                        {c.email && <div className="text-xs text-gray-500 truncate">{c.email}</div>}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <input
+            type="number"
+            placeholder="Сумма"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            className="input-field"
+            min="1"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Комментарий"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            className="input-field"
+          />
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <button type="submit" className="btn-gold w-full" disabled={loading || !selected}>
+            {loading ? 'Отправка...' : 'Отправить'}
+          </button>
+        </form>
+      </div>
+      <PremiumModal isOpen={showModal} onClose={() => setShowModal(false)} title="Перевод выполнен!">
+        <p className="text-white">Операция записана в историю.</p>
+      </PremiumModal>
+    </div>
+  )
 }
