@@ -127,7 +127,11 @@ function MasteryAdmin() {
   const [materialsMetric, setMaterialsMetric] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
-  const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
+  const auth = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('Сессия истекла — обновите страницу и войдите заново')
+    return { Authorization: `Bearer ${session.access_token}` }
+  }
 
   const load = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -148,13 +152,17 @@ function MasteryAdmin() {
   useEffect(() => { load() }, [])
 
   const saveMetric = async (payload, id) => {
-    const h = await auth()
-    const r = id
-      ? await fetch('/api/company-admin/kpi/metrics', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
-      : await fetch('/api/company-admin/kpi/metrics', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    const d = await r.json()
-    if (r.ok) { showSuccess(id ? 'Показатель обновлён' : 'Показатель создан'); setCreateOpen(false); setEditMetric(null); load() }
-    else showError('Ошибка: ' + (d.error || 'сохранение не удалось'))
+    try {
+      const h = await auth()
+      const r = id
+        ? await fetch('/api/company-admin/kpi/metrics', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
+        : await fetch('/api/company-admin/kpi/metrics', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const d = await r.json()
+      if (r.ok) { showSuccess(id ? 'Показатель обновлён' : 'Показатель создан'); setCreateOpen(false); setEditMetric(null); load() }
+      else showError('Ошибка: ' + (d.error || 'сохранение не удалось'))
+    } catch (e) {
+      showError(e.message || 'Не удалось сохранить — проверьте соединение')
+    }
   }
 
   const delMetric = async id => {
@@ -237,6 +245,7 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
 )
 
 function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, onSave }) {
+  const { showError } = useFeedback()
   const [step, setStep] = useState('type')
   const [newParam, setNewParam] = useState({ label: '', unit: 'шт' })
   const [form, setForm] = useState(null)
@@ -269,9 +278,13 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
 
   const submit = () => {
-    if (!form.name.trim()) return
+    if (!form.name.trim()) { showError('Укажите название цели'); return }
     let inputs = [], formula = null
-    if (form.kpi_type === 'ratio') { if (!form.num || !form.den) return; inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 } }
+    if (form.kpi_type === 'ratio') {
+      if (!form.num || !form.den) { showError('Для «Доля / конверсия» выберите числитель и знаменатель'); return }
+      inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 }
+    }
+    if (form.useCustom && (!form.customTiers || form.customTiers.length === 0)) { showError('Добавьте хотя бы один уровень или переключитесь на стандартный шаблон'); return }
     const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
     // Свои уровни — сортируем от мягкого к строгому с учётом направления,
     // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
