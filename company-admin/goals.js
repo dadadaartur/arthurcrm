@@ -31,18 +31,23 @@ function GoalsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single()
-      if (!profileData) { router.push('/'); return }
-      const compId = profileData.company_id
-      setCompanyId(compId)
-      await loadData(compId)
-      setLoading(false)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/login'); return }
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single()
+        if (!profileData) { router.push('/'); return }
+        const compId = profileData.company_id
+        setCompanyId(compId)
+        await loadData(compId)
+      } catch (e) {
+        showError('Не удалось загрузить раздел целей: ' + (e.message || 'ошибка соединения'))
+      } finally {
+        setLoading(false)
+      }
     }
     init()
   }, [router])
@@ -52,6 +57,7 @@ function GoalsPage() {
       supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).eq('is_company_admin', false).is('deleted_at', null)
     ])
+    if (goalsRes.error) showError('Не удалось загрузить список целей: ' + goalsRes.error.message)
     setGoals(goalsRes.data || [])
     setEmployees(empRes.data || [])
   }

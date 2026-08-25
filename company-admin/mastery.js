@@ -28,6 +28,25 @@ const TYPE_META = [
   { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам' },
   { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI' },
 ]
+// Простые кастомные иконки для карточек выбора типа расчёта — единый
+// стиль (stroke, без заливки, без эмодзи) с остальным проектом.
+const TYPE_ICONS = {
+  average: <path d="M3 12h4l3-7 4 14 3-7h4" />,
+  cumulative: <><rect x="4" y="14" width="4" height="7" /><rect x="10" y="9" width="4" height="12" /><rect x="16" y="4" width="4" height="17" /></>,
+  plan: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /></>,
+  ratio: <><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 1 9 9h-9z" /></>,
+  inverse: <path d="M20 7L13 14l-4-4-6 6" />,
+  binary: <><circle cx="8" cy="12" r="5" /><path d="M13 9l3 3-3 3" /></>,
+  min_period: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /><path d="M8 15l2 2 4-4" /></>,
+  dynamics: <><path d="M4 17l5-6 4 4 7-9" /><path d="M15 6h5v5" /></>,
+  rating: <><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></>,
+  weighted: <><path d="M12 3v18M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z" /><path d="M5 8h14" /></>,
+}
+const TypeIcon = ({ type, size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {TYPE_ICONS[type]}
+  </svg>
+)
 const THRESH_NORMAL = [
   { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
   { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '10' },
@@ -134,20 +153,31 @@ function MasteryAdmin() {
   }
 
   const load = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-    const h = await auth()
-    const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
-    if (r.ok) {
-      const m = await r.json()
-      setMetrics(m)
-      const p = {}
-      ;(m || []).forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i }))
-      setPool(Object.values(p))
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { showError('Сессия не найдена — войдите заново'); return }
+      const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+      const h = await auth()
+      const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
+      if (r.ok) {
+        const m = await r.json()
+        setMetrics(m)
+        const p = {}
+        ;(m || []).forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i }))
+        setPool(Object.values(p))
+      } else {
+        const d = await r.json().catch(() => ({}))
+        showError('Не удалось загрузить цели: ' + (d.error || `код ${r.status}`))
+      }
+      if (prof?.company_id) {
+        const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
+        setCompanyKarma(acc?.balance || 0)
+      }
+    } catch (e) {
+      showError('Не удалось загрузить раздел целей: ' + (e.message || 'ошибка соединения'))
+    } finally {
+      setLoading(false)
     }
-    const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
-    setCompanyKarma(acc?.balance || 0)
-    setLoading(false)
   }
   useEffect(() => { load() }, [])
 
@@ -166,10 +196,14 @@ function MasteryAdmin() {
   }
 
   const delMetric = async id => {
-    const h = await auth()
-    const r = await fetch(`/api/company-admin/kpi/metrics?id=${id}`, { method: 'DELETE', headers: h })
-    if (r.ok) { showSuccess('Показатель удалён'); load() }
-    else showError('Не удалось удалить показатель')
+    try {
+      const h = await auth()
+      const r = await fetch(`/api/company-admin/kpi/metrics?id=${id}`, { method: 'DELETE', headers: h })
+      if (r.ok) { showSuccess('Показатель удалён'); load() }
+      else { const d = await r.json().catch(() => ({})); showError('Не удалось удалить показатель: ' + (d.error || `код ${r.status}`)) }
+    } catch (e) {
+      showError(e.message || 'Не удалось удалить показатель')
+    }
   }
 
   const confirmDelete = () => {
@@ -278,23 +312,27 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
 
   const submit = () => {
-    if (!form.name.trim()) { showError('Укажите название цели'); return }
-    let inputs = [], formula = null
-    if (form.kpi_type === 'ratio') {
-      if (!form.num || !form.den) { showError('Для «Доля / конверсия» выберите числитель и знаменатель'); return }
-      inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 }
+    try {
+      if (!form.name.trim()) { showError('Укажите название цели'); return }
+      let inputs = [], formula = null
+      if (form.kpi_type === 'ratio') {
+        if (!form.num || !form.den) { showError('Для «Доля / конверсия» выберите числитель и знаменатель'); return }
+        inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 }
+      }
+      if (form.useCustom && (!form.customTiers || form.customTiers.length === 0)) { showError('Добавьте хотя бы один уровень или переключитесь на стандартный шаблон'); return }
+      const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
+      // Свои уровни — сортируем от мягкого к строгому с учётом направления,
+      // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
+      let thresholds = null
+      if (form.useCustom && form.customTiers?.length) {
+        thresholds = [...form.customTiers]
+          .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
+          .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
+      }
+      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null }, initial?.id)
+    } catch (e) {
+      showError('Не удалось подготовить цель к сохранению: ' + (e.message || 'непредвиденная ошибка'))
     }
-    if (form.useCustom && (!form.customTiers || form.customTiers.length === 0)) { showError('Добавьте хотя бы один уровень или переключитесь на стандартный шаблон'); return }
-    const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
-    // Свои уровни — сортируем от мягкого к строгому с учётом направления,
-    // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
-    let thresholds = null
-    if (form.useCustom && form.customTiers?.length) {
-      thresholds = [...form.customTiers]
-        .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
-        .map(t => ({ key: t.key, label: t.label.trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
-    }
-    onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null }, initial?.id)
   }
 
   return (
@@ -304,15 +342,22 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
         <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия авто (5/10/15/20)</div>
         {step === 'type' ? (
           <>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Выберите тип расчёта</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', color: '#fff' }}>Выберите тип расчёта</h3>
+            <p style={{ fontSize: 12, color: '#888', margin: '0 0 18px' }}>Как считать значение показателя — от этого зависят и пороги ниже</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
-                  style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, textAlign: 'left', padding: '12px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
-                  <span style={{ color: '#FFD700', fontWeight: 600, fontSize: 13 }}>{t.label}</span>
-                  <span style={{ color: '#999', fontSize: 12, lineHeight: 1.4 }}>{t.hint} <span style={{ color: '#666' }}>Примеры: {t.ex}</span></span>
+                  style={{ display: 'flex', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 16, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,215,0,0.1)', color: '#FFD700' }}>
+                    <TypeIcon type={t.key} />
+                  </span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', color: '#fff', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.label}</span>
+                    <span style={{ display: 'block', color: '#999', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
+                    <span style={{ display: 'inline-block', marginTop: 6, color: '#FFD700', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)' }}>{t.ex}</span>
+                  </span>
                 </button>
               ))}
             </div>

@@ -46,7 +46,8 @@ export default function RewardsAdmin() {
   const [tab, setTab] = useState('create')
   const [form, setForm] = useState({
     name: '', description: '', cost: '', type: 'digital',
-    requires_approval: false, limit_per_user: '', image_file: null, preview_url: ''
+    requires_approval: false, limit_per_user: '', image_file: null, preview_url: '',
+    is_featured: false, promo_label: '', partner_name: '', requires_unlock: ''
   })
   const [editingId, setEditingId] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ show: false, rewardId: null, rewardName: '' })
@@ -94,14 +95,16 @@ export default function RewardsAdmin() {
       name: form.name, description: form.description, cost: costValue, type: form.type,
       requires_approval: form.requires_approval,
       limit_per_user: form.limit_per_user ? parseInt(form.limit_per_user) : null,
-      image_url: imageUrl, company_id: profile.company_id
+      image_url: imageUrl, company_id: profile.company_id,
+      is_featured: form.is_featured, promo_label: form.promo_label || null,
+      partner_name: form.partner_name || null, requires_unlock: form.requires_unlock || null
     }
     const { error } = editingId
       ? await supabase.from('rewards').update(rewardData).eq('id', editingId)
       : await supabase.from('rewards').insert(rewardData)
     if (error) { showError('Ошибка сохранения: ' + error.message); return }
     showSuccess(editingId ? 'Товар обновлён' : 'Товар создан')
-    setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
+    setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '', is_featured: false, promo_label: '', partner_name: '', requires_unlock: '' })
     setEditingId(null)
     loadRewards(profile)
   }
@@ -113,7 +116,9 @@ export default function RewardsAdmin() {
       name: reward.name, description: reward.description || '', cost: reward.cost.toString(),
       type: reward.type || 'digital', requires_approval: reward.requires_approval || false,
       limit_per_user: reward.limit_per_user ? reward.limit_per_user.toString() : '',
-      image_file: null, preview_url: reward.image_url || ''
+      image_file: null, preview_url: reward.image_url || '',
+      is_featured: reward.is_featured || false, promo_label: reward.promo_label || '',
+      partner_name: reward.partner_name || '', requires_unlock: reward.requires_unlock || ''
     })
   }
 
@@ -188,6 +193,27 @@ export default function RewardsAdmin() {
                       style={{ accentColor: '#FFD700' }} />
                     Требуется согласование
                   </label>
+                </div>
+                <div style={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, padding: 14, borderRadius: 12, background: 'rgba(192,132,252,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
+                  <div style={{ gridColumn: 'span 4', fontSize: 11, color: '#c084fc', textTransform: 'uppercase', letterSpacing: 0.5 }}>Витрина и партнёрка (пп. 11-12)</div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Партнёр</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="напр. МТС" value={form.partner_name} onChange={e => setForm({ ...form, partner_name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Ключ разблокировки</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="совпадает с заданием" value={form.requires_unlock} onChange={e => setForm({ ...form, requires_unlock: e.target.value })} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Промо-метка</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="напр. Скидка 20%" value={form.promo_label} onChange={e => setForm({ ...form, promo_label: e.target.value })} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                      Топ-товар (в ленте)
+                    </label>
+                  </div>
                 </div>
                 <div style={{ gridColumn: 'span 3' }}>
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
