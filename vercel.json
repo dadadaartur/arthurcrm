@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/check-deadlines",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}
