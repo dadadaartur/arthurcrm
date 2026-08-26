@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../../lib/auth'
 import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../../lib/kpi'
+import { creditEnergy } from '../../../../lib/energy'
 import { pullAutoValues } from '../../../../lib/kpiSource'
 
 // Запуск авто-сбора по требованию — для тест-стенда (п.7 ТЗ) и для случаев,
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
     if (improved) {
       dE = energyFor(metric, newBand) - energyFor(metric, oldBand)
       dK = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
-      if (dE > 0) { const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', profile.user_id).maybeSingle(); await a.from('kpi_energy').upsert({ user_id: profile.user_id, energy: (en?.energy || 0) + dE, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }) }
+      if (dE > 0) { await creditEnergy(a, profile.user_id, dE) }
       if (dK > 0) { const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', profile.user_id).maybeSingle(); await a.from('karma_balance').upsert({ user_id: profile.user_id, balance: (bal?.balance || 0) + dK }, { onConflict: 'user_id' }); await a.from('karma_transactions').insert({ user_id: profile.user_id, amount: dK, type: 'kpi_bonus', description: `KPI «${metric.name}» (авто): ${newBand}` }) }
     }
     results.push({ email: row.email, matched: true, name: profile.display_name || profile.email, value: row.value, band: newBand, improved, energyGranted: dE > 0 ? dE : 0, karmaGranted: dK > 0 ? dK : 0 })

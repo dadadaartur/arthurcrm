@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../lib/kpi'
 import { pullAutoValues } from '../../../lib/kpiSource'
+import { creditEnergy } from '../../../lib/energy'
 
 // РАНЬШЕ: этот хендлер не проверял вообще ничего — vercel.json настраивает
 // только РАСПИСАНИЕ вызова, а сам URL /api/cron/check-deadlines оставался
@@ -158,13 +159,13 @@ export default async function handler(req, res) {
         await a.from('karma_balance').upsert({ user_id: emp.user_id, balance: (bal?.balance || 0) + t.reward_karma }, { onConflict: 'user_id' })
         await a.from('karma_transactions').insert({ user_id: emp.user_id, amount: t.reward_karma, type: 'task_reward', description: `Авто-зачёт: «${t.title}»` })
       }
+      let grantedEnergy = 0
       if (t.auto_energy > 0) {
-        const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', emp.user_id).maybeSingle()
-        await a.from('kpi_energy').upsert({ user_id: emp.user_id, energy: (en?.energy || 0) + t.auto_energy, updated_at: now.toISOString() }, { onConflict: 'user_id' })
+        grantedEnergy = await creditEnergy(a, emp.user_id, t.auto_energy)
       }
       await a.from('notifications').insert({
         user_id: emp.user_id,
-        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${t.auto_energy} энергии`,
+        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${grantedEnergy} энергии${grantedEnergy < t.auto_energy ? ' (дневной лимит энергии почти исчерпан)' : ''}`,
         link: '/history'
       })
     }
@@ -232,7 +233,7 @@ export default async function handler(req, res) {
       if (improved) {
         const dE = energyFor(metric, newBand) - energyFor(metric, oldBand)
         const dK = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
-        if (dE > 0) { const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', profile.user_id).maybeSingle(); await a.from('kpi_energy').upsert({ user_id: profile.user_id, energy: (en?.energy || 0) + dE, updated_at: now.toISOString() }, { onConflict: 'user_id' }) }
+        if (dE > 0) { await creditEnergy(a, profile.user_id, dE) }
         if (dK > 0) { const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', profile.user_id).maybeSingle(); await a.from('karma_balance').upsert({ user_id: profile.user_id, balance: (bal?.balance || 0) + dK }, { onConflict: 'user_id' }); await a.from('karma_transactions').insert({ user_id: profile.user_id, amount: dK, type: 'kpi_bonus', description: `KPI «${metric.name}» (авто): ${newBand}` }) }
         autoGranted++
       }

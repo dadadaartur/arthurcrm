@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../../lib/auth'
 import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../../lib/kpi'
+import { creditEnergy } from '../../../../lib/energy'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -28,8 +29,7 @@ export default async function handler(req, res) {
       const dEnergy = energyFor(metric, newBand) - energyFor(metric, oldBand)
       const dKarma = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
       if (dEnergy > 0) {
-        const { data: en } = await a.from('kpi_energy').select('*').eq('user_id', e.userId).maybeSingle()
-        await a.from('kpi_energy').upsert({ user_id: e.userId, energy: (en?.energy || 0) + dEnergy, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+        await creditEnergy(a, e.userId, dEnergy)
       }
       if (dKarma > 0) {
         const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', e.userId).maybeSingle()

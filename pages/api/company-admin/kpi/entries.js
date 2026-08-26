@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../../lib/auth'
 import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../../lib/kpi'
+import { creditEnergy } from '../../../../lib/energy'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
     if (bandRankOf(metric, newBand) > bandRankOf(metric, oldBand)) {
       const dE = energyFor(metric, newBand) - energyFor(metric, oldBand)
       const dK = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
-      if (dE > 0) { const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', e.userId).maybeSingle(); await a.from('kpi_energy').upsert({ user_id: e.userId, energy: (en?.energy || 0) + dE, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }) }
+      if (dE > 0) { await creditEnergy(a, e.userId, dE) }
       if (dK > 0) { const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', e.userId).maybeSingle(); await a.from('karma_balance').upsert({ user_id: e.userId, balance: (bal?.balance || 0) + dK }, { onConflict: 'user_id' }); await a.from('karma_transactions').insert({ user_id: e.userId, amount: dK, type: 'kpi_bonus', description: `KPI «${metric.name}»: ${newBand}` }) }
     }
   }

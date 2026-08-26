@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../lib/auth'
+import { creditEnergy } from '../../../lib/energy'
 
 const sb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 const shuffle = a => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]] } return r }
@@ -151,8 +152,7 @@ export default async function handler(req, res) {
         await a.from('karma_transactions').insert({ user_id: ctx.user.id, amount: t.karma_reward, type: 'test_reward', description: `Тест «${t.title}» сдан (${pct}%)` })
       }
       if (t.energy_reward > 0) {
-        const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', ctx.user.id).maybeSingle()
-        await a.from('kpi_energy').upsert({ user_id: ctx.user.id, energy: (en?.energy || 0) + t.energy_reward, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+        await creditEnergy(a, ctx.user.id, t.energy_reward)
       }
     }
     return res.status(200).json({ score: pct, passed, show_correct: t?.show_correct_answers })

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
+import { creditEnergy } from '../../../lib/energy'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -25,8 +26,7 @@ export default async function handler(req, res) {
     const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', ctx.user.id).maybeSingle()
     await a.from('karma_balance').upsert({ user_id: ctx.user.id, balance: (bal?.balance || 0) + 2 }, { onConflict: 'user_id' })
     await a.from('karma_transactions').insert({ user_id: ctx.user.id, amount: 2, type: 'test_reward', description: `Тест «${t.title}» сдан (${score}%)` })
-    const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', ctx.user.id).maybeSingle()
-    await a.from('kpi_energy').upsert({ user_id: ctx.user.id, energy: (en?.energy || 0) + 5, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    await creditEnergy(a, ctx.user.id, 5)
   }
   res.status(200).json({ score, passed })
 }
