@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import DatePicker from '../components/DatePicker'
 import LoadingScreen from '../components/LoadingScreen'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
@@ -207,12 +208,9 @@ export default function MyPurchases() {
           <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: 20, marginBottom: 16 }}>Активация сертификата</h3>
             <p style={{ marginBottom: 16 }}>{activationModal.purchase.reward_name}</p>
-            <input
-              type="date"
-              value={activationDate}
-              onChange={e => setActivationDate(e.target.value)}
-              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 16 }}
-            />
+            <div style={{ marginBottom: 16 }}>
+              <DatePicker value={activationDate} onChange={setActivationDate} placeholder="Выберите дату" />
+            </div>
             <textarea
               value={activationComment}
               onChange={e => setActivationComment(e.target.value)}

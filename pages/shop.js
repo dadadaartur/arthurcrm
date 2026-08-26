@@ -31,6 +31,8 @@ export default function Shop() {
   const [loading, setLoading] = useState(false)
   const [selectedReward, setSelectedReward] = useState(null)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [unlockedKeys, setUnlockedKeys] = useState([])
+  const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
     const init = async () => {
@@ -64,6 +66,10 @@ export default function Shop() {
         .eq('company_id', profile.company_id)
         .order('cost')
       setRewards(rewardsData || [])
+      // Партнёрские товары (п.11 ТЗ) — какие ключи разблокировки уже
+      // открыты у сотрудника, чтобы показать замок на остальных.
+      const { data: unlocks } = await supabase.from('employee_unlocks').select('unlock_key').eq('user_id', user.id)
+      setUnlockedKeys((unlocks || []).map(u => u.unlock_key))
       setInitialLoading(false)
     }
     init()
@@ -97,6 +103,10 @@ export default function Shop() {
   }
 
   if (initialLoading) return <LoadingScreen />
+
+  const featuredRewards = rewards.filter(r => r.is_featured || r.promo_label)
+  const partnerNames = [...new Set(rewards.filter(r => r.partner_name).map(r => r.partner_name))]
+  const visibleRewards = activeCategory === 'all' ? rewards : rewards.filter(r => r.partner_name === activeCategory)
 
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: 'transparent', overflow: 'hidden', position: 'relative', fontFamily: 'Inter, sans-serif' }}>
@@ -136,7 +146,48 @@ export default function Shop() {
             </div>
           </div>
 
+          {/* Лента акций и топ-товаров — как в маркетплейсах (п.12 ТЗ) */}
+          {featuredRewards.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" /></svg>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Акции и топ товары</span>
+              </div>
+              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x mandatory' }}>
+                {featuredRewards.map(reward => (
+                  <div key={reward.id} onClick={() => setSelectedReward(reward)} style={{
+                    flex: '0 0 240px', scrollSnapAlign: 'start', cursor: 'pointer', borderRadius: 18, overflow: 'hidden',
+                    background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.25)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)', transition: 'transform 0.25s'
+                  }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)' }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}>
+                    <div style={{ height: 120, position: 'relative' }}>
+                      {reward.image_url ? <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />}
+                      {reward.promo_label && <span style={{ position: 'absolute', top: 10, left: 10, background: 'linear-gradient(135deg, #f87171, #c084fc)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20 }}>{reward.promo_label}</span>}
+                    </div>
+                    <div style={{ padding: 14 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reward.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#FFD700' }}>{reward.cost} {getKarmikWord(reward.cost)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Категории от партнёров (п.11-12 ТЗ) */}
+          {partnerNames.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+              <button onClick={() => setActiveCategory('all')} className={`filter-pill ${activeCategory === 'all' ? 'active' : ''}`}>Все товары</button>
+              {partnerNames.map(name => (
+                <button key={name} onClick={() => setActiveCategory(name)} className={`filter-pill ${activeCategory === name ? 'active' : ''}`}>{name}</button>
+              ))}
+            </div>
+          )}
+
           {/* Сетка карточек */}
+          {visibleRewards.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#777', padding: '60px 0' }}>В этой категории пока нет товаров</div>
+          ) : (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -144,15 +195,16 @@ export default function Shop() {
             marginTop: 16,
             paddingBottom: 40
           }}>
-            {rewards.map(reward => {
+            {visibleRewards.map(reward => {
               const word = getKarmikWord(reward.cost)
+              const isLocked = !!reward.requires_unlock && !unlockedKeys.includes(reward.requires_unlock)
               return (
                 <div key={reward.id} style={{
                   background: 'rgba(15, 20, 35, 0.8)',
                   backdropFilter: 'blur(10px)',
                   borderRadius: 24,
                   overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: isLocked ? '1px solid rgba(192,132,252,0.35)' : '1px solid rgba(255,255,255,0.08)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   cursor: 'pointer',
@@ -165,7 +217,7 @@ export default function Shop() {
                 >
                   <div style={{ width: '100%', height: 220, position: 'relative', overflow: 'hidden' }}>
                     {reward.image_url ? (
-                      <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={reward.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: isLocked ? 'grayscale(0.7) brightness(0.5)' : 'none' }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)' }} />
                     )}
@@ -175,12 +227,23 @@ export default function Shop() {
                     {reward.requires_approval && (
                       <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,0,0,0.5)', backdropFilter: 'blur(4px)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>Требуется согласование</span>
                     )}
+                    {isLocked && (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(10,10,20,0.35)' }}>
+                        <span style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                        </span>
+                        <span style={{ fontSize: 11, color: '#e9d5ff', textAlign: 'center', padding: '0 16px' }}>Откроется после партнёрского задания</span>
+                      </div>
+                    )}
                   </div>
                   <div style={{ padding: '20px 24px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <h3 style={{ fontSize: 20, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{reward.name}</h3>
                     <p style={{ fontSize: 14, color: '#aaa', marginBottom: 20, lineHeight: 1.6, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{reward.description}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                       <span style={{ fontSize: 18, fontWeight: 600, color: '#FFD700' }}>{reward.cost} {word}</span>
+                      {isLocked ? (
+                        <span style={{ fontSize: 12, color: '#c084fc', padding: '10px 18px', border: '1px solid rgba(192,132,252,0.4)', borderRadius: 14 }}>Заблокировано</span>
+                      ) : (
                       <button
                         onClick={(e) => { e.stopPropagation(); purchase(reward); }}
                         disabled={loading}
@@ -211,12 +274,14 @@ export default function Shop() {
                       >
                         Купить
                       </button>
+                      )}
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
+          )}
         </div>
       </div>
 
@@ -295,6 +360,12 @@ export default function Shop() {
                   <span style={{ fontSize: 28, fontWeight: 700, color: '#FFD700' }}>
                     {selectedReward.cost} {getKarmikWord(selectedReward.cost)}
                   </span>
+                  {selectedReward.requires_unlock && !unlockedKeys.includes(selectedReward.requires_unlock) ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#c084fc', padding: '14px 24px', border: '1px solid rgba(192,132,252,0.4)', borderRadius: 14 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                      Откроется после партнёрского задания
+                    </span>
+                  ) : (
                   <button
                     onClick={() => { purchase(selectedReward); }}
                     disabled={loading}
@@ -324,6 +395,7 @@ export default function Shop() {
                   >
                     Купить
                   </button>
+                  )}
                 </div>
               </div>
             </div>

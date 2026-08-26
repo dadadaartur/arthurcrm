@@ -15,44 +15,6 @@ function getKarmikWord(n) {
   return 'кармиков'
 }
 
-function CorporateLanding() {
-  const router = useRouter()
-  const { user } = useProfile()
-  return (
-    <div className="landing-wrapper min-h-screen bg-black text-white overflow-x-hidden">
-      <Head><title>Кармический Банк | Экосистема Роста</title></Head>
-      <div className="stars-bg"><div className="gradient-aura" /></div>
-      <header className="fixed top-0 w-full z-50 px-8 py-5 flex justify-between items-center backdrop-blur-md">
-        <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent">Кармический банк</div>
-        {user ? (
-          <button onClick={() => router.push('/')} className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">Вернуться в систему</button>
-        ) : (
-          <button onClick={() => router.push('/login')} className="text-sm font-medium text-white/70 hover:text-white transition-colors px-5 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">Войти</button>
-        )}
-      </header>
-      <section className="relative pt-32 pb-20 flex flex-col items-center text-center px-4">
-        <div className="hero-black-hole mb-12" style={{ position: 'relative', width: 180, height: 180 }}>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,0,0.4) 0%, rgba(255,100,0,0.2) 30%, transparent 60%)', filter: 'blur(14px)', animation: 'orbitSpin 80s linear infinite' }} />
-          <div className="black-hole" style={{ width: 180, height: 180, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-        </div>
-        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tighter leading-tight">
-          Управляйте не людьми, <br />
-          <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-purple-600 bg-clip-text text-transparent">а энергией их достижений</span>
-        </h1>
-        <p className="max-w-2xl text-gray-400 text-lg md:text-xl mb-10">Традиционные премии — это прошлое. «Кармический Банк» — это операционная система для мотивации.</p>
-        <div className="flex gap-6"><button onClick={() => router.push('/create-company')} className="btn-gold !text-lg !py-4 !px-12">Создать компанию</button></div>
-      </section>
-      <footer className="py-10 border-t border-white/5 text-center text-gray-600 text-xs">© {new Date().getFullYear()} Кармический банк.</footer>
-      <style jsx>{`
-        .hero-black-hole { position: relative; display: flex; justify-content: center; align-items: center; }
-        .gradient-aura { position: absolute; bottom: 0; width: 100%; height: 50%; background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%); }
-        .landing-wrapper { scroll-behavior: smooth; }
-        @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}</style>
-    </div>
-  )
-}
-
 function FlyingComet({ left, top, angle, dist, dur, delay, scale = 0.55 }) {
   return (
     <div style={{ position: 'absolute', left, top, zIndex: 1, pointerEvents: 'none', transform: `rotate(${angle}deg)`, '--dist': dist + 'px', filter: 'blur(0.6px)' }}>
@@ -73,6 +35,7 @@ export default function Home() {
   const router = useRouter()
   const [balance, setBalance] = useState(0)
   const [pageLoading, setPageLoading] = useState(true)
+  const [planKind, setPlanKind] = useState('onboarding') // 'onboarding' | 'development' — см. п.8 ТЗ
   const [holo, setHolo] = useState(false)
   const [pulse, setPulse] = useState(0)
   const starsRef = useRef(null)
@@ -103,6 +66,11 @@ export default function Home() {
     const loadData = async () => {
       const { data: bal } = await supabase.from('karma_balance').select('balance').eq('user_id', user.id).single()
       if (bal) setBalance(bal.balance)
+      // Пока сотрудник в периоде адаптации (есть активный план с kind='onboarding')
+      // — показываем кнопку «План адаптации», иначе — «План развития».
+      const { data: activeOnboarding } = await supabase.from('adaptation_plans').select('id')
+        .eq('employee_id', user.id).eq('kind', 'onboarding').eq('status', 'active').maybeSingle()
+      setPlanKind(activeOnboarding ? 'onboarding' : 'development')
       setPageLoading(false)
     }
     loadData()
@@ -137,8 +105,12 @@ export default function Home() {
     setPulse(p => p + 1)
   }
 
+  useEffect(() => {
+    if (!loading && !user) router.push('/landing')
+  }, [loading, user, router])
+
   if (loading || pageLoading) return null
-  if (!user) return <CorporateLanding />
+  if (!user) return null
 
   const karmikWord = getKarmikWord(balance)
   const centerX = 58
@@ -151,7 +123,7 @@ export default function Home() {
     { title: 'Моя компания', sub: 'данные и новости', left: 77, top: 60, colors: ['#c084fc', '#F28B82'] },
     { title: 'Покупки', sub: 'мои награды', left: 58, top: 68, colors: ['#ffe29f', '#b3f0ff'] },
     { title: 'База знаний', sub: 'лучшие практики', left: 39, top: 60, colors: ['#c084fc', '#7AC78F'] },
-    { title: 'План адаптации', sub: 'твой путь', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
+    { title: planKind === 'onboarding' ? 'План адаптации' : 'План развития', sub: planKind === 'onboarding' ? 'твой путь' : 'расти дальше', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
     { title: 'Цели', sub: 'твои победы', left: 39, top: 24, colors: ['#A3E0B0', '#d4af37'] },
   ]
   const beams = blocks.map(block => {
@@ -163,7 +135,7 @@ export default function Home() {
   })
   const routes = {
     'Чемпионат': '/leaderboard', 'Моя компания': '/company', 'База знаний': '/knowledge',
-    'План адаптации': '/onboarding', 'Цели': '/goals', 'Задания': '/tasks',
+    'План адаптации': '/onboarding', 'План развития': '/development', 'Цели': '/goals', 'Задания': '/tasks',
     'Магазин': '/shop', 'Покупки': '/my-purchases',
   }
 
