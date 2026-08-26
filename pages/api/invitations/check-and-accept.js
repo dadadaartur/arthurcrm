@@ -49,22 +49,23 @@ export default async function handler(req, res) {
 
   if (!invite) return res.status(200).json({ status: 'no_invite' })
 
-  const perms = invite.permissions || {}
+  const perms = invite.payload || {}
 
   const profileData = {
     company_id: invite.company_id,
-    role_id: invite.role_id,
+    role_id: perms.roleId || null,
     email,
-    display_name: [perms.first_name, perms.last_name].filter(Boolean).join(' ') || email,
-    first_name: perms.first_name || null,
-    last_name: perms.last_name || null,
-    position_id: perms.position_id || null,
+    display_name: [perms.firstName, perms.lastName].filter(Boolean).join(' ') || email,
+    first_name: perms.firstName || null,
+    last_name: perms.lastName || null,
+    position_id: perms.positionId || null,
     is_company_admin: false,
-    can_create_tasks: !!perms.can_create_tasks,
-    can_review_tasks: !!perms.can_review_tasks,
-    can_manage_employees: !!perms.can_manage_employees,
-    can_delete_employees: !!perms.can_delete_employees,
-    manager_id: invite.created_by
+    can_create_tasks: !!perms.permissions?.can_create_tasks,
+    can_review_tasks: !!perms.permissions?.can_review_tasks,
+    can_manage_employees: !!perms.permissions?.can_manage_employees,
+    can_delete_employees: !!perms.permissions?.can_delete_employees,
+    department_id: perms.departmentId || null,
+    manager_id: perms.managerId || invite.created_by
   }
 
   const { error: profileError } = existingProfile
@@ -79,6 +80,10 @@ export default async function handler(req, res) {
     .from('invitations')
     .update({ status: 'accepted', accepted_at: new Date().toISOString(), invited_user_id: user.id })
     .eq('id', invite.id)
+
+  if (perms.pendingManagerDepartmentId) {
+    await supabaseAdmin.from('departments').update({ manager_user_id: user.id }).eq('id', perms.pendingManagerDepartmentId).eq('company_id', invite.company_id)
+  }
 
   res.status(200).json({ status: 'joined', companyId: invite.company_id })
 }

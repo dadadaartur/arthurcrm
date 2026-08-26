@@ -8,6 +8,9 @@ import { useFeedback } from '../../context/ActionFeedbackContext'
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '8px 16px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
 const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }
+const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
+  <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.2s ease' }}>{children}</button>
+)
 
 // Поиск сотрудника с аватаром — тот же паттерн, что в переводе кармиков и
 // назначении плана адаптации, вынесен сюда локально ради скорости (третье
@@ -112,14 +115,24 @@ function DepartmentAdmin() {
 
   const saveDept = async () => {
     if (!editDept.name?.trim()) { showError('Укажите название отдела'); return }
+    if (editDept.inviteByEmail && !editDept.managerEmail?.trim()) { showError('Укажите email будущего руководителя'); return }
     try {
       const h = await auth()
       const r = editDept.id
         ? await fetch('/api/company-admin/departments', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editDept.id, name: editDept.name, parentDepartmentId: editDept.parent_department_id, managerUserId: editDept.manager_user_id }) })
-        : await fetch('/api/company-admin/departments', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: editDept.name, parentDepartmentId: editDept.parent_department_id, managerUserId: editDept.manager_user_id }) })
+        : await fetch('/api/company-admin/departments', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: editDept.name, parentDepartmentId: editDept.parent_department_id, managerUserId: editDept.inviteByEmail ? null : editDept.manager_user_id }) })
       const d = await r.json()
       if (!r.ok) { showError(d.error || 'Не удалось сохранить отдел'); return }
-      showSuccess(editDept.id ? 'Отдел обновлён' : 'Отдел создан')
+
+      if (editDept.inviteByEmail && editDept.managerEmail?.trim()) {
+        const deptId = editDept.id || d.id
+        const ir = await fetch('/api/company-admin/invite-department-manager', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: editDept.managerEmail.trim(), departmentId: deptId }) })
+        const id = await ir.json()
+        if (!ir.ok) { showError('Отдел сохранён, но приглашение не отправлено: ' + (id.error || '')); setEditDept(null); load(); return }
+        showSuccess(id.status === 'assigned_existing' ? 'Отдел сохранён, руководитель назначен' : 'Отдел сохранён, приглашение руководителю отправлено')
+      } else {
+        showSuccess(editDept.id ? 'Отдел обновлён' : 'Отдел создан')
+      }
       setEditDept(null)
       load()
     } catch (e) { showError(e.message) }
@@ -277,7 +290,22 @@ function DepartmentAdmin() {
               </div>
               <div>
                 <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Руководитель</label>
-                <EmployeePicker employees={employees} value={editDept.manager_user_id} empName={empName} onChange={v => setEditDept({ ...editDept, manager_user_id: v })} />
+                {editDept.id ? (
+                  <EmployeePicker employees={employees} value={editDept.manager_user_id} empName={empName} onChange={v => setEditDept({ ...editDept, manager_user_id: v })} />
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                      <Seg active={!editDept.inviteByEmail} onClick={() => setEditDept({ ...editDept, inviteByEmail: false, managerEmail: '' })}>Уже есть в системе</Seg>
+                      <Seg active={editDept.inviteByEmail} onClick={() => setEditDept({ ...editDept, inviteByEmail: true, manager_user_id: null })} color="#4ade80">Пригласить по email</Seg>
+                    </div>
+                    {editDept.inviteByEmail ? (
+                      <input className="input-field" style={{ width: '100%' }} type="email" placeholder="manager@company.ru" value={editDept.managerEmail || ''} onChange={e => setEditDept({ ...editDept, managerEmail: e.target.value })} />
+                    ) : (
+                      <EmployeePicker employees={employees} value={editDept.manager_user_id} empName={empName} onChange={v => setEditDept({ ...editDept, manager_user_id: v })} />
+                    )}
+                    {editDept.inviteByEmail && <p style={{ fontSize: 11, color: '#888', margin: '6px 0 0' }}>Если этого человека ещё нет в компании — он получит приглашение и автоматически станет руководителем этого отдела, как только зарегистрируется.</p>}
+                  </>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
                 <button onClick={() => setEditDept(null)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>

@@ -24,6 +24,7 @@ function AnalyticsAdmin() {
   const { showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState([])
+  const [scope, setScope] = useState('company')
   const [employees, setEmployees] = useState([])
   const [cur, setCur] = useState([])
   const [prev, setPrev] = useState([])
@@ -46,7 +47,7 @@ function AnalyticsAdmin() {
         fetch(`/api/kpi/analytics?from=${from}&to=${to}`, { headers: h }),
         fetch(`/api/kpi/analytics?from=${shift(from, -days)}&to=${shift(from, -1)}`, { headers: h })
       ])
-      if (r1.ok) { const d = await r1.json(); setMetrics(d.metrics || []); setEmployees(d.employees || []); setCur(d.entries || []); setChartId(c => c || d.metrics?.[0]?.id || null) }
+      if (r1.ok) { const d = await r1.json(); setMetrics(d.metrics || []); setEmployees(d.employees || []); setCur(d.entries || []); setChartId(c => c || d.metrics?.[0]?.id || null); setScope(d.scope || 'company') }
       else showError('Не удалось загрузить аналитику')
       if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) }
     } catch (e) { showError('Сетевая ошибка') }
@@ -117,7 +118,11 @@ function AnalyticsAdmin() {
   return (
     <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/company-admin" title="Аналитика команды" />
+        <BackArrow href="/company-admin" title="Аналитика команды" extra={
+          <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: scope === 'team' ? 'rgba(192,132,252,0.12)' : 'rgba(255,215,0,0.1)', color: scope === 'team' ? '#c084fc' : '#FFD700', border: `1px solid ${scope === 'team' ? 'rgba(192,132,252,0.35)' : 'rgba(255,215,0,0.3)'}` }}>
+            {scope === 'team' ? 'Ваша команда и вложенные отделы' : 'Вся компания'}
+          </span>
+        } />
 
         {/* Тонкая строка периода */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'rgba(15,20,35,0.85)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 18 }}>
