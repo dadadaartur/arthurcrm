@@ -260,6 +260,21 @@ export default function RewardsAdmin() {
         )}
 
         {tab === 'history' && (
+          <>
+          <div style={{ marginBottom: 20, padding: 18, borderRadius: 16, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', marginBottom: 10 }}>Сейчас в ленте наверху магазина ({rewards.filter(r => r.is_featured || r.promo_label).length})</div>
+            {rewards.filter(r => r.is_featured || r.promo_label).length === 0 ? (
+              <p style={{ fontSize: 12, color: '#aaa', margin: 0 }}>Пока пусто. Откройте товар на редактирование и в блоке «Лента наверху магазина» включите «Показывать в ленте» или заполните промо-метку.</p>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {rewards.filter(r => r.is_featured || r.promo_label).map(r => (
+                  <button key={r.id} onClick={() => handleEdit(r)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', fontSize: 12, cursor: 'pointer' }}>
+                    {r.name}{r.promo_label ? ` · ${r.promo_label}` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {rewards.length === 0 && (
               <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -313,6 +328,7 @@ export default function RewardsAdmin() {
               </div>
             ))}
           </div>
+          </>
         )}
 
         {/* Модалка удаления */}

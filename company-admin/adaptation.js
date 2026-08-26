@@ -33,6 +33,8 @@ function AdaptationAdmin() {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ employee_id: '', template_id: '', start_date: '' })
+  const [empSearch, setEmpSearch] = useState('')
+  const [empDropdownOpen, setEmpDropdownOpen] = useState(false)
   const [panel, setPanel] = useState(null) // { plan, tab: 'events'|'journal', events, history }
   const [approveDraft, setApproveDraft] = useState({}) // eventId -> { rating, feedback }
   const [reportModal, setReportModal] = useState(null)
@@ -50,7 +52,7 @@ function AdaptationAdmin() {
     const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
     if (!prof) { window.location.href = '/'; return }
     const { data: emps } = await supabase.from('profiles')
-      .select('user_id, email, first_name, last_name, display_name, is_company_admin')
+      .select('user_id, email, first_name, last_name, display_name, is_company_admin, avatar_url')
       .eq('company_id', prof.company_id).is('deleted_at', null)
     setEmployees((emps || []).filter(e => !e.is_company_admin))
     const h = await auth()
@@ -137,12 +139,45 @@ function AdaptationAdmin() {
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 16 }}>{kind === 'onboarding' ? 'Назначить план адаптации' : 'Назначить план развития'}</h3>
           {templates.length === 0 && <p style={{ fontSize: 12, color: '#f87171', marginBottom: 12 }}>Нет активных шаблонов {kind === 'development' ? 'развития' : 'адаптации'} — обратитесь к администратору площадки, чтобы добавить.</p>}
           <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) auto', gap: 14, alignItems: 'end' }}>
-            <div>
+            <div style={{ position: 'relative' }}>
               <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Сотрудник</label>
-              <select className="input-field" style={{ width: '100%' }} value={form.employee_id} onChange={e => setForm({ ...form, employee_id: e.target.value })}>
-                <option value="">—</option>
-                {employees.map(e => <option key={e.user_id} value={e.user_id}>{empName(e.user_id)}</option>)}
-              </select>
+              {form.employee_id ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 12, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.3)' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(160,233,255,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#a0e9ff', overflow: 'hidden' }}>
+                    {employees.find(e => e.user_id === form.employee_id)?.avatar_url
+                      ? <img src={employees.find(e => e.user_id === form.employee_id).avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : empName(form.employee_id).charAt(0).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 13, color: '#fff', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(form.employee_id)}</span>
+                  <button type="button" onClick={() => { setForm({ ...form, employee_id: '' }); setEmpSearch('') }} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input className="input-field" style={{ width: '100%' }} placeholder="Начните вводить имя…" value={empSearch}
+                    onChange={e => { setEmpSearch(e.target.value); setEmpDropdownOpen(true) }} onFocus={() => setEmpDropdownOpen(true)} autoComplete="off" />
+                  {empDropdownOpen && (
+                    <div style={{ position: 'absolute', zIndex: 20, marginTop: 4, width: '100%', maxHeight: 240, overflowY: 'auto', borderRadius: 14, border: '1px solid rgba(255,215,0,0.25)', background: 'rgba(20,25,45,0.97)', backdropFilter: 'blur(16px)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
+                      {employees.filter(e => empName(e.user_id).toLowerCase().includes(empSearch.toLowerCase()) || e.email?.toLowerCase().includes(empSearch.toLowerCase())).length === 0 ? (
+                        <div style={{ padding: '10px 14px', fontSize: 13, color: '#777' }}>Никого не найдено</div>
+                      ) : employees.filter(e => empName(e.user_id).toLowerCase().includes(empSearch.toLowerCase()) || e.email?.toLowerCase().includes(empSearch.toLowerCase())).map(e => (
+                        <button type="button" key={e.user_id} onClick={() => { setForm({ ...form, employee_id: e.user_id }); setEmpDropdownOpen(false); setEmpSearch('') }}
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+                          onMouseEnter={ev => { ev.currentTarget.style.background = 'rgba(255,215,0,0.08)' }} onMouseLeave={ev => { ev.currentTarget.style.background = 'none' }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,215,0,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#FFD700', overflow: 'hidden' }}>
+                            {e.avatar_url ? <img src={e.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : empName(e.user_id).charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(e.user_id)}</div>
+                            {e.email && <div style={{ fontSize: 11, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.email}</div>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             <div>
               <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Шаблон</label>
@@ -161,20 +196,33 @@ function AdaptationAdmin() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {plans.length === 0 && <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Планов пока нет</div>}
-          {plans.map(p => (
+          {plans.map(p => {
+            const pct = p.progress.total ? Math.round(p.progress.done / p.progress.total * 100) : 0
+            const statusLabel = { active: 'Активен', completed: 'Завершён', cancelled: 'Отменён', draft: 'Черновик' }[p.status] || p.status
+            return (
             <div key={p.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ color: '#fff', fontWeight: 600 }}>{p.employee_name}</div>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>старт {new Date(p.start_date).toLocaleDateString('ru')} · {p.progress.done}/{p.progress.total} событий{p.progress.avgRating ? ` · ср. оценка ${p.progress.avgRating}` : ''}</div>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                  <span style={{ color: '#fff', fontWeight: 600 }}>{p.employee_name}</span>
+                  <span style={{ fontSize: 11, color: '#888' }}>старт {new Date(p.start_date).toLocaleDateString('ru')}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ flex: 1, height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct === 100 ? 'linear-gradient(90deg,#4ade80,#a0e9ff)' : 'linear-gradient(90deg,#FFD700,#c084fc)', transition: 'width 0.4s' }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap' }}>{p.progress.done}/{p.progress.total} · {pct}%</span>
+                  {p.progress.avgRating && <span style={{ fontSize: 11, color: '#FFD700', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="#FFD700" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg> {p.progress.avgRating}</span>}
+                </div>
               </div>
-              <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: p.status === 'active' ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)', color: p.status === 'active' ? '#4ade80' : '#aaa', border: `1px solid ${p.status === 'active' ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.15)'}` }}>{p.status}</span>
+              <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: p.status === 'active' ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.06)', color: p.status === 'active' ? '#4ade80' : '#aaa', border: `1px solid ${p.status === 'active' ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.15)'}` }}>{statusLabel}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => openPanel(p)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>События и журнал</button>
                 <button onClick={() => openReport(p)} style={{ ...ghostBtn, borderColor: 'rgba(160,233,255,0.4)', color: '#a0e9ff' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Отчёт</button>
                 <button onClick={() => openEdit(p)} style={{ ...ghostBtn, borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Редактировать</button>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

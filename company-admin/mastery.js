@@ -145,6 +145,7 @@ function MasteryAdmin() {
   const [editMetric, setEditMetric] = useState(null)
   const [materialsMetric, setMaterialsMetric] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [detailsMetric, setDetailsMetric] = useState(null)
 
   const auth = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -231,11 +232,22 @@ function MasteryAdmin() {
             <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }} title={m.name}>{m.name}</div>
+                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
                 <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                 {resolveThresholds(m).map(t => <span key={t.key} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${t.color}12`, color: t.color, border: `1px solid ${t.color}33` }}>{t.label} {t.value}{m.unit}</span>)}
+              </div>
+              {/* Шкала порогов — визуально показывает соотношение уровней между
+                  собой, чтобы не приходилось сопоставлять числа в пилюлях */}
+              <div style={{ position: 'relative', height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', marginBottom: 14 }}>
+                {(() => {
+                  const bands = resolveThresholds(m)
+                  const max = Math.max(...bands.map(b => b.value), 1)
+                  return bands.map(b => (
+                    <span key={b.key} title={`${b.label}: ${b.value}${m.unit}`} style={{ position: 'absolute', left: `${Math.min(100, (b.value / max) * 100)}%`, top: '50%', transform: 'translate(-50%, -50%)', width: 10, height: 10, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}88`, border: '2px solid #0f1423' }} />
+                  ))
+                })()}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setMaterialsMetric(m)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
@@ -267,6 +279,37 @@ function MasteryAdmin() {
               <button onClick={() => setDeleteConfirm(null)} style={{ ...ghostBtn, flex: 1 }}>Отмена</button>
               <button onClick={confirmDelete} style={{ flex: 1, background: 'rgba(244,67,54,0.15)', border: '1px solid rgba(244,67,54,0.5)', borderRadius: 12, padding: '9px 18px', color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Удалить</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {detailsMetric && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => setDetailsMetric(null)}>
+          <div style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 28, maxWidth: 520, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+              <h3 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: 0 }}>{detailsMetric.name}</h3>
+              <button onClick={() => setDetailsMetric(null)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <span style={{ fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[detailsMetric.kpi_type || 'cumulative']}</span>
+            {detailsMetric.description && <p style={{ fontSize: 14, color: '#ccc', lineHeight: 1.6, margin: '14px 0' }}>{detailsMetric.description}</p>}
+            {detailsMetric.advice && (
+              <div style={{ padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.2)', fontSize: 13, color: '#a0e9ff', marginBottom: 16 }}>{detailsMetric.advice}</div>
+            )}
+            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Пороги выполнения</div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(resolveThresholds(detailsMetric).length, 4)}, 1fr)`, gap: 8 }}>
+              {resolveThresholds(detailsMetric).map(t => (
+                <div key={t.key} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${t.color}0d`, border: `1px solid ${t.color}33` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.label}</div>
+                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
+                </div>
+              ))}
+            </div>
+            {detailsMetric.source === 'auto' && (
+              <div style={{ marginTop: 16, fontSize: 11, color: '#4ade80' }}>Источник: автоматический (внешняя интеграция)</div>
+            )}
           </div>
         </div>
       )}
