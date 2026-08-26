@@ -46,7 +46,8 @@ export default function RewardsAdmin() {
   const [tab, setTab] = useState('create')
   const [form, setForm] = useState({
     name: '', description: '', cost: '', type: 'digital',
-    requires_approval: false, limit_per_user: '', image_file: null, preview_url: ''
+    requires_approval: false, limit_per_user: '', image_file: null, preview_url: '',
+    is_featured: false, promo_label: '', partner_name: '', requires_unlock: ''
   })
   const [editingId, setEditingId] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ show: false, rewardId: null, rewardName: '' })
@@ -94,14 +95,16 @@ export default function RewardsAdmin() {
       name: form.name, description: form.description, cost: costValue, type: form.type,
       requires_approval: form.requires_approval,
       limit_per_user: form.limit_per_user ? parseInt(form.limit_per_user) : null,
-      image_url: imageUrl, company_id: profile.company_id
+      image_url: imageUrl, company_id: profile.company_id,
+      is_featured: form.is_featured, promo_label: form.promo_label || null,
+      partner_name: form.partner_name || null, requires_unlock: form.requires_unlock || null
     }
     const { error } = editingId
       ? await supabase.from('rewards').update(rewardData).eq('id', editingId)
       : await supabase.from('rewards').insert(rewardData)
     if (error) { showError('Ошибка сохранения: ' + error.message); return }
     showSuccess(editingId ? 'Товар обновлён' : 'Товар создан')
-    setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '' })
+    setForm({ name: '', description: '', cost: '', type: 'digital', requires_approval: false, limit_per_user: '', image_file: null, preview_url: '', is_featured: false, promo_label: '', partner_name: '', requires_unlock: '' })
     setEditingId(null)
     loadRewards(profile)
   }
@@ -113,7 +116,9 @@ export default function RewardsAdmin() {
       name: reward.name, description: reward.description || '', cost: reward.cost.toString(),
       type: reward.type || 'digital', requires_approval: reward.requires_approval || false,
       limit_per_user: reward.limit_per_user ? reward.limit_per_user.toString() : '',
-      image_file: null, preview_url: reward.image_url || ''
+      image_file: null, preview_url: reward.image_url || '',
+      is_featured: reward.is_featured || false, promo_label: reward.promo_label || '',
+      partner_name: reward.partner_name || '', requires_unlock: reward.requires_unlock || ''
     })
   }
 
@@ -189,6 +194,30 @@ export default function RewardsAdmin() {
                     Требуется согласование
                   </label>
                 </div>
+                <div style={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, padding: 16, borderRadius: 12, background: 'rgba(192,132,252,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
+                  <div style={{ gridColumn: 'span 4' }}>
+                    <div style={{ fontSize: 12, color: '#c084fc', fontWeight: 600, marginBottom: 4 }}>Лента наверху магазина и партнёрские категории</div>
+                    <div style={{ fontSize: 11, color: '#888', lineHeight: 1.5 }}>Товар попадёт в горизонтальную ленту вверху магазина, если заполнить промо-метку или включить «Показывать в ленте». Поле «Партнёр» создаёт отдельную вкладку-категорию в магазине — она появится автоматически, как только у товара будет заполнено это поле.</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Партнёр (категория в магазине)</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="напр. МТС" value={form.partner_name} onChange={e => setForm({ ...form, partner_name: e.target.value })} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Ключ разблокировки</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="совпадает с заданием" value={form.requires_unlock} onChange={e => setForm({ ...form, requires_unlock: e.target.value })} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Промо-метка (попадёт в ленту)</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="напр. Скидка 20%" value={form.promo_label} onChange={e => setForm({ ...form, promo_label: e.target.value })} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+                    <label onClick={() => setForm({ ...form, is_featured: !form.is_featured })} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: form.is_featured ? '#FFD700' : '#ccc', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 12, background: form.is_featured ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)', border: `1px solid ${form.is_featured ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.1)'}`, transition: 'all 0.2s' }}>
+                      <input type="checkbox" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                      Показывать в ленте
+                    </label>
+                  </div>
+                </div>
                 <div style={{ gridColumn: 'span 3' }}>
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
                   <textarea className="input-field" style={{ width: '100%' }} rows={2}
@@ -231,6 +260,21 @@ export default function RewardsAdmin() {
         )}
 
         {tab === 'history' && (
+          <>
+          <div style={{ marginBottom: 20, padding: 18, borderRadius: 16, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', marginBottom: 10 }}>Сейчас в ленте наверху магазина ({rewards.filter(r => r.is_featured || r.promo_label).length})</div>
+            {rewards.filter(r => r.is_featured || r.promo_label).length === 0 ? (
+              <p style={{ fontSize: 12, color: '#aaa', margin: 0 }}>Пока пусто. Откройте товар на редактирование и в блоке «Лента наверху магазина» включите «Показывать в ленте» или заполните промо-метку.</p>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {rewards.filter(r => r.is_featured || r.promo_label).map(r => (
+                  <button key={r.id} onClick={() => handleEdit(r)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', fontSize: 12, cursor: 'pointer' }}>
+                    {r.name}{r.promo_label ? ` · ${r.promo_label}` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {rewards.length === 0 && (
               <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -284,6 +328,7 @@ export default function RewardsAdmin() {
               </div>
             ))}
           </div>
+          </>
         )}
 
         {/* Модалка удаления */}

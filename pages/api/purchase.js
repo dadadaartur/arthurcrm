@@ -16,6 +16,17 @@ export default async function handler(req, res) {
 
   const userId = ctx.user.id
 
+  // Партнёрские товары (п.11 ТЗ) — требуют разблокировки через выполнение
+  // соответствующего задания от партнёра. Проверяем ДО вызова RPC
+  // purchase_reward, а не внутри неё — исходник этой функции создан
+  // напрямую в Supabase (её нет ни в одном файле миграций этого репозитория),
+  // поэтому переписывать её саму рискованнее, чем остановить покупку раньше.
+  const { data: reward } = await supabaseAdmin.from('rewards').select('requires_unlock').eq('id', rewardId).maybeSingle()
+  if (reward?.requires_unlock) {
+    const { data: unlock } = await supabaseAdmin.from('employee_unlocks').select('id').eq('user_id', userId).eq('unlock_key', reward.requires_unlock).maybeSingle()
+    if (!unlock) return res.status(403).json({ error: 'Этот товар доступен только после выполнения соответствующего партнёрского задания' })
+  }
+
   const { data, error: purchaseError } = await supabaseAdmin.rpc('purchase_reward', {
     p_user_id: userId,
     p_reward_id: rewardId,

@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       // уровней. Если не передан (стандартный шаблон из 4 уровней выше) —
       // остаётся null, показатель работает по старым 4 столбцам как раньше.
       thresholds: Array.isArray(b.thresholds) && b.thresholds.length > 0 ? b.thresholds : null,
+      source: b.source === 'auto' ? 'auto' : 'manual', source_config: b.source === 'auto' ? (b.source_config || null) : null,
       description: b.description || null, advice: b.advice || null, inputs: b.inputs || null, formula: b.formula || null, is_active: true
     }).select().single()
     if (error) return res.status(500).json({ error: error.message })
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
     if (fields.name) fields.name = String(fields.name).slice(0, 24)
     ;['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'energy_min', 'energy_mid', 'energy_top', 'energy_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => { if (fields[k] !== undefined) fields[k] = Number(fields[k]) || 0 })
     if (fields.thresholds !== undefined) fields.thresholds = Array.isArray(fields.thresholds) && fields.thresholds.length > 0 ? fields.thresholds : null
+    if (fields.source !== undefined) { fields.source = fields.source === 'auto' ? 'auto' : 'manual'; if (fields.source !== 'auto') fields.source_config = null }
     const { error } = await a.from('kpi_metrics').update(fields).eq('id', id).eq('company_id', companyId)
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json({ success: true })

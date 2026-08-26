@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import DatePicker from '../../components/DatePicker'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -99,8 +100,8 @@ function HistoryPage() {
             <option value="rejected">Отклонено</option>
           </select>
           <input type="text" placeholder="Сотрудник (email)" className="input-field w-auto" value={filter.employee} onChange={e => setFilter({...filter, employee: e.target.value})} />
-          <input type="date" className="input-field w-auto" value={filter.dateFrom} onChange={e => setFilter({...filter, dateFrom: e.target.value})} />
-          <input type="date" className="input-field w-auto" value={filter.dateTo} onChange={e => setFilter({...filter, dateTo: e.target.value})} />
+          <DatePicker value={filter.dateFrom} onChange={v => setFilter({...filter, dateFrom: v})} placeholder="С даты" />
+          <DatePicker value={filter.dateTo} onChange={v => setFilter({...filter, dateTo: v})} placeholder="По дату" />
           <button onClick={() => { setPage(0); fetchHistory(); }} className="btn-gold text-xs px-4">Применить</button>
         </div>
         <div className="max-h-80 overflow-y-auto space-y-2">

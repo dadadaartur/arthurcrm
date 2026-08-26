@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../lib/auth'
+import { creditKarma, grantKarmaBoost, grantUnlock } from '../../../lib/karma'
 
 // РАНЬШЕ: UPDATE на task_assignments фильтровался только по .eq('id', ...),
 // без повторной проверки статуса — тот же паттерн read-then-write, что и в
@@ -36,12 +37,23 @@ export default async function handler(req, res) {
       return res.status(409).json({ error: 'Задание уже обработано другим запросом' })
     }
     const k = Number(asg.tasks?.reward_karma) || 0
+    let rewardNote = ''
+    const rewardType = asg.tasks?.reward_type || 'karma'
+    const rewardConfig = asg.tasks?.reward_config || {}
+
     if (k > 0) {
-      const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', asg.user_id).maybeSingle()
-      await a.from('karma_balance').upsert({ user_id: asg.user_id, balance: (bal?.balance || 0) + k }, { onConflict: 'user_id' })
-      await a.from('karma_transactions').insert({ user_id: asg.user_id, amount: k, type: 'task_reward', description: `Задание «${asg.tasks?.title}» одобрено` })
+      await creditKarma(a, { userId: asg.user_id, amount: k, type: 'task_reward', description: `Задание «${asg.tasks?.title}» одобрено` })
     }
-    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено! +${k} кармиков`, link: '/history' })
+    // Партнёрские типы награды (п.11 ТЗ) — сверх обычных кармиков (если
+    // они тоже заданы) выдаём разблокировку категории магазина или буст.
+    if (rewardType === 'shop_unlock' && rewardConfig.unlock_key) {
+      await grantUnlock(a, { userId: asg.user_id, unlockKey: rewardConfig.unlock_key, sourceTaskId: asg.task_id })
+      rewardNote = ' Открыт доступ к партнёрским товарам в магазине.'
+    } else if (rewardType === 'karma_boost' && rewardConfig.percent) {
+      await grantKarmaBoost(a, { userId: asg.user_id, companyId: asg.tasks?.company_id, percent: rewardConfig.percent, durationDays: rewardConfig.duration_days || 30, source: asg.tasks?.partner_name, sourceTaskId: asg.task_id })
+      rewardNote = ` Активирован буст +${rewardConfig.percent}% ко всем начислениям на ${rewardConfig.duration_days || 30} дн.`
+    }
+    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено!${k > 0 ? ` +${k} кармиков` : ''}${rewardNote}`, link: '/history' })
   } else {
     const { data: updated, error: updErr } = await a.from('task_assignments')
       .update({ status: 'rejected', comment: comment || null })

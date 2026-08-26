@@ -28,6 +28,25 @@ const TYPE_META = [
   { key: 'rating', label: 'Рейтинг в команде', hint: 'Процентиль среди коллег.', ex: 'Топ-10 по продажам' },
   { key: 'weighted', label: 'Взвешенный индекс', hint: 'Комплексный KPI с весами.', ex: '0.5×продажи +0.3×CSI' },
 ]
+// Простые кастомные иконки для карточек выбора типа расчёта — единый
+// стиль (stroke, без заливки, без эмодзи) с остальным проектом.
+const TYPE_ICONS = {
+  average: <path d="M3 12h4l3-7 4 14 3-7h4" />,
+  cumulative: <><rect x="4" y="14" width="4" height="7" /><rect x="10" y="9" width="4" height="12" /><rect x="16" y="4" width="4" height="17" /></>,
+  plan: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /></>,
+  ratio: <><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 1 9 9h-9z" /></>,
+  inverse: <path d="M20 7L13 14l-4-4-6 6" />,
+  binary: <><circle cx="8" cy="12" r="5" /><path d="M13 9l3 3-3 3" /></>,
+  min_period: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /><path d="M8 15l2 2 4-4" /></>,
+  dynamics: <><path d="M4 17l5-6 4 4 7-9" /><path d="M15 6h5v5" /></>,
+  rating: <><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z" /></>,
+  weighted: <><path d="M12 3v18M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z" /><path d="M5 8h14" /></>,
+}
+const TypeIcon = ({ type, size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {TYPE_ICONS[type]}
+  </svg>
+)
 const THRESH_NORMAL = [
   { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
   { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '10' },
@@ -126,42 +145,66 @@ function MasteryAdmin() {
   const [editMetric, setEditMetric] = useState(null)
   const [materialsMetric, setMaterialsMetric] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [detailsMetric, setDetailsMetric] = useState(null)
 
-  const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
+  const auth = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) throw new Error('Сессия истекла — обновите страницу и войдите заново')
+    return { Authorization: `Bearer ${session.access_token}` }
+  }
 
   const load = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
-    const h = await auth()
-    const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
-    if (r.ok) {
-      const m = await r.json()
-      setMetrics(m)
-      const p = {}
-      ;(m || []).forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i }))
-      setPool(Object.values(p))
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { showError('Сессия не найдена — войдите заново'); return }
+      const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
+      const h = await auth()
+      const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
+      if (r.ok) {
+        const m = await r.json()
+        setMetrics(m)
+        const p = {}
+        ;(m || []).forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i }))
+        setPool(Object.values(p))
+      } else {
+        const d = await r.json().catch(() => ({}))
+        showError('Не удалось загрузить цели: ' + (d.error || `код ${r.status}`))
+      }
+      if (prof?.company_id) {
+        const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
+        setCompanyKarma(acc?.balance || 0)
+      }
+    } catch (e) {
+      showError('Не удалось загрузить раздел целей: ' + (e.message || 'ошибка соединения'))
+    } finally {
+      setLoading(false)
     }
-    const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
-    setCompanyKarma(acc?.balance || 0)
-    setLoading(false)
   }
   useEffect(() => { load() }, [])
 
   const saveMetric = async (payload, id) => {
-    const h = await auth()
-    const r = id
-      ? await fetch('/api/company-admin/kpi/metrics', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
-      : await fetch('/api/company-admin/kpi/metrics', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    const d = await r.json()
-    if (r.ok) { showSuccess(id ? 'Показатель обновлён' : 'Показатель создан'); setCreateOpen(false); setEditMetric(null); load() }
-    else showError('Ошибка: ' + (d.error || 'сохранение не удалось'))
+    try {
+      const h = await auth()
+      const r = id
+        ? await fetch('/api/company-admin/kpi/metrics', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
+        : await fetch('/api/company-admin/kpi/metrics', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const d = await r.json()
+      if (r.ok) { showSuccess(id ? 'Показатель обновлён' : 'Показатель создан'); setCreateOpen(false); setEditMetric(null); load() }
+      else showError('Ошибка: ' + (d.error || 'сохранение не удалось'))
+    } catch (e) {
+      showError(e.message || 'Не удалось сохранить — проверьте соединение')
+    }
   }
 
   const delMetric = async id => {
-    const h = await auth()
-    const r = await fetch(`/api/company-admin/kpi/metrics?id=${id}`, { method: 'DELETE', headers: h })
-    if (r.ok) { showSuccess('Показатель удалён'); load() }
-    else showError('Не удалось удалить показатель')
+    try {
+      const h = await auth()
+      const r = await fetch(`/api/company-admin/kpi/metrics?id=${id}`, { method: 'DELETE', headers: h })
+      if (r.ok) { showSuccess('Показатель удалён'); load() }
+      else { const d = await r.json().catch(() => ({})); showError('Не удалось удалить показатель: ' + (d.error || `код ${r.status}`)) }
+    } catch (e) {
+      showError(e.message || 'Не удалось удалить показатель')
+    }
   }
 
   const confirmDelete = () => {
@@ -189,11 +232,22 @@ function MasteryAdmin() {
             <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }} title={m.name}>{m.name}</div>
+                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
                 <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                 {resolveThresholds(m).map(t => <span key={t.key} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${t.color}12`, color: t.color, border: `1px solid ${t.color}33` }}>{t.label} {t.value}{m.unit}</span>)}
+              </div>
+              {/* Шкала порогов — визуально показывает соотношение уровней между
+                  собой, чтобы не приходилось сопоставлять числа в пилюлях */}
+              <div style={{ position: 'relative', height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', marginBottom: 14 }}>
+                {(() => {
+                  const bands = resolveThresholds(m)
+                  const max = Math.max(...bands.map(b => b.value), 1)
+                  return bands.map(b => (
+                    <span key={b.key} title={`${b.label}: ${b.value}${m.unit}`} style={{ position: 'absolute', left: `${Math.min(100, (b.value / max) * 100)}%`, top: '50%', transform: 'translate(-50%, -50%)', width: 10, height: 10, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}88`, border: '2px solid #0f1423' }} />
+                  ))
+                })()}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setMaterialsMetric(m)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
@@ -228,6 +282,37 @@ function MasteryAdmin() {
           </div>
         </div>
       )}
+
+      {detailsMetric && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => setDetailsMetric(null)}>
+          <div style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 28, maxWidth: 520, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+              <h3 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: 0 }}>{detailsMetric.name}</h3>
+              <button onClick={() => setDetailsMetric(null)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <span style={{ fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[detailsMetric.kpi_type || 'cumulative']}</span>
+            {detailsMetric.description && <p style={{ fontSize: 14, color: '#ccc', lineHeight: 1.6, margin: '14px 0' }}>{detailsMetric.description}</p>}
+            {detailsMetric.advice && (
+              <div style={{ padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.2)', fontSize: 13, color: '#a0e9ff', marginBottom: 16 }}>{detailsMetric.advice}</div>
+            )}
+            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Пороги выполнения</div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(resolveThresholds(detailsMetric).length, 4)}, 1fr)`, gap: 8 }}>
+              {resolveThresholds(detailsMetric).map(t => (
+                <div key={t.key} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${t.color}0d`, border: `1px solid ${t.color}33` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.label}</div>
+                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
+                </div>
+              ))}
+            </div>
+            {detailsMetric.source === 'auto' && (
+              <div style={{ marginTop: 16, fontSize: 11, color: '#4ade80' }}>Источник: автоматический (внешняя интеграция)</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -237,6 +322,7 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
 )
 
 function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, onSave }) {
+  const { showError } = useFeedback()
   const [step, setStep] = useState('type')
   const [newParam, setNewParam] = useState({ label: '', unit: 'шт' })
   const [form, setForm] = useState(null)
@@ -244,8 +330,8 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   useEffect(() => {
     if (open) {
       const hasCustom = Array.isArray(initial?.thresholds) && initial.thresholds.length > 0
-      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null }
-        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null })
+      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null, source: initial.source || 'manual', source_url: initial.source_config?.url || '' }
+        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null, source: 'manual', source_url: '' })
       setStep(initial?.kpi_type ? 'form' : 'type')
     }
   }, [open, initial])
@@ -269,19 +355,27 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
 
   const submit = () => {
-    if (!form.name.trim()) return
-    let inputs = [], formula = null
-    if (form.kpi_type === 'ratio') { if (!form.num || !form.den) return; inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 } }
-    const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
-    // Свои уровни — сортируем от мягкого к строгому с учётом направления,
-    // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
-    let thresholds = null
-    if (form.useCustom && form.customTiers?.length) {
-      thresholds = [...form.customTiers]
-        .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
-        .map(t => ({ key: t.key, label: t.label.trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
+    try {
+      if (!form.name.trim()) { showError('Укажите название цели'); return }
+      let inputs = [], formula = null
+      if (form.kpi_type === 'ratio') {
+        if (!form.num || !form.den) { showError('Для «Доля / конверсия» выберите числитель и знаменатель'); return }
+        inputs = [pool.find(p => p.key === form.num), pool.find(p => p.key === form.den)].filter(Boolean); formula = { num: form.num, den: form.den, mult: Number(form.mult) || 100 }
+      }
+      if (form.useCustom && (!form.customTiers || form.customTiers.length === 0)) { showError('Добавьте хотя бы один уровень или переключитесь на стандартный шаблон'); return }
+      const nums = {}; ['thr_min', 'thr_mid', 'thr_top', 'thr_ultra', 'karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].forEach(k => nums[k] = Number(form[k]) || 0)
+      // Свои уровни — сортируем от мягкого к строгому с учётом направления,
+      // чтобы lib/kpi.js::bandFor читал их в правильном порядке.
+      let thresholds = null
+      if (form.useCustom && form.customTiers?.length) {
+        thresholds = [...form.customTiers]
+          .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
+          .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
+      }
+      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null }, initial?.id)
+    } catch (e) {
+      showError('Не удалось подготовить цель к сохранению: ' + (e.message || 'непредвиденная ошибка'))
     }
-    onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds }, initial?.id)
   }
 
   return (
@@ -291,15 +385,22 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
         <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия авто (5/10/15/20)</div>
         {step === 'type' ? (
           <>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Выберите тип расчёта</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', color: '#fff' }}>Выберите тип расчёта</h3>
+            <p style={{ fontSize: 12, color: '#888', margin: '0 0 18px' }}>Как считать значение показателя — от этого зависят и пороги ниже</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
-                  style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 14, textAlign: 'left', padding: '12px 16px', borderRadius: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
-                  <span style={{ color: '#FFD700', fontWeight: 600, fontSize: 13 }}>{t.label}</span>
-                  <span style={{ color: '#999', fontSize: 12, lineHeight: 1.4 }}>{t.hint} <span style={{ color: '#666' }}>Примеры: {t.ex}</span></span>
+                  style={{ display: 'flex', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 16, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,215,0,0.1)', color: '#FFD700' }}>
+                    <TypeIcon type={t.key} />
+                  </span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', color: '#fff', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.label}</span>
+                    <span style={{ display: 'block', color: '#999', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
+                    <span style={{ display: 'inline-block', marginTop: 6, color: '#FFD700', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)' }}>{t.ex}</span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -354,6 +455,23 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
                   ))}
                 </div>
                 <button type="button" onClick={addTier} style={{ ...ghostBtn, marginTop: 10, fontSize: 12 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>+ Добавить уровень</button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Источник значений</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <Seg active={form.source !== 'auto'} onClick={() => setForm({ ...form, source: 'manual' })} color="#a0e9ff">Ручной ввод</Seg>
+                <Seg active={form.source === 'auto'} onClick={() => setForm({ ...form, source: 'auto' })} color="#4ade80">Авто (внешний источник)</Seg>
+              </div>
+            </div>
+            {form.source === 'auto' && (
+              <div style={{ marginBottom: 16, padding: 12, borderRadius: 12, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>URL внешнего источника (отдаёт JSON вида [{'{'}email, value{'}'}])</label>
+                <input className="input-field" style={{ width: '100%' }} placeholder="https://ваша-crm.ru/api/kpi-export" value={form.source_url} onChange={e => setForm({ ...form, source_url: e.target.value })} />
+                <p style={{ fontSize: 11, color: '#777', margin: '8px 0 0' }}>
+                  Раз в день (и по кнопке «Проверить сейчас») система дёргает эту ссылку и сама зачисляет пороги/награды. Ещё нет реальной CRM для интеграции — настройте и проверьте всю цепочку на тестовом источнике на странице <Link href="/company-admin/crm-sandbox" style={{ color: '#4ade80' }}>«Тест-стенд автозачёта»</Link>.
+                </p>
               </div>
             )}
 

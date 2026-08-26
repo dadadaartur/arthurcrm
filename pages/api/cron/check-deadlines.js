@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { bandFor, bandRankOf } from '../../../lib/kpi'
+import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../lib/kpi'
+import { pullAutoValues } from '../../../lib/kpiSource'
 
 // РАНЬШЕ: этот хендлер не проверял вообще ничего — vercel.json настраивает
 // только РАСПИСАНИЕ вызова, а сам URL /api/cron/check-deadlines оставался
@@ -169,5 +170,74 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length })
+  // 4) Уведомления о наступлении события плана адаптации/развития (п.8 ТЗ).
+  // Раньше сотрудник узнавал о событии, только если сам зашёл на страницу —
+  // никакого проактивного напоминания не было. Текст уведомления немного
+  // отличается по типу события (тестирование/встреча-ОС/обычное), чтобы
+  // сразу было понятно, к чему готовиться.
+  const EVENT_NOTICE = {
+    test: 'У вас запланировано тестирование',
+    feedback: 'Сегодня время обратной связи с руководителем',
+    meeting: 'У вас запланирована встреча',
+    training: 'Сегодня у вас обучение',
+  }
+  const { data: activePlans } = await a.from('adaptation_plans').select('id, employee_id, start_date, kind').eq('status', 'active')
+  let planEventsNotified = 0
+  for (const plan of activePlans || []) {
+    const { data: pendingEvents } = await a.from('adaptation_plan_events').select('id, day_number, event_time, title, event_type')
+      .eq('plan_id', plan.id).eq('status', 'pending').is('reminded_at', null)
+    for (const ev of pendingEvents || []) {
+      const evDate = new Date(plan.start_date + 'T00:00:00')
+      evDate.setDate(evDate.getDate() + (ev.day_number - 1))
+      const [h, m] = (ev.event_time || '09:00').split(':').map(Number)
+      evDate.setHours(h || 9, m || 0, 0, 0)
+      if (evDate > now) continue
+      const notice = EVENT_NOTICE[ev.event_type] || 'Наступило событие плана'
+      const planLabel = plan.kind === 'development' ? '/development' : '/onboarding'
+      await a.from('notifications').insert({ user_id: plan.employee_id, message: `${notice}: «${ev.title}»`, link: planLabel })
+      await a.from('adaptation_plan_events').update({ reminded_at: now.toISOString() }).eq('id', ev.id)
+      planEventsNotified++
+    }
+  }
+
+  // 5) Авто-сбор показателей с внешним источником (п.7 ТЗ).
+  // pullAutoValues() была написана заранее, но раньше её нигде не вызывали
+  // — источник 'auto' был настроен номинально и никогда сам не срабатывал.
+  // Логика начисления — та же, что и при ручном вводе KPI (см.
+  // company-admin/kpi/entries.js): пишем в kpi_entries, начисляем только
+  // разницу между новым и старым уровнем, чтобы не задваивать награду при
+  // повторном срабатывании в один день.
+  const { data: autoMetrics } = await a.from('kpi_metrics').select('*').eq('source', 'auto').eq('is_active', true)
+  let autoGranted = 0
+  for (const metric of autoMetrics || []) {
+    let rows = []
+    try { rows = await pullAutoValues(metric) } catch (e) { continue }
+    if (!rows.length) continue
+    const emails = rows.map(r => r.email).filter(Boolean)
+    const { data: profiles } = await a.from('profiles').select('user_id, email').eq('company_id', metric.company_id).in('email', emails)
+    const byEmail = {}
+    ;(profiles || []).forEach(p => { byEmail[p.email] = p })
+    for (const row of rows) {
+      const profile = byEmail[row.email]
+      if (!profile) continue
+      const newBand = bandFor(row.value, metric)
+      const { data: ex } = await a.from('kpi_entries').select('*').eq('metric_id', metric.id).eq('user_id', profile.user_id).eq('entry_date', today).maybeSingle()
+      const oldBand = ex?.granted_band || 'none'
+      const improved = bandRankOf(metric, newBand) > bandRankOf(metric, oldBand)
+      await a.from('kpi_entries').upsert({
+        metric_id: metric.id, user_id: profile.user_id, company_id: metric.company_id,
+        value: row.value, entry_date: today, source: 'auto',
+        granted_band: improved ? newBand : oldBand
+      }, { onConflict: 'metric_id,user_id,entry_date' })
+      if (improved) {
+        const dE = energyFor(metric, newBand) - energyFor(metric, oldBand)
+        const dK = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
+        if (dE > 0) { const { data: en } = await a.from('kpi_energy').select('energy').eq('user_id', profile.user_id).maybeSingle(); await a.from('kpi_energy').upsert({ user_id: profile.user_id, energy: (en?.energy || 0) + dE, updated_at: now.toISOString() }, { onConflict: 'user_id' }) }
+        if (dK > 0) { const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', profile.user_id).maybeSingle(); await a.from('karma_balance').upsert({ user_id: profile.user_id, balance: (bal?.balance || 0) + dK }, { onConflict: 'user_id' }); await a.from('karma_transactions').insert({ user_id: profile.user_id, amount: dK, type: 'kpi_bonus', description: `KPI «${metric.name}» (авто): ${newBand}` }) }
+        autoGranted++
+      }
+    }
+  }
+
+  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length, planEventsNotified, autoGranted })
 }

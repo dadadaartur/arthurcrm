@@ -4,14 +4,15 @@ import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
 import { withAuth } from '../../components/withAuth'
+import { useFeedback } from '../../context/ActionFeedbackContext'
 
 function GoalsPage() {
   const router = useRouter()
+  const { showSuccess, showError } = useFeedback()
   const [companyId, setCompanyId] = useState(null)
   const [goals, setGoals] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' })
 
   const [form, setForm] = useState({
     assign_to_all: true,
@@ -30,18 +31,23 @@ function GoalsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single()
-      if (!profileData) { router.push('/'); return }
-      const compId = profileData.company_id
-      setCompanyId(compId)
-      await loadData(compId)
-      setLoading(false)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/login'); return }
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single()
+        if (!profileData) { router.push('/'); return }
+        const compId = profileData.company_id
+        setCompanyId(compId)
+        await loadData(compId)
+      } catch (e) {
+        showError('Не удалось загрузить раздел целей: ' + (e.message || 'ошибка соединения'))
+      } finally {
+        setLoading(false)
+      }
     }
     init()
   }, [router])
@@ -51,74 +57,74 @@ function GoalsPage() {
       supabase.from('goals').select('*, profiles(email, display_name)').eq('company_id', compId).eq('is_active', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('user_id, email, display_name').eq('company_id', compId).eq('is_company_admin', false).is('deleted_at', null)
     ])
+    if (goalsRes.error) showError('Не удалось загрузить список целей: ' + goalsRes.error.message)
     setGoals(goalsRes.data || [])
     setEmployees(empRes.data || [])
-  }
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({ show: true, message, type })
-    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000)
   }
 
   const handleCreateGoal = async (e) => {
     e.preventDefault()
     if (!form.assign_to_all && form.user_ids.length === 0) {
-      showNotification('Выберите хотя бы одного сотрудника', 'error')
+      showError('Выберите хотя бы одного сотрудника')
       return
     }
     if (!form.target_value || form.target_value < 1) {
-      showNotification('Укажите количество больше 0', 'error')
+      showError('Укажите количество больше 0')
       return
     }
 
-    const targetUserIds = form.assign_to_all ? employees.map(e => e.user_id) : form.user_ids
+    try {
+      const targetUserIds = form.assign_to_all ? employees.map(e => e.user_id) : form.user_ids
 
-    let deadline = null
-    if (form.period_type === 'manual') {
-      const d = new Date()
-      d.setDate(d.getDate() + (form.manual_days || 30))
-      deadline = d.toISOString()
-    } else {
-      const now = new Date()
-      if (form.period_type === 'day') {
-        deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
-      } else if (form.period_type === 'week') {
-        const nextWeek = new Date(now)
-        nextWeek.setDate(now.getDate() + (7 - now.getDay()))
-        deadline = nextWeek.toISOString()
-      } else if (form.period_type === 'month') {
-        deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+      let deadline = null
+      if (form.period_type === 'manual') {
+        const d = new Date()
+        d.setDate(d.getDate() + (form.manual_days || 30))
+        deadline = d.toISOString()
+      } else {
+        const now = new Date()
+        if (form.period_type === 'day') {
+          deadline = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString()
+        } else if (form.period_type === 'week') {
+          const nextWeek = new Date(now)
+          nextWeek.setDate(now.getDate() + (7 - now.getDay()))
+          deadline = nextWeek.toISOString()
+        } else if (form.period_type === 'month') {
+          deadline = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+        }
       }
+
+      const inserts = targetUserIds.map(userId => ({
+        company_id: companyId,
+        user_id: userId,
+        goal_type: form.use_custom_type ? (form.custom_goal_type || 'custom') : form.goal_type,
+        title: form.use_custom_type ? (form.goal_title || form.custom_goal_type) : (form.goal_title || form.goal_type),
+        target_value: form.target_value,
+        period: form.period_type === 'manual' ? 'custom' : form.period_type,
+        reward_rubles: form.reward_mode === 'rubles' || form.reward_mode === 'combo' ? form.reward_rubles : 0,
+        reward_karma: form.reward_mode === 'karma' || form.reward_mode === 'combo' ? form.reward_karma : 0,
+        deadline,
+        is_active: true,
+        created_by: null
+      }))
+
+      const { error } = await supabase.from('goals').insert(inserts)
+      if (error) {
+        showError('Ошибка создания целей: ' + error.message)
+        return
+      }
+
+      setForm({
+        assign_to_all: true, user_ids: [], goal_type: 'calls',
+        custom_goal_type: '', goal_title: '', use_custom_type: false,
+        target_value: 10, period_type: 'day', manual_days: 30,
+        reward_mode: 'none', reward_rubles: 0, reward_karma: 0
+      })
+      showSuccess(`Цели созданы (${targetUserIds.length} шт.)`)
+      loadData(companyId)
+    } catch (e) {
+      showError('Не удалось создать цели — проверьте соединение и попробуйте снова')
     }
-
-    const inserts = targetUserIds.map(userId => ({
-      company_id: companyId,
-      user_id: userId,
-      goal_type: form.use_custom_type ? (form.custom_goal_type || 'custom') : form.goal_type,
-      title: form.use_custom_type ? (form.goal_title || form.custom_goal_type) : (form.goal_title || form.goal_type),
-      target_value: form.target_value,
-      period: form.period_type === 'manual' ? 'custom' : form.period_type,
-      reward_rubles: form.reward_mode === 'rubles' || form.reward_mode === 'combo' ? form.reward_rubles : 0,
-      reward_karma: form.reward_mode === 'karma' || form.reward_mode === 'combo' ? form.reward_karma : 0,
-      deadline,
-      is_active: true,
-      created_by: null
-    }))
-
-    const { error } = await supabase.from('goals').insert(inserts)
-    if (error) {
-      showNotification('Ошибка создания целей: ' + error.message, 'error')
-      return
-    }
-
-    setForm({
-      assign_to_all: true, user_ids: [], goal_type: 'calls',
-      custom_goal_type: '', goal_title: '', use_custom_type: false,
-      target_value: 10, period_type: 'day', manual_days: 30,
-      reward_mode: 'none', reward_rubles: 0, reward_karma: 0
-    })
-    showNotification(`Цели созданы (${targetUserIds.length} шт.)`)
-    loadData(companyId)
   }
 
   const handleDeleteGoal = async (goalId) => {
@@ -261,12 +267,6 @@ function GoalsPage() {
           </table>
         )}
       </div>
-
-      {notification.show && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-800 border border-gray-700 text-white px-6 py-4 rounded-xl shadow-lg animate-fade-in">
-          {notification.message}
-        </div>
-      )}
     </div>
   )
 }
