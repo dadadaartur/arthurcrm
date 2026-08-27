@@ -15,6 +15,7 @@ const CARDS = [
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
   { key: 'global', title: 'Глобальные цели', sub: 'Стратегические цели компании', href: '/company-admin/global-goals', color: '#FFD700', accent: '#ffb3c6', primary: true },
+  { key: 'wheel', title: 'Колесо фортуны', sub: 'Призы за рост уровня мастерства', href: '/company-admin/wheel', color: '#c084fc', accent: '#FFD700' },
   { key: 'results', title: 'Результаты команды', sub: 'Аналитика и динамика', href: '/company-admin/results', color: '#a0e9ff', accent: '#4ade80' },
   { key: 'analytics', title: 'Аналитика показателей', sub: 'Дашборды, динамика, тревоги', href: '/company-admin/analytics', color: '#4ade80', accent: '#FFD700' },
   { key: 'learn', title: 'Обучение', sub: 'Тренинги и тесты, превью', href: '/company-admin/learn', color: '#c084fc', accent: '#4ade80' },

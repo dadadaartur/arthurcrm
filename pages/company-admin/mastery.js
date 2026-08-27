@@ -10,6 +10,7 @@ import PremiumModal from '../../components/PremiumModal'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 import { BAND_LABELS, BAND_COLORS, TYPE_LABELS, resolveThresholds } from '../../lib/kpi'
+import PeriodHint, { PERIOD_LABELS } from '../../components/PeriodHint'
 
 const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, ' ').replace(/^ +|_+$/g, '')
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
@@ -235,6 +236,21 @@ function MasteryAdmin() {
           {metrics.map(m => (
             <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 18, padding: 22, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: '#aaa', border: '1px solid rgba(255,255,255,0.12)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {(m.reward_image_url || m.reward_description) && (
+                    <span title="Настроен приз за максимум" style={{ display: 'flex' }}>
+                      {m.reward_image_url ? (
+                        <img src={m.reward_image_url} alt="" style={{ width: 16, height: 16, borderRadius: 4, objectFit: 'cover' }} />
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="1" /><path d="M12 8v13M3 12h18M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+                      )}
+                    </span>
+                  )}
+                  <PeriodHint period={m.period || 'daily'} resetHour={m.reset_hour ?? 8} />
+                </div>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
                 <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 16, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
@@ -338,8 +354,8 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
   useEffect(() => {
     if (open) {
       const hasCustom = Array.isArray(initial?.thresholds) && initial.thresholds.length > 0
-      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null, source: initial.source || 'manual', source_url: initial.source_config?.url || '', department_id: initial.department_id || '' }
-        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null, source: 'manual', source_url: '', department_id: '' })
+      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null, source: initial.source || 'manual', source_url: initial.source_config?.url || '', department_id: initial.department_id || '', period: initial.period || 'daily', reset_hour: initial.reset_hour ?? 8, reward_description: initial.reward_description || '', reward_image_file: null, reward_preview_url: initial.reward_image_url || '' }
+        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null, source: 'manual', source_url: '', department_id: '', period: 'daily', reset_hour: 8, reward_description: '', reward_image_file: null, reward_preview_url: '' })
       setStep(initial?.kpi_type ? 'form' : 'type')
     }
   }, [open, initial])
@@ -362,7 +378,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
   const deleteTier = i => setForm(f => ({ ...f, customTiers: f.customTiers.filter((_, idx) => idx !== i) }))
   const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
 
-  const submit = () => {
+  const submit = async () => {
     try {
       if (!form.name.trim()) { showError('Укажите название цели'); return }
       if (myScope !== null && !form.department_id) { showError('Выберите отдел — вы не администратор компании, показатель нужно привязать к своей команде'); return }
@@ -381,7 +397,16 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
           .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
           .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
       }
-      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null, department_id: form.department_id || null }, initial?.id)
+      // Фото приза (п.3 фидбека) — грузим в тот же бакет, что и остальные
+      // изображения проекта, тем же способом, что и товары магазина.
+      let rewardImageUrl = initial?.reward_image_url || null
+      if (form.reward_image_file) {
+        const ext = form.reward_image_file.name.split('.').pop()
+        const path = `public/reward-${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.reward_image_file)
+        if (!upErr) rewardImageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      }
+      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null, department_id: form.department_id || null, reward_image_url: rewardImageUrl, reward_description: form.reward_description || null }, initial?.id)
     } catch (e) {
       showError('Не удалось подготовить цель к сохранению: ' + (e.message || 'непредвиденная ошибка'))
     }
@@ -430,14 +455,29 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
               </>)}
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кому виден показатель</label>
-              <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
-                {myScope === null && <option value="">Вся компания</option>}
-                {departments.map(d => <option key={d.id} value={d.id}>{d.name} (отдел и все вложенные)</option>)}
-              </select>
-              {myScope !== null && departments.length === 0 && <p style={{ fontSize: 11, color: '#f87171', margin: '6px 0 0' }}>У вас нет ни одного отдела в управлении — создайте отдел в «Отделах компании», прежде чем заводить показатель.</p>}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кому виден показатель</label>
+                <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                  {myScope === null && <option value="">Вся компания</option>}
+                  {departments.map(d => <option key={d.id} value={d.id}>{d.name} (отдел и все вложенные)</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Период обновления</label>
+                <select className="input-field" style={{ width: '100%' }} value={form.period} onChange={e => setForm({ ...form, period: e.target.value })}>
+                  <option value="daily">Ежедневно</option>
+                  <option value="weekly">Еженедельно</option>
+                  <option value="monthly">Ежемесячно</option>
+                  <option value="quarterly">Ежеквартально</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Час обновления (МСК)</label>
+                <input type="number" min="0" max="23" className="input-field" style={{ width: '100%' }} value={form.reset_hour} onChange={e => setForm({ ...form, reset_hour: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })} />
+              </div>
             </div>
+            {myScope !== null && departments.length === 0 && <p style={{ fontSize: 11, color: '#f87171', margin: '-10px 0 16px' }}>У вас нет ни одного отдела в управлении — создайте отдел в «Отделах компании», прежде чем заводить показатель.</p>}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Пороги выполнения</span>
@@ -497,6 +537,27 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Описание</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
               <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Советы</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.advice} onChange={e => setForm({ ...form, advice: e.target.value })} /></div>
             </div>
+
+            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.2)' }}>
+              <div style={{ fontSize: 11, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Приз за достижение максимума (необязательно)</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 14, alignItems: 'start' }}>
+                <div>
+                  <label htmlFor="reward-image-upload" style={{ display: 'block', width: 100, height: 100, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px dashed rgba(255,215,0,0.4)', background: 'rgba(255,255,255,0.03)', position: 'relative' }}>
+                    {form.reward_preview_url ? (
+                      <img src={form.reward_preview_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#888', textAlign: 'center', padding: 6 }}>Фото приза</span>
+                    )}
+                  </label>
+                  <input id="reward-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) setForm({ ...form, reward_image_file: f, reward_preview_url: URL.createObjectURL(f) }) }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Что получит сотрудник</label>
+                  <textarea className="input-field" style={{ width: '100%' }} rows={3} placeholder="Например: Сертификат в ресторан на 5000₽" value={form.reward_description} onChange={e => setForm({ ...form, reward_description: e.target.value })} />
+                </div>
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={onClose} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
               <button onClick={submit} style={{ ...ghostBtn, flex: 1, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сохранить</button>
