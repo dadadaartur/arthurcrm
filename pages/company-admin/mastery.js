@@ -230,34 +230,33 @@ function MasteryAdmin() {
           </div>
         } />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14, marginBottom: 28, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 16, marginBottom: 28, alignItems: 'start' }}>
           {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
           {metrics.map(m => (
-            <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
+            <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 18, padding: 22, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
+                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 16, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                   <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
                   <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(160,233,255,0.1)' : 'rgba(255,215,0,0.1)', color: m.department_id ? '#a0e9ff' : '#FFD700', border: `1px solid ${m.department_id ? 'rgba(160,233,255,0.3)' : 'rgba(255,215,0,0.3)'}` }}>
                     {m.department_id ? (departments.find(d => d.id === m.department_id)?.name || 'Отдел') : 'Вся компания'}
                   </span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {resolveThresholds(m).map(t => <span key={t.key} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${t.color}12`, color: t.color, border: `1px solid ${t.color}33` }}>{t.label} {t.value}{m.unit}</span>)}
+
+              {/* Рейтинговая шкала порогов — каждый уровень собственным
+                  сегментом с названием и значением внутри, вместо мелких
+                  пилюль отдельно от тонкой линии-индикатора. */}
+              <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
+                {resolveThresholds(m).map(t => (
+                  <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: `${t.color}14`, border: `1px solid ${t.color}40` }}>
+                    <div style={{ fontSize: 9, color: t.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
+                    <div style={{ fontSize: 15, color: '#fff', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, color: '#888', fontWeight: 400 }}>{m.unit}</span></div>
+                  </div>
+                ))}
               </div>
-              {/* Шкала порогов — визуально показывает соотношение уровней между
-                  собой, чтобы не приходилось сопоставлять числа в пилюлях */}
-              <div style={{ position: 'relative', height: 6, borderRadius: 4, background: 'rgba(255,255,255,0.06)', marginBottom: 14 }}>
-                {(() => {
-                  const bands = resolveThresholds(m)
-                  const max = Math.max(...bands.map(b => b.value), 1)
-                  return bands.map(b => (
-                    <span key={b.key} title={`${b.label}: ${b.value}${m.unit}`} style={{ position: 'absolute', left: `${Math.min(100, (b.value / max) * 100)}%`, top: '50%', transform: 'translate(-50%, -50%)', width: 10, height: 10, borderRadius: '50%', background: b.color, boxShadow: `0 0 8px ${b.color}88`, border: '2px solid #0f1423' }} />
-                  ))
-                })()}
-              </div>
+
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setMaterialsMetric(m)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
                 <button onClick={() => setEditMetric(m)} title="Редактировать" style={{ background: 'rgba(160,233,255,0.08)', border: '1px solid rgba(160,233,255,0.3)', borderRadius: 10, padding: '8px 10px', color: '#a0e9ff', cursor: 'pointer', transition: 'all .25s', display: 'flex', alignItems: 'center' }}

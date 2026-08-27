@@ -17,7 +17,15 @@ const CATEGORIES = [
   { key: 'strategic', label: 'Стратегические', color: '#e2e8f0' },
 ]
 const PERIODS = [
-  { key: 'month', label: 'Месяц' }, { key: 'quarter', label: 'Квартал' }, { key: 'year', label: 'Год' }
+  { key: 'week', label: 'Неделя' }, { key: 'month', label: 'Месяц' }, { key: 'quarter', label: 'Квартал' }, { key: 'year', label: 'Год' }
+]
+const TEMPLATES = [
+  { title: 'Выполнить план продаж', category: 'financial', metric: 'Сумма выручки', target_value: 1000000, unit: 'руб', period: 'month' },
+  { title: 'Удержать клиентов', category: 'quality', metric: 'Индекс удовлетворённости (NPS)', target_value: 80, unit: '%', period: 'quarter' },
+  { title: 'Нарастить базу лидов', category: 'operational', metric: 'Новые лиды', target_value: 500, unit: 'шт', period: 'month' },
+  { title: 'Провести обучение команды', category: 'development', metric: 'Сотрудников прошли обучение', target_value: 100, unit: '%', period: 'quarter' },
+  { title: 'Снизить время ответа клиенту', category: 'quality', metric: 'Среднее время ответа', target_value: 15, unit: 'мин', period: 'week' },
+  { title: 'Годовая цель по росту компании', category: 'strategic', metric: '% роста к прошлому году', target_value: 30, unit: '%', period: 'year' },
 ]
 const ghostBtn = {
   background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
@@ -101,7 +109,16 @@ function GlobalGoals() {
 
         {/* Создание */}
         <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 18, color: '#fff' }}>Новая глобальная цель</h3>
+          <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: '#fff' }}>Новая глобальная цель</h3>
+          <p style={{ fontSize: 12, color: '#888', marginBottom: 14 }}>Можно начать с готового шаблона (заполнит поля ниже, дальше можно поправить) или заполнить вручную.</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+            {TEMPLATES.map((t, i) => (
+              <button key={i} type="button" onClick={() => setForm(f => ({ ...f, ...t }))}
+                style={{ fontSize: 11, padding: '6px 14px', borderRadius: 20, background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.3)', color: '#c084fc', cursor: 'pointer' }}>
+                {t.title}
+              </button>
+            ))}
+          </div>
           <form onSubmit={handleCreate}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
               <div style={{ gridColumn: 'span 2' }}>

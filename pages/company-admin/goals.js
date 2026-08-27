@@ -226,7 +226,7 @@ function GoalsPage() {
                 <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl/Cmd для выбора нескольких</p>
               </div>
             )}
-            <button type="submit" className="btn-gold w-full mt-4">Создать</button>
+            <button type="submit" className="btn-gold mt-4" style={{ minWidth: 180 }}>Создать</button>
           </div>
         </form>
       </div>

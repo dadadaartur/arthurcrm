@@ -196,11 +196,11 @@ export default function TaskDetail() {
         )}
 
         {assignment.status === 'assigned' && (
-          <button onClick={handleStart} className="btn-gold w-full">Начать задание</button>
+          <button onClick={handleStart} className="btn-gold" style={{ minWidth: 200 }}>Начать задание</button>
         )}
 
         {assignment.status === 'in_progress' && (
-          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold w-full">
+          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold" style={{ minWidth: 200 }}>
             Отправить на проверку
           </button>
         )}
