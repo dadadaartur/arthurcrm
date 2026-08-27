@@ -38,6 +38,7 @@ function TasksPage() {
   const [archived, setArchived] = useState([])
   const [metrics, setMetrics] = useState([])
   const [departments, setDepartments] = useState([])
+  const [employees, setEmployees] = useState([])
   const [myScope, setMyScope] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('create')
@@ -47,9 +48,9 @@ function TasksPage() {
     title: '', description: '', reward_karma: 10,
     task_type: 'one_time', frequency: 'once', target_role: 'all',
     requires_review: true, requires_proof: false, proof_type: 'any',
-    deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 5,
+    deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 1,
     auto_mode: 'general', auto_metric_id: '', auto_target_rank: 1,
-    department_id: '', image_file: null
+    department_id: '', specific_user_ids: [], image_file: null
   })
   const [creating, setCreating] = useState(false)
 
@@ -63,7 +64,7 @@ function TasksPage() {
       const { data: { session } } = await supabase.auth.getSession()
       const dr = await fetch('/api/company-admin/departments', { headers: { Authorization: `Bearer ${session.access_token}` } })
       let scope = null
-      if (dr.ok) { const dd = await dr.json(); setDepartments(dd.departments || []); setMyScope(dd.scope); scope = dd.scope }
+      if (dr.ok) { const dd = await dr.json(); setDepartments(dd.departments || []); setEmployees(dd.employees || []); setMyScope(dd.scope); scope = dd.scope }
       await loadData(p.company_id, scope)
       setLoading(false)
     }
@@ -157,7 +158,7 @@ function TasksPage() {
           const isExternal = tab === 'create-external'
           const relevantMetrics = isExternal ? metrics.filter(m => m.source === 'auto') : metrics
           return (
-          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: `1px solid ${isExternal ? 'rgba(74,222,128,0.3)' : 'rgba(192,132,252,0.3)'}` }}>
+          <div style={{ maxWidth: 820, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: `1px solid ${isExternal ? 'rgba(74,222,128,0.3)' : 'rgba(192,132,252,0.3)'}` }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: '#fff' }}>{isExternal ? 'Задание с внешней автопроверкой' : 'Задание по цели'}</h3>
             <p style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>
               {isExternal
@@ -199,17 +200,13 @@ function TasksPage() {
               </div>
 
               {!isExternal && form.auto_mode === 'general' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 20 }}>
+                <div style={{ marginBottom: 20 }}>
                   <select className="input-field" style={{ width: '100%' }} value={form.auto_goal_condition} onChange={e => setForm({ ...form, auto_goal_condition: e.target.value })}>
                     {Object.entries(AUTO_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                   </select>
-                  <div>
-                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
-                    <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
-                  </div>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.7fr', gap: 12, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12, marginBottom: 20 }}>
                   <div>
                     <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Показатель{isExternal ? ' (с внешним источником)' : ''}</label>
                     <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id} onChange={e => setForm({ ...form, auto_metric_id: e.target.value, auto_target_rank: 1 })}>
@@ -225,12 +222,9 @@ function TasksPage() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Энергия</label>
-                    <input type="number" className="input-field" style={{ width: '100%' }} value={form.auto_energy} onChange={e => setForm({ ...form, auto_energy: parseInt(e.target.value) || 0 })} />
-                  </div>
                 </div>
               )}
+              <p style={{ fontSize: 11, color: '#666', margin: '-14px 0 16px' }}>За выполнение начисляется +1 энергия автоматически — не редактируется отдельно.</p>
               <button type="submit" className="btn-gold">Создать задание</button>
             </form>
           </div>
@@ -238,7 +232,7 @@ function TasksPage() {
         })()}
 
         {tab === 'create' && (
-          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 32, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ maxWidth: 900, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)' }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: '#fff' }}>Создать задание</h3>
             <form onSubmit={handleCreateTask}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -258,20 +252,42 @@ function TasksPage() {
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн (фирменный календарь)</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
                 </div>
-                <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Для кого</label>
-                  <select className="input-field" style={{ width: '100%' }} value={form.target_role} onChange={e => setForm({ ...form, target_role: e.target.value })}>
-                    <option value="all">Все сотрудники</option>
-                    <option value="new">Новые (&lt; 1 мес.)</option>
-                    <option value="experienced">Опытные (&gt; 1 мес.)</option>
-                  </select>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Кому назначить</label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: form.target_role === 'specific' ? 10 : 0 }}>
+                    {[['all', 'Все'], ['new', 'Новые'], ['experienced', 'Опытные'], ['specific', 'Выбрать сотрудников']].map(([k, label]) => (
+                      <Seg key={k} active={form.target_role === k} onClick={() => setForm({ ...form, target_role: k })} color="#a0e9ff">{label}</Seg>
+                    ))}
+                  </div>
+                  {form.target_role === 'specific' && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', maxHeight: 140, overflowY: 'auto' }}>
+                      {employees.length === 0 && <span style={{ fontSize: 11, color: '#777' }}>Нет сотрудников для выбора</span>}
+                      {employees.map(e => {
+                        const name = [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
+                        const checked = form.specific_user_ids.includes(e.user_id)
+                        return (
+                          <label key={e.user_id} onClick={() => setForm(f => ({ ...f, specific_user_ids: checked ? f.specific_user_ids.filter(id => id !== e.user_id) : [...f.specific_user_ids, e.user_id] }))}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', background: checked ? 'rgba(160,233,255,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${checked ? 'rgba(160,233,255,0.5)' : 'rgba(255,255,255,0.12)'}`, color: checked ? '#a0e9ff' : '#ccc' }}>
+                            {name}
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Отдел</label>
-                  <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                  <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })} disabled={form.target_role === 'specific'}>
                     {myScope === null && <option value="">Вся компания</option>}
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
                   </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Изображение (необязательно)</label>
+                  <label htmlFor="task-image-upload" className="input-field" style={{ width: '100%', display: 'flex', alignItems: 'center', cursor: 'pointer', color: form.image_file ? '#fff' : '#777', boxSizing: 'border-box' }}>
+                    {form.image_file ? form.image_file.name : 'Выбрать файл...'}
+                  </label>
+                  <input id="task-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, image_file: e.target.files?.[0] || null })} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>

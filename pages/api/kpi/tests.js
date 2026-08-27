@@ -151,9 +151,10 @@ export default async function handler(req, res) {
         await a.from('karma_balance').upsert({ user_id: ctx.user.id, balance: (bal?.balance || 0) + t.karma_reward }, { onConflict: 'user_id' })
         await a.from('karma_transactions').insert({ user_id: ctx.user.id, amount: t.karma_reward, type: 'test_reward', description: `Тест «${t.title}» сдан (${pct}%)` })
       }
-      if (t.energy_reward > 0) {
-        await creditEnergy(a, ctx.user.id, t.energy_reward)
-      }
+      // Фиксированные +1 за успешное действие (по вашей просьбе от
+      // 27 августа 2026) — не читаем t.energy_reward, чтобы правило не
+      // зависело от того, что записано в конкретном тесте.
+      await creditEnergy(a, ctx.user.id, 1)
     }
     return res.status(200).json({ score: pct, passed, show_correct: t?.show_correct_answers })
   }

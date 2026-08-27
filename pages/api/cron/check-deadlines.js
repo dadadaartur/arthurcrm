@@ -159,13 +159,14 @@ export default async function handler(req, res) {
         await a.from('karma_balance').upsert({ user_id: emp.user_id, balance: (bal?.balance || 0) + t.reward_karma }, { onConflict: 'user_id' })
         await a.from('karma_transactions').insert({ user_id: emp.user_id, amount: t.reward_karma, type: 'task_reward', description: `Авто-зачёт: «${t.title}»` })
       }
-      let grantedEnergy = 0
-      if (t.auto_energy > 0) {
-        grantedEnergy = await creditEnergy(a, emp.user_id, t.auto_energy)
-      }
+      // Энергия за выполнение — фиксированные +1, не редактируется
+      // (по вашей просьбе от 27 августа 2026). Не полагаюсь на
+      // сохранённое t.auto_energy — для заданий, созданных до этого
+      // правила, там могут быть старые числа.
+      const grantedEnergy = await creditEnergy(a, emp.user_id, 1)
       await a.from('notifications').insert({
         user_id: emp.user_id,
-        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${grantedEnergy} энергии${grantedEnergy < t.auto_energy ? ' (дневной лимит энергии почти исчерпан)' : ''}`,
+        message: `Авто-зачёт: цель «${t.title}» выполнена! +${t.reward_karma} кармиков, +${grantedEnergy} энергии${grantedEnergy < 1 ? ' (дневной лимит энергии исчерпан)' : ''}`,
         link: '/history'
       })
     }

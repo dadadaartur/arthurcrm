@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', ctx.user.id).maybeSingle()
     await a.from('karma_balance').upsert({ user_id: ctx.user.id, balance: (bal?.balance || 0) + 2 }, { onConflict: 'user_id' })
     await a.from('karma_transactions').insert({ user_id: ctx.user.id, amount: 2, type: 'test_reward', description: `Тест «${t.title}» сдан (${score}%)` })
-    await creditEnergy(a, ctx.user.id, 5)
+    await creditEnergy(a, ctx.user.id, 1)
   }
   res.status(200).json({ score, passed })
 }

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../lib/auth'
 import { creditKarma, grantKarmaBoost, grantUnlock } from '../../../lib/karma'
+import { creditEnergy } from '../../../lib/energy'
 
 // РАНЬШЕ: UPDATE на task_assignments фильтровался только по .eq('id', ...),
 // без повторной проверки статуса — тот же паттерн read-then-write, что и в
@@ -44,6 +45,10 @@ export default async function handler(req, res) {
     if (k > 0) {
       await creditKarma(a, { userId: asg.user_id, amount: k, type: 'task_reward', description: `Задание «${asg.tasks?.title}» одобрено` })
     }
+    // Энергия за выполнение — фиксированные +1 (по вашей просьбе от
+    // 27 августа 2026, не редактируется админом), раньше подтверждённое
+    // задание вообще не давало энергии, только кармики.
+    const grantedEnergy = await creditEnergy(a, asg.user_id, 1)
     // Партнёрские типы награды (п.11 ТЗ) — сверх обычных кармиков (если
     // они тоже заданы) выдаём разблокировку категории магазина или буст.
     if (rewardType === 'shop_unlock' && rewardConfig.unlock_key) {
@@ -53,7 +58,7 @@ export default async function handler(req, res) {
       await grantKarmaBoost(a, { userId: asg.user_id, companyId: asg.tasks?.company_id, percent: rewardConfig.percent, durationDays: rewardConfig.duration_days || 30, source: asg.tasks?.partner_name, sourceTaskId: asg.task_id })
       rewardNote = ` Активирован буст +${rewardConfig.percent}% ко всем начислениям на ${rewardConfig.duration_days || 30} дн.`
     }
-    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено!${k > 0 ? ` +${k} кармиков` : ''}${rewardNote}`, link: '/history' })
+    await a.from('notifications').insert({ user_id: asg.user_id, message: `Задание «${asg.tasks?.title}» одобрено!${k > 0 ? ` +${k} кармиков` : ''}${grantedEnergy > 0 ? ` +${grantedEnergy} энергии` : ''}${rewardNote}`, link: '/history' })
   } else {
     const { data: updated, error: updErr } = await a.from('task_assignments')
       .update({ status: 'rejected', comment: comment || null })

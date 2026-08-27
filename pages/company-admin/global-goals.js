@@ -108,7 +108,7 @@ function GlobalGoals() {
         <BackArrow href="/company-admin" title="Глобальные цели" />
 
         {/* Создание */}
-        <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
+        <div style={{ maxWidth: 820, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
           <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: '#fff' }}>Новая глобальная цель</h3>
           <p style={{ fontSize: 12, color: '#888', marginBottom: 14 }}>Можно начать с готового шаблона (заполнит поля ниже, дальше можно поправить) или заполнить вручную.</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>

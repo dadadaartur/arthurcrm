@@ -16,7 +16,6 @@ const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, ' ').re
 const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
 const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
-const AUTO_ENERGY = { energy_min: 5, energy_mid: 10, energy_top: 15, energy_ultra: 20 }
 const TYPE_META = [
   { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки' },
   { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи' },
@@ -74,7 +73,6 @@ const toCustomTiers = (form, isInverse) => {
     label: BAND_LABELS[b],
     value: Number(form['thr_' + b]) || 0,
     karma: Number(form['karma_' + b]) || 0,
-    energy: [5, 10, 15, 20][isInverse ? order.length - 1 - i : i],
     color: TIER_PALETTE[b === 'min' ? 1 : b === 'mid' ? 2 : b === 'top' ? 3 : 5],
   }))
 }
@@ -113,7 +111,7 @@ function TierRow({ tier, onChange, onDelete, canDelete }) {
   const [colorOpen, setColorOpen] = useState(false)
   const set = (k, v) => onChange({ ...tier, [k]: v })
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '30px 1.4fr 0.8fr 0.7fr 0.7fr 30px', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '30px 1.6fr 0.8fr 0.7fr auto 30px', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
       <button type="button" onClick={() => setColorOpen(o => !o)} title="Цвет уровня"
         style={{ width: 20, height: 20, borderRadius: '50%', background: tier.color, border: '2px solid rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }} />
       {colorOpen && (
@@ -127,7 +125,7 @@ function TierRow({ tier, onChange, onDelete, canDelete }) {
       <input className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Название уровня" value={tier.label} onChange={e => set('label', e.target.value)} />
       <input type="number" step="0.1" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Порог" value={tier.value} onChange={e => set('value', e.target.value)} />
       <input type="number" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Кармики" value={tier.karma} onChange={e => set('karma', e.target.value)} />
-      <input type="number" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Энергия" value={tier.energy} onChange={e => set('energy', e.target.value)} />
+      <span title="Энергия начисляется автоматически по строгости уровня, не редактируется" style={{ fontSize: 10, color: '#666', whiteSpace: 'nowrap', padding: '0 4px' }}>эн. авто</span>
       <button type="button" onClick={onDelete} disabled={!canDelete} title={canDelete ? 'Удалить уровень' : 'Должен остаться хотя бы один уровень'}
         style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 8, padding: 6, color: canDelete ? '#f87171' : '#555', cursor: canDelete ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <TrashIcon />
@@ -376,7 +374,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
   }
   const updateTier = (i, next) => setForm(f => ({ ...f, customTiers: f.customTiers.map((t, idx) => idx === i ? next : t) }))
   const deleteTier = i => setForm(f => ({ ...f, customTiers: f.customTiers.filter((_, idx) => idx !== i) }))
-  const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, energy: 5, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
+  const addTier = () => setForm(f => ({ ...f, customTiers: [...(f.customTiers || []), { key: newTierKey(), label: `Уровень ${(f.customTiers?.length || 0) + 1}`, value: 0, karma: 0, color: TIER_PALETTE[(f.customTiers?.length || 0) % TIER_PALETTE.length] }] }))
 
   const submit = async () => {
     try {
@@ -395,7 +393,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
       if (form.useCustom && form.customTiers?.length) {
         thresholds = [...form.customTiers]
           .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
-          .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
+          .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, color: t.color }))
       }
       // Фото приза (п.3 фидбека) — грузим в тот же бакет, что и остальные
       // изображения проекта, тем же способом, что и товары магазина.
@@ -406,7 +404,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
         const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.reward_image_file)
         if (!upErr) rewardImageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
       }
-      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null, department_id: form.department_id || null, reward_image_url: rewardImageUrl, reward_description: form.reward_description || null }, initial?.id)
+      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null, department_id: form.department_id || null, reward_image_url: rewardImageUrl, reward_description: form.reward_description || null }, initial?.id)
     } catch (e) {
       showError('Не удалось подготовить цель к сохранению: ' + (e.message || 'непредвиденная ошибка'))
     }
@@ -416,7 +414,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
         <CloseX onClick={onClose} />
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия авто (5/10/15/20)</div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия начисляется автоматически (+1 / +2 за топ / +3 за ультра)</div>
         {step === 'type' ? (
           <>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', color: '#fff' }}>Выберите тип расчёта</h3>
@@ -499,12 +497,12 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
             ) : (
               <div style={{ marginBottom: 16 }}>
                 {isInverse && <div style={{ marginBottom: 10, padding: 10, borderRadius: 10, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 11 }}>Меньше — лучше: у самого строгого уровня должен быть самый маленький порог.</div>}
-                <div style={{ display: 'grid', gridTemplateColumns: '30px 1.4fr 0.8fr 0.7fr 0.7fr 30px', gap: 8, padding: '0 10px', marginBottom: 6 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '30px 1.6fr 0.8fr 0.7fr auto 30px', gap: 8, padding: '0 10px', marginBottom: 6 }}>
                   <span />
                   <span style={{ fontSize: 10, color: '#666' }}>Название</span>
                   <span style={{ fontSize: 10, color: '#666' }}>Порог</span>
                   <span style={{ fontSize: 10, color: '#666' }}>Кармики</span>
-                  <span style={{ fontSize: 10, color: '#666' }}>Энергия</span>
+                  <span />
                   <span />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

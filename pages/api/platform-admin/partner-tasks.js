@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       const { data: task, error: taskErr } = await a.from('tasks').insert({
         company_id: companyId, title: title.trim(), description: description || null,
         reward_karma: Number(rewardKarma) || 0, task_type: 'one_time', frequency: 'once', target_role: 'all',
-        requires_review: true, is_active: true, is_archived: false, deadline_at: deadlineAt,
+        requires_review: true, requires_proof: false, proof_type: 'any', is_active: true, is_archived: false, deadline_at: deadlineAt,
         partner_name: partnerName.trim(), reward_type: rewardType || 'karma', reward_config: rewardConfig,
       }).select().single()
       if (taskErr || !task) continue

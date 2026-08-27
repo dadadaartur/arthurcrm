@@ -27,8 +27,10 @@ export default async function handler(req, res) {
   // Отдел, на который назначается задание, должен быть в зоне
   // ответственности создателя — руководитель отдела не может назначить
   // задание на всю компанию или на чужую ветку (см. lib/departments.js).
+  // Режим «конкретные сотрудники» — отдел необязателен, там своя проверка
+  // зоны ниже, по каждому выбранному человеку.
   const departmentId = f.department_id || null
-  if (scope !== null) {
+  if (scope !== null && f.target_role !== 'specific') {
     if (!departmentId) return res.status(403).json({ error: 'Вы не администратор компании — выберите отдел' })
     if (!scope.includes(departmentId)) return res.status(403).json({ error: 'Этот отдел вне вашей зоны ответственности' })
   }
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
     reward_karma: f.reward_karma, task_type: f.is_auto_goal ? 'auto_goal' : f.task_type,
     frequency: f.frequency, target_role: f.target_role,
     requires_review: f.is_auto_goal ? false : f.requires_review,
-    requires_proof: f.requires_proof, proof_type: f.requires_proof ? f.proof_type : null,
+    requires_proof: f.requires_proof, proof_type: f.requires_proof ? (f.proof_type || 'any') : 'any',
     deadline_at: deadlineAt, is_active: true,
     is_auto_goal: f.is_auto_goal, auto_goal_condition: f.is_auto_goal && f.auto_mode === 'general' ? f.auto_goal_condition : null,
     auto_energy: f.is_auto_goal ? f.auto_energy : 0,
@@ -50,22 +52,46 @@ export default async function handler(req, res) {
   }).select().single()
   if (error) return res.status(500).json({ error: error.message })
 
-  // Назначение: без отдела — вся компания (как было раньше, для админа
-  // компании); с отделом — только сотрудники этого отдела и всех
-  // вложенных, не вся компания.
-  let empQuery = a.from('profiles').select('user_id').eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
-  if (departmentId) {
-    const targetDeptIds = getSubtreeIds(allDepartments || [], departmentId)
-    empQuery = empQuery.in('department_id', targetDeptIds)
+  // Назначение. Раньше target_role сохранялся в задании, но никак не
+  // влиял на то, кому реально уходило назначение (только отдел сужал
+  // список) — теперь фильтрует по-настоящему:
+  // specific — только явно выбранные сотрудники (отдел в этом режиме не
+  //   участвует, это осознанный выбор конкретных людей);
+  // new/experienced — по дате трудоустройства (порог 30 дней);
+  // all — все сотрудники в зоне (вся компания или конкретный отдел).
+  let targetUserIds = null
+  if (f.target_role === 'specific') {
+    targetUserIds = Array.isArray(f.specific_user_ids) ? f.specific_user_ids : []
+    if (targetUserIds.length === 0) return res.status(400).json({ error: 'Выберите хотя бы одного сотрудника' })
+  } else {
+    let empQuery = a.from('profiles').select('user_id, hire_date').eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
+    if (departmentId) {
+      const targetDeptIds = getSubtreeIds(allDepartments || [], departmentId)
+      empQuery = empQuery.in('department_id', targetDeptIds)
+    }
+    const { data: emps } = await empQuery
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30)
+    const filtered = (emps || []).filter(e => {
+      if (f.target_role === 'new') return e.hire_date && new Date(e.hire_date) > cutoff
+      if (f.target_role === 'experienced') return !e.hire_date || new Date(e.hire_date) <= cutoff
+      return true
+    })
+    targetUserIds = filtered.map(e => e.user_id)
   }
-  const { data: emps } = await empQuery
 
-  if (emps?.length) {
+  if (targetUserIds === null) targetUserIds = []
+  if (f.target_role === 'specific' && scope !== null && targetUserIds.length) {
+    const { data: picked } = await a.from('profiles').select('user_id, department_id').in('user_id', targetUserIds).eq('company_id', companyId)
+    const outOfScope = (picked || []).some(p => !scope.includes(p.department_id))
+    if (outOfScope) return res.status(403).json({ error: 'Среди выбранных есть сотрудники вне вашей зоны ответственности' })
+  }
+
+  if (targetUserIds.length) {
     const { error: asErr } = await a.from('task_assignments').insert(
-      emps.map(emp => ({ task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt }))
+      targetUserIds.map(userId => ({ task_id: task.id, user_id: userId, status: 'assigned', deadline_at: deadlineAt }))
     )
     if (asErr) return res.status(500).json({ error: 'Задание создано, но не удалось назначить: ' + asErr.message })
   }
 
-  res.status(200).json({ task, assignedCount: emps?.length || 0 })
+  res.status(200).json({ task, assignedCount: targetUserIds.length })
 }
