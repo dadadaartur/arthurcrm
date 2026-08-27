@@ -6,7 +6,10 @@ import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
 import TrainingVideoModal from '../components/TrainingVideoModal'
+import WheelOfFortune from '../components/WheelOfFortune'
+import { useFeedback } from '../context/ActionFeedbackContext'
 import { BAND_LABELS, BAND_COLORS, bandRankOf, bandFor, rangeValue, resolveThresholds } from '../lib/kpi'
+import PeriodHint, { PERIOD_LABELS } from '../components/PeriodHint'
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
@@ -34,6 +37,7 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
 )
 
 export default function GoalsPage() {
+  const { showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
   const [levels, setLevels] = useState([])
@@ -49,6 +53,11 @@ export default function GoalsPage() {
   const [myTests, setMyTests] = useState([])
   const [myViews, setMyViews] = useState([])
   const [globalGoals, setGlobalGoals] = useState([])
+  const [wheelSpins, setWheelSpins] = useState(0)
+  const [wheelOpen, setWheelOpen] = useState(false)
+  const [wheelConfig, setWheelConfig] = useState(null)
+  const [wheelSpinning, setWheelSpinning] = useState(false)
+  const [wheelResult, setWheelResult] = useState(null)
 
   useEffect(() => {
     const init = async () => {
@@ -60,6 +69,8 @@ export default function GoalsPage() {
       if (r1.ok) setData(await r1.json())
       if (r2.ok) setLevels(await r2.json())
       if (r3.ok) setGlobalGoals(await r3.json())
+      const { data: p } = await supabase.from('profiles').select('wheel_spins_available').eq('user_id', user.id).maybeSingle()
+      setWheelSpins(p?.wheel_spins_available || 0)
       const { data: g } = await supabase.from('goals').select('*').eq('user_id', user.id).eq('is_active', true)
       setOldGoals(g || [])
       // Личная статистика
@@ -132,10 +143,25 @@ export default function GoalsPage() {
     <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/" title="Мои цели" extra={
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
-            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
-            {next && <div style={{ fontSize: 10, color: '#888' }}>ещё {remaining} до «{next.name}»</div>}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
+            {wheelSpins > 0 && (
+              <button onClick={async () => {
+                setWheelResult(null); setWheelOpen(true)
+                if (!wheelConfig) {
+                  const { data: { session } } = await supabase.auth.getSession()
+                  const r = await fetch('/api/company-admin/wheel-config', { headers: { Authorization: `Bearer ${session.access_token}` } })
+                  if (r.ok) setWheelConfig(await r.json())
+                }
+              }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(192,132,252,0.2), rgba(255,215,0,0.15))', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 3v9l6 3" /></svg>
+                Колесо фортуны · {wheelSpins}
+              </button>
+            )}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
+              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
+              {next && <div style={{ fontSize: 10, color: '#888' }}>ещё {remaining} до «{next.name}»</div>}
+            </div>
           </div>
         } />
 
@@ -208,6 +234,10 @@ export default function GoalsPage() {
               <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 22, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: '#aaa', border: '1px solid rgba(255,255,255,0.12)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
+                  <PeriodHint period={m.period || 'daily'} resetHour={m.reset_hour ?? 8} />
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
                   <span style={{ fontSize: 16, fontWeight: 600, color: '#fff', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{m.name}</span>
                   <span style={{ fontSize: 15, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
@@ -233,6 +263,16 @@ export default function GoalsPage() {
                     )
                   })}
                 </div>
+
+                {(m.reward_image_url || m.reward_description) && (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)' }}>
+                    {m.reward_image_url && <img src={m.reward_image_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 9, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.4 }}>Приз за максимум</div>
+                      <div style={{ fontSize: 12, color: '#ddd', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.reward_description}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -295,6 +335,38 @@ export default function GoalsPage() {
       <LevelPathModal open={pathOpen} onClose={() => setPathOpen(false)} energy={energy} />
       {videoTraining && <TrainingVideoModal training={videoTraining} onClose={() => setVideoTraining(null)} />}
 
+      {wheelOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !wheelSpinning && setWheelOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: '#fff' }}>Колесо фортуны</h3>
+            {wheelConfig === null ? (
+              <p style={{ color: '#888', fontSize: 13 }}>Загрузка...</p>
+            ) : wheelConfig.prizes?.length ? (
+              <WheelOfFortune
+                prizes={wheelConfig.prizes}
+                spinning={wheelSpinning}
+                result={wheelResult}
+                onSpin={async (spinTo) => {
+                  setWheelSpinning(true)
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    const r = await fetch('/api/wheel/spin', { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } })
+                    const d = await r.json()
+                    if (!r.ok) { showError?.(d.error); setWheelSpinning(false); return }
+                    spinTo(d.prizeId)
+                    setWheelSpins(d.spinsLeft)
+                    setTimeout(() => { setWheelResult(d.prize); setWheelSpinning(false) }, 4600)
+                  } catch (e) { setWheelSpinning(false) }
+                }}
+              />
+            ) : (
+              <p style={{ color: '#888', fontSize: 13 }}>Колесо пока не настроено</p>
+            )}
+            <button onClick={() => setWheelOpen(false)} className="btn-outline" style={{ marginTop: 24, minWidth: 120 }}>Закрыть</button>
+          </div>
+        </div>
+      )}
+
       {/* Модалка деталей показателя */}
       {detailsMetric && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setDetailsMetric(null)}>
@@ -319,6 +391,17 @@ export default function GoalsPage() {
                 </div>
               ))}
             </div>
+
+            {(detailsMetric.reward_image_url || detailsMetric.reward_description) && (
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)' }}>
+                {detailsMetric.reward_image_url && <img src={detailsMetric.reward_image_url} alt="" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />}
+                <div>
+                  <div style={{ fontSize: 11, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Приз за достижение максимума</div>
+                  <div style={{ fontSize: 14, color: '#fff' }}>{detailsMetric.reward_description}</div>
+                </div>
+              </div>
+            )}
+
             <h4 style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>Материалы для роста</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(detailsMetric.trainings || []).map(t => {
