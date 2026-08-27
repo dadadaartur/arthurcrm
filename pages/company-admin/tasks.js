@@ -37,6 +37,8 @@ function TasksPage() {
   const [tasks, setTasks] = useState([])
   const [archived, setArchived] = useState([])
   const [metrics, setMetrics] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [myScope, setMyScope] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('create')
   const [restoreId, setRestoreId] = useState(null)
@@ -47,7 +49,7 @@ function TasksPage() {
     requires_review: true, requires_proof: false, proof_type: 'any',
     deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 5,
     auto_mode: 'general', auto_metric_id: '', auto_target_rank: 1,
-    image_file: null
+    department_id: '', image_file: null
   })
   const [creating, setCreating] = useState(false)
 
@@ -58,20 +60,29 @@ function TasksPage() {
       const { data: p } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
       if (!p) { router.push('/'); return }
       setCompanyId(p.company_id)
-      await loadData(p.company_id)
+      const { data: { session } } = await supabase.auth.getSession()
+      const dr = await fetch('/api/company-admin/departments', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      let scope = null
+      if (dr.ok) { const dd = await dr.json(); setDepartments(dd.departments || []); setMyScope(dd.scope); scope = dd.scope }
+      await loadData(p.company_id, scope)
       setLoading(false)
     }
     init()
   }, [router])
 
-  const loadData = async (cid) => {
+  // Изоляция команд (миграция 013) — руководитель отдела видит на этой
+  // странице только задания своей зоны (свой отдел + все вложенные) и
+  // общие для всей компании, не всё подряд.
+  const loadData = async (cid, scope) => {
     const [a, b, m] = await Promise.all([
       supabase.from('tasks').select('*').eq('company_id', cid).eq('is_active', true).eq('is_archived', false).order('created_at', { ascending: false }),
       supabase.from('tasks').select('*').eq('company_id', cid).eq('is_archived', true).order('archived_at', { ascending: false }),
       supabase.from('kpi_metrics').select('*').eq('company_id', cid).eq('is_active', true).order('name')
     ])
-    setTasks(a.data || [])
-    setArchived(b.data || [])
+    const scopeToUse = scope !== undefined ? scope : myScope
+    const inScope = t => scopeToUse === null || !t.department_id || scopeToUse.includes(t.department_id)
+    setTasks((a.data || []).filter(inScope))
+    setArchived((b.data || []).filter(inScope))
     setMetrics(m.data || [])
   }
 
@@ -80,6 +91,7 @@ function TasksPage() {
     if (!form.title.trim()) { showError('Укажите название задания'); return }
     if (!form.reward_karma || form.reward_karma <= 0) { showError('Укажите награду больше 0'); return }
     if (form.is_auto_goal && form.auto_mode === 'specific' && !form.auto_metric_id) { showError('Выберите показатель для точного авто-задания'); return }
+    if (myScope !== null && !form.department_id) { showError('Выберите отдел — вы не администратор компании, задание нужно привязать к своей команде'); return }
     setCreating(true)
     let imageUrl = null
     if (form.image_file) {
@@ -88,36 +100,23 @@ function TasksPage() {
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.image_file)
       if (!upErr) imageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     }
-    const deadlineAt = form.deadline_date ? new Date(form.deadline_date + 'T23:59:59').toISOString() : null
-    const { data: task, error } = await supabase.from('tasks').insert({
-      company_id: companyId, title: form.title, description: form.description,
-      reward_karma: form.reward_karma, task_type: form.is_auto_goal ? 'auto_goal' : form.task_type,
-      frequency: form.frequency, target_role: form.target_role,
-      requires_review: form.is_auto_goal ? false : form.requires_review,
-      requires_proof: form.requires_proof, proof_type: form.requires_proof ? form.proof_type : null,
-      deadline_at: deadlineAt, is_active: true,
-      is_auto_goal: form.is_auto_goal, auto_goal_condition: form.is_auto_goal && form.auto_mode === 'general' ? form.auto_goal_condition : null,
-      auto_energy: form.is_auto_goal ? form.auto_energy : 0,
-      auto_metric_id: form.is_auto_goal && form.auto_mode === 'specific' && form.auto_metric_id ? form.auto_metric_id : null,
-      auto_target_rank: form.is_auto_goal && form.auto_mode === 'specific' ? form.auto_target_rank : null,
-      image_url: imageUrl
-    }).select().single()
-    if (error) { showError('Ошибка создания: ' + error.message); setCreating(false); return }
-
-    const { data: emps } = await supabase.from('profiles').select('user_id')
-      .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
-    if (emps?.length) {
-      const { error: asErr } = await supabase.from('task_assignments').insert(
-        emps.map(emp => ({ task_id: task.id, user_id: emp.user_id, status: 'assigned', deadline_at: deadlineAt }))
-      )
-      if (asErr) { showError('Ошибка назначения: ' + asErr.message); setCreating(false); return }
-      showSuccess(`Задание создано и назначено ${emps.length} сотрудникам`)
-    } else {
-      showSuccess('Задание создано')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/company-admin/tasks/create', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, image_url: imageUrl })
+      })
+      const d = await r.json()
+      if (!r.ok) { showError(d.error || 'Не удалось создать задание'); setCreating(false); return }
+      showSuccess(d.assignedCount ? `Задание создано и назначено ${d.assignedCount} сотрудникам` : 'Задание создано (пока некому назначать)')
+      setForm({ ...form, title: '', description: '', image_file: null, deadline_date: '' })
+      loadData(companyId)
+    } catch (err) {
+      showError(err.message || 'Не удалось создать задание')
+    } finally {
+      setCreating(false)
     }
-    setForm({ ...form, title: '', description: '', image_file: null, deadline_date: '' })
-    setCreating(false)
-    loadData(companyId)
   }
 
   const handleDelete = async (id) => {
@@ -190,6 +189,13 @@ function TasksPage() {
                   <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
                 </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Отдел</label>
+                  <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                    {myScope === null && <option value="">Вся компания</option>}
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
+                  </select>
+                </div>
               </div>
 
               {!isExternal && form.auto_mode === 'general' ? (
@@ -260,6 +266,13 @@ function TasksPage() {
                     <option value="experienced">Опытные (&gt; 1 мес.)</option>
                   </select>
                 </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Отдел</label>
+                  <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                    {myScope === null && <option value="">Вся компания</option>}
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
+                  </select>
+                </div>
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
@@ -297,6 +310,9 @@ function TasksPage() {
                   <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{t.title}</div>
                   <span style={{ color: '#FFD700', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
                 </div>
+                <span style={{ display: 'inline-block', fontSize: 9, padding: '1px 8px', borderRadius: 20, marginTop: 6, background: t.department_id ? 'rgba(160,233,255,0.1)' : 'rgba(255,215,0,0.1)', color: t.department_id ? '#a0e9ff' : '#FFD700', border: `1px solid ${t.department_id ? 'rgba(160,233,255,0.3)' : 'rgba(255,215,0,0.3)'}` }}>
+                  {t.department_id ? (departments.find(d => d.id === t.department_id)?.name || 'Отдел') : 'Вся компания'}
+                </span>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
                   {t.is_auto_goal
                     ? (t.auto_metric_id

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../../lib/auth'
 import { bandFor } from '../../../lib/kpi'
+import { isVisibleToEmployee } from '../../../lib/departments'
 
 // РАНЬШЕ: kpi_trainings запрашивался через .select('*') и отдавался
 // сотруднику как есть, вместе с test_questions — а каждый элемент
@@ -22,7 +23,12 @@ export default async function handler(req, res) {
   if (!ctx) return
   const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const companyId = ctx.profile?.company_id
-  const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true).order('id')
+  const { data: rawMetrics } = await a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true).order('id')
+  // Изоляция команд (миграция 013) — сотрудник видит общие для компании
+  // показатели и то, что назначено на его отдел или любой отдел-родитель,
+  // не соседние ветки (например, логистика не видит цели продаж).
+  const { data: departmentsForScope } = await a.from('departments').select('id, parent_department_id').eq('company_id', companyId)
+  const metrics = (rawMetrics || []).filter(m => isVisibleToEmployee(m.department_id, ctx.profile?.department_id, departmentsForScope || []))
   const ids = (metrics || []).map(m => m.id)
   let entries = [], trainings = []
   if (ids.length) {

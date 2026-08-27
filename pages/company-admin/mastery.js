@@ -141,6 +141,8 @@ function MasteryAdmin() {
   const [metrics, setMetrics] = useState([])
   const [pool, setPool] = useState([])
   const [companyKarma, setCompanyKarma] = useState(0)
+  const [departments, setDepartments] = useState([])
+  const [myScope, setMyScope] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [editMetric, setEditMetric] = useState(null)
   const [materialsMetric, setMaterialsMetric] = useState(null)
@@ -170,6 +172,8 @@ function MasteryAdmin() {
         const d = await r.json().catch(() => ({}))
         showError('Не удалось загрузить цели: ' + (d.error || `код ${r.status}`))
       }
+      const dr = await fetch('/api/company-admin/departments', { headers: h })
+      if (dr.ok) { const dd = await dr.json(); setDepartments(dd.departments || []); setMyScope(dd.scope) }
       if (prof?.company_id) {
         const { data: acc } = await supabase.from('company_karma_accounts').select('balance').eq('company_id', prof.company_id).maybeSingle()
         setCompanyKarma(acc?.balance || 0)
@@ -233,7 +237,12 @@ function MasteryAdmin() {
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
                 <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 15, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
-                <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
+                  <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(160,233,255,0.1)' : 'rgba(255,215,0,0.1)', color: m.department_id ? '#a0e9ff' : '#FFD700', border: `1px solid ${m.department_id ? 'rgba(160,233,255,0.3)' : 'rgba(255,215,0,0.3)'}` }}>
+                    {m.department_id ? (departments.find(d => d.id === m.department_id)?.name || 'Отдел') : 'Вся компания'}
+                  </span>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                 {resolveThresholds(m).map(t => <span key={t.key} style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${t.color}12`, color: t.color, border: `1px solid ${t.color}33` }}>{t.label} {t.value}{m.unit}</span>)}
@@ -267,7 +276,7 @@ function MasteryAdmin() {
         </div>
       </div>
 
-      <GoalFormModal open={createOpen || !!editMetric} initial={editMetric} pool={pool} setPool={setPool} companyKarma={companyKarma} onClose={() => { setCreateOpen(false); setEditMetric(null) }} onSave={saveMetric} />
+      <GoalFormModal open={createOpen || !!editMetric} initial={editMetric} pool={pool} setPool={setPool} companyKarma={companyKarma} departments={departments} myScope={myScope} onClose={() => { setCreateOpen(false); setEditMetric(null) }} onSave={saveMetric} />
       <MaterialsModal metric={materialsMetric} onClose={() => setMaterialsMetric(null)} />
 
       {deleteConfirm && (
@@ -321,7 +330,7 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   <button onClick={onClick} style={{ padding: '8px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.25s ease' }}>{children}</button>
 )
 
-function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, onSave }) {
+function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments, myScope, onClose, onSave }) {
   const { showError } = useFeedback()
   const [step, setStep] = useState('type')
   const [newParam, setNewParam] = useState({ label: '', unit: 'шт' })
@@ -330,8 +339,8 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   useEffect(() => {
     if (open) {
       const hasCustom = Array.isArray(initial?.thresholds) && initial.thresholds.length > 0
-      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null, source: initial.source || 'manual', source_url: initial.source_config?.url || '' }
-        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null, source: 'manual', source_url: '' })
+      setForm(initial ? { name: initial.name, unit: initial.unit, kpi_type: initial.kpi_type || 'cumulative', thr_min: initial.thr_min, thr_mid: initial.thr_mid, thr_top: initial.thr_top, thr_ultra: initial.thr_ultra, karma_min: initial.karma_min, karma_mid: initial.karma_mid, karma_top: initial.karma_top, karma_ultra: initial.karma_ultra, description: initial.description || '', advice: initial.advice || '', num: initial.formula?.num || '', den: initial.formula?.den || '', mult: initial.formula?.mult || 100, useCustom: hasCustom, customTiers: hasCustom ? initial.thresholds.map(t => ({ ...t })) : null, source: initial.source || 'manual', source_url: initial.source_config?.url || '', department_id: initial.department_id || '' }
+        : { name: '', unit: '%', kpi_type: null, thr_min: 5, thr_mid: 10, thr_top: 15, thr_ultra: 20, karma_min: 1, karma_mid: 3, karma_top: 5, karma_ultra: 10, description: '', advice: '', num: '', den: '', mult: 100, useCustom: false, customTiers: null, source: 'manual', source_url: '', department_id: '' })
       setStep(initial?.kpi_type ? 'form' : 'type')
     }
   }, [open, initial])
@@ -357,6 +366,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
   const submit = () => {
     try {
       if (!form.name.trim()) { showError('Укажите название цели'); return }
+      if (myScope !== null && !form.department_id) { showError('Выберите отдел — вы не администратор компании, показатель нужно привязать к своей команде'); return }
       let inputs = [], formula = null
       if (form.kpi_type === 'ratio') {
         if (!form.num || !form.den) { showError('Для «Доля / конверсия» выберите числитель и знаменатель'); return }
@@ -372,7 +382,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
           .sort((a, b) => isInverse ? Number(b.value) - Number(a.value) : Number(a.value) - Number(b.value))
           .map(t => ({ key: t.key, label: (t.label || '').trim() || t.key, value: Number(t.value) || 0, karma: Number(t.karma) || 0, energy: Number(t.energy) || 0, color: t.color }))
       }
-      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null }, initial?.id)
+      onSave({ ...form, mode: form.kpi_type === 'ratio' ? 'formula' : 'direct', ...nums, ...AUTO_ENERGY, inputs, formula, thresholds, source: form.source, source_config: form.source === 'auto' ? { url: form.source_url, emailField: 'email', valueField: 'value', ...(initial?.source_config?.mock_data ? { mock_data: initial.source_config.mock_data } : {}) } : null, department_id: form.department_id || null }, initial?.id)
     } catch (e) {
       showError('Не удалось подготовить цель к сохранению: ' + (e.message || 'непредвиденная ошибка'))
     }
@@ -419,6 +429,15 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, onClose, on
                 <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Множитель</label><input type="number" className="input-field" style={{ width: '100%' }} value={form.mult} onChange={e => setForm({ ...form, mult: e.target.value })} /></div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}><input className="input-field" style={{ flex: 1 }} placeholder="Новый параметр" value={newParam.label} onChange={e => setNewParam({ ...newParam, label: e.target.value })} /><button onClick={addParam} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11 }}>+</button></div>
               </>)}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кому виден показатель</label>
+              <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
+                {myScope === null && <option value="">Вся компания</option>}
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name} (отдел и все вложенные)</option>)}
+              </select>
+              {myScope !== null && departments.length === 0 && <p style={{ fontSize: 11, color: '#f87171', margin: '6px 0 0' }}>У вас нет ни одного отдела в управлении — создайте отдел в «Отделах компании», прежде чем заводить показатель.</p>}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
