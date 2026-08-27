@@ -58,6 +58,10 @@ html { scrollbar-width: thin; scrollbar-color: rgba(255,215,0,0.35) transparent;
   0%, 100% { background-position: 0% center; }
   50% { background-position: 100% center; }
 }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,215,0,0.25); }
+  50% { box-shadow: 0 0 18px rgba(255,215,0,0.55); }
+}
 
 .stars-bg {
   position: fixed;
