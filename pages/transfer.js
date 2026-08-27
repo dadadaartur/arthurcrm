@@ -254,7 +254,7 @@ export default function Transfer() {
           </div>
 
           {error && <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>{error}</p>}
-          <button type="submit" className="btn-gold w-full" disabled={loading || !selected}>
+          <button type="submit" className="btn-gold" style={{ minWidth: 160 }} disabled={loading || !selected}>
             {loading ? 'Отправка...' : 'Отправить'}
           </button>
         </form>

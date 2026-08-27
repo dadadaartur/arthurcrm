@@ -240,7 +240,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <button type="submit" disabled={saving} className="btn-gold w-full">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+          <button type="submit" disabled={saving} className="btn-gold" style={{ minWidth: 160 }}>{saving ? 'Сохранение...' : 'Сохранить'}</button>
         </div>
       </form>
     </div>

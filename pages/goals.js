@@ -48,6 +48,7 @@ export default function GoalsPage() {
   const [testResult, setTestResult] = useState(null)
   const [myTests, setMyTests] = useState([])
   const [myViews, setMyViews] = useState([])
+  const [globalGoals, setGlobalGoals] = useState([])
 
   useEffect(() => {
     const init = async () => {
@@ -55,9 +56,10 @@ export default function GoalsPage() {
       if (!user) { window.location.href = '/login'; return }
       const { data: { session } } = await supabase.auth.getSession()
       const h = { Authorization: `Bearer ${session.access_token}` }
-      const [r1, r2] = await Promise.all([fetch('/api/kpi/my', { headers: h }), fetch('/api/kpi/levels', { headers: h })])
+      const [r1, r2, r3] = await Promise.all([fetch('/api/kpi/my', { headers: h }), fetch('/api/kpi/levels', { headers: h }), fetch('/api/global-goals/my', { headers: h })])
       if (r1.ok) setData(await r1.json())
       if (r2.ok) setLevels(await r2.json())
+      if (r3.ok) setGlobalGoals(await r3.json())
       const { data: g } = await supabase.from('goals').select('*').eq('user_id', user.id).eq('is_active', true)
       setOldGoals(g || [])
       // Личная статистика
@@ -137,36 +139,56 @@ export default function GoalsPage() {
           </div>
         } />
 
-        {cur && (
-          <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 20, border: `1px solid ${cur.color}33`, marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: cur.color, textShadow: `0 0 10px ${cur.color}` }}>{cur.name}</span>
-                {next && <span style={{ fontSize: 12, color: '#888' }}>→ {next.name}</span>}
+        <div style={{ display: 'grid', gridTemplateColumns: cur ? 'minmax(280px, 420px) 1fr' : '1fr', gap: 16, marginBottom: 24, alignItems: 'stretch' }}>
+          {cur && (
+            <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 16, border: `1px solid ${cur.color}33` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
+                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
               </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы по достижению</button>
-                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 11, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
+              {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
+              {next ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: '#888' }}>
+                  <span>ещё {remaining} до «{next.name}»</span>
+                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
+                </div>
+              ) : <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>Максимальный уровень достигнут</div>}
+              {tipsOpen && next && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {forecast.length === 0 && <p style={{ fontSize: 11, color: '#777', margin: 0 }}>Нет активных показателей для прогноза</p>}
+                  {forecast.slice(0, 2).map((f, i) => (
+                    <div key={i} style={{ fontSize: 11, color: '#ccc', padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)' }}>
+                      «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b>: +{f.e} эн./день → ≈{f.days} дн.
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Цели компании — раньше сотрудник вообще не видел, что цели
+              задаются не только лично ему, но и команде/компании в целом */}
+          {globalGoals.length > 0 && (
+            <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 16, border: '1px solid rgba(255,215,0,0.2)', overflow: 'hidden' }}>
+              <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Цели компании</div>
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                {globalGoals.map(g => {
+                  const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
+                  return (
+                    <div key={g.id} style={{ flex: '0 0 220px', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
+                      <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={6} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: '#888' }}>
+                        <span>{g.current_value || 0}/{g.target_value}{g.unit}</span>
+                        <span>{pct}%</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-            {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={14} />}
-            {next && (
-              <div style={{ textAlign: 'center', marginTop: 10, fontSize: 14, fontWeight: 600, color: '#FFD700', textShadow: '0 0 14px rgba(255,215,0,0.5)', letterSpacing: 0.3 }}>
-                До «{next.name}» осталось {remaining} энергии — держи темп!
-              </div>
-            )}
-            {tipsOpen && next && (
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {forecast.length === 0 && <p style={{ fontSize: 12, color: '#777' }}>Нет активных показателей для прогноза</p>}
-                {forecast.slice(0, 3).map((f, i) => (
-                  <div key={i} style={{ fontSize: 12, color: '#ccc', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    Держать «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b> ({f.label}): +{f.e} эн./день → ≈ <b style={{ color: '#FFD700' }}>{f.days} дн.</b> до «{next.name}»
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
@@ -178,27 +200,38 @@ export default function GoalsPage() {
           <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 16, marginBottom: 40 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))', gap: 18, marginBottom: 40 }}>
           {data.metrics.map(m => {
             const { value, band, thresholds } = metricView(m)
+            const myRank = bandRankOf(m, band)
             return (
-              <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
+              <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 22, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }} title={m.name}>{m.name}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: '#fff', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{m.name}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                 </div>
-                <ProgressBar3D value={value ?? 0} marks={thresholds.map(t => ({ key: t.key, value: t.value }))} />
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 10 }}>
-                  {thresholds.map(t => (
-                    <span key={t.key} style={{ fontSize: 10, fontWeight: t.key === band ? 700 : 500, padding: '3px 9px', borderRadius: 20, background: `${t.color}18`, color: t.color, border: `1px solid ${t.color}${t.key === band ? '88' : '2e'}` }}>
-                      {t.label} {t.value}{m.unit}
-                    </span>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <span style={{ fontSize: 11, color: '#888' }}>Текущий уровень:</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 12px', borderRadius: 20, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44` }}>{BAND_LABELS[band]}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-                  <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44`, whiteSpace: 'nowrap', flexShrink: 0 }}>{BAND_LABELS[band]}</span>
+
+                {/* Рейтинговая шкала — достигнутые уровни залиты и светятся,
+                    недостигнутые — контуром. Видно с одного взгляда, где ты
+                    сейчас и что нужно, чтобы продвинуться дальше. */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {thresholds.map((t, i) => {
+                    const achieved = myRank >= i + 1
+                    const isCurrent = t.key === band
+                    return (
+                      <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, position: 'relative', background: achieved ? `${t.color}26` : 'rgba(255,255,255,0.03)', border: `1.5px solid ${achieved ? t.color : 'rgba(255,255,255,0.1)'}`, boxShadow: isCurrent ? `0 0 14px ${t.color}66` : 'none', transition: 'all 0.3s' }}>
+                        {isCurrent && <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 8, padding: '1px 6px', borderRadius: 20, background: t.color, color: '#0a0e1c', fontWeight: 700, whiteSpace: 'nowrap' }}>ВЫ ЗДЕСЬ</span>}
+                        <div style={{ fontSize: 9, color: achieved ? t.color : '#777', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
+                        <div style={{ fontSize: 15, color: achieved ? '#fff' : '#999', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>{m.unit}</span></div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
