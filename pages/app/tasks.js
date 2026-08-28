@@ -33,9 +33,13 @@ export default function AppTasks() {
     setLoading(false)
   }
 
+  const [starting, setStarting] = useState(null)
+
   const handleStart = async (id) => {
+    setStarting(id)
     await supabase.from('task_assignments').update({ status: 'in_progress', started_at: new Date().toISOString() }).eq('id', id).eq('status', 'assigned')
-    load()
+    await load()
+    setStarting(null)
   }
 
   const shown = tab === 'history' ? history : active.filter(a => {
@@ -81,7 +85,7 @@ export default function AppTasks() {
                   </span>
                 ) : t?.is_auto_goal ? (
                   <div style={{ marginTop: 8 }}>
-                    <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80' }}>Авто по цели — не нажимать</span>
+                    <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80' }}>Выполнение засчитается автоматически</span>
                     {ap && (
                       <div style={{ marginTop: 8 }}>
                         <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -94,7 +98,9 @@ export default function AppTasks() {
                 ) : (
                   <div style={{ marginTop: 10 }}>
                     {item.status === 'assigned' && (
-                      <button onClick={() => handleStart(item.id)} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 10, background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700' }}>Начать</button>
+                      <button onClick={() => handleStart(item.id)} disabled={starting === item.id} style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 10, background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700', opacity: starting === item.id ? 0.6 : 1 }}>
+                        {starting === item.id ? 'Начинаем...' : 'Начать'}
+                      </button>
                     )}
                     {item.status === 'in_progress' && (
                       <span style={{ fontSize: 11, color: '#f97316' }}>В работе — завершите в полной версии на компьютере</span>

@@ -30,13 +30,13 @@ export default function AppLogin() {
       <Head>
         <title>Вход · Кармический банк</title>
         <link rel="manifest" href="/app-manifest.json" />
-        <link rel="apple-touch-icon" href="/app-icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/app-icons/mobkarma.png" />
         <meta name="theme-color" content="#0a0e1c" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
       </Head>
 
       <div style={{ width: 72, height: 72, borderRadius: 20, marginBottom: 20, overflow: 'hidden' }}>
-        <img src="/app-icons/icon-192.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src="/app-icons/mobkarma.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
       <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Кармический банк</h1>
       <p style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>Вход в мобильное приложение</p>

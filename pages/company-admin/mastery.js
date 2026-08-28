@@ -468,6 +468,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
                   <option value="weekly">Еженедельно</option>
                   <option value="monthly">Ежемесячно</option>
                   <option value="quarterly">Ежеквартально</option>
+                  <option value="once">Разовая</option>
                 </select>
               </div>
               <div>
