@@ -91,6 +91,19 @@ export default async function handler(req, res) {
       targetUserIds.map(userId => ({ task_id: task.id, user_id: userId, status: 'assigned', deadline_at: deadlineAt }))
     )
     if (asErr) return res.status(500).json({ error: 'Задание создано, но не удалось назначить: ' + asErr.message })
+
+    // Уведомления — раньше не отправлялись вообще ни сотрудникам, ни
+    // руководителю, из-за чего новое задание можно было узнать только
+    // случайно зайдя в раздел заданий.
+    await a.from('notifications').insert(
+      targetUserIds.map(userId => ({ user_id: userId, message: `Новое задание: «${task.title}»`, link: '/tasks' }))
+    )
+    if (departmentId) {
+      const dept = (allDepartments || []).find(d => d.id === departmentId)
+      if (dept?.manager_user_id && dept.manager_user_id !== ctx.user.id) {
+        await a.from('notifications').insert({ user_id: dept.manager_user_id, message: `Новое задание «${task.title}» назначено вашей команде (${targetUserIds.length} сотр.)`, link: '/company-admin/tasks' })
+      }
+    }
   }
 
   res.status(200).json({ task, assignedCount: targetUserIds.length })

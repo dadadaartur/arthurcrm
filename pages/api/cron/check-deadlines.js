@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       .eq('company_id', r.tasks?.company_id).or('is_company_admin.eq.true,can_review_tasks.eq.true')
     if (admins?.length) {
       await a.from('notifications').insert(admins.map(ad => ({
-        user_id: ad.user_id, message: `У сотрудника скоро истекает срок задания «${r.tasks?.title}»`, link: '/company-admin/review'
+        user_id: ad.user_id, message: `У сотрудника скоро истекает срок задания «${r.tasks?.title}»`, link: '/company-admin/tasks?tab=review'
       })))
     }
     await a.from('task_assignments').update({ deadline_reminded_at: now.toISOString() }).eq('id', r.id)

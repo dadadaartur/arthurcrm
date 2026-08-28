@@ -10,7 +10,6 @@ const CARDS = [
   { key: 'tasks', title: 'Управление заданиями', sub: 'Создание, назначение, награды', href: '/company-admin/tasks', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'employees', title: 'Команда', sub: 'Сотрудники, должности, доступы', href: '/company-admin/employees', color: '#a0e9ff', accent: '#FFD700', primary: true },
   { key: 'departments', title: 'Отделы компании', sub: 'Структура, руководители, подчинённые', href: '/company-admin/departments', color: '#c084fc', accent: '#a0e9ff', primary: true },
-  { key: 'review', title: 'Задания на проверке', sub: 'Одобрение и отклонение', href: '/company-admin/review', color: '#ffb3c6', accent: '#FFD700', badge: 'pendingReviews' },
   { key: 'history', title: 'История заданий', sub: 'Выполненные и отклонённые', href: '/company-admin/history', color: '#e2e8f0', accent: '#a0e9ff' },
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
@@ -137,7 +136,7 @@ function CompanyAdminDashboard() {
           <StatTile label="Активных заданий" value={stats.tasks} color="#c084fc" delay={0.05} onClick={() => router.push('/company-admin/tasks')} />
           <StatTile label="Сотрудников" value={stats.employees} color="#a0e9ff" delay={0.12} onClick={() => router.push('/company-admin/employees')} />
           <StatTile label="Целей в работе" value={stats.goals} color="#FFD700" delay={0.19} onClick={() => router.push('/company-admin/mastery')} />
-          <StatTile label="На проверке" value={stats.pendingReviews} color="#ffb3c6" delay={0.26} onClick={() => router.push('/company-admin/review')} />
+          <StatTile label="На проверке" value={stats.pendingReviews} color="#ffb3c6" delay={0.26} onClick={() => router.push('/company-admin/tasks?tab=review')} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18, marginBottom: 18 }}>

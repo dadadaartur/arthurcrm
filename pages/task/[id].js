@@ -4,7 +4,9 @@ import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import PremiumModal from '../../components/PremiumModal'
 import BackArrow from '../../components/BackArrow'
+import ProgressBar3D from '../../components/ProgressBar3D'
 import { useFeedback } from '../../context/ActionFeedbackContext'
+import { bandFor, bandRankOf, resolveThresholds, rangeValue, BAND_COLORS, BAND_LABELS } from '../../lib/kpi'
 
 const PROOF_LABELS = { photo: 'фотографию', video: 'видео', any: 'файл' }
 const PROOF_ACCEPT = { photo: 'image/*', video: 'video/*', any: 'image/*,video/*,application/pdf' }
@@ -15,6 +17,7 @@ export default function TaskDetail() {
   const { id } = router.query
   const [user, setUser] = useState(null)
   const [assignment, setAssignment] = useState(null)
+  const [autoProgress, setAutoProgress] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitModal, setSubmitModal] = useState({ show: false, comment: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -32,10 +35,33 @@ export default function TaskDetail() {
           .from('task_assignments')
           .select(`id, status, started_at, deadline_at, comment, proof_urls,
             tasks( id, title, description, reward_karma, icon, requires_review,
-                   requires_proof, proof_type, deadline_hours )`)
+                   requires_proof, proof_type, deadline_hours, is_auto_goal,
+                   auto_goal_condition, auto_metric_id, auto_target_rank, partner_name )`)
           .eq('id', id)
           .single()
         setAssignment(data)
+
+        // Авто-зачётное задание — подтягиваем прогресс по показателю
+        // отдельно, страница деталей задания не должна знать бизнес-логику
+        // расчёта показателей сама по себе, только читать готовый результат.
+        if (data?.tasks?.is_auto_goal && data.tasks.auto_metric_id) {
+          const today = new Date().toISOString().slice(0, 10)
+          const { data: metric } = await supabase.from('kpi_metrics').select('*').eq('id', data.tasks.auto_metric_id).maybeSingle()
+          if (metric) {
+            const { data: entries } = await supabase.from('kpi_entries').select('value, entry_date').eq('user_id', user.id).eq('metric_id', metric.id).eq('entry_date', today)
+            const rv = rangeValue(metric, entries || [])
+            const currentBand = rv ? bandFor(rv.value, metric) : 'none'
+            const thresholds = resolveThresholds(metric)
+            const targetTier = thresholds[(data.tasks.auto_target_rank || 1) - 1]
+            const { data: grantedToday } = await supabase.from('task_auto_grants').select('task_id').eq('task_id', data.tasks.id).eq('user_id', user.id).eq('grant_date', today).maybeSingle()
+            setAutoProgress({
+              metricName: metric.name, unit: metric.unit,
+              currentValue: rv?.value ?? 0, currentBand,
+              targetLabel: targetTier?.label || '', targetValue: targetTier?.value ?? null,
+              achievedToday: !!grantedToday,
+            })
+          }
+        }
       }
       setLoading(false)
     }
@@ -114,20 +140,28 @@ export default function TaskDetail() {
   const t = assignment.tasks
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-8">
       <BackArrow href="/tasks" title="Задание" />
 
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139,92,246,0.3)' }}>
-        <div className="flex items-center gap-3 mb-4">
-          {t.icon ? <span className="text-3xl">{t.icon}</span> : (
-            <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
-            </span>
-          )}
-          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139,92,246,0.3)', display: 'flex', flexDirection: 'column', minHeight: 320 }}>
+        <div className="flex items-center gap-3 mb-3">
+          <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
+          </span>
+          <h1 className="text-xl font-bold text-white" style={{ lineHeight: 1.3 }}>{t.title}</h1>
         </div>
 
-        <p className="text-gray-400 mb-4">{t.description}</p>
+        <div style={{ marginBottom: 12 }}>
+          {t.is_auto_goal ? (
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.35)' }}>Засчитывается автоматически по цели</span>
+          ) : t.partner_name ? (
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.35)' }}>Партнёрское · {t.partner_name}</span>
+          ) : (
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(160,233,255,0.1)', color: '#a0e9ff', border: '1px solid rgba(160,233,255,0.3)' }}>Проверяет руководитель</span>
+          )}
+        </div>
+
+        {t.description && <p className="text-gray-400 mb-4 text-sm">{t.description}</p>}
 
         <div className="flex flex-wrap gap-4 text-sm mb-4">
           <div className="flex items-center gap-1">
@@ -142,7 +176,19 @@ export default function TaskDetail() {
           )}
         </div>
 
-        {/* Значок "нужно медиа" */}
+        {t.is_auto_goal && autoProgress && (
+          <div style={{ marginBottom: 16, padding: 14, borderRadius: 12, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
+            <p style={{ fontSize: 12, color: '#4ade80', margin: '0 0 10px' }}>
+              Ничего нажимать не нужно — система сама проверит показатель «{autoProgress.metricName}» и засчитает задание при достижении уровня «{autoProgress.targetLabel}».
+            </p>
+            <ProgressBar3D value={autoProgress.currentValue} marks={[{ key: 't', value: autoProgress.targetValue ?? 1 }]} height={8} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12 }}>
+              <span style={{ color: BAND_COLORS[autoProgress.currentBand] }}>Сейчас: {autoProgress.currentValue}{autoProgress.unit} ({BAND_LABELS[autoProgress.currentBand]})</span>
+              {autoProgress.achievedToday && <span style={{ color: '#4ade80' }}>Выполнено сегодня</span>}
+            </div>
+          </div>
+        )}
+
         {t.requires_proof && (
           <div className="mb-4 px-4 py-2 rounded-xl text-sm flex items-center gap-2"
             style={{ background: 'rgba(160,233,255,0.08)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff' }}>
@@ -150,24 +196,25 @@ export default function TaskDetail() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-sm text-gray-400">Статус:</span>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-            assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
-            assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' :
-            assignment.status === 'completed' ? 'bg-green-900 text-green-300' :
-            assignment.status === 'rejected' ? 'bg-red-900 text-red-300' :
-            'bg-gray-800 text-gray-400'
-          }`}>
-            {assignment.status === 'assigned' && 'Новое'}
-            {assignment.status === 'in_progress' && 'В работе'}
-            {assignment.status === 'pending_review' && 'На проверке'}
-            {assignment.status === 'completed' && 'Выполнено'}
-            {assignment.status === 'rejected' && 'Отклонено'}
-          </span>
-        </div>
+        {!t.is_auto_goal && (
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-sm text-gray-400">Статус:</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
+              assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' :
+              assignment.status === 'completed' ? 'bg-green-900 text-green-300' :
+              assignment.status === 'rejected' ? 'bg-red-900 text-red-300' :
+              'bg-gray-800 text-gray-400'
+            }`}>
+              {assignment.status === 'assigned' && 'Новое'}
+              {assignment.status === 'in_progress' && 'В работе'}
+              {assignment.status === 'pending_review' && 'На проверке'}
+              {assignment.status === 'completed' && 'Выполнено'}
+              {assignment.status === 'rejected' && 'Отклонено'}
+            </span>
+          </div>
+        )}
 
-        {/* Загруженные файлы (уже отправленные) */}
         {assignment.proof_urls?.length > 0 && (
           <div className="mb-4">
             <p className="text-xs text-gray-400 mb-2">Прикреплённые файлы:</p>
@@ -195,34 +242,37 @@ export default function TaskDetail() {
           </div>
         )}
 
-        {assignment.status === 'assigned' && (
-          <button onClick={handleStart} className="btn-gold" style={{ minWidth: 200 }}>Начать задание</button>
-        )}
+        {/* Действие всегда прижато к низу карточки — не прыгает по высоте
+            в зависимости от объёма контента выше */}
+        <div style={{ marginTop: 'auto', paddingTop: 12 }}>
+          {!t.is_auto_goal && assignment.status === 'assigned' && (
+            <button onClick={handleStart} className="btn-gold" style={{ minWidth: 180 }}>Начать задание</button>
+          )}
 
-        {assignment.status === 'in_progress' && (
-          <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold" style={{ minWidth: 200 }}>
-            Отправить на проверку
-          </button>
-        )}
+          {!t.is_auto_goal && assignment.status === 'in_progress' && (
+            <button onClick={() => setSubmitModal({ show: true, comment: '' })} className="btn-gold" style={{ minWidth: 180 }}>
+              Отправить на проверку
+            </button>
+          )}
 
-        {assignment.status === 'pending_review' && (
-          <div className="text-center text-purple-300 py-2">Ожидает проверки руководителем</div>
-        )}
+          {!t.is_auto_goal && assignment.status === 'pending_review' && (
+            <div className="text-center text-purple-300 py-2">Ожидает проверки руководителем</div>
+          )}
 
-        {(assignment.status === 'completed' || assignment.status === 'rejected') && (
-          <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-            <div className="flex items-center justify-center gap-2">
-              {assignment.status === 'completed'
-                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>}
-              <span>{assignment.status === 'completed' ? 'Задание выполнено' : 'Задание отклонено'}</span>
+          {!t.is_auto_goal && (assignment.status === 'completed' || assignment.status === 'rejected') && (
+            <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+              <div className="flex items-center justify-center gap-2">
+                {assignment.status === 'completed'
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>}
+                <span>{assignment.status === 'completed' ? 'Задание выполнено' : 'Задание отклонено'}</span>
+              </div>
+              {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
             </div>
-            {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Модальное окно сабмита с загрузкой файлов */}
       <PremiumModal isOpen={submitModal.show} onClose={() => !submitting && setSubmitModal({ show: false, comment: '' })}
         title="Отправить на проверку" showCloseButton={false}>
         <div className="text-left space-y-4">
@@ -231,7 +281,6 @@ export default function TaskDetail() {
             onChange={e => setSubmitModal({ ...submitModal, comment: e.target.value })}
             rows={3} />
 
-          {/* Блок загрузки файлов — показывается только если задание требует медиа */}
           {t.requires_proof && (
             <div>
               <p className="text-sm text-gray-400 mb-2">
@@ -255,7 +304,9 @@ export default function TaskDetail() {
                         <p className="text-sm text-white truncate">{f.name}</p>
                         <p className="text-xs text-gray-500">{(f.size / 1024 / 1024).toFixed(1)} МБ</p>
                       </div>
-                      <button onClick={() => removeFile(i)} className="text-gray-500 hover:text-red-400 text-lg leading-none">×</button>
+                      <button onClick={() => removeFile(i)} className="text-gray-500 hover:text-red-400" style={{ background: 'none', border: 'none', padding: 4, display: 'flex' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                      </button>
                     </div>
                   )
                 })}

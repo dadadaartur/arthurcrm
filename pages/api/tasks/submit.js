@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       await a.from('notifications').insert(reviewers.map(r => ({
         user_id: r.user_id, type: 'task_review',
         message: `${sender} отправил задание «${asg.tasks?.title}»${needsReview ? ' на проверку' : ' (без проверки)'}`,
-        link: needsReview ? '/company-admin/review' : '/company-admin/history'
+        link: needsReview ? '/company-admin/tasks?tab=review' : '/company-admin/history'
       })))
     }
   }

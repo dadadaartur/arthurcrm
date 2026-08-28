@@ -53,6 +53,17 @@ function TasksPage() {
     department_id: '', specific_user_ids: [], image_file: null
   })
   const [creating, setCreating] = useState(false)
+  const [pendingReviews, setPendingReviews] = useState([])
+  const [reviewHistory, setReviewHistory] = useState([])
+  const [selectedReview, setSelectedReview] = useState(null)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewLoading, setReviewLoading] = useState(false)
+
+  useEffect(() => {
+    if (router.query.tab && ['create', 'create-goal', 'create-external', 'review', 'active', 'archived'].includes(router.query.tab)) {
+      setTab(router.query.tab)
+    }
+  }, [router.query.tab])
 
   useEffect(() => {
     const init = async () => {
@@ -82,9 +93,57 @@ function TasksPage() {
     ])
     const scopeToUse = scope !== undefined ? scope : myScope
     const inScope = t => scopeToUse === null || !t.department_id || scopeToUse.includes(t.department_id)
-    setTasks((a.data || []).filter(inScope))
-    setArchived((b.data || []).filter(inScope))
+    const scopedTasks = (a.data || []).filter(inScope)
+    const scopedArchived = (b.data || []).filter(inScope)
+    setTasks(scopedTasks)
+    setArchived(scopedArchived)
     setMetrics(m.data || [])
+    await loadReviews(cid, [...scopedTasks, ...scopedArchived])
+  }
+
+  // Проверка заданий — раньше жила отдельной страницей review.js без
+  // единого понятия зоны ответственности (видела все задания компании
+  // целиком, руководитель отдела видел бы чужие команды). Теперь
+  // переиспользует тот же список задач, что уже отфильтрован по зоне.
+  const loadReviews = async (cid, scopedTaskList) => {
+    const taskMap = Object.fromEntries(scopedTaskList.map(t => [t.id, t]))
+    const taskIds = scopedTaskList.map(t => t.id)
+    if (!taskIds.length) { setPendingReviews([]); setReviewHistory([]); return }
+    const [{ data: pending }, { data: hist }] = await Promise.all([
+      supabase.from('task_assignments').select('id, status, comment, proof_urls, started_at, task_id, user_id')
+        .in('task_id', taskIds).eq('status', 'pending_review').order('started_at', { ascending: false }),
+      supabase.from('task_assignments').select('id, status, comment, proof_urls, completed_at, reviewed_at, task_id, user_id')
+        .in('task_id', taskIds).in('status', ['completed', 'rejected']).order('completed_at', { ascending: false }).limit(200)
+    ])
+    const userIds = [...new Set([...(pending || []), ...(hist || [])].map(x => x.user_id))]
+    let profilesById = {}
+    if (userIds.length) {
+      const { data: profs } = await supabase.from('profiles').select('user_id, email, display_name, first_name, last_name').in('user_id', userIds)
+      profilesById = Object.fromEntries((profs || []).map(p => [p.user_id, p]))
+    }
+    const empName = uid => { const p = profilesById[uid]; return p ? ([p.first_name, p.last_name].filter(Boolean).join(' ') || p.display_name || p.email) : 'Сотрудник' }
+    setPendingReviews((pending || []).map(item => ({ ...item, task: taskMap[item.task_id], employee_name: empName(item.user_id), employee_email: profilesById[item.user_id]?.email || '' })))
+    setReviewHistory((hist || []).map(item => ({ ...item, task: taskMap[item.task_id], employee_name: empName(item.user_id) })))
+  }
+
+  const handleReview = async (action) => {
+    if (!selectedReview) return
+    setReviewLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/tasks/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+      body: JSON.stringify({ assignmentId: selectedReview.id, action, comment: reviewComment })
+    })
+    setReviewLoading(false)
+    if (res.ok) {
+      setSelectedReview(null); setReviewComment('')
+      showSuccess(action === 'approve' ? 'Задание одобрено, кармики начислены' : 'Задание отклонено')
+      loadData(companyId)
+    } else {
+      const err = await res.json()
+      showError('Ошибка: ' + (err.error || 'Неизвестная ошибка'))
+    }
   }
 
   const handleCreateTask = async (e) => {
@@ -150,6 +209,7 @@ function TasksPage() {
           <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: false })); setTab('create') }} style={pillTab(tab === 'create')}>Обычное задание</button>
           <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific' })); setTab('create-goal') }} style={pillTab(tab === 'create-goal')}>По цели</button>
           <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific' })); setTab('create-external') }} style={pillTab(tab === 'create-external')}>С внешней автопроверкой</button>
+          <button onClick={() => setTab('review')} style={pillTab(tab === 'review')}>На проверке{pendingReviews.length > 0 && ` · ${pendingReviews.length}`}</button>
           <button onClick={() => setTab('active')} style={pillTab(tab === 'active')}>Активные</button>
           <button onClick={() => setTab('archived')} style={pillTab(tab === 'archived')}>Архив · {archived.length}</button>
         </div>
@@ -315,6 +375,69 @@ function TasksPage() {
           </div>
         )}
 
+        {tab === 'review' && (
+          <div>
+            {pendingReviews.length === 0 ? (
+              <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 50, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 24 }}>
+                Все задания проверены — новые отправки появятся здесь автоматически
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
+                {pendingReviews.map(item => (
+                  <div key={item.id} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 18, border: '1px solid rgba(249,115,22,0.3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{item.task?.title}</div>
+                        <div style={{ color: '#aaa', fontSize: 13 }}>{item.employee_name}</div>
+                        <div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 600 }}>+{item.task?.reward_karma} кармиков</span>
+                          {item.started_at && <span style={{ fontSize: 12, color: '#888' }}>отправлено {new Date(item.started_at).toLocaleString('ru')}</span>}
+                        </div>
+                      </div>
+                      <button onClick={() => { setSelectedReview(item); setReviewComment('') }} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Проверить</button>
+                    </div>
+                    {item.comment && (
+                      <div style={{ marginTop: 14, padding: 12, borderRadius: 10, fontSize: 13, color: '#ccc', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        Комментарий сотрудника: <span style={{ color: '#fff' }}>{item.comment}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>История решений</div>
+            {reviewHistory.length === 0 ? (
+              <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 40, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>Нет проверенных заданий</div>
+            ) : (
+              // Настоящая <table> вместо независимого grid на каждую
+              // строку — раньше у каждой строки была своя колонка auto под
+              // кармики, и из-за разной длины числа колонка со статусом
+              // получала разную ширину от строки к строке, слово
+              // «Одобрено» визуально прыгало по горизонтали.
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {reviewHistory.map(item => (
+                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '12px 10px', color: '#fff', fontSize: 14, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.task?.title}
+                        <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{item.employee_name}</div>
+                      </td>
+                      <td style={{ padding: '12px 10px', color: '#888', fontSize: 12, whiteSpace: 'nowrap' }}>{item.completed_at && new Date(item.completed_at).toLocaleDateString('ru')}</td>
+                      <td style={{ padding: '12px 10px' }}>
+                        <span style={{ display: 'inline-block', fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 600, background: item.status === 'completed' ? 'rgba(74,222,128,0.15)' : 'rgba(244,67,54,0.15)', color: item.status === 'completed' ? '#4ade80' : '#f87171', border: `1px solid ${item.status === 'completed' ? 'rgba(74,222,128,0.4)' : 'rgba(244,67,54,0.4)'}` }}>
+                          {item.status === 'completed' ? 'Одобрено' : 'Отклонено'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', color: '#FFD700', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>+{item.task?.reward_karma}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
         {tab === 'active' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
             {tasks.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Нет активных заданий</div>}
@@ -367,7 +490,71 @@ function TasksPage() {
           </div>
         )}
       </div>
+
+      {selectedReview && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !reviewLoading && setSelectedReview(null)}>
+          <div style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 26, maxWidth: 480, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{selectedReview.task?.title}</h3>
+            <div style={{ padding: 16, borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>Сотрудник</div>
+                  <div style={{ color: '#fff', fontWeight: 500 }}>{selectedReview.employee_name}</div>
+                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{selectedReview.employee_email}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>Награда</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>+{selectedReview.task?.reward_karma}</div>
+                </div>
+              </div>
+              {selectedReview.comment && (
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
+                  <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Комментарий сотрудника</div>
+                  <div style={{ fontSize: 13, color: '#fff' }}>{selectedReview.comment}</div>
+                </div>
+              )}
+            </div>
+
+            {selectedReview.proof_urls?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Подтверждение</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {selectedReview.proof_urls.map((url, i) => {
+                    const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+                    const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i)
+                    return (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)' }}>
+                        {isImage ? (
+                          <img src={url} alt="" style={{ width: 110, height: 110, objectFit: 'cover', display: 'block' }} />
+                        ) : (
+                          <div style={{ width: 110, height: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(255,255,255,0.04)', color: '#aaa' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#a0e9ff' }}>{isVideo ? 'ВИДЕО' : 'ФАЙЛ'}</span>
+                            <span style={{ fontSize: 10 }}>Открыть</span>
+                          </div>
+                        )}
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Комментарий к решению</label>
+            <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Необязательно — сотрудник получит его в уведомлении" className="input-field" style={{ width: '100%', marginBottom: 16 }} rows={3} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <button onClick={() => !reviewLoading && setSelectedReview(null)} className="btn-outline" disabled={reviewLoading}>Отмена</button>
+              <button onClick={() => handleReview('reject')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'rgba(244,67,54,0.1)', border: '1px solid rgba(244,67,54,0.4)', color: '#f87171', cursor: 'pointer' }}>
+                {reviewLoading ? '...' : 'Отклонить'}
+              </button>
+              <button onClick={() => handleReview('approve')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(74,222,128,0.15))', border: '1px solid rgba(255,215,0,0.5)', color: '#FFD700', cursor: 'pointer' }}>
+                {reviewLoading ? '...' : 'Одобрить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-export default withAuth(TasksPage, { permission: 'can_create_tasks' })
+export default withAuth(TasksPage, { permission: ['can_create_tasks', 'can_review_tasks'] })
