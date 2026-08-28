@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Токены дизайна — светлая тема (27.08.2026, по вашей просьбе).
+   Вся платформа, КРОМЕ инсталляции на главной странице (у неё
+   свой полностью непрозрачный тёмный фон прямо в pages/index.js,
+   эти переменные её не касаются вообще).
+   Собраны в одном месте намеренно — чтобы можно было откатить
+   решение одной правкой файла, если светлая версия не понравится,
+   а не искать правки по полусотне файлов.
+   ============================================================ */
+:root {
+  --bg-page: #f3f4f8;
+  --bg-card: #ffffff;
+  --bg-card-soft: rgba(255,255,255,0.75);
+  --bg-hover: rgba(15,23,42,0.035);
+  --border-subtle: rgba(15,23,42,0.09);
+  --border-gold: rgba(176,128,16,0.4);
+  --text-primary: #161b28;
+  --text-secondary: #5b6478;
+  --text-muted: #94a0b8;
+  --accent-gold: #b8860b;
+  --accent-gold-bright: #FFD700;
+  --accent-cyan: #0e7490;
+  --accent-purple: #7c3aed;
+  --accent-green: #16a34a;
+  --accent-red: #dc2626;
+  --accent-pink: #db2777;
+  --shadow-card: 0 4px 18px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.05);
+  --shadow-card-hover: 0 10px 28px rgba(15,23,42,0.1);
+}
+
 * {
   cursor: default !important;
   user-select: none;
@@ -25,16 +55,109 @@ html, body {
 ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,215,0,0.3);
+  background: rgba(176,128,16,0.25);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,215,0,0.5);
+  background: rgba(176,128,16,0.4);
   background-clip: padding-box;
 }
-html { scrollbar-width: thin; scrollbar-color: rgba(255,215,0,0.35) transparent; }
+html { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.3) transparent; }
+
+/* ============================================================
+   Область светлой темы. Оборачивает КОНКРЕТНУЮ переделанную
+   страницу (className="theme-light" на корневом div) — внутри неё
+   те же самые классы (.premium-card, .input-field, .btn-gold и
+   т.д.) получают светлый вид, а все остальные, ещё не переделанные
+   страницы продолжают использовать те же классы без изменений,
+   потому что вне .theme-light эти правила не действуют вообще.
+   ============================================================ */
+.theme-light {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+.theme-light .premium-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+}
+.theme-light .input-field {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  backdrop-filter: none;
+}
+.theme-light .input-field:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(184,134,11,0.12);
+}
+.theme-light .input-field::placeholder { color: var(--text-muted); }
+.theme-light .btn-gold, .theme-light .btn-glass {
+  background: linear-gradient(135deg, rgba(184,134,11,0.14), rgba(124,58,237,0.1), rgba(14,116,144,0.1));
+  border: 1px solid var(--border-gold);
+  color: var(--text-primary);
+  text-shadow: none;
+  animation: none;
+}
+.theme-light .btn-gold:hover, .theme-light .btn-glass:hover {
+  background: linear-gradient(135deg, rgba(184,134,11,0.22), rgba(124,58,237,0.16), rgba(14,116,144,0.16));
+  border-color: rgba(176,128,16,0.65);
+  box-shadow: var(--shadow-card-hover);
+}
+.theme-light .btn-outline, .theme-light .btn-glass-outline {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.theme-light .btn-outline:hover, .theme-light .btn-glass-outline:hover {
+  border-color: var(--accent-gold);
+  background: rgba(184,134,11,0.06);
+  box-shadow: none;
+}
+.theme-light .filter-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.theme-light .filter-pill.active {
+  background: linear-gradient(135deg, rgba(184,134,11,0.14), rgba(124,58,237,0.12));
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+.theme-light .modal-overlay { background: rgba(15,23,42,0.5); }
+.theme-light .modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card-hover);
+  color: var(--text-primary);
+}
+.theme-light .file-upload-btn {
+  background: var(--bg-card);
+  border: 1px dashed var(--border-gold);
+  color: var(--text-secondary);
+}
+.theme-light .file-upload-btn:hover {
+  background: rgba(184,134,11,0.06);
+  border-color: var(--accent-gold);
+  box-shadow: none;
+}
+/* BackArrow используется на каждой странице через общий компонент —
+   переопределяю через !important, потому что сам компонент красит
+   инлайн-стилем (единственный практичный способ подстроить общий
+   компонент под конкретную страницу, не трогая все ~90 мест вызова). */
+.theme-light .back-arrow-circle {
+  background: var(--bg-card) !important;
+  border-color: var(--border-gold) !important;
+}
+.theme-light .back-arrow-title {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
 
 /* Заголовок «Кармический банк» в шапке — анимация появления + золото-
    циан-фиолетовый градиент вместо оранжево-фиолетового. */
