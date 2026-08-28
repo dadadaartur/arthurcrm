@@ -5,12 +5,13 @@ import DateRangePicker from '../components/DateRangePicker'
 
 // Подписи и иконки по типу операции — чтобы сразу было видно, откуда
 // начисление (задание/цель/тест/перевод/покупка), а не только читать
-// сплошное предложение в description.
+// сплошное предложение в description. Цвета — насыщенные версии
+// (не пастельные), чтобы читались как текст на светлом фоне.
 const TX_TYPE = {
-  task_reward: { label: 'Задание', color: '#4ade80' },
-  task_review: { label: 'Проверка задания', color: '#4ade80' },
-  kpi_bonus: { label: 'Цель (KPI)', color: '#a0e9ff' },
-  test_reward: { label: 'Тестирование', color: '#c084fc' },
+  task_reward: { label: 'Задание', color: '#16a34a' },
+  task_review: { label: 'Проверка задания', color: '#16a34a' },
+  kpi_bonus: { label: 'Цель (KPI)', color: '#0e7490' },
+  test_reward: { label: 'Тестирование', color: '#7c3aed' },
 }
 const TypeIcon = ({ kind, color }) => {
   const paths = {
@@ -60,9 +61,6 @@ export default function History() {
     const { data: pr } = await supabase.from('purchases')
       .select('*').eq('user_id', userId).order('created_at', { ascending: false })
 
-    // Кто отправил/кому ушёл перевод (п.14 ТЗ) — отдельными запросами, а не
-    // через PostgREST-эмбеддинг по FK, чтобы не зависеть от точного имени
-    // связи в схеме.
     const counterpartIds = [...new Set((tr || []).map(t => t.from_user_id === userId ? t.to_user_id : t.from_user_id).filter(Boolean))]
     let profilesById = {}
     if (counterpartIds.length) {
@@ -107,7 +105,7 @@ export default function History() {
   if (!user) return null
 
   return (
-    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-4 py-10">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-4 py-10">
       <div className="premium-card mb-6">
         <BackArrow href="/" title="История операций" />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
@@ -119,21 +117,19 @@ export default function History() {
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: '#888' }}>Период:</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период:</span>
             <DateRangePicker from={dateFrom} to={dateTo} onChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(0) }} />
           </div>
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="premium-card text-center" style={{ color: '#777', padding: '50px 0' }}>Операций за выбранный период не найдено</div>
+        <div className="premium-card text-center" style={{ color: 'var(--text-muted)', padding: '50px 0' }}>Операций за выбранный период не найдено</div>
       ) : (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
         {paginated.map(op => {
-          const kind = op.type === 'transfer' ? 'transfer' : op.type === 'purchase' ? 'purchase' : (op.type_ || op.type)
           const txMeta = op.type === 'transaction' ? TX_TYPE[op.type] : null
-          const color = op.type === 'transfer' ? '#a0e9ff' : op.type === 'purchase' ? '#f87171' : (txMeta?.color || '#FFD700')
-          const iconKind = op.type === 'transaction' ? op.type : op.type
+          const color = op.type === 'transfer' ? '#0e7490' : op.type === 'purchase' ? '#dc2626' : (txMeta?.color || '#b8860b')
           const isPositive = (op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id)
           return (
             <div key={op.id + op.type} className="premium-card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -144,7 +140,7 @@ export default function History() {
                     <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4, color }}>
                       {op.type === 'transfer' ? 'Перевод' : op.type === 'purchase' ? 'Покупка' : (TX_TYPE[op.type]?.label || 'Начисление')}
                     </span>
-                    <p className="font-medium text-white" style={{ margin: '2px 0 0', fontSize: 14, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    <p className="font-medium" style={{ margin: '2px 0 0', fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {op.type === 'transfer' ? (
                         op.from_user_id === user.id ? 'Исходящий перевод' : 'Входящий перевод'
                       ) : op.type === 'purchase' ? (
@@ -154,19 +150,19 @@ export default function History() {
                       )}
                     </p>
                   </div>
-                  <span className={`font-semibold ${isPositive ? 'text-green-400' : 'text-red-400'}`} style={{ whiteSpace: 'nowrap', fontSize: 15 }}>
+                  <span className="font-semibold" style={{ whiteSpace: 'nowrap', fontSize: 15, color: isPositive ? 'var(--accent-green)' : 'var(--accent-red)' }}>
                     {op.type === 'transaction' ? (op.amount > 0 ? '+' : '') + op.amount :
                      op.type === 'transfer' ? (op.from_user_id === user.id ? '-' : '+') + op.amount :
                      op.type === 'purchase' ? '-' + op.cost : ''}
                   </span>
                 </div>
                 {op.type === 'transfer' && op.counterpart && (
-                  <p className="text-sm mt-1" style={{ color: '#a0e9ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p className="text-sm mt-1" style={{ color: 'var(--accent-cyan)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {op.from_user_id === user.id ? 'Кому: ' : 'От: '}{op.counterpart.name}
-                    <span className="text-gray-500"> · {op.counterpart.email}{op.counterpart.department ? ` · ${op.counterpart.department}` : ''}</span>
+                    <span style={{ color: 'var(--text-muted)' }}> · {op.counterpart.email}{op.counterpart.department ? ` · ${op.counterpart.department}` : ''}</span>
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">{new Date(op.created_at).toLocaleString('ru')}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{new Date(op.created_at).toLocaleString('ru')}</p>
               </div>
             </div>
           )

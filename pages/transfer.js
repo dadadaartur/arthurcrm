@@ -149,31 +149,31 @@ export default function Transfer() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
+    <div className="theme-light max-w-lg mx-auto px-4 py-10">
       <BackArrow href="/" title="Перевод кармиков" />
       <div className="premium-card" style={{ padding: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '14px 18px', borderRadius: 16, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)' }}>
-          <span style={{ fontSize: 12, color: '#999' }}>Ваш баланс</span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{balance} кармиков</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '14px 18px', borderRadius: 16, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ваш баланс</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-gold)' }}>{balance} кармиков</span>
         </div>
 
         <form onSubmit={handleTransfer} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Кому</label>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Кому</label>
             {selected ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.3)' }}>
                 {selected.avatar_url ? (
                   <img src={selected.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 ) : (
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(160,233,255,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#a0e9ff', fontWeight: 600 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(14,116,144,0.14)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: 'var(--accent-cyan)', fontWeight: 600 }}>
                     {colleagueName(selected).charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 14, color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(selected)}</div>
-                  {selected.email && <div style={{ fontSize: 12, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.email}</div>}
+                  <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(selected)}</div>
+                  {selected.email && <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.email}</div>}
                 </div>
-                <button type="button" onClick={clearSelection} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0, padding: 4 }} title="Выбрать другого">
+                <button type="button" onClick={clearSelection} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0, padding: 4 }} title="Выбрать другого">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -195,9 +195,9 @@ export default function Transfer() {
                   required
                 />
                 {dropdownOpen && !colleaguesLoading && (
-                  <div style={{ position: 'absolute', zIndex: 20, marginTop: 6, width: '100%', maxHeight: 260, overflowY: 'auto', borderRadius: 14, border: '1px solid rgba(255,215,0,0.25)', background: 'rgba(20,25,45,0.97)', backdropFilter: 'blur(16px)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
+                  <div style={{ position: 'absolute', zIndex: 20, marginTop: 6, width: '100%', maxHeight: 260, overflowY: 'auto', borderRadius: 14, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', backdropFilter: 'blur(16px)', boxShadow: 'var(--shadow-card-hover)' }}>
                     {filteredColleagues.length === 0 ? (
-                      <div style={{ padding: '10px 14px', fontSize: 13, color: '#777' }}>Никого не найдено</div>
+                      <div style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text-muted)' }}>Никого не найдено</div>
                     ) : (
                       filteredColleagues.map(c => (
                         <button
@@ -205,19 +205,19 @@ export default function Transfer() {
                           key={c.user_id}
                           onClick={() => selectColleague(c)}
                           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,215,0,0.08)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
                           onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                         >
                           {c.avatar_url ? (
                             <img src={c.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                           ) : (
-                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,215,0,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#FFD700' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(184,134,11,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-gold)' }}>
                               {colleagueName(c).charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(c)}</div>
-                            {c.email && <div style={{ fontSize: 11, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
+                            <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{colleagueName(c)}</div>
+                            {c.email && <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
                           </div>
                         </button>
                       ))
@@ -229,7 +229,7 @@ export default function Transfer() {
           </div>
 
           <div>
-            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Сумма</label>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Сумма</label>
             <input
               type="number"
               placeholder="0"
@@ -243,7 +243,7 @@ export default function Transfer() {
           </div>
 
           <div>
-            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Комментарий (необязательно)</label>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Комментарий (необязательно)</label>
             <input
               type="text"
               placeholder="За помощь с отчётом"
@@ -253,7 +253,7 @@ export default function Transfer() {
             />
           </div>
 
-          {error && <p style={{ color: '#f87171', fontSize: 13, margin: 0 }}>{error}</p>}
+          {error && <p style={{ color: 'var(--accent-red)', fontSize: 13, margin: 0 }}>{error}</p>}
           <button type="submit" className="btn-gold" style={{ minWidth: 160 }} disabled={loading || !selected}>
             {loading ? 'Отправка...' : 'Отправить'}
           </button>

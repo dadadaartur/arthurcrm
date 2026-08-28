@@ -1,7 +1,6 @@
 import '../styles/globals.css'
 import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
-import Background from '../components/Background'
 import MobileBlock from '../components/MobileBlock'
 import { ProfileProvider } from '../context/ProfileContext'
 import { ActionFeedbackProvider } from '../context/ActionFeedbackContext'
@@ -45,7 +44,6 @@ export default function App({ Component, pageProps }) {
   return (
     <ProfileProvider>
       <ActionFeedbackProvider>
-        <Background />
         {!skipMobileBlock && <MobileBlock />}
         <Layout>
           <Component {...pageProps} />

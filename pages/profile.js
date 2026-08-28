@@ -142,19 +142,18 @@ export default function Profile() {
       : user?.email?.substring(0, 2).toUpperCase() || '?'
 
   const sectionStyle = {
-    background: 'rgba(15,20,35,0.75)',
-    backdropFilter: 'blur(14px)',
-    WebkitBackdropFilter: 'blur(14px)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-card)',
     borderRadius: 20,
     padding: 24,
     marginBottom: 20,
   }
-  const sectionTitleStyle = { fontSize: 13, fontWeight: 600, color: '#a0e9ff', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 18 }
-  const fieldLabelStyle = { fontSize: 12, color: '#8a94a8', display: 'block', marginBottom: 6 }
+  const sectionTitleStyle = { fontSize: 13, fontWeight: 600, color: 'var(--accent-cyan)', letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 18 }
+  const fieldLabelStyle = { fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }
 
   return (
-    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-4 py-12">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-4 py-12">
       <BackArrow href="/" title="Мой профиль" />
 
       {message.text && (
@@ -163,9 +162,9 @@ export default function Profile() {
           style={{
             padding: '12px 16px',
             borderRadius: 14,
-            background: message.type === 'success' ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)',
-            border: `1px solid ${message.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
-            color: message.type === 'success' ? '#4ade80' : '#f87171',
+            background: message.type === 'success' ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)',
+            border: `1px solid ${message.type === 'success' ? 'rgba(22,163,74,0.3)' : 'rgba(220,38,38,0.3)'}`,
+            color: message.type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)',
             fontSize: 14,
           }}
         >
@@ -178,11 +177,11 @@ export default function Profile() {
         <div style={sectionStyle}>
           <div style={sectionTitleStyle}>Фото профиля</div>
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="relative w-28 h-28 rounded-full overflow-hidden flex-shrink-0" style={{ border: '1px solid rgba(255,215,0,0.3)', background: 'rgba(255,255,255,0.05)' }}>
+            <div className="relative w-28 h-28 rounded-full overflow-hidden flex-shrink-0" style={{ border: '1px solid var(--border-gold)', background: 'var(--bg-page)' }}>
               {form.preview_url ? (
                 <img src={form.preview_url} alt="Аватар" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-semibold">{initials}</div>
+                <div className="w-full h-full flex items-center justify-center text-3xl font-semibold" style={{ color: 'var(--text-muted)' }}>{initials}</div>
               )}
             </div>
             <div className="flex flex-col gap-2 items-center">
@@ -194,7 +193,7 @@ export default function Profile() {
                 Загрузить фото
               </label>
               {profile?.avatar_url && (
-                <button type="button" onClick={handleRemoveAvatar} className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                <button type="button" onClick={handleRemoveAvatar} className="text-xs transition-colors" style={{ color: 'var(--accent-red)' }}>
                   Удалить фото
                 </button>
               )}
@@ -235,7 +234,7 @@ export default function Profile() {
                   <option value="">Не выбрана</option>
                   {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
-                {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs text-gray-500 mt-1.5">Должность может изменить только администратор</p>}
+                {profile?.role_id !== 1 && profile?.role_id !== 2 && <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>Должность может изменить только администратор</p>}
               </div>
             </div>
           </div>
