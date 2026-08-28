@@ -27,6 +27,7 @@ export default function Shop() {
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
   const [rewards, setRewards] = useState([])
+  const [purchaseCounts, setPurchaseCounts] = useState({})
   const [modal, setModal] = useState({ show: false, message: '', type: '' })
   const [loading, setLoading] = useState(false)
   const [selectedReward, setSelectedReward] = useState(null)
@@ -66,6 +67,15 @@ export default function Shop() {
         .eq('company_id', profile.company_id)
         .order('cost')
       setRewards(rewardsData || [])
+      // Лимит покупок на человека (limit_per_user) раньше нигде визуально
+      // не учитывался — сотрудник видел кнопку «Купить» даже если уже
+      // выбрал весь доступный лимит. Считаю через PostgREST-эмбеддинг
+      // rewards(id), а не через прямое имя колонки-внешнего ключа на
+      // purchases, которое нигде в проекте явно не встречается.
+      const { data: purchasesData } = await supabase.from('purchases').select('rewards(id)').eq('user_id', user.id)
+      const counts = {}
+      ;(purchasesData || []).forEach(p => { const id = p.rewards?.id; if (id) counts[id] = (counts[id] || 0) + 1 })
+      setPurchaseCounts(counts)
       // Партнёрские товары (п.11 ТЗ) — какие ключи разблокировки уже
       // открыты у сотрудника, чтобы показать замок на остальных.
       const { data: unlocks } = await supabase.from('employee_unlocks').select('unlock_key').eq('user_id', user.id)
@@ -198,6 +208,8 @@ export default function Shop() {
             {visibleRewards.map(reward => {
               const word = getKarmikWord(reward.cost)
               const isLocked = !!reward.requires_unlock && !unlockedKeys.includes(reward.requires_unlock)
+              const bought = purchaseCounts[reward.id] || 0
+              const limitReached = reward.limit_per_user > 0 && bought >= reward.limit_per_user
               return (
                 <div key={reward.id} style={{
                   background: 'rgba(15, 20, 35, 0.8)',
@@ -243,6 +255,11 @@ export default function Shop() {
                       <span style={{ fontSize: 18, fontWeight: 600, color: '#FFD700' }}>{reward.cost} {word}</span>
                       {isLocked ? (
                         <span style={{ fontSize: 12, color: '#c084fc', padding: '10px 18px', border: '1px solid rgba(192,132,252,0.4)', borderRadius: 14 }}>Заблокировано</span>
+                      ) : limitReached ? (
+                        <span style={{ fontSize: 12, color: '#4ade80', padding: '10px 18px', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
+                          Уже куплено
+                        </span>
                       ) : (
                       <button
                         onClick={(e) => { e.stopPropagation(); purchase(reward); }}
@@ -364,6 +381,11 @@ export default function Shop() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#c084fc', padding: '14px 24px', border: '1px solid rgba(192,132,252,0.4)', borderRadius: 14 }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
                       Откроется после партнёрского задания
+                    </span>
+                  ) : (purchaseCounts[selectedReward.id] || 0) >= selectedReward.limit_per_user && selectedReward.limit_per_user > 0 ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#4ade80', padding: '14px 24px', border: '1px solid rgba(74,222,128,0.4)', borderRadius: 14 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      Уже куплено
                     </span>
                   ) : (
                   <button

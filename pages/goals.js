@@ -196,7 +196,8 @@ export default function GoalsPage() {
               задаются не только лично ему, но и команде/компании в целом */}
           {globalGoals.length > 0 && (
             <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 16, border: '1px solid rgba(255,215,0,0.2)', overflow: 'hidden' }}>
-              <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Цели компании</div>
+              <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Цели компании</div>
+              <div style={{ fontSize: 10, color: '#666', marginBottom: 10 }}>командные и разовые цели, которые ставит руководитель — не привязаны к вашим личным показателям</div>
               <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
                 {globalGoals.map(g => {
                   const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0

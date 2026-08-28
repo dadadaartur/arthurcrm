@@ -33,7 +33,10 @@ export default function Login() {
     })
 
     if (!signInError) {
-      window.location.href = '/'
+      // С телефона — сразу в мобильное приложение, а не на десктопную
+      // главную (которую всё равно тут же перехватит блокировка
+      // маленьких экранов).
+      window.location.href = window.innerWidth < 820 ? '/app' : '/'
       return
     }
 

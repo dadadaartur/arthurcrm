@@ -26,11 +26,12 @@ export default function App({ Component, pageProps }) {
   // (components/AppShell.js) — десктопный Layout/шапка/фон ему не нужны
   // и не подходят по формату для маленького экрана.
   const isMobileApp = router.pathname.startsWith('/app')
-  // /landing — публичная маркетинговая страница, её должны нормально
-  // видеть и с телефона (это первая точка контакта для потенциального
-  // клиента, а не рабочий инструмент) — блокировка касается только
-  // рабочей платформы после входа.
-  const skipMobileBlock = isMobileApp || router.pathname === '/landing'
+  // /landing — публичная маркетинговая страница, должна нормально
+  // открываться и с телефона. /login — тоже: иначе кнопка «Войти» с
+  // лендинга вела в тупик (блокировка ловила саму страницу входа).
+  // После успешного входа login.js сам решает, куда вести дальше —
+  // в /app на маленьком экране, на десктоп на большом.
+  const skipMobileBlock = isMobileApp || router.pathname === '/landing' || router.pathname === '/login'
   if (isMobileApp) {
     return (
       <ProfileProvider>
