@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-export const PERIOD_LABELS = { daily: 'Ежедневно', weekly: 'Еженедельно', monthly: 'Ежемесячно', quarterly: 'Ежеквартально' }
-const PERIOD_RULE = { daily: 'день', weekly: 'неделю', monthly: 'месяц', quarterly: 'квартал' }
+export const PERIOD_LABELS = { daily: 'Ежедневно', weekly: 'Еженедельно', monthly: 'Ежемесячно', quarterly: 'Ежеквартально', once: 'Разовая' }
+const PERIOD_RULE = { daily: 'день', weekly: 'неделю', monthly: 'месяц', quarterly: 'квартал', once: 'весь срок' }
 
 // Значок-вопрос с подсказкой правил обновления шкалы (п.2 из большого
 // списка фидбека, 27 августа 2026 — «нет явного понимания дедлайна
@@ -17,7 +17,7 @@ export default function PeriodHint({ period, resetHour }) {
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 22, right: 0, zIndex: 30, width: 220, padding: '10px 12px', borderRadius: 10, background: '#1a1f2f', border: '1px solid rgba(255,215,0,0.25)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', fontSize: 11, color: '#ccc', lineHeight: 1.5 }}>
-          Шкала обновляется {period === 'daily' ? 'ежедневно' : period === 'weekly' ? 'раз в неделю' : period === 'monthly' ? 'раз в месяц' : 'раз в квартал'} в {String(resetHour ?? 8).padStart(2, '0')}:00 мск — значение считается за текущий {PERIOD_RULE[period] || 'день'}.
+          Шкала обновляется {period === 'daily' ? 'ежедневно' : period === 'weekly' ? 'раз в неделю' : period === 'monthly' ? 'раз в месяц' : period === 'once' ? 'один раз — это разовая цель без периодического сброса' : 'раз в квартал'}{period !== 'once' ? ` в ${String(resetHour ?? 8).padStart(2, '0')}:00 мск — значение считается за текущий ${PERIOD_RULE[period] || 'день'}` : ''}.
         </div>
       )}
     </span>

@@ -30,7 +30,7 @@ export default function MobileBlock() {
       padding: 32, textAlign: 'center', fontFamily: 'Inter, sans-serif'
     }}>
       <div style={{ width: 64, height: 64, borderRadius: 18, marginBottom: 22, overflow: 'hidden' }}>
-        <img src="/app-icons/icon-192.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src="/app-icons/mobkarma.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
       <h1 style={{ fontSize: 19, fontWeight: 700, marginBottom: 10, maxWidth: 320 }}>
         Платформа работает только на больших экранах
