@@ -3,7 +3,22 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import LoadingScreen from '../components/LoadingScreen'
 import BackArrow from '../components/BackArrow'
+import ProgressBar3D from '../components/ProgressBar3D'
 import { useFeedback } from '../context/ActionFeedbackContext'
+import { BAND_COLORS, BAND_LABELS } from '../lib/kpi'
+
+// Тип задания — раньше сотрудник вообще не видел разницы между ручным и
+// авто-зачётным заданием, все выглядели одинаково с одной и той же
+// кнопкой «Начать», даже там, где нажимать нечего.
+const TypeBadge = ({ task }) => {
+  if (task?.is_auto_goal) {
+    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.35)' }}>Авто по цели</span>
+  }
+  if (task?.partner_name) {
+    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.35)' }}>Партнёр: {task.partner_name}</span>
+  }
+  return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(160,233,255,0.1)', color: '#a0e9ff', border: '1px solid rgba(160,233,255,0.3)' }}>Ручная проверка</span>
+}
 
 export default function TasksPage() {
   const router = useRouter()
@@ -14,9 +29,6 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
 
-  // При загрузке: если есть задания "в работе" — показываем их первыми,
-  // так как пользователь скорее всего уже нажал "Начать" и ему важно продолжить.
-  // Новые задания остаются доступны на своей вкладке, но не подавляют "в работе".
   useEffect(() => {
     if (activeTasks.length > 0) {
       const inProgress = activeTasks.filter(t => t.status === 'in_progress')
@@ -31,17 +43,12 @@ export default function TasksPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
-      // Без профиля неизвестна компания пользователя — доступ к чужим/
-      // ничьим заданиям быть не должно. Уводим на /welcome (там уже есть
-      // обработка "нет компании / ждите приглашение").
       const { data: profile } = await supabase
         .from('profiles')
         .select('company_id, deleted_at')
         .eq('user_id', user.id)
         .maybeSingle()
       if (!profile?.company_id || profile.deleted_at) { router.push('/welcome'); return }
-
       setUser(user)
       setLoading(false)
     }
@@ -49,37 +56,20 @@ export default function TasksPage() {
   }, [])
 
   useEffect(() => {
-    if (user) loadTasks(user.id)
+    if (user) loadTasks()
   }, [user])
 
-  const loadTasks = async (userId) => {
-    if (!userId) return
-    const { data: active } = await supabase
-      .from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id, tasks( id, title, description, reward_karma, image_url )')
-      .eq('user_id', userId)
-      .in('status', ['assigned', 'in_progress', 'pending_review'])
-      .limit(50)
-
-    const { data: completed } = await supabase
-      .from('task_assignments')
-      .select('id, status, comment, started_at, completed_at, task_id, tasks( id, title, reward_karma )')
-      .eq('user_id', userId)
-      .in('status', ['completed', 'rejected'])
-      .order('completed_at', { ascending: false })
-      .limit(50)
-
-    setActiveTasks(active || [])
-    setHistory(completed || [])
+  const loadTasks = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const r = await fetch('/api/tasks/my', { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (r.ok) {
+      const d = await r.json()
+      setActiveTasks(d.active || [])
+      setHistory(d.history || [])
+    }
   }
 
   const handleStart = async (assignmentId) => {
-    // Доп. условие .eq('status', 'assigned') — defense in depth: основную
-    // защиту от недопустимых переходов статуса даёт триггер БД
-    // (trg_enforce_task_assignment_transition), но так запрос сразу же не
-    // находит строку и не долетает до триггера, если задание уже не в
-    // статусе "assigned" (например, двойной клик или устаревшие данные на
-    // экране) — вместо жёсткой ошибки из триггера получаем тихий no-op.
     const { error } = await supabase
       .from('task_assignments')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
@@ -89,7 +79,7 @@ export default function TasksPage() {
 
     if (!error) {
       showSuccess('Задание принято в работу')
-      loadTasks(user.id)
+      loadTasks()
     } else {
       showError('Ошибка при начале задания')
     }
@@ -114,14 +104,18 @@ export default function TasksPage() {
     if (!error) {
       setSubmitModal({ show: false, assignmentId: null, comment: '' })
       showSuccess('Задание отправлено на проверку')
-      loadTasks(user.id)
+      loadTasks()
     } else {
       showError('Ошибка отправки')
     }
     setSubmitting(false)
   }
 
+  // Авто-зачётные задания всегда лежат в статусе assigned (крон пишет
+  // отдельный лог начислений, а не меняет статус самой строки) — поэтому
+  // для вкладок используем их собственный прогресс, а не общий статус.
   const filteredTasks = activeTasks.filter(assignment => {
+    if (assignment.tasks?.is_auto_goal) return activeTab === 'new'
     if (activeTab === 'new') return assignment.status === 'assigned'
     if (activeTab === 'in_progress') return assignment.status === 'in_progress'
     if (activeTab === 'pending_review') return assignment.status === 'pending_review'
@@ -138,13 +132,13 @@ export default function TasksPage() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <BackArrow href="/" title="Мои задания" extra={<span className="ml-auto text-sm text-gray-400">{user?.email}</span>} />
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-6 py-8">
+      <BackArrow href="/" title="Мои задания" />
 
       <div className="flex gap-4 mb-6">
         {[
           { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
-          { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress').length },
+          { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress' && !t.tasks?.is_auto_goal).length },
           { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
           { key: 'history', label: 'История', count: history.length }
         ].map(tab => (
@@ -172,58 +166,63 @@ export default function TasksPage() {
         filteredTasks.length === 0 ? (
           <p className="text-gray-400">Нет заданий</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
             {filteredTasks.map(assignment => {
               const t = assignment.tasks
+              const ap = assignment.autoProgress
               return (
-                <div key={assignment.id} className="premium-card relative overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                    borderColor: 'rgba(139, 92, 246, 0.3)',
-                    boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
-                  }}
-                >
-                  <div className="relative z-10">
-                    <div className="flex items-start gap-3 mb-2">
-                      {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
-                      <div className="flex-1">
-                        <h3 className="text-white font-semibold">
-                          {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
-                        </h3>
-                        <span className={`px-2 py-0.5 rounded text-xs ${
-                          assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
-                          assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' : 'bg-gray-800 text-gray-400'
-                        }`}>
-                          {assignment.status === 'assigned' ? 'Новое' : assignment.status === 'in_progress' ? 'В работе' : 'На проверке'}
-                        </span>
+                <div key={assignment.id} style={{
+                  background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: 16, padding: 18,
+                  display: 'flex', flexDirection: 'column'
+                }}>
+                  <div className="flex items-start gap-3 mb-2">
+                    {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
+                      </h3>
+                      <div style={{ marginTop: 4 }}><TypeBadge task={t} /></div>
+                    </div>
+                  </div>
+                  {t?.description && <p className="text-gray-400 text-sm mb-3" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{t.description}</p>}
+
+                  {ap ? (
+                    <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                      <p style={{ fontSize: 11, color: '#4ade80', margin: '0 0 8px' }}>
+                        Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
+                      </p>
+                      <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+                        <span style={{ color: BAND_COLORS[ap.currentBand] }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
+                        {ap.achievedToday && <span style={{ color: '#4ade80' }}>Выполнено сегодня</span>}
                       </div>
                     </div>
-                    <p className="text-gray-400 text-sm mb-2">
-                      {t ? t.description : 'Описание недоступно'}
-                    </p>
-                    <div className="flex justify-between items-center text-xs mb-3">
-                      <span className="text-yellow-400">+ {t?.reward_karma ?? '?'} кармиков</span>
-                      {assignment.deadline_at && (
-                        <span className="text-gray-500 font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {assignment.status === 'assigned' && (
-                        <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                          Начать
-                        </button>
-                      )}
-                      {assignment.status === 'in_progress' && (
-                        <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                          Отправить на проверку
-                        </button>
-                      )}
-                      {assignment.status === 'pending_review' && (
-                        <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
-                          Ожидает проверки
-                        </div>
-                      )}
-                    </div>
+                  ) : null}
+
+                  <div className="flex justify-between items-center text-xs mb-3">
+                    <span className="text-yellow-400">+ {t?.reward_karma ?? '?'} кармиков</span>
+                    {assignment.deadline_at && (
+                      <span className="text-gray-500 font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 'auto' }}>
+                    {!t?.is_auto_goal && assignment.status === 'assigned' && (
+                      <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                        Начать
+                      </button>
+                    )}
+                    {!t?.is_auto_goal && assignment.status === 'in_progress' && (
+                      <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
+                        Отправить на проверку
+                      </button>
+                    )}
+                    {!t?.is_auto_goal && assignment.status === 'pending_review' && (
+                      <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                        Ожидает проверки
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -236,20 +235,22 @@ export default function TasksPage() {
         history.length === 0 ? (
           <p className="text-gray-400">Нет завершённых заданий</p>
         ) : (
-          <div className="max-h-96 overflow-y-auto space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 500, overflowY: 'auto' }}>
             {history.map(h => {
               const t = h.tasks
               if (!t) return null
               return (
-                <div key={h.id} className="flex justify-between items-center p-3 rounded bg-gray-800">
-                  <div>
-                    <span className="text-white">{t.title}</span>
-                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                      {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
-                    </span>
+                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span className="text-white" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs flex-shrink-0 ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                        {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
                   </div>
-                  <span className="text-yellow-400 text-sm">+ {t.reward_karma} кармиков</span>
+                  <span className="text-yellow-400 text-sm flex-shrink-0">+ {t.reward_karma} кармиков</span>
                 </div>
               )
             })}
@@ -257,7 +258,6 @@ export default function TasksPage() {
         )
       )}
 
-      {/* Модальное окно для комментария при отправке */}
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
