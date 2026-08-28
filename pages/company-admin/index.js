@@ -10,7 +10,6 @@ const CARDS = [
   { key: 'tasks', title: 'Управление заданиями', sub: 'Создание, назначение, награды', href: '/company-admin/tasks', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'employees', title: 'Команда', sub: 'Сотрудники, должности, доступы', href: '/company-admin/employees', color: '#a0e9ff', accent: '#FFD700', primary: true },
   { key: 'departments', title: 'Отделы компании', sub: 'Структура, руководители, подчинённые', href: '/company-admin/departments', color: '#c084fc', accent: '#a0e9ff', primary: true },
-  { key: 'history', title: 'История заданий', sub: 'Выполненные и отклонённые', href: '/company-admin/history', color: '#e2e8f0', accent: '#a0e9ff' },
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
   { key: 'global', title: 'Глобальные цели', sub: 'Стратегические цели компании', href: '/company-admin/global-goals', color: '#FFD700', accent: '#ffb3c6', primary: true },
