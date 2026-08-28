@@ -32,7 +32,10 @@ function buildCheck(options) {
     if (allowedRoles.length === 0) return () => true
     return (profile) => allowedRoles.includes(profile.role_id)
   }
-  if (options.permission) return (profile) => hasPermission(profile, options.permission)
+  if (options.permission) {
+    const perms = Array.isArray(options.permission) ? options.permission : [options.permission]
+    return (profile) => perms.some(p => hasPermission(profile, p))
+  }
   if (options.adminOnly) return (profile) => isSuperAdmin(profile) || isCompanyAdmin(profile)
   if (options.anyStaff) return (profile) => hasAnyAdminAccess(profile)
   return () => true
