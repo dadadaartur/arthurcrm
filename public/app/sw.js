@@ -12,7 +12,17 @@ const SHELL_ASSETS = [
 ]
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL_ASSETS)))
+  // cache.addAll — всё или ничего: если хотя бы один ресурс отвечает не
+  // 200 (например, иконку ещё не загрузили в public/app-icons/), вся
+  // установка service worker падает, и он не активируется вовсе — это
+  // могло быть причиной, почему вообще все запросы из приложения
+  // начинали падать с «Failed to fetch». Кэшируем по одному, ошибка
+  // одного файла не должна валить остальные.
+  event.waitUntil(
+    caches.open(CACHE).then((cache) =>
+      Promise.all(SHELL_ASSETS.map((url) => cache.add(url).catch(() => {})))
+    )
+  )
   self.skipWaiting()
 })
 
