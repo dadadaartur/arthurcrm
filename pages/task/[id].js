@@ -140,15 +140,15 @@ export default function TaskDetail() {
   const t = assignment.tasks
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="theme-light max-w-2xl mx-auto px-4 py-8">
       <BackArrow href="/tasks" title="Задание" />
 
-      <div className="premium-card" style={{ background: 'linear-gradient(135deg, #1E1B4B, #1A1A2E)', borderColor: 'rgba(139,92,246,0.3)', display: 'flex', flexDirection: 'column', minHeight: 320 }}>
+      <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 320 }}>
         <div className="flex items-center gap-3 mb-3">
-          <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
+          <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
           </span>
-          <h1 className="text-xl font-bold text-white" style={{ lineHeight: 1.3 }}>{t.title}</h1>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }} style={{ lineHeight: 1.3 }}>{t.title}</h1>
         </div>
 
         <div style={{ marginBottom: 12 }}>
@@ -191,20 +191,20 @@ export default function TaskDetail() {
 
         {t.requires_proof && (
           <div className="mb-4 px-4 py-2 rounded-xl text-sm flex items-center gap-2"
-            style={{ background: 'rgba(160,233,255,0.08)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff' }}>
+            style={{ background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.3)', color: 'var(--accent-cyan)' }}>
             Для выполнения нужно загрузить {PROOF_LABELS[t.proof_type || 'any']}
           </div>
         )}
 
         {!t.is_auto_goal && (
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-sm text-gray-400">Статус:</span>
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Статус:</span>
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-              assignment.status === 'pending_review' ? 'bg-purple-900 text-purple-300' :
-              assignment.status === 'in_progress' ? 'bg-orange-900 text-orange-300' :
-              assignment.status === 'completed' ? 'bg-green-900 text-green-300' :
-              assignment.status === 'rejected' ? 'bg-red-900 text-red-300' :
-              'bg-gray-800 text-gray-400'
+              assignment.status === 'pending_review' ? 'bg-purple-100 text-purple-700' :
+              assignment.status === 'in_progress' ? 'bg-orange-100 text-orange-700' :
+              assignment.status === 'completed' ? 'bg-green-100 text-green-700' :
+              assignment.status === 'rejected' ? 'bg-red-100 text-red-700' :
+              'bg-gray-100 text-gray-600'
             }`}>
               {assignment.status === 'assigned' && 'Новое'}
               {assignment.status === 'in_progress' && 'В работе'}
@@ -217,7 +217,7 @@ export default function TaskDetail() {
 
         {assignment.proof_urls?.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs text-gray-400 mb-2">Прикреплённые файлы:</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>Прикреплённые файлы:</p>
             <div className="flex flex-wrap gap-2">
               {assignment.proof_urls.map((url, i) => {
                 const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i)
@@ -225,14 +225,14 @@ export default function TaskDetail() {
                 return (
                   <a key={i} href={url} target="_blank" rel="noopener noreferrer"
                     className="block rounded-lg overflow-hidden"
-                    style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                    style={{ border: '1px solid var(--border-subtle)' }}>
                     {isImage
                       ? <img src={url} alt="" className="w-20 h-20 object-cover" />
                       : <div className="w-20 h-20 flex items-center justify-center text-2xl"
-                          style={{ background: 'rgba(255,255,255,0.05)' }}>
+                          style={{ background: 'var(--bg-page)' }}>
                           {isVideo
-                            ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>
-                            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
+                            ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0e7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>
+                            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
                         </div>
                     }
                   </a>
@@ -256,18 +256,18 @@ export default function TaskDetail() {
           )}
 
           {!t.is_auto_goal && assignment.status === 'pending_review' && (
-            <div className="text-center text-purple-300 py-2">Ожидает проверки руководителем</div>
+            <div className="text-center py-2">Ожидает проверки руководителем</div>
           )}
 
           {!t.is_auto_goal && (assignment.status === 'completed' || assignment.status === 'rejected') && (
-            <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+            <div className={`text-center py-2 rounded ${assignment.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
               <div className="flex items-center justify-center gap-2">
                 {assignment.status === 'completed'
                   ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                   : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>}
                 <span>{assignment.status === 'completed' ? 'Задание выполнено' : 'Задание отклонено'}</span>
               </div>
-              {assignment.comment && <p className="text-sm mt-1 text-gray-400">Комментарий: {assignment.comment}</p>}
+              {assignment.comment && <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Комментарий: {assignment.comment}</p>}
             </div>
           )}
         </div>
@@ -283,9 +283,9 @@ export default function TaskDetail() {
 
           {t.requires_proof && (
             <div>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Прикрепите {PROOF_LABELS[t.proof_type || 'any']}
-                <span className="text-red-400 ml-1">*</span>
+                <span style={{ color: 'var(--accent-red)' }} className="ml-1">*</span>
               </p>
 
               <div className="space-y-2">
@@ -294,17 +294,17 @@ export default function TaskDetail() {
                   const isVideo = f.type.startsWith('video/')
                   return (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      style={{ background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                       {isImage && (
                         <img src={URL.createObjectURL(f)} alt="" className="w-12 h-12 object-cover rounded" />
                       )}
-                      {isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>}
-                      {!isImage && !isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0e9ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
+                      {isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="15" height="14" rx="2" /><path d="M17 9l5-3v12l-5-3" /></svg>}
+                      {!isImage && !isVideo && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0e7490" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{f.name}</p>
-                        <p className="text-xs text-gray-500">{(f.size / 1024 / 1024).toFixed(1)} МБ</p>
+                        <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{f.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{(f.size / 1024 / 1024).toFixed(1)} МБ</p>
                       </div>
-                      <button onClick={() => removeFile(i)} className="text-gray-500 hover:text-red-400" style={{ background: 'none', border: 'none', padding: 4, display: 'flex' }}>
+                      <button onClick={() => removeFile(i)} style={{ color: 'var(--text-muted)' }} className="hover:text-red-500" style={{ background: 'none', border: 'none', padding: 4, display: 'flex' }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -317,13 +317,13 @@ export default function TaskDetail() {
                 onChange={handleFilesChange} />
 
               <button onClick={() => fileRef.current?.click()}
-                className="mt-2 w-full py-2 rounded-xl text-sm text-gray-300 transition-all"
-                style={{ border: '1px dashed rgba(255,215,0,0.4)', background: 'rgba(255,215,0,0.06)' }}>
+                className="mt-2 w-full py-2 rounded-xl text-sm transition-all"
+                style={{ border: '1px dashed var(--border-gold)', background: 'rgba(184,134,11,0.06)', color: 'var(--text-secondary)' }}>
                 + Добавить {PROOF_LABELS[t.proof_type || 'any']}
               </button>
 
               {uploadProgress && (
-                <p className="text-sm text-[#a0e9ff] text-center">{uploadProgress}</p>
+                <p className="text-sm text-center" style={{ color: 'var(--accent-cyan)' }}>{uploadProgress}</p>
               )}
             </div>
           )}
