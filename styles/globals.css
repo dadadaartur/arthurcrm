@@ -145,6 +145,17 @@ html { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.3) transparent;
   border-color: var(--accent-gold);
   box-shadow: none;
 }
+.theme-light .action-btn {
+  background: linear-gradient(135deg, rgba(14,116,144,0.08), rgba(124,58,237,0.08));
+  border: 1px solid var(--border-gold);
+  color: var(--text-primary);
+  animation: none;
+  backdrop-filter: none;
+}
+.theme-light .action-btn:hover {
+  border-color: var(--accent-purple);
+  box-shadow: none;
+}
 /* BackArrow используется на каждой странице через общий компонент —
    переопределяю через !important, потому что сам компонент красит
    инлайн-стилем (единственный практичный способ подстроить общий
