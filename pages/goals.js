@@ -11,27 +11,34 @@ import { useFeedback } from '../context/ActionFeedbackContext'
 import { BAND_LABELS, BAND_COLORS, bandRankOf, bandFor, rangeValue, resolveThresholds } from '../lib/kpi'
 import PeriodHint, { PERIOD_LABELS } from '../components/PeriodHint'
 
+// Оригинальные BAND_COLORS (из lib/kpi.js) — светлый/пастельный набор,
+// подобранный под тёмный фон, ещё используется в неpereделанной
+// company-admin/mastery.js. Общий модуль менять нельзя — там сломается
+// контраст на тёмном. Здесь, для уже светлой страницы — своя, более
+// насыщенная версия тех же самых 5 цветов, чтобы читалось как текст на
+// белом фоне.
+const BAND_COLORS_LIGHT = { none: '#dc2626', min: '#ea580c', mid: '#b8860b', top: '#16a34a', ultra: '#9333ea' }
+
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
 const shiftISO = n => { const d = new Date(); d.setDate(d.getDate() + n); return toISO(d) }
 
 const ghostBtn = {
-  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
-  padding: '8px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s'
+  background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12,
+  padding: '8px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#b8860b'; e.currentTarget.style.boxShadow = '0 0 14px rgba(184,134,11,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   <button onClick={onClick} style={{
     padding: '8px 18px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400,
-    background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)',
-    border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`,
-    color: active ? color : '#999', transition: 'all 0.25s ease', backdropFilter: 'blur(8px)',
+    background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)',
+    border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`,
+    color: active ? color : 'var(--text-muted)', transition: 'all 0.25s ease',
     boxShadow: active ? `0 0 14px ${color}22` : 'none'
   }}
   onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; e.currentTarget.style.color = '#ddd' } }}
-  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#999' } }}>
+  onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-muted)' } }}>
     {children}
   </button>
 )
@@ -100,7 +107,7 @@ export default function GoalsPage() {
   }
 
   if (loading) return <LoadingScreen />
-  if (!data) return <div style={{ padding: '40px 32px', color: '#777' }}>Нет данных</div>
+  if (!data) return <div style={{ padding: '40px 32px', color: 'var(--text-muted)' }}>Нет данных</div>
 
   const inRange = d => {
     if (mode === 'today') return d === todayISO
@@ -140,7 +147,7 @@ export default function GoalsPage() {
   const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/" title="Мои цели" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -152,7 +159,7 @@ export default function GoalsPage() {
                   const r = await fetch('/api/company-admin/wheel-config', { headers: { Authorization: `Bearer ${session.access_token}` } })
                   if (r.ok) setWheelConfig(await r.json())
                 }
-              }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(192,132,252,0.2), rgba(255,215,0,0.15))', border: '1px solid rgba(255,215,0,0.4)', color: '#FFD700', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
+              }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(192,132,252,0.2), rgba(255,215,0,0.15))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 3v9l6 3" /></svg>
                 Колесо фортуны · {wheelSpins}
               </button>
@@ -160,30 +167,30 @@ export default function GoalsPage() {
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
               <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
-              {next && <div style={{ fontSize: 10, color: '#888' }}>ещё {remaining} до «{next.name}»</div>}
+              {next && <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>ещё {remaining} до «{next.name}»</div>}
             </div>
           </div>
         } />
 
         <div style={{ display: 'grid', gridTemplateColumns: cur ? 'minmax(280px, 420px) 1fr' : '1fr', gap: 16, marginBottom: 24, alignItems: 'stretch' }}>
           {cur && (
-            <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 16, border: `1px solid ${cur.color}33` }}>
+            <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 16, border: `1px solid ${cur.color}33` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
-                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
+                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
               </div>
               {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
               {next ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: '#888' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
                   <span>ещё {remaining} до «{next.name}»</span>
-                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: '#a0e9ff', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
+                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
                 </div>
-              ) : <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>Максимальный уровень достигнут</div>}
+              ) : <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Максимальный уровень достигнут</div>}
               {tipsOpen && next && (
                 <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {forecast.length === 0 && <p style={{ fontSize: 11, color: '#777', margin: 0 }}>Нет активных показателей для прогноза</p>}
+                  {forecast.length === 0 && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Нет активных показателей для прогноза</p>}
                   {forecast.slice(0, 2).map((f, i) => (
-                    <div key={i} style={{ fontSize: 11, color: '#ccc', padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)' }}>
+                    <div key={i} style={{ fontSize: 11, color: 'var(--text-primary)', padding: '6px 10px', borderRadius: 8, background: 'var(--bg-page)' }}>
                       «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b>: +{f.e} эн./день → ≈{f.days} дн.
                     </div>
                   ))}
@@ -195,17 +202,17 @@ export default function GoalsPage() {
           {/* Цели компании — раньше сотрудник вообще не видел, что цели
               задаются не только лично ему, но и команде/компании в целом */}
           {globalGoals.length > 0 && (
-            <div style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 16, border: '1px solid rgba(255,215,0,0.2)', overflow: 'hidden' }}>
-              <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Цели компании</div>
-              <div style={{ fontSize: 10, color: '#666', marginBottom: 10 }}>командные и разовые цели, которые ставит руководитель — не привязаны к вашим личным показателям</div>
+            <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 16, border: '1px solid var(--border-gold)', overflow: 'hidden' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Цели компании</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10 }}>командные и разовые цели, которые ставит руководитель — не привязаны к вашим личным показателям</div>
               <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
                 {globalGoals.map(g => {
                   const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
                   return (
-                    <div key={g.id} style={{ flex: '0 0 220px', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
+                    <div key={g.id} style={{ flex: '0 0 220px', padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
                       <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={6} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: '#888' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: 'var(--text-secondary)' }}>
                         <span>{g.current_value || 0}/{g.target_value}{g.unit}</span>
                         <span>{pct}%</span>
                       </div>
@@ -224,7 +231,7 @@ export default function GoalsPage() {
           <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
           <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
           <div style={{ width: 180 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
-          <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))', gap: 18, marginBottom: 40 }}>
@@ -232,20 +239,20 @@ export default function GoalsPage() {
             const { value, band, thresholds } = metricView(m)
             const myRank = bandRankOf(m, band)
             return (
-              <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 18, padding: 22, border: `1px solid ${BAND_COLORS[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
+              <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 22, border: `1px solid ${BAND_COLORS_LIGHT[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS_LIGHT[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS_LIGHT[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: '#aaa', border: '1px solid rgba(255,255,255,0.12)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
+                  <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'var(--bg-page)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.12)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
                   <PeriodHint period={m.period || 'daily'} resetHour={m.reset_hour ?? 8} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: '#fff', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{m.name}</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: BAND_COLORS[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{m.name}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: BAND_COLORS_LIGHT[band], whiteSpace: 'nowrap', flexShrink: 0 }}>{value != null ? `${value}${m.unit}` : '—'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 11, color: '#888' }}>Текущий уровень:</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 12px', borderRadius: 20, background: `${BAND_COLORS[band]}18`, color: BAND_COLORS[band], border: `1px solid ${BAND_COLORS[band]}44` }}>{BAND_LABELS[band]}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Текущий уровень:</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 12px', borderRadius: 20, background: `${BAND_COLORS_LIGHT[band]}18`, color: BAND_COLORS_LIGHT[band], border: `1px solid ${BAND_COLORS_LIGHT[band]}44` }}>{BAND_LABELS[band]}</span>
                 </div>
 
                 {/* Рейтинговая шкала — достигнутые уровни залиты и светятся,
@@ -256,46 +263,46 @@ export default function GoalsPage() {
                     const achieved = myRank >= i + 1
                     const isCurrent = t.key === band
                     return (
-                      <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, position: 'relative', background: achieved ? `${t.color}26` : 'rgba(255,255,255,0.03)', border: `1.5px solid ${achieved ? t.color : 'rgba(255,255,255,0.1)'}`, boxShadow: isCurrent ? `0 0 14px ${t.color}66` : 'none', transition: 'all 0.3s' }}>
+                      <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, position: 'relative', background: achieved ? `${t.color}26` : 'var(--bg-page)', border: `1.5px solid ${achieved ? t.color : 'var(--border-subtle)'}`, boxShadow: isCurrent ? `0 0 14px ${t.color}66` : 'none', transition: 'all 0.3s' }}>
                         {isCurrent && <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 8, padding: '1px 6px', borderRadius: 20, background: t.color, color: '#0a0e1c', fontWeight: 700, whiteSpace: 'nowrap' }}>ВЫ ЗДЕСЬ</span>}
                         <div style={{ fontSize: 9, color: achieved ? t.color : '#777', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
-                        <div style={{ fontSize: 15, color: achieved ? '#fff' : '#999', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>{m.unit}</span></div>
+                        <div style={{ fontSize: 15, color: achieved ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>{m.unit}</span></div>
                       </div>
                     )
                   })}
                 </div>
 
                 {(m.reward_image_url || m.reward_description) && (
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(184,134,11,0.05)', border: '1px solid var(--border-gold)' }}>
                     {m.reward_image_url && <img src={m.reward_image_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 9, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.4 }}>Приз за максимум</div>
-                      <div style={{ fontSize: 12, color: '#ddd', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.reward_description}</div>
+                      <div style={{ fontSize: 9, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Приз за максимум</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.reward_description}</div>
                     </div>
                   </div>
                 )}
               </div>
             )
           })}
-          {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Руководитель ещё не задал показатели</div>}
+          {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Руководитель ещё не задал показатели</div>}
         </div>
 
         {oldGoals.length > 0 && (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Глобальные цели на период</h2>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>Количественные цели руководителя. Прогресс обновляет руководитель.</p>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Глобальные цели на период</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>Количественные цели руководителя. Прогресс обновляет руководитель.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {oldGoals.map(g => {
                 const pct = Math.min(100, ((g.current_value || 0) / (g.target_value || 1)) * 100)
                 const done = pct >= 100
                 return (
-                  <div key={g.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 14, padding: 18, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div key={g.id} style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 18, border: '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                      <span style={{ color: '#fff', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>{g.title || g.goal_type}</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>{g.title || g.goal_type}</span>
                       <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0, background: done ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.12)', color: done ? '#4ade80' : '#FFD700' }}>{done ? 'Выполнено' : `${Math.round(pct)}%`}</span>
                     </div>
                     <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={12} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 5 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 5 }}>
                       <span>Сейчас: {g.current_value ?? 0}</span>
                       <span>Цель: {g.target_value}</span>
                     </div>
@@ -308,24 +315,24 @@ export default function GoalsPage() {
 
         {(myTests.length > 0 || myViews.length > 0) && (
           <div style={{ marginTop: 40 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 14 }}>Мои результаты</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 14 }}>Мои результаты</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
               {myTests.filter(t => t.completed_at).map(t => (
-                <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(15,20,35,0.85)', border: `1px solid ${t.is_passed ? 'rgba(74,222,128,0.3)' : 'rgba(244,67,54,0.3)'}` }}>
+                <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-card)', border: `1px solid ${t.is_passed ? 'rgba(74,222,128,0.3)' : 'rgba(244,67,54,0.3)'}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 500 }}>Тест #{t.test_id}</span>
+                    <span style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 500 }}>Тест #{t.test_id}</span>
                     <span style={{ color: t.is_passed ? '#4ade80' : '#f87171', fontWeight: 700 }}>{t.score}%</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
                     <span>{new Date(t.completed_at).toLocaleDateString('ru')}</span>
                     <span>{t.is_passed ? 'сдан' : 'не сдан'}</span>
                   </div>
                 </div>
               ))}
               {myViews.filter(v => v.completed).map(v => (
-                <div key={v.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(15,20,35,0.85)', border: '1px solid rgba(74,222,128,0.25)' }}>
-                  <div style={{ color: '#4ade80', fontSize: 13, fontWeight: 500 }}>Тренинг просмотрен</div>
-                  <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>{new Date(v.created_at).toLocaleDateString('ru')}</div>
+                <div key={v.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-card)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                  <div style={{ color: 'var(--accent-green)', fontSize: 13, fontWeight: 500 }}>Тренинг просмотрен</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>{new Date(v.created_at).toLocaleDateString('ru')}</div>
                 </div>
               ))}
             </div>
@@ -337,11 +344,11 @@ export default function GoalsPage() {
       {videoTraining && <TrainingVideoModal training={videoTraining} onClose={() => setVideoTraining(null)} />}
 
       {wheelOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !wheelSpinning && setWheelOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: '#fff' }}>Колесо фортуны</h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !wheelSpinning && setWheelOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' }}>Колесо фортуны</h3>
             {wheelConfig === null ? (
-              <p style={{ color: '#888', fontSize: 13 }}>Загрузка...</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Загрузка...</p>
             ) : wheelConfig.prizes?.length ? (
               <WheelOfFortune
                 prizes={wheelConfig.prizes}
@@ -361,7 +368,7 @@ export default function GoalsPage() {
                 }}
               />
             ) : (
-              <p style={{ color: '#888', fontSize: 13 }}>Колесо пока не настроено</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Колесо пока не настроено</p>
             )}
             <button onClick={() => setWheelOpen(false)} className="btn-outline" style={{ marginTop: 24, minWidth: 120 }}>Закрыть</button>
           </div>
@@ -370,59 +377,59 @@ export default function GoalsPage() {
 
       {/* Модалка деталей показателя */}
       {detailsMetric && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setDetailsMetric(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 'min(780px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
-            <button onClick={() => setDetailsMetric(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer', transition: 'transform 0.3s' }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setDetailsMetric(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(780px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <button onClick={() => setDetailsMetric(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', transition: 'transform 0.3s' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
               <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
-                <circle cx="17" cy="17" r="15" stroke="#f87171" strokeOpacity="0.5" strokeWidth="1" strokeDasharray="4 5" style={{ transformOrigin: '17px 17px', animation: 'mxSpin 6s linear infinite' }} />
-                <path d="M12 12 L22 22 M22 12 L12 22" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="17" cy="17" r="15" stroke="#dc2626" strokeOpacity="0.4" strokeWidth="1" strokeDasharray="4 5" style={{ transformOrigin: '17px 17px', animation: 'mxSpin 6s linear infinite' }} />
+                <path d="M12 12 L22 22 M22 12 L12 22" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', margin: '0 0 14px', paddingRight: 40 }}>{detailsMetric.name}</h3>
-            {detailsMetric.description && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 8px' }}><b style={{ color: '#a0e9ff' }}>Как считается:</b> {detailsMetric.description}</p>}
-            {detailsMetric.advice && <p style={{ fontSize: 13, color: '#ccc', lineHeight: 1.6, margin: '0 0 16px' }}><b style={{ color: '#4ade80' }}>Советы:</b> {detailsMetric.advice}</p>}
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 14px', paddingRight: 40 }}>{detailsMetric.name}</h3>
+            {detailsMetric.description && <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: '0 0 8px' }}><b style={{ color: 'var(--accent-cyan)' }}>Как считается:</b> {detailsMetric.description}</p>}
+            {detailsMetric.advice && <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: '0 0 16px' }}><b style={{ color: 'var(--accent-green)' }}>Советы:</b> {detailsMetric.advice}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${resolveThresholds(detailsMetric).length}, 1fr)`, gap: 8, margin: '0 0 20px' }}>
               {resolveThresholds(detailsMetric).map(t => (
                 <div key={t.key} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${t.color}0d`, border: `1px solid ${t.color}33` }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.label}</div>
-                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
-                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
+                  <div style={{ fontSize: 16, color: 'var(--text-primary)', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
                 </div>
               ))}
             </div>
 
             {(detailsMetric.reward_image_url || detailsMetric.reward_description) && (
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)' }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
                 {detailsMetric.reward_image_url && <img src={detailsMetric.reward_image_url} alt="" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />}
                 <div>
-                  <div style={{ fontSize: 11, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Приз за достижение максимума</div>
-                  <div style={{ fontSize: 14, color: '#fff' }}>{detailsMetric.reward_description}</div>
+                  <div style={{ fontSize: 11, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Приз за достижение максимума</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{detailsMetric.reward_description}</div>
                 </div>
               </div>
             )}
 
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>Материалы для роста</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>Материалы для роста</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(detailsMetric.trainings || []).map(t => {
                 const { band } = metricView(detailsMetric)
                 const recommended = t.recommend_below === 'all' || bandRankOf(detailsMetric, band) < bandRankOf(detailsMetric, t.recommend_below)
                 return (
-                  <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: recommended ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                  <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-page)', border: recommended ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>{t.title}</span>
-                      {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{t.title}</span>
+                      {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
                     </div>
                     {t.type === 'video' && (t.url || t.video_path) && (
                       <button onClick={() => { setDetailsMetric(null); setVideoTraining(t) }} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Смотреть в плеере</button>
                     )}
-                    {t.type === 'text' && t.content && <p style={{ fontSize: 12, color: '#aaa', margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{t.content}</p>}
-                    {t.type === 'test' && <button onClick={() => { setDetailsMetric(null); setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 10, borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пройти тест</button>}
+                    {t.type === 'text' && t.content && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{t.content}</p>}
+                    {t.type === 'test' && <button onClick={() => { setDetailsMetric(null); setActiveTest({ training: t, answers: [] }); setTestResult(null) }} style={{ ...ghostBtn, marginTop: 10, borderColor: 'rgba(192,132,252,0.4)', color: 'var(--accent-purple)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Пройти тест</button>}
                   </div>
                 )
               })}
-              {(detailsMetric.trainings || []).length === 0 && <p style={{ fontSize: 12, color: '#666' }}>Материалов пока нет</p>}
+              {(detailsMetric.trainings || []).length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Материалов пока нет</p>}
             </div>
           </div>
           <style jsx>{`@keyframes mxSpin { to { transform: rotate(360deg) } }`}</style>
@@ -430,16 +437,16 @@ export default function GoalsPage() {
       )}
 
       {activeTest && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !testResult && setActiveTest(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26, position: 'relative' }}>
-            <button onClick={() => setActiveTest(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !testResult && setActiveTest(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 26, position: 'relative' }}>
+            <button onClick={() => setActiveTest(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 18px', background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{activeTest.training.title}</h3>
             {(activeTest.training.test_questions || []).map((q, qi) => (
               <div key={qi} style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 14, color: '#fff', marginBottom: 8 }}>{qi + 1}. {q.q}</p>
+                <p style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 8 }}>{qi + 1}. {q.q}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {(q.options || []).map((opt, oi) => (
-                    <label key={oi} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#ccc', cursor: 'pointer', padding: '8px 12px', borderRadius: 10, border: `1px solid ${activeTest.answers[qi] === oi ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.08)'}`, background: activeTest.answers[qi] === oi ? 'rgba(255,215,0,0.08)' : 'transparent' }}>
+                    <label key={oi} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', padding: '8px 12px', borderRadius: 10, border: `1px solid ${activeTest.answers[qi] === oi ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: activeTest.answers[qi] === oi ? 'rgba(184,134,11,0.08)' : 'transparent' }}>
                       <input type="radio" name={`q${qi}`} checked={activeTest.answers[qi] === oi} onChange={() => setActiveTest(a => { const ans = [...a.answers]; ans[qi] = oi; return { ...a, answers: ans } })} />
                       {opt}
                     </label>

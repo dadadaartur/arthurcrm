@@ -15,9 +15,9 @@ const TypeBadge = ({ task }) => {
     return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.35)' }}>Авто по цели</span>
   }
   if (task?.partner_name) {
-    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.35)' }}>Партнёр: {task.partner_name}</span>
+    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(184,134,11,0.1)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)' }}>Партнёр: {task.partner_name}</span>
   }
-  return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(160,233,255,0.1)', color: '#a0e9ff', border: '1px solid rgba(160,233,255,0.3)' }}>Ручная проверка</span>
+  return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(14,116,144,0.08)', color: 'var(--accent-cyan)', border: '1px solid rgba(14,116,144,0.3)' }}>Ручная проверка</span>
 }
 
 export default function TasksPage() {
@@ -132,7 +132,7 @@ export default function TasksPage() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="px-6 py-8">
+    <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-6 py-8">
       <BackArrow href="/" title="Мои задания" />
 
       <div className="flex gap-4 mb-6">
@@ -151,7 +151,7 @@ export default function TasksPage() {
                 className={`ml-2 inline-flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold
                   ${tab.key === 'new' && activeTab !== 'new'
                     ? 'bg-[#FFD700] text-[#0a1628] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]'
-                    : 'bg-gray-700 text-gray-300'
+                    : 'bg-gray-200 text-gray-600'
                   }`}
                 style={{ padding: '0 6px', fontSize: 11 }}
               >
@@ -164,7 +164,7 @@ export default function TasksPage() {
 
       {activeTab !== 'history' && (
         filteredTasks.length === 0 ? (
-          <p className="text-gray-400">Нет заданий</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Нет заданий</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
             {filteredTasks.map(assignment => {
@@ -172,20 +172,20 @@ export default function TasksPage() {
               const ap = assignment.autoProgress
               return (
                 <div key={assignment.id} style={{
-                  background: 'linear-gradient(135deg, #1E1B4B 0%, #1A1A2E 100%)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: 16, padding: 18,
+                  background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)',
+                  border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 18,
                   display: 'flex', flexDirection: 'column'
                 }}>
                   <div className="flex items-start gap-3 mb-2">
                     {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-semibold" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
                       </h3>
                       <div style={{ marginTop: 4 }}><TypeBadge task={t} /></div>
                     </div>
                   </div>
-                  {t?.description && <p className="text-gray-400 text-sm mb-3" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{t.description}</p>}
+                  {t?.description && <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-3" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{t.description}</p>}
 
                   {ap ? (
                     <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
@@ -194,16 +194,16 @@ export default function TasksPage() {
                       </p>
                       <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-                        <span style={{ color: BAND_COLORS[ap.currentBand] }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
-                        {ap.achievedToday && <span style={{ color: '#4ade80' }}>Выполнено сегодня</span>}
+                        <span style={{ color: '#16a34a' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
+                        {ap.achievedToday && <span style={{ color: 'var(--accent-green)' }}>Выполнено сегодня</span>}
                       </div>
                     </div>
                   ) : null}
 
                   <div className="flex justify-between items-center text-xs mb-3">
-                    <span className="text-yellow-400">+ {t?.reward_karma ?? '?'} кармиков</span>
+                    <span style={{ color: 'var(--accent-gold)' }}>+ {t?.reward_karma ?? '?'} кармиков</span>
                     {assignment.deadline_at && (
-                      <span className="text-gray-500 font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+                      <span style={{ color: 'var(--text-muted)' }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
                     )}
                   </div>
 
@@ -219,7 +219,7 @@ export default function TasksPage() {
                       </button>
                     )}
                     {!t?.is_auto_goal && assignment.status === 'pending_review' && (
-                      <div className="w-full text-center text-xs py-1.5" style={{ color: 'rgba(192,132,252,0.9)' }}>
+                      <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>
                         Ожидает проверки
                       </div>
                     )}
@@ -233,24 +233,24 @@ export default function TasksPage() {
 
       {activeTab === 'history' && (
         history.length === 0 ? (
-          <p className="text-gray-400">Нет завершённых заданий</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Нет завершённых заданий</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 500, overflowY: 'auto' }}>
             {history.map(h => {
               const t = h.tasks
               if (!t) return null
               return (
-                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
+                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span className="text-white" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs flex-shrink-0 ${h.status === 'completed' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                      <span style={{ color: 'var(--text-primary)' }} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs flex-shrink-0 ${h.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{new Date(h.completed_at).toLocaleString('ru')}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{new Date(h.completed_at).toLocaleString('ru')}</p>
                   </div>
-                  <span className="text-yellow-400 text-sm flex-shrink-0">+ {t.reward_karma} кармиков</span>
+                  <span style={{ color: 'var(--accent-gold)' }} className="text-sm flex-shrink-0">+ {t.reward_karma} кармиков</span>
                 </div>
               )
             })}
@@ -261,7 +261,7 @@ export default function TasksPage() {
       {submitModal.show && (
         <div className="modal-overlay" onClick={() => setSubmitModal({ show: false })}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold mb-4 text-gold">Отправить на проверку</h3>
+            <h3 className="text-xl font-semibold mb-4" style={{ color: 'var(--accent-gold)' }}>Отправить на проверку</h3>
             <textarea
               className="input-field"
               placeholder="Введите комментарий (номер заказа, результат)"

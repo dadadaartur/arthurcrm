@@ -15,6 +15,7 @@ export default function Profile() {
 
   const [departments, setDepartments] = useState([])
   const [positions, setPositions] = useState([])
+  const [stats, setStats] = useState(null)
 
   const [form, setForm] = useState({
     first_name: '',
@@ -57,6 +58,27 @@ export default function Profile() {
         setDepartments(deps || [])
         setPositions(pos || [])
       }
+
+      // Панель статистики справа — реальные данные вместо пустого места:
+      // те же самые API, что уже использует «Мои цели» и «Мои задания»,
+      // не завожу ничего нового ради одной сводки.
+      const { data: { session } } = await supabase.auth.getSession()
+      const h = { Authorization: `Bearer ${session.access_token}` }
+      const [{ data: bal }, myRes, levelsRes, tasksRes] = await Promise.all([
+        supabase.from('karma_balance').select('balance').eq('user_id', user.id).maybeSingle(),
+        fetch('/api/kpi/my', { headers: h }),
+        fetch('/api/kpi/levels', { headers: h }),
+        fetch('/api/tasks/my', { headers: h }),
+      ])
+      let energy = 0, levels = [], activeTasks = 0, goalsCount = 0
+      if (myRes.ok) { const d = await myRes.json(); energy = d.energy || 0; goalsCount = (d.metrics || []).length }
+      if (levelsRes.ok) levels = await levelsRes.json()
+      if (tasksRes.ok) { const d = await tasksRes.json(); activeTasks = (d.active || []).filter(a => a.status !== 'pending_review').length }
+      let cur = null
+      levels.forEach(l => { if (energy >= l.energy_threshold) cur = l })
+      const next = levels.find(l => l.energy_threshold > energy) || null
+      setStats({ balance: bal?.balance || 0, energy, cur, next, activeTasks, goalsCount })
+
       setLoading(false)
     }
     init()
@@ -172,7 +194,7 @@ export default function Profile() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 280px) minmax(360px, 520px) 1fr', gap: 20, alignItems: 'start' }}>
         {/* Аватар — узкая колонка слева, а не растянутая на всю ширину строка */}
         <div style={sectionStyle}>
           <div style={sectionTitleStyle}>Фото профиля</div>
@@ -240,6 +262,48 @@ export default function Profile() {
           </div>
 
           <button type="submit" disabled={saving} className="btn-gold" style={{ minWidth: 160 }}>{saving ? 'Сохранение...' : 'Сохранить'}</button>
+        </div>
+
+        {/* Панель личной статистики — реальные данные (баланс, уровень,
+            активные задания/цели), чтобы широкий третий столбец на
+            большом экране не пустовал просто так. */}
+        <div style={sectionStyle}>
+          <div style={sectionTitleStyle}>Кратко о вас</div>
+          {stats && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Баланс</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-gold)' }}>{stats.balance} к.</span>
+              </div>
+
+              {stats.cur && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: stats.cur.color || 'var(--accent-gold)' }}>{stats.cur.name}</span>
+                    {stats.next && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{stats.energy}/{stats.next.energy_threshold} эн.</span>}
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: 'var(--bg-page)', overflow: 'hidden' }}>
+                    <div style={{ width: `${stats.next ? Math.min(100, Math.round((stats.energy - stats.cur.energy_threshold) / (stats.next.energy_threshold - stats.cur.energy_threshold) * 100)) : 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent-gold), var(--accent-purple))' }} />
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ padding: '12px 14px', borderRadius: 14, background: 'var(--bg-page)', textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-cyan)' }}>{stats.activeTasks}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>активных заданий</div>
+                </div>
+                <div style={{ padding: '12px 14px', borderRadius: 14, background: 'var(--bg-page)', textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-purple)' }}>{stats.goalsCount}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>отслеживаемых целей</div>
+                </div>
+              </div>
+
+              <a href="/history" style={{ textAlign: 'center', fontSize: 12, color: 'var(--accent-cyan)', textDecoration: 'none', padding: '10px 0', borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
+                Смотреть историю операций →
+              </a>
+            </div>
+          )}
         </div>
       </form>
     </div>
