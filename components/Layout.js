@@ -6,31 +6,13 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 import { isSuperAdmin as checkIsSuperAdmin, isCompanyAdmin as checkIsCompanyAdmin } from '../lib/permissions'
 
-function StarsBackground() {
-  useEffect(() => {
-    const container = document.getElementById('real-stars')
-    if (!container || container.children.length > 0) return
-    const colors = ['#ff4d4d', '#4d79ff', '#ffff66', '#e0f0ff', '#ffb366']
-    for (let i = 0; i < 40; i++) {
-      const star = document.createElement('div')
-      const size = Math.random() * 4 + 1.5
-      star.style.width = size + 'px'
-      star.style.height = size + 'px'
-      star.style.borderRadius = '50%'
-      star.style.background = colors[Math.floor(Math.random() * colors.length)]
-      star.style.position = 'absolute'
-      star.style.left = Math.random() * 100 + '%'
-      star.style.top = Math.random() * 100 + '%'
-      star.style.boxShadow = `0 0 ${size * 2}px ${star.style.background}`
-      star.style.animation = `realTwinkle ${Math.random() * 3 + 3}s infinite alternate`
-      star.style.animationDelay = Math.random() * 5 + 's'
-      star.style.opacity = '0'
-      container.appendChild(star)
-    }
-  }, [])
-  return <div id="real-stars" className="stars-bg" />
-}
-
+// Шапка и подвал переведены на светлую тему как постоянные, общие для
+// всего сайта элементы (не через обёртку .theme-light конкретной
+// страницы — шапка не является потомком какой-то одной страницы, а
+// значит на неё не действует то же самое каскадное правило). Из-за
+// этого первое время шапка будет светлой поверх ещё не переделанных
+// тёмных страниц — временная нестыковка на период, пока не переведён
+// весь остальной проект, не баг.
 function NotificationBell() {
   const { user } = useProfile()
   const router = useRouter()
@@ -87,35 +69,31 @@ function NotificationBell() {
   return (
     <>
       <button ref={btnRef} onClick={toggle} title="Уведомления"
-        style={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(255,215,0,0.15)' : 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', color: '#FFD700', transition: 'all 0.3s ease' }}
-        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.45)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none' }}>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 5px rgba(255,215,0,0.7))' }}>
+        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(184,134,11,0.12)' : 'rgba(184,134,11,0.06)', border: '1px solid rgba(184,134,11,0.3)', color: '#b8860b', transition: 'all 0.3s ease' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9999, background: 'linear-gradient(135deg, #FFD700, #c084fc)', color: '#0a1628', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(255,215,0,.7)' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #b8860b, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
         )}
       </button>
       {open && createPortal(
-        <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: 'rgba(12,17,32, 0.97)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 14, boxShadow: '0 16px 50px rgba(0,0,0,0.6), 0 0 24px rgba(255,215,0,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFD700', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
+        <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: '#ffffff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 16, boxShadow: '0 16px 40px rgba(15,23,42,0.16)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#b8860b', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
             {items.length > 0 && (
-              <button onClick={markAll} style={{ fontSize: 11, color: '#aaa', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
+              <button onClick={markAll} style={{ fontSize: 11, color: '#94a0b8', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
             )}
           </div>
           {items.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#777', textAlign: 'center', padding: '18px 0' }}>Пока нет уведомлений</p>
+            <p style={{ fontSize: 13, color: '#94a0b8', textAlign: 'center', padding: '18px 0' }}>Пока нет уведомлений</p>
           ) : (
             items.map(n => (
               <div key={n.id} onClick={() => clickItem(n)}
-                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #FFD700', transition: 'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.16)'}
-                onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'rgba(255,255,255,0.03)' : 'rgba(255,215,0,0.08)'}>
-                <p style={{ fontSize: 13, color: '#eee', margin: 0 }}>{n.message}</p>
-                <p style={{ fontSize: 11, color: '#777', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
+                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(184,134,11,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #b8860b' }}>
+                <p style={{ fontSize: 13, color: '#161b28', margin: 0 }}>{n.message}</p>
+                <p style={{ fontSize: 11, color: '#94a0b8', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
               </div>
             ))
           )}
@@ -125,6 +103,8 @@ function NotificationBell() {
     </>
   )
 }
+
+const navPill = { flex: '0 0 auto', fontSize: 12, fontWeight: 500, background: '#fff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 50, padding: '8px 16px', color: '#5b6478', textDecoration: 'none', transition: 'all 0.2s', whiteSpace: 'nowrap' }
 
 export default function Layout({ children }) {
   const { user, profile, loading } = useProfile()
@@ -151,22 +131,10 @@ export default function Layout({ children }) {
   }
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
-        <StarsBackground />
-        <header className="flex justify-between items-center px-6 py-2 relative z-10">
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
+        <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
           <div className="flex items-center gap-4">
-            <div className="h-6 w-32 bg-gray-700 rounded-full animate-pulse"> </div>
-            <div className="flex gap-2">
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"> </div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full animate-pulse"> </div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"> </div>
-              <div className="h-6 w-14 bg-gray-700 rounded-full animate-pulse"> </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="h-6 w-20 bg-gray-700 rounded-full animate-pulse"> </div>
-            <div className="h-6 w-6 bg-gray-700 rounded-full animate-pulse"> </div>
-            <div className="h-6 w-12 bg-gray-700 rounded-full animate-pulse"> </div>
+            <div className="h-6 w-32 rounded-full animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }}> </div>
           </div>
         </header>
         <main className="flex-grow relative z-10">{children}</main>
@@ -181,12 +149,12 @@ export default function Layout({ children }) {
   const isPendingModeration = !isSuperAdmin && !isPlatformStaff && companyStatus === 'pending'
   if (isBlockedByModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
+      <div className="theme-light min-h-screen flex items-center justify-center px-4">
         <div className="premium-card max-w-md text-center">
-          <h1 className="text-xl font-bold text-red-400 mb-3">
+          <h1 className="text-xl font-bold mb-3" style={{ color: 'var(--accent-red)' }}>
             {companyStatus === 'suspended' ? 'Компания заблокирована' : 'Заявка компании отклонена'}
           </h1>
-          <p className="text-gray-400 mb-4">
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
             {profile.companies.status_reason || 'Обратитесь в поддержку Кармического банка для уточнения деталей.'}
           </p>
           <button onClick={handleLogout} className="btn-outline text-sm px-4 py-2">Выйти</button>
@@ -196,10 +164,10 @@ export default function Layout({ children }) {
   }
   if (isPendingModeration) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'transparent' }}>
+      <div className="theme-light min-h-screen flex items-center justify-center px-4">
         <div className="premium-card max-w-md text-center">
-          <h1 className="text-xl font-bold text-yellow-400 mb-3">Заявка на модерации</h1>
-          <p className="text-gray-400 mb-4">
+          <h1 className="text-xl font-bold mb-3" style={{ color: 'var(--accent-gold)' }}>Заявка на модерации</h1>
+          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
             Компания «{profile.companies.name}» создана и ожидает проверки администратором Кармического банка.
             Обычно это занимает немного времени — как только заявку одобрят, здесь появится полный доступ.
           </p>
@@ -216,45 +184,38 @@ export default function Layout({ children }) {
     return user?.email?.substring(0, 2).toUpperCase() || '?'
   }
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
-      <StarsBackground />
-      <header className="flex justify-between items-center px-6 py-2 relative z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="brand-title text-base font-bold">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
+      <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #b8860b, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
           </Link>
-          <nav className="flex gap-2 text-xs font-medium">
-            <Link href="/goals" className="action-btn !py-1.5 !px-4 !text-xs">Мои цели</Link>
-            {isSuperAdmin && <Link href="/admin" className="action-btn !py-1.5 !px-4 !text-xs">Админ</Link>}
-            {isPlatformStaff && (
-              <Link href="/platform-admin" className="action-btn !py-1.5 !px-4 !text-xs">Модерация площадки</Link>
-            )}
-            {isCompanyAdmin && (
-              <Link href="/company-admin" className="action-btn !py-1.5 !px-4 !text-xs">Управление</Link>
-            )}
-            {isCompanyAdmin && (
-              <Link href="/company-admin/results" className="action-btn !py-1.5 !px-4 !text-xs">Результаты</Link>
-            )}
+          <nav className="flex gap-2 flex-wrap">
+            <Link href="/goals" style={navPill}>Мои цели</Link>
+            {isSuperAdmin && <Link href="/admin" style={navPill}>Админ</Link>}
+            {isPlatformStaff && <Link href="/platform-admin" style={navPill}>Модерация площадки</Link>}
+            {isCompanyAdmin && <Link href="/company-admin" style={navPill}>Управление</Link>}
+            {isCompanyAdmin && <Link href="/company-admin/results" style={navPill}>Результаты</Link>}
           </nav>
         </div>
-        <div className="flex items-center gap-4 text-xs font-medium">
-          {companyName && <span className="text-gray-400 text-xs">{companyName}</span>}
+        <div className="flex items-center gap-3 text-xs font-medium">
+          {companyName && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{companyName}</span>}
           <NotificationBell />
-          <Link href="/profile" className="flex items-center gap-2 text-white hover:text-gold transition-colors">
+          <Link href="/profile" className="flex items-center gap-2 transition-colors" style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)' }}>
                 {getInitials()}
               </div>
             )}
-            <span>{profile?.display_name || user.email}</span>
+            <span style={{ fontSize: 12 }}>{profile?.display_name || user.email}</span>
           </Link>
-          <button onClick={handleLogout} className="action-btn !py-1.5 !px-4 !text-xs">Выйти</button>
+          <button onClick={handleLogout} style={navPill}>Выйти</button>
         </div>
       </header>
       <main className="flex-grow relative z-10">{children}</main>
-      <footer className="text-center py-4 text-xs text-gray-500 relative z-10">
+      <footer className="text-center py-4 text-xs relative z-10" style={{ color: 'var(--text-muted)' }}>
         © {new Date().getFullYear()} Кармический банк
       </footer>
     </div>
