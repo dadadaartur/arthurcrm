@@ -69,31 +69,31 @@ function NotificationBell() {
   return (
     <>
       <button ref={btnRef} onClick={toggle} title="Уведомления"
-        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(184,134,11,0.12)' : 'rgba(184,134,11,0.06)', border: '1px solid rgba(184,134,11,0.3)', color: '#b8860b', transition: 'all 0.3s ease' }}>
+        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(184,134,11,0.12)' : 'rgba(184,134,11,0.06)', border: '1px solid rgba(184,134,11,0.3)', color: '#8a6208', transition: 'all 0.3s ease' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #b8860b, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #8a6208, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
         )}
       </button>
       {open && createPortal(
         <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: '#ffffff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 16, boxShadow: '0 16px 40px rgba(15,23,42,0.16)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#b8860b', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6208', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
             {items.length > 0 && (
-              <button onClick={markAll} style={{ fontSize: 11, color: '#94a0b8', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
+              <button onClick={markAll} style={{ fontSize: 11, color: '#5f6b80', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
             )}
           </div>
           {items.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#94a0b8', textAlign: 'center', padding: '18px 0' }}>Пока нет уведомлений</p>
+            <p style={{ fontSize: 13, color: '#5f6b80', textAlign: 'center', padding: '18px 0' }}>Пока нет уведомлений</p>
           ) : (
             items.map(n => (
               <div key={n.id} onClick={() => clickItem(n)}
-                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(184,134,11,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #b8860b' }}>
+                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(184,134,11,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #8a6208' }}>
                 <p style={{ fontSize: 13, color: '#161b28', margin: 0 }}>{n.message}</p>
-                <p style={{ fontSize: 11, color: '#94a0b8', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
+                <p style={{ fontSize: 11, color: '#5f6b80', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
               </div>
             ))
           )}
@@ -187,7 +187,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
       <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
         <div className="flex items-center gap-3 flex-wrap">
-          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #b8860b, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
           </Link>
           <nav className="flex gap-2 flex-wrap">
