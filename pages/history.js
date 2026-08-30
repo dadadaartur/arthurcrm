@@ -8,8 +8,8 @@ import DateRangePicker from '../components/DateRangePicker'
 // сплошное предложение в description. Цвета — насыщенные версии
 // (не пастельные), чтобы читались как текст на светлом фоне.
 const TX_TYPE = {
-  task_reward: { label: 'Задание', color: '#16a34a' },
-  task_review: { label: 'Проверка задания', color: '#16a34a' },
+  task_reward: { label: 'Задание', color: '#137a39' },
+  task_review: { label: 'Проверка задания', color: '#137a39' },
   kpi_bonus: { label: 'Цель (KPI)', color: '#0e7490' },
   test_reward: { label: 'Тестирование', color: '#7c3aed' },
 }
@@ -129,7 +129,7 @@ export default function History() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
         {paginated.map(op => {
           const txMeta = op.type === 'transaction' ? TX_TYPE[op.type] : null
-          const color = op.type === 'transfer' ? '#0e7490' : op.type === 'purchase' ? '#dc2626' : (txMeta?.color || '#b8860b')
+          const color = op.type === 'transfer' ? '#0e7490' : op.type === 'purchase' ? '#dc2626' : (txMeta?.color || '#8a6208')
           const isPositive = (op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id)
           return (
             <div key={op.id + op.type} className="premium-card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>

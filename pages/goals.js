@@ -17,7 +17,7 @@ import PeriodHint, { PERIOD_LABELS } from '../components/PeriodHint'
 // контраст на тёмном. Здесь, для уже светлой страницы — своя, более
 // насыщенная версия тех же самых 5 цветов, чтобы читалось как текст на
 // белом фоне.
-const BAND_COLORS_LIGHT = { none: '#dc2626', min: '#ea580c', mid: '#b8860b', top: '#16a34a', ultra: '#9333ea' }
+const BAND_COLORS_LIGHT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#9333ea' }
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
@@ -27,7 +27,7 @@ const ghostBtn = {
   background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12,
   padding: '8px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#b8860b'; e.currentTarget.style.boxShadow = '0 0 14px rgba(184,134,11,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   <button onClick={onClick} style={{
