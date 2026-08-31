@@ -230,6 +230,7 @@ function MasteryAdmin() {
         <BackArrow href="/company-admin" title="Управление целями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(184,134,11,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
+            <Link href="/company-admin/mastery-report" style={{ ...ghostBtn, textDecoration: 'none', borderColor: 'rgba(14,116,144,0.35)', color: '#0e7490' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Отчёт по выполнению</Link>
             <button onClick={() => setCreateOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
           </div>
         } />
