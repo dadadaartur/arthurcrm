@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import DatePicker from '../../components/DatePicker'
+import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
@@ -32,13 +32,11 @@ function AnalyticsAdmin() {
   const [prev, setPrev] = useState([])
   const [from, setFrom] = useState(shift(today, -6))
   const [to, setTo] = useState(today)
-  const [p, setP] = useState('week')
   const [chartId, setChartId] = useState(null)
   const [sortAsc, setSortAsc] = useState(false)
   const [fillOpen, setFillOpen] = useState(false)
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
-  const applyPreset = k => { setP(k); if (k === 'yesterday') { setFrom(shift(today, -1)); setTo(shift(today, -1)) } if (k === 'week') { setFrom(shift(today, -6)); setTo(today) } if (k === 'month') { setFrom(shift(today, -29)); setTo(today) } }
 
   const load = async () => {
     setLoading(true)
@@ -129,14 +127,7 @@ function AnalyticsAdmin() {
         {/* Тонкая строка периода */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-subtle)', marginBottom: 18 }}>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период</span>
-          <DatePicker value={from} onChange={v => { setFrom(v); setP('') }} placeholder="С даты" />
-          <span style={{ color: 'var(--text-muted)' }}>—</span>
-          <DatePicker value={to} onChange={v => { setTo(v); setP('') }} placeholder="По дату" />
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => applyPreset('yesterday')} style={tiny(p === 'yesterday')}>Вчера</button>
-            <button onClick={() => applyPreset('week')} style={tiny(p === 'week')}>Неделя</button>
-            <button onClick={() => applyPreset('month')} style={tiny(p === 'month')}>Месяц</button>
-          </div>
+          <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{days} дн.</span>
           <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, marginLeft: 'auto', borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
         </div>
@@ -196,7 +187,7 @@ function AnalyticsAdmin() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Динамика по дням</h3>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {metrics.map(m => <button key={m.id} onClick={() => setChartId(m.id)} style={tiny(chartId === m.id)}>{m.name}</button>)}
+                {metrics.map(m => <button key={m.id} title={m.name} onClick={() => setChartId(m.id)} style={{ ...tiny(chartId === m.id), maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</button>)}
               </div>
             </div>
             <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>

@@ -76,7 +76,7 @@ function MasteryReport() {
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <BackArrow href="/company-admin/mastery" title="Отчёт по выполнению целей" extra={
-          <div style={{ marginLeft: 'auto' }}><DateRangePicker from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t) }} /></div>
+          <div style={{ marginLeft: 'auto' }}><DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} /></div>
         } />
 
         {/* Общая сводка по всем показателям сразу */}

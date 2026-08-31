@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppShell from '../../components/AppShell'
+import PaymentSeal from '../../components/PaymentSeal'
 import { supabase } from '../../lib/supabaseClient'
 import { useProfile } from '../../context/ProfileContext'
 import { useFeedback } from '../../context/ActionFeedbackContext'
@@ -10,7 +11,7 @@ import { useFeedback } from '../../context/ActionFeedbackContext'
 // недостижим с телефона.
 export default function AppTransfer() {
   const { user } = useProfile()
-  const { showSuccess, showError } = useFeedback()
+  const { showError } = useFeedback()
   const [balance, setBalance] = useState(0)
   const [colleagues, setColleagues] = useState([])
   const [search, setSearch] = useState('')
@@ -18,6 +19,7 @@ export default function AppTransfer() {
   const [amount, setAmount] = useState('')
   const [comment, setComment] = useState('')
   const [sending, setSending] = useState(false)
+  const [seal, setSeal] = useState(null)
 
   useEffect(() => {
     if (!user) return
@@ -54,8 +56,8 @@ export default function AppTransfer() {
       const result = await res.json()
       if (!res.ok) { showError(result.error || 'Ошибка перевода'); setSending(false); return }
       setBalance(result.newBalance)
+      setSeal({ amount: amt, name: name(selected) })
       setSelected(null); setAmount(''); setComment(''); setSearch('')
-      showSuccess('Перевод выполнен')
     } catch (e) {
       showError('Сетевая ошибка: ' + (e?.message || 'не удалось связаться с сервером'))
     }
@@ -63,6 +65,7 @@ export default function AppTransfer() {
   }
 
   return (
+    <>
     <AppShell title="Перевод коллеге" active="transfer">
       <div style={{ borderRadius: 14, padding: '10px 14px', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 12, color: '#aaa' }}>Ваш баланс</span>
@@ -111,5 +114,7 @@ export default function AppTransfer() {
         {sending ? 'Отправка...' : 'Отправить'}
       </button>
     </AppShell>
+    {seal && <PaymentSeal mode="success" amount={seal.amount} label={`кармиков отправлено · ${seal.name}`} onDone={() => setSeal(null)} />}
+    </>
   )
 }
