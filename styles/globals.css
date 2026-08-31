@@ -156,6 +156,35 @@ html { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.3) transparent;
   border-color: var(--accent-purple);
   box-shadow: none;
 }
+.theme-light .dash-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  animation: none;
+}
+.theme-light .dash-card:hover {
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+.theme-light .dash-card h3 {
+  background: linear-gradient(135deg, #8a6208, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.theme-light .pastel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: none;
+}
+.theme-light .pastel-card h3 {
+  background: linear-gradient(135deg, #8a6208, #0e7490);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 /* BackArrow используется на каждой странице через общий компонент —
    переопределяю через !important, потому что сам компонент красит
    инлайн-стилем (единственный практичный способ подстроить общий
