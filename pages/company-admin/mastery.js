@@ -13,9 +13,14 @@ import { BAND_LABELS, BAND_COLORS, TYPE_LABELS, resolveThresholds } from '../../
 import PeriodHint, { PERIOD_LABELS } from '../../components/PeriodHint'
 
 const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, ' ').replace(/^ +|_+$/g, '')
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '9px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '9px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+// Насыщенная версия BAND_COLORS (общий модуль lib/kpi.js подобран под
+// тёмный фон и используется на других, ещё не переделанных страницах —
+// его нельзя менять глобально). Только для подписей порогов на этой
+// уже светлой странице.
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
 const TYPE_META = [
   { key: 'average', label: 'Среднее за период', hint: 'Средняя арифметика за день/неделю/месяц.', ex: 'CSI, средний чек, время обработки' },
   { key: 'cumulative', label: 'Накопительное', hint: 'Общая сумма за период.', ex: 'Звонки, продажи, задачи' },
@@ -48,16 +53,16 @@ const TypeIcon = ({ type, size = 22 }) => (
   </svg>
 )
 const THRESH_NORMAL = [
-  { k: 'thr_min', label: 'Мин — допустимый', color: BAND_COLORS.min, ph: '5' },
-  { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '10' },
-  { k: 'thr_top', label: 'Топ', color: BAND_COLORS.top, ph: '15' },
-  { k: 'thr_ultra', label: 'Ультра — лучший', color: BAND_COLORS.ultra, ph: '20' },
+  { k: 'thr_min', label: 'Мин — допустимый', color: BAND_TEXT.min, ph: '5' },
+  { k: 'thr_mid', label: 'Средний', color: BAND_TEXT.mid, ph: '10' },
+  { k: 'thr_top', label: 'Топ', color: BAND_TEXT.top, ph: '15' },
+  { k: 'thr_ultra', label: 'Ультра — лучший', color: BAND_TEXT.ultra, ph: '20' },
 ]
 const THRESH_INVERSE = [
-  { k: 'thr_ultra', label: 'Ультра — лучший (меньше всего)', color: BAND_COLORS.ultra, ph: '5' },
-  { k: 'thr_top', label: 'Топ', color: BAND_COLORS.top, ph: '8' },
-  { k: 'thr_mid', label: 'Средний', color: BAND_COLORS.mid, ph: '11' },
-  { k: 'thr_min', label: 'Мин — допустимый (больше всего)', color: BAND_COLORS.min, ph: '15' },
+  { k: 'thr_ultra', label: 'Ультра — лучший (меньше всего)', color: BAND_TEXT.ultra, ph: '5' },
+  { k: 'thr_top', label: 'Топ', color: BAND_TEXT.top, ph: '8' },
+  { k: 'thr_mid', label: 'Средний', color: BAND_TEXT.mid, ph: '11' },
+  { k: 'thr_min', label: 'Мин — допустимый (больше всего)', color: BAND_TEXT.min, ph: '15' },
 ]
 // Палитра для кастомных уровней — те же цвета, что уже используются по
 // всему проекту, чтобы новые уровни не выбивались из общего стиля.
@@ -79,8 +84,8 @@ const toCustomTiers = (form, isInverse) => {
 const CloseX = ({ onClick }) => (
   <button onClick={onClick} className="mx-close" title="Закрыть">
     <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
-      <circle cx="17" cy="17" r="15" stroke="#f87171" strokeOpacity="0.5" strokeWidth="1" strokeDasharray="4 5" className="mx-ring" />
-      <path d="M12 12 L22 22 M22 12 L12 22" stroke="#f87171" strokeWidth="2" strokeLinecap="round" className="mx-x" />
+      <circle cx="17" cy="17" r="15" stroke="#dc2626" strokeOpacity="0.4" strokeWidth="1" strokeDasharray="4 5" className="mx-ring" />
+      <path d="M12 12 L22 22 M22 12 L12 22" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" className="mx-x" />
     </svg>
     <style jsx>{`
       .mx-close { position: absolute; top: 12px; right: 12px; background: none; border: none; cursor: pointer; padding: 4px; transition: transform .4s cubic-bezier(.34,1.56,.64,1); z-index: 5; }
@@ -111,23 +116,23 @@ function TierRow({ tier, onChange, onDelete, canDelete }) {
   const [colorOpen, setColorOpen] = useState(false)
   const set = (k, v) => onChange({ ...tier, [k]: v })
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '30px 1.6fr 0.8fr 0.7fr auto 30px', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '30px 1.6fr 0.8fr 0.7fr auto 30px', gap: 8, alignItems: 'center', padding: '8px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', position: 'relative' }}>
       <button type="button" onClick={() => setColorOpen(o => !o)} title="Цвет уровня"
-        style={{ width: 20, height: 20, borderRadius: '50%', background: tier.color, border: '2px solid rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0 }} />
+        style={{ width: 20, height: 20, borderRadius: '50%', background: tier.color, border: '2px solid rgba(15,23,42,0.15)', cursor: 'pointer', padding: 0 }} />
       {colorOpen && (
-        <div style={{ position: 'absolute', top: 34, left: 8, zIndex: 10, display: 'flex', gap: 5, padding: 8, borderRadius: 10, background: '#1a1f2f', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 8px 20px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'absolute', top: 34, left: 8, zIndex: 10, display: 'flex', gap: 5, padding: 8, borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)' }}>
           {TIER_PALETTE.map(c => (
             <button key={c} type="button" onClick={() => { set('color', c); setColorOpen(false) }}
-              style={{ width: 18, height: 18, borderRadius: '50%', background: c, border: c === tier.color ? '2px solid #fff' : '2px solid transparent', cursor: 'pointer', padding: 0 }} />
+              style={{ width: 18, height: 18, borderRadius: '50%', background: c, border: c === tier.color ? '2px solid var(--text-primary)' : '2px solid transparent', cursor: 'pointer', padding: 0 }} />
           ))}
         </div>
       )}
       <input className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Название уровня" value={tier.label} onChange={e => set('label', e.target.value)} />
       <input type="number" step="0.1" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Порог" value={tier.value} onChange={e => set('value', e.target.value)} />
       <input type="number" className="input-field" style={{ width: '100%', fontSize: 12 }} placeholder="Кармики" value={tier.karma} onChange={e => set('karma', e.target.value)} />
-      <span title="Энергия начисляется автоматически по строгости уровня, не редактируется" style={{ fontSize: 10, color: '#666', whiteSpace: 'nowrap', padding: '0 4px' }}>эн. авто</span>
+      <span title="Энергия начисляется автоматически по строгости уровня, не редактируется" style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', padding: '0 4px' }}>эн. авто</span>
       <button type="button" onClick={onDelete} disabled={!canDelete} title={canDelete ? 'Удалить уровень' : 'Должен остаться хотя бы один уровень'}
-        style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 8, padding: 6, color: canDelete ? '#f87171' : '#555', cursor: canDelete ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: 6, color: canDelete ? '#dc2626' : 'var(--text-muted)', cursor: canDelete ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <TrashIcon />
       </button>
     </div>
@@ -220,29 +225,29 @@ function MasteryAdmin() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление целями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: '#888', padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,215,0,0.25)', background: 'rgba(255,215,0,0.06)' }}>Баланс: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм.</span>
-            <button onClick={() => setCreateOpen(true)} style={{ ...ghostBtn, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(184,134,11,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
+            <button onClick={() => setCreateOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
           </div>
         } />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 16, marginBottom: 28, alignItems: 'start' }}>
-          {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Целей пока нет — создайте первую</div>}
+          {metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Целей пока нет — создайте первую</div>}
           {metrics.map(m => (
-            <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 18, padding: 22, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.35)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+            <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 22, border: '1px solid var(--border-subtle)', transition: 'border-color 0.25s' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-gold)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: '#aaa', border: '1px solid rgba(255,255,255,0.12)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
+                <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'var(--bg-page)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}>{PERIOD_LABELS[m.period || 'daily']}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {(m.reward_image_url || m.reward_description) && (
                     <span title="Настроен приз за максимум" style={{ display: 'flex' }}>
                       {m.reward_image_url ? (
                         <img src={m.reward_image_url} alt="" style={{ width: 16, height: 16, borderRadius: 4, objectFit: 'cover' }} />
                       ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="1" /><path d="M12 8v13M3 12h18M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="1" /><path d="M12 8v13M3 12h18M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
                       )}
                     </span>
                   )}
@@ -250,10 +255,10 @@ function MasteryAdmin() {
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
-                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: '#fff', fontWeight: 600, fontSize: 16, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
+                <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 16, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <span style={{ fontSize: 10, color: '#c084fc', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
-                  <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(160,233,255,0.1)' : 'rgba(255,215,0,0.1)', color: m.department_id ? '#a0e9ff' : '#FFD700', border: `1px solid ${m.department_id ? 'rgba(160,233,255,0.3)' : 'rgba(255,215,0,0.3)'}` }}>
+                  <span style={{ fontSize: 10, color: '#7c3aed', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
+                  <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(184,134,11,0.08)', color: m.department_id ? '#0e7490' : '#8a6208', border: `1px solid ${m.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
                     {m.department_id ? (departments.find(d => d.id === m.department_id)?.name || 'Отдел') : 'Вся компания'}
                   </span>
                 </div>
@@ -266,21 +271,21 @@ function MasteryAdmin() {
                 {resolveThresholds(m).map(t => (
                   <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: `${t.color}14`, border: `1px solid ${t.color}40` }}>
                     <div style={{ fontSize: 9, color: t.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
-                    <div style={{ fontSize: 15, color: '#fff', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, color: '#888', fontWeight: 400 }}>{m.unit}</span></div>
+                    <div style={{ fontSize: 15, color: 'var(--text-primary)', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 400 }}>{m.unit}</span></div>
                   </div>
                 ))}
               </div>
 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button onClick={() => setMaterialsMetric(m)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Материалы</button>
-                <button onClick={() => setEditMetric(m)} title="Редактировать" style={{ background: 'rgba(160,233,255,0.08)', border: '1px solid rgba(160,233,255,0.3)', borderRadius: 10, padding: '8px 10px', color: '#a0e9ff', cursor: 'pointer', transition: 'all .25s', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#a0e9ff'; e.currentTarget.style.boxShadow = '0 0 12px rgba(160,233,255,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(160,233,255,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
+                <button onClick={() => setEditMetric(m)} title="Редактировать" style={{ background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.3)', borderRadius: 10, padding: '8px 10px', color: '#0e7490', cursor: 'pointer', transition: 'all .25s', display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#0e7490'; e.currentTarget.style.boxShadow = 'none' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(14,116,144,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
                   <PencilIcon />
                 </button>
-                <button onClick={() => setDeleteConfirm(m)} title="Удалить" style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 10, padding: '8px 10px', color: '#f87171', cursor: 'pointer', transition: 'all .25s', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#f87171'; e.currentTarget.style.boxShadow = '0 0 12px rgba(244,67,54,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(244,67,54,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
+                <button onClick={() => setDeleteConfirm(m)} title="Удалить" style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 10, padding: '8px 10px', color: '#dc2626', cursor: 'pointer', transition: 'all .25s', display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#dc2626'; e.currentTarget.style.boxShadow = 'none' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(220,38,38,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
                   <TrashIcon />
                 </button>
               </div>
@@ -293,44 +298,44 @@ function MasteryAdmin() {
       <MaterialsModal metric={materialsMetric} onClose={() => setMaterialsMetric(null)} />
 
       {deleteConfirm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setDeleteConfirm(null)}>
-          <div style={{ background: '#1a1f2f', border: '1px solid rgba(244,67,54,0.4)', borderRadius: 20, padding: 28, maxWidth: 380, width: '90%', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Удалить цель?</div>
-            <div style={{ fontSize: 14, color: '#aaa', marginBottom: 20 }}>«{deleteConfirm.name}» будет удалена. Это действие нельзя отменить.</div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setDeleteConfirm(null)}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(220,38,38,0.35)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 28, maxWidth: 380, width: '90%', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Удалить цель?</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>«{deleteConfirm.name}» будет удалена. Это действие нельзя отменить.</div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setDeleteConfirm(null)} style={{ ...ghostBtn, flex: 1 }}>Отмена</button>
-              <button onClick={confirmDelete} style={{ flex: 1, background: 'rgba(244,67,54,0.15)', border: '1px solid rgba(244,67,54,0.5)', borderRadius: 12, padding: '9px 18px', color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Удалить</button>
+              <button onClick={confirmDelete} style={{ flex: 1, background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.4)', borderRadius: 12, padding: '9px 18px', color: '#dc2626', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Удалить</button>
             </div>
           </div>
         </div>
       )}
 
       {detailsMetric && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => setDetailsMetric(null)}>
-          <div style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 28, maxWidth: 520, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => setDetailsMetric(null)}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 28, maxWidth: 520, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-              <h3 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: 0 }}>{detailsMetric.name}</h3>
-              <button onClick={() => setDetailsMetric(null)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', flexShrink: 0 }}>
+              <h3 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{detailsMetric.name}</h3>
+              <button onClick={() => setDetailsMetric(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
-            <span style={{ fontSize: 11, color: '#c084fc' }}>{TYPE_LABELS[detailsMetric.kpi_type || 'cumulative']}</span>
-            {detailsMetric.description && <p style={{ fontSize: 14, color: '#ccc', lineHeight: 1.6, margin: '14px 0' }}>{detailsMetric.description}</p>}
+            <span style={{ fontSize: 11, color: '#7c3aed' }}>{TYPE_LABELS[detailsMetric.kpi_type || 'cumulative']}</span>
+            {detailsMetric.description && <p style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6, margin: '14px 0' }}>{detailsMetric.description}</p>}
             {detailsMetric.advice && (
-              <div style={{ padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.06)', border: '1px solid rgba(160,233,255,0.2)', fontSize: 13, color: '#a0e9ff', marginBottom: 16 }}>{detailsMetric.advice}</div>
+              <div style={{ padding: 12, borderRadius: 12, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.25)', fontSize: 13, color: '#0e7490', marginBottom: 16 }}>{detailsMetric.advice}</div>
             )}
-            <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Пороги выполнения</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Пороги выполнения</div>
             <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(resolveThresholds(detailsMetric).length, 4)}, 1fr)`, gap: 8 }}>
               {resolveThresholds(detailsMetric).map(t => (
                 <div key={t.key} style={{ padding: 12, borderRadius: 10, textAlign: 'center', background: `${t.color}0d`, border: `1px solid ${t.color}33` }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.label}</div>
-                  <div style={{ fontSize: 16, color: '#fff', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
-                  <div style={{ fontSize: 10, color: '#888', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
+                  <div style={{ fontSize: 16, color: 'var(--text-primary)', marginTop: 4, fontWeight: 600 }}>{t.value}{detailsMetric.unit}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>+{t.energy} эн. · +{t.karma} к.</div>
                 </div>
               ))}
             </div>
             {detailsMetric.source === 'auto' && (
-              <div style={{ marginTop: 16, fontSize: 11, color: '#4ade80' }}>Источник: автоматический (внешняя интеграция)</div>
+              <div style={{ marginTop: 16, fontSize: 11, color: '#137a39' }}>Источник: автоматический (внешняя интеграция)</div>
             )}
           </div>
         </div>
@@ -339,8 +344,8 @@ function MasteryAdmin() {
   )
 }
 
-const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
-  <button onClick={onClick} style={{ padding: '8px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.25s ease' }}>{children}</button>
+const Seg = ({ active, onClick, children, color = '#8a6208' }) => (
+  <button onClick={onClick} style={{ padding: '8px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.25s ease' }}>{children}</button>
 )
 
 function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments, myScope, onClose, onSave }) {
@@ -411,27 +416,27 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: 'min(980px, 95vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 28, position: 'relative' }}>
         <CloseX onClick={onClose} />
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 10 }}>Баланс компании: <b style={{ color: '#FFD700' }}>{companyKarma}</b> карм. · Энергия начисляется автоматически (+1 / +2 за топ / +3 за ультра)</div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 10 }}>Баланс компании: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм. · Энергия начисляется автоматически (+1 / +2 за топ / +3 за ультра)</div>
         {step === 'type' ? (
           <>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', color: '#fff' }}>Выберите тип расчёта</h3>
-            <p style={{ fontSize: 12, color: '#888', margin: '0 0 18px' }}>Как считать значение показателя — от этого зависят и пороги ниже</p>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 4px', color: 'var(--text-primary)' }}>Выберите тип расчёта</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Как считать значение показателя — от этого зависят и пороги ниже</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
-                  style={{ display: 'flex', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 16, cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.background = 'rgba(255,215,0,0.06)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,215,0,0.1)', color: '#FFD700' }}>
+                  style={{ display: 'flex', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', transition: 'all 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.background = 'rgba(184,134,11,0.05)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184,134,11,0.1)', color: '#8a6208' }}>
                     <TypeIcon type={t.key} />
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', color: '#fff', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.label}</span>
-                    <span style={{ display: 'block', color: '#999', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
-                    <span style={{ display: 'inline-block', marginTop: 6, color: '#FFD700', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)' }}>{t.ex}</span>
+                    <span style={{ display: 'block', color: 'var(--text-primary)', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.label}</span>
+                    <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
+                    <span style={{ display: 'inline-block', marginTop: 6, color: '#8a6208', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>{t.ex}</span>
                   </span>
                 </button>
               ))}
@@ -439,30 +444,30 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
           </>
         ) : (
           <>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
-            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: 'var(--text-primary)' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
+            {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.25)', color: '#0e7490', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
-              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
+              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
+              <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
               {form.kpi_type === 'ratio' && (<>
-                <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Числитель</label><select className="input-field" style={{ width: '100%' }} value={form.num} onChange={e => setForm({ ...form, num: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
-                <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Знаменатель</label><select className="input-field" style={{ width: '100%' }} value={form.den} onChange={e => setForm({ ...form, den: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
-                <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Множитель</label><input type="number" className="input-field" style={{ width: '100%' }} value={form.mult} onChange={e => setForm({ ...form, mult: e.target.value })} /></div>
+                <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Числитель</label><select className="input-field" style={{ width: '100%' }} value={form.num} onChange={e => setForm({ ...form, num: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
+                <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Знаменатель</label><select className="input-field" style={{ width: '100%' }} value={form.den} onChange={e => setForm({ ...form, den: e.target.value })}><option value="">—</option>{pool.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>
+                <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Множитель</label><input type="number" className="input-field" style={{ width: '100%' }} value={form.mult} onChange={e => setForm({ ...form, mult: e.target.value })} /></div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}><input className="input-field" style={{ flex: 1 }} placeholder="Новый параметр" value={newParam.label} onChange={e => setNewParam({ ...newParam, label: e.target.value })} /><button onClick={addParam} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11 }}>+</button></div>
               </>)}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кому виден показатель</label>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Кому виден показатель</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
                   {myScope === null && <option value="">Вся компания</option>}
                   {departments.map(d => <option key={d.id} value={d.id}>{d.name} (отдел и все вложенные)</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Период обновления</label>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Период обновления</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.period} onChange={e => setForm({ ...form, period: e.target.value })}>
                   <option value="daily">Ежедневно</option>
                   <option value="weekly">Еженедельно</option>
@@ -472,17 +477,17 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Час обновления (МСК)</label>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Час обновления (МСК)</label>
                 <input type="number" min="0" max="23" className="input-field" style={{ width: '100%' }} value={form.reset_hour} onChange={e => setForm({ ...form, reset_hour: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })} />
               </div>
             </div>
-            {myScope !== null && departments.length === 0 && <p style={{ fontSize: 11, color: '#f87171', margin: '-10px 0 16px' }}>У вас нет ни одного отдела в управлении — создайте отдел в «Отделах компании», прежде чем заводить показатель.</p>}
+            {myScope !== null && departments.length === 0 && <p style={{ fontSize: 11, color: '#dc2626', margin: '-10px 0 16px' }}>У вас нет ни одного отдела в управлении — создайте отдел в «Отделах компании», прежде чем заводить показатель.</p>}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Пороги выполнения</span>
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Пороги выполнения</span>
               <div style={{ display: 'flex', gap: 6 }}>
-                <Seg active={!form.useCustom} onClick={toggleCustom} color="#a0e9ff">Шаблон · 4 уровня</Seg>
-                <Seg active={form.useCustom} onClick={toggleCustom} color="#c084fc">Свои уровни</Seg>
+                <Seg active={!form.useCustom} onClick={toggleCustom} color="#0e7490">Шаблон · 4 уровня</Seg>
+                <Seg active={form.useCustom} onClick={toggleCustom} color="#7c3aed">Свои уровни</Seg>
               </div>
             </div>
 
@@ -492,17 +497,17 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
                   <div key={t.k}><label style={{ fontSize: 11, color: t.color, display: 'block', marginBottom: 4 }}>{t.label}</label><input type="number" step="0.1" placeholder={t.ph} className="input-field" style={{ width: '100%' }} value={form[t.k]} onChange={e => setForm({ ...form, [t.k]: e.target.value })} /></div>
                 ))}
                 {['karma_min', 'karma_mid', 'karma_top', 'karma_ultra'].map((k, i) => (
-                  <div key={k}><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Кармики · {BAND_LABELS[['min', 'mid', 'top', 'ultra'][i]]}</label><input type="number" className="input-field" style={{ width: '100%' }} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
+                  <div key={k}><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Кармики · {BAND_LABELS[['min', 'mid', 'top', 'ultra'][i]]}</label><input type="number" className="input-field" style={{ width: '100%' }} value={form[k]} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
                 ))}
               </div>
             ) : (
               <div style={{ marginBottom: 16 }}>
-                {isInverse && <div style={{ marginBottom: 10, padding: 10, borderRadius: 10, background: 'rgba(160,233,255,0.07)', border: '1px solid rgba(160,233,255,0.3)', color: '#a0e9ff', fontSize: 11 }}>Меньше — лучше: у самого строгого уровня должен быть самый маленький порог.</div>}
+                {isInverse && <div style={{ marginBottom: 10, padding: 10, borderRadius: 10, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.25)', color: '#0e7490', fontSize: 11 }}>Меньше — лучше: у самого строгого уровня должен быть самый маленький порог.</div>}
                 <div style={{ display: 'grid', gridTemplateColumns: '30px 1.6fr 0.8fr 0.7fr auto 30px', gap: 8, padding: '0 10px', marginBottom: 6 }}>
                   <span />
-                  <span style={{ fontSize: 10, color: '#666' }}>Название</span>
-                  <span style={{ fontSize: 10, color: '#666' }}>Порог</span>
-                  <span style={{ fontSize: 10, color: '#666' }}>Кармики</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Название</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Порог</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Кармики</span>
                   <span />
                   <span />
                 </div>
@@ -516,42 +521,42 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Источник значений</span>
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Источник значений</span>
               <div style={{ display: 'flex', gap: 6 }}>
-                <Seg active={form.source !== 'auto'} onClick={() => setForm({ ...form, source: 'manual' })} color="#a0e9ff">Ручной ввод</Seg>
-                <Seg active={form.source === 'auto'} onClick={() => setForm({ ...form, source: 'auto' })} color="#4ade80">Авто (внешний источник)</Seg>
+                <Seg active={form.source !== 'auto'} onClick={() => setForm({ ...form, source: 'manual' })} color="#0e7490">Ручной ввод</Seg>
+                <Seg active={form.source === 'auto'} onClick={() => setForm({ ...form, source: 'auto' })} color="#137a39">Авто (внешний источник)</Seg>
               </div>
             </div>
             {form.source === 'auto' && (
-              <div style={{ marginBottom: 16, padding: 12, borderRadius: 12, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.25)' }}>
-                <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>URL внешнего источника (отдаёт JSON вида [{'{'}email, value{'}'}])</label>
+              <div style={{ marginBottom: 16, padding: 12, borderRadius: 12, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.25)' }}>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>URL внешнего источника (отдаёт JSON вида [{'{'}email, value{'}'}])</label>
                 <input className="input-field" style={{ width: '100%' }} placeholder="https://ваша-crm.ru/api/kpi-export" value={form.source_url} onChange={e => setForm({ ...form, source_url: e.target.value })} />
-                <p style={{ fontSize: 11, color: '#777', margin: '8px 0 0' }}>
-                  Раз в день (и по кнопке «Проверить сейчас») система дёргает эту ссылку и сама зачисляет пороги/награды. Ещё нет реальной CRM для интеграции — настройте и проверьте всю цепочку на тестовом источнике на странице <Link href="/company-admin/crm-sandbox" style={{ color: '#4ade80' }}>«Тест-стенд автозачёта»</Link>.
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '8px 0 0' }}>
+                  Раз в день система сама дёргает эту ссылку и зачисляет пороги/награды — та же логика, что и для ручного ввода, просто значение приходит извне вместо формы.
                 </p>
               </div>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Описание</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-              <div><label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Советы</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.advice} onChange={e => setForm({ ...form, advice: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Описание</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Советы</label><textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.advice} onChange={e => setForm({ ...form, advice: e.target.value })} /></div>
             </div>
 
             <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.2)' }}>
-              <div style={{ fontSize: 11, color: '#FFD700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Приз за достижение максимума (необязательно)</div>
+              <div style={{ fontSize: 11, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Приз за достижение максимума (необязательно)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 14, alignItems: 'start' }}>
                 <div>
-                  <label htmlFor="reward-image-upload" style={{ display: 'block', width: 100, height: 100, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px dashed rgba(255,215,0,0.4)', background: 'rgba(255,255,255,0.03)', position: 'relative' }}>
+                  <label htmlFor="reward-image-upload" style={{ display: 'block', width: 100, height: 100, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px dashed var(--border-gold)', background: 'var(--bg-page)', position: 'relative' }}>
                     {form.reward_preview_url ? (
                       <img src={form.reward_preview_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#888', textAlign: 'center', padding: 6 }}>Фото приза</span>
+                      <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: 6 }}>Фото приза</span>
                     )}
                   </label>
                   <input id="reward-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) setForm({ ...form, reward_image_file: f, reward_preview_url: URL.createObjectURL(f) }) }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Что получит сотрудник</label>
+                  <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Что получит сотрудник</label>
                   <textarea className="input-field" style={{ width: '100%' }} rows={3} placeholder="Например: Сертификат в ресторан на 5000₽" value={form.reward_description} onChange={e => setForm({ ...form, reward_description: e.target.value })} />
                 </div>
               </div>
@@ -559,7 +564,7 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={onClose} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
-              <button onClick={submit} style={{ ...ghostBtn, flex: 1, borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сохранить</button>
+              <button onClick={submit} style={{ ...ghostBtn, flex: 1, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сохранить</button>
             </div>
           </>
         )}
@@ -599,21 +604,21 @@ function MaterialsModal({ metric, onClose }) {
 
   if (!metric) return null
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: 'min(880px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 28, position: 'relative' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: 'min(880px, 94vw)', maxHeight: '88vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 28, position: 'relative' }}>
         <CloseX onClick={onClose} />
-        <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>Материалы: {metric.name}</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: 'var(--text-primary)' }}>Материалы: {metric.name}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
           {trainings.map(t => (
-            <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ fontSize: 13, color: '#fff' }}>{t.title}</span>
+            <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{t.title}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 {t.type === 'video' && <button onClick={() => setVideo(t)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Показать</button>}
-                <Link href={`/company-admin/tests?training=${t.id}`} style={{ ...ghostBtn, textDecoration: 'none', borderColor: 'rgba(192,132,252,0.4)', color: '#c084fc' }}>Тест</Link>
+                <Link href={`/company-admin/tests?training=${t.id}`} style={{ ...ghostBtn, textDecoration: 'none', borderColor: 'rgba(124,58,237,0.35)', color: '#7c3aed' }}>Тест</Link>
               </div>
             </div>
           ))}
-          {trainings.length === 0 && <p style={{ color: '#777', fontSize: 12 }}>Материалов пока нет</p>}
+          {trainings.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>Материалов пока нет</p>}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <input className="input-field" placeholder="Название" value={tForm.title} onChange={e => setTForm({ ...tForm, title: e.target.value })} />
@@ -623,8 +628,8 @@ function MaterialsModal({ metric, onClose }) {
             <label style={{ ...ghostBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', fontSize: 11 }}>{file ? file.name : 'Загрузить файл'}<input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => setFile(e.target.files[0])} /></label>
           </>)}
           {uploading && (
-            <div style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, #FFD700, #4ade80)', borderRadius: 3, animation: 'upMove 1.1s ease-in-out infinite' }} />
+            <div style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--bg-page)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, #8a6208, #137a39)', borderRadius: 3, animation: 'upMove 1.1s ease-in-out infinite' }} />
               <style jsx>{`@keyframes upMove { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }`}</style>
             </div>
           )}

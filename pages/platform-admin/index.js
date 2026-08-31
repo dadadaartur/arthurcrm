@@ -7,10 +7,10 @@ import { useFeedback } from '../../context/ActionFeedbackContext'
 import BackArrow from '../../components/BackArrow'
 
 const STATUS_LABELS = {
-  pending: { label: 'На модерации', color: '#eab308' },
-  active: { label: 'Активна', color: '#22c55e' },
-  suspended: { label: 'Заблокирована', color: '#ef4444' },
-  rejected: { label: 'Отклонена', color: '#6b7280' },
+  pending: { label: 'На модерации', color: '#b45309' },
+  active: { label: 'Активна', color: '#137a39' },
+  suspended: { label: 'Заблокирована', color: '#dc2626' },
+  rejected: { label: 'Отклонена', color: '#5f6b80' },
 }
 const PERM_LABELS = {
   approve_companies: 'Одобрять компании',
@@ -150,32 +150,35 @@ export default function PlatformAdmin() {
 
   if (access === 'denied') {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center">
+      <div className="theme-light max-w-xl mx-auto px-4 py-16 text-center">
         <div className="premium-card">
-          <h1 className="text-xl font-bold mb-2">Нет доступа</h1>
-          <p className="text-gray-400">Этот раздел доступен только сотрудникам Кармического банка.</p>
+          <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Нет доступа</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Этот раздел доступен только сотрудникам Кармического банка.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="theme-light max-w-6xl mx-auto px-6 py-8">
       <BackArrow href="/" title="Кабинет модератора площадки" extra={
-        <span className="text-sm text-gray-400">{me?.isSuperAdmin ? 'Супер-админ' : `Модератор · права: ${me?.permissions?.join(', ') || '—'}`}</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          {me?.isSuperAdmin && <a href="/central-bank" style={{ fontSize: 12, padding: '7px 16px', borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', textDecoration: 'none', whiteSpace: 'nowrap' }}>Центробанк →</a>}
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{me?.isSuperAdmin ? 'Супер-админ' : `Модератор · права: ${me?.permissions?.join(', ') || '—'}`}</span>
+        </div>
       } />
 
-      <div className="flex gap-4 mb-6 border-b border-gray-700">
+      <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
         <button
           onClick={() => setTab('companies')}
-          className={`pb-2 text-sm ${tab === 'companies' ? 'text-gold border-b-2 border-gold' : 'text-gray-400'}`}
+          style={tab === 'companies' ? { color: '#8a6208', borderBottom: '2px solid #8a6208' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
         >
           Компании
         </button>
         {me?.isSuperAdmin && (
           <button
             onClick={() => setTab('moderators')}
-            className={`pb-2 text-sm ${tab === 'moderators' ? 'text-gold border-b-2 border-gold' : 'text-gray-400'}`}
+            style={tab === 'moderators' ? { color: '#8a6208', borderBottom: '2px solid #8a6208' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Модераторы
           </button>
@@ -183,7 +186,7 @@ export default function PlatformAdmin() {
         {(me?.isSuperAdmin || me?.permissions?.includes('manage_partner_tasks')) && (
           <button
             onClick={() => setTab('partner-tasks')}
-            className={`pb-2 text-sm ${tab === 'partner-tasks' ? 'text-gold border-b-2 border-gold' : 'text-gray-400'}`}
+            style={tab === 'partner-tasks' ? { color: '#8a6208', borderBottom: '2px solid #8a6208' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Задания от партнёров
           </button>
@@ -194,7 +197,7 @@ export default function PlatformAdmin() {
         <div>
           <div className="pastel-card p-4 mb-6">
             <h3 className="font-bold mb-3">Назначить модератора</h3>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
               Пользователь должен уже иметь аккаунт в системе (зарегистрироваться самостоятельно) — здесь мы только
               выдаём ему права модератора площадки, без доступа к какой-либо конкретной компании.
             </p>
@@ -215,14 +218,14 @@ export default function PlatformAdmin() {
 
           <div className="pastel-card overflow-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-gray-400 border-b border-gray-700">
+              <thead style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
                 <tr><th className="py-2 pr-4">Имя</th><th className="py-2 pr-4">Права</th><th className="py-2 pr-4">Статус</th><th className="py-2">Действия</th></tr>
               </thead>
               <tbody>
                 {moderators.map(m => (
-                  <tr key={m.id} className="border-b border-gray-800">
+                  <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td className="py-2 pr-4">{m.display_name}</td>
-                    <td className="py-2 pr-4 text-xs text-gray-400">{(m.permissions || []).join(', ') || '—'}</td>
+                    <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-secondary)' }}>{(m.permissions || []).join(', ') || '—'}</td>
                     <td className="py-2 pr-4">{m.active ? 'активен' : 'отключён'}</td>
                     <td className="py-2">
                       {m.active && (
@@ -231,7 +234,7 @@ export default function PlatformAdmin() {
                     </td>
                   </tr>
                 ))}
-                {moderators.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-gray-500">Модераторов пока нет</td></tr>}
+                {moderators.length === 0 && <tr><td colSpan={4} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>Модераторов пока нет</td></tr>}
               </tbody>
             </table>
           </div>
@@ -259,29 +262,29 @@ export default function PlatformAdmin() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Кармиков сразу (0 — без них)</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Кармиков сразу (0 — без них)</label>
                 <input type="number" className="input-field w-full" value={ptForm.rewardKarma} onChange={e => setPtForm({ ...ptForm, rewardKarma: e.target.value })} />
               </div>
               {ptForm.rewardType === 'shop_unlock' && (
                 <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 block mb-1">Ключ разблокировки (задайте у товаров в rewards.requires_unlock такой же)</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ключ разблокировки (задайте у товаров в rewards.requires_unlock такой же)</label>
                   <input className="input-field w-full" placeholder="mts-merch" value={ptForm.unlockKey} onChange={e => setPtForm({ ...ptForm, unlockKey: e.target.value })} />
                 </div>
               )}
               {ptForm.rewardType === 'karma_boost' && (<>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Буст, %</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Буст, %</label>
                   <input type="number" className="input-field w-full" value={ptForm.boostPercent} onChange={e => setPtForm({ ...ptForm, boostPercent: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Длительность, дней</label>
+                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Длительность, дней</label>
                   <input type="number" className="input-field w-full" value={ptForm.boostDurationDays} onChange={e => setPtForm({ ...ptForm, boostDurationDays: e.target.value })} />
                 </div>
               </>)}
             </div>
 
             <div className="mb-3">
-              <label className="text-xs text-gray-500 block mb-1">Срок выполнения (необязательно)</label>
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Срок выполнения (необязательно)</label>
               <div style={{ maxWidth: 200 }}><DatePicker value={ptForm.deadlineDate} onChange={v => setPtForm({ ...ptForm, deadlineDate: v })} placeholder="Без срока" /></div>
             </div>
 
@@ -299,7 +302,7 @@ export default function PlatformAdmin() {
                       {c.name}
                     </label>
                   ))}
-                  {companies.length === 0 && <span className="text-xs text-gray-500">Список компаний ещё грузится — откройте вкладку «Компании» один раз.</span>}
+                  {companies.length === 0 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Список компаний ещё грузится — откройте вкладку «Компании» один раз.</span>}
                 </div>
               )}
             </div>
@@ -309,21 +312,21 @@ export default function PlatformAdmin() {
 
           <div className="pastel-card overflow-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-gray-400 border-b border-gray-700">
+              <thead style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
                 <tr><th className="py-2 pr-4">Партнёр</th><th className="py-2 pr-4">Задание</th><th className="py-2 pr-4">Награда</th><th className="py-2">Создано</th></tr>
               </thead>
               <tbody>
                 {partnerTasks.map(t => (
-                  <tr key={t.id} className="border-b border-gray-800">
+                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td className="py-2 pr-4">{t.partner_name}</td>
                     <td className="py-2 pr-4">{t.title}</td>
-                    <td className="py-2 pr-4 text-xs text-gray-400">
+                    <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {t.reward_type === 'shop_unlock' ? `Товары: ${t.reward_config?.unlock_key || '—'}` : t.reward_type === 'karma_boost' ? `Буст +${t.reward_config?.percent}% на ${t.reward_config?.duration_days} дн.` : `${t.reward_karma} кармиков`}
                     </td>
-                    <td className="py-2 text-xs text-gray-500">{new Date(t.created_at).toLocaleDateString('ru')}</td>
+                    <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(t.created_at).toLocaleDateString('ru')}</td>
                   </tr>
                 ))}
-                {partnerTasks.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-gray-500">Партнёрских заданий пока нет</td></tr>}
+                {partnerTasks.length === 0 && <tr><td colSpan={4} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>Партнёрских заданий пока нет</td></tr>}
               </tbody>
             </table>
           </div>
@@ -356,7 +359,7 @@ export default function PlatformAdmin() {
       ) : (
         <div className="pastel-card overflow-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-gray-400 border-b border-gray-700">
+            <thead style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
               <tr>
                 <th className="py-2 pr-4">Компания</th>
                 <th className="py-2 pr-4">Сотрудников</th>
@@ -367,36 +370,36 @@ export default function PlatformAdmin() {
             </thead>
             <tbody>
               {companies.map(c => (
-                <tr key={c.id} className="border-b border-gray-800">
+                <tr key={c.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <td className="py-3 pr-4">
                     <div className="font-medium">{c.name}</div>
-                    {c.description && <div className="text-xs text-gray-500 max-w-xs truncate">{c.description}</div>}
+                    {c.description && <div className="text-xs max-w-xs truncate" style={{ color: 'var(--text-muted)' }}>{c.description}</div>}
                   </td>
                   <td className="py-3 pr-4">{c.employeeCount}</td>
                   <td className="py-3 pr-4">
-                    <span style={{ color: STATUS_LABELS[c.status]?.color || '#999' }}>
+                    <span style={{ color: STATUS_LABELS[c.status]?.color || 'var(--text-muted)' }}>
                       {STATUS_LABELS[c.status]?.label || c.status}
                     </span>
-                    {c.status_reason && <div className="text-xs text-gray-500">{c.status_reason}</div>}
+                    {c.status_reason && <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{c.status_reason}</div>}
                   </td>
-                  <td className="py-3 pr-4 text-gray-400">{new Date(c.created_at).toLocaleDateString('ru')}</td>
+                  <td className="py-3 pr-4" style={{ color: 'var(--text-secondary)' }}>{new Date(c.created_at).toLocaleDateString('ru')}</td>
                   <td className="py-3">
                     <div className="flex gap-2 flex-wrap">
                       {c.status !== 'active' && (
-                        <button onClick={() => applyStatus(c.id, 'active')} className="text-xs text-green-400 hover:text-green-300">Активировать</button>
+                        <button onClick={() => applyStatus(c.id, 'active')} className="text-xs" style={{ color: '#137a39' }}>Активировать</button>
                       )}
                       {c.status !== 'suspended' && (
-                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'suspended' })} className="text-xs text-red-400 hover:text-red-300">Заблокировать</button>
+                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'suspended' })} className="text-xs" style={{ color: '#dc2626' }}>Заблокировать</button>
                       )}
                       {c.status === 'pending' && (
-                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'rejected' })} className="text-xs text-gray-400 hover:text-gray-400">Отклонить</button>
+                        <button onClick={() => setReasonModal({ companyId: c.id, targetStatus: 'rejected' })} className="text-xs" style={{ color: 'var(--text-secondary)' }}>Отклонить</button>
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
               {companies.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-gray-500">Нет компаний по заданному фильтру</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>Нет компаний по заданному фильтру</td></tr>
               )}
             </tbody>
           </table>
@@ -405,9 +408,9 @@ export default function PlatformAdmin() {
       </>)}
 
       {reasonModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4" style={{ background: 'rgba(15,23,42,0.5)' }}>
           <div className="premium-card max-w-md w-full">
-            <h3 className="font-bold mb-3">
+            <h3 className="font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
               {reasonModal.targetStatus === 'suspended' ? 'Причина блокировки' : 'Причина отклонения'}
             </h3>
             <textarea

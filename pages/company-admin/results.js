@@ -6,12 +6,17 @@ import DateRangePicker from '../../components/DateRangePicker'
 import { withAuth } from '../../components/withAuth'
 import { BAND_COLORS, BAND_LABELS } from '../../lib/kpi'
 
+// Насыщенная версия BAND_COLORS для этой уже светлой страницы — общий
+// модуль подобран под тёмный фон и используется в непеределанной
+// админке, менять его нельзя.
+
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
 const pill = a => ({
   padding: '7px 16px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
-  border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
-  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)',
+  border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
+  color: a ? '#8a6208' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 
 function ResultsAdmin() {
@@ -45,12 +50,12 @@ function ResultsAdmin() {
   const sortKey = row => sortBy === 'energy' ? row.energy : sortBy === 'karma' ? row.balance : sortBy === 'tests' ? row.tests_passed : (metricValue(row) ?? -1)
   const sorted = [...rows].sort((a, b) => sortKey(b) - sortKey(a))
   const podium = sorted.slice(0, 3)
-  const medal = ['#FFD700', '#c0c8d8', '#d4894a']
+  const medal = ['#8a6208', '#64748b', '#92400e']
 
   if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Результаты команды" extra={
           <div style={{ marginLeft: 'auto' }}><DateRangePicker from={range.from} to={range.to} onChange={setRange} /></div>
@@ -64,21 +69,21 @@ function ResultsAdmin() {
             <option value="">Все показатели</option>
             {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <span style={{ fontSize: 11, color: '#888', marginLeft: 'auto' }}>Сотрудников: {sorted.length}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Сотрудников: {sorted.length}</span>
         </div>
 
         {/* Пьедестал */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
           {podium.map((r, i) => (
             <div key={r.user_id} style={{
-              background: 'linear-gradient(145deg, rgba(20,25,45,0.9), rgba(10,15,30,0.95))',
+              background: 'var(--bg-card)',
               border: `1px solid ${medal[i]}55`, borderRadius: 18, padding: 22, textAlign: 'center',
-              boxShadow: `0 0 24px ${medal[i]}22`
+              boxShadow: 'var(--shadow-card)'
             }}>
               <div style={{ width: 44, height: 44, margin: '0 auto 10px', borderRadius: '50%', background: `radial-gradient(circle, ${medal[i]}33, transparent 70%)`, border: `1.5px solid ${medal[i]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 800, color: medal[i] }}>{i + 1}</div>
-              <div style={{ color: '#fff', fontWeight: 600 }}>{r.name}</div>
-              <div style={{ fontSize: 13, marginTop: 4, color: '#FFD700' }}>{r.energy} энергии</div>
-              <div style={{ fontSize: 12, marginTop: 2, color: '#a0e9ff' }}>{r.balance} кармиков</div>
+              <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.name}</div>
+              <div style={{ fontSize: 13, marginTop: 4, color: 'var(--accent-gold)' }}>{r.energy} энергии</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: '#0e7490' }}>{r.balance} кармиков</div>
             </div>
           ))}
         </div>
@@ -86,52 +91,52 @@ function ResultsAdmin() {
         {/* Рейтинг */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sorted.length === 0 && (
-            <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
               Нет данных за выбранный период
             </div>
           )}
           {sorted.map((r, idx) => (
             <div key={r.user_id} onClick={() => setExpanded(expanded === r.user_id ? null : r.user_id)}
               style={{
-                background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 14, padding: '14px 18px',
-                border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'border-color 0.25s'
+                background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 14, padding: '14px 18px',
+                border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.25s'
               }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-gold)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <span style={{ width: 26, textAlign: 'center', fontWeight: 800, color: idx < 3 ? medal[idx] : '#556' }}>{idx + 1}</span>
+                <span style={{ width: 26, textAlign: 'center', fontWeight: 800, color: idx < 3 ? medal[idx] : 'var(--text-muted)' }}>{idx + 1}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#fff', fontWeight: 500 }}>{r.name}</div>
-                  <div style={{ display: 'flex', gap: 14, fontSize: 12, color: '#888', marginTop: 2 }}>
-                    <span style={{ color: '#FFD700' }}>{r.energy} энергии</span>
-                    <span style={{ color: '#a0e9ff' }}>{r.balance} кармиков</span>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{r.name}</div>
+                  <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    <span style={{ color: 'var(--accent-gold)' }}>{r.energy} энергии</span>
+                    <span style={{ color: '#0e7490' }}>{r.balance} кармиков</span>
                     <span>{r.tests_passed} тестов</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {(r.latest || []).slice(0, 4).map(e => {
                     const m = metrics.find(x => x.id === e.metric_id)
-                    return <span key={e.metric_id} title={m?.name} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: `${BAND_COLORS[e.band]}18`, color: BAND_COLORS[e.band], border: `1px solid ${BAND_COLORS[e.band]}44` }}>{e.value}{m?.unit}</span>
+                    return <span key={e.metric_id} title={m?.name} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: `${BAND_TEXT[e.band]}18`, color: BAND_TEXT[e.band], border: `1px solid ${BAND_TEXT[e.band]}44` }}>{e.value}{m?.unit}</span>
                   })}
                 </div>
               </div>
               {expanded === r.user_id && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }} onClick={e => e.stopPropagation()}>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }} onClick={e => e.stopPropagation()}>
                   {metrics.map(m => {
                     const pts = (r.entries || []).filter(e => e.metric_id === m.id).map(e => Number(e.value)).reverse()
                     const last = pts[pts.length - 1]
                     const band = (r.latest || []).find(x => x.metric_id === m.id)?.band || 'none'
                     return (
-                      <div key={m.id} style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div key={m.id} style={{ padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                          <span style={{ color: '#fff' }}>{m.name}</span>
-                          <span style={{ color: BAND_COLORS[band], fontWeight: 700 }}>{last ?? '—'}{m.unit}</span>
+                          <span style={{ color: 'var(--text-primary)' }}>{m.name}</span>
+                          <span style={{ color: BAND_TEXT[band], fontWeight: 700 }}>{last ?? '—'}{m.unit}</span>
                         </div>
-                        <div style={{ fontSize: 11, color: '#888' }}>{BAND_LABELS[band]} · {pts.length} записей</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{BAND_LABELS[band]} · {pts.length} записей</div>
                       </div>
                     )
                   })}
-                  {metrics.length === 0 && <p style={{ color: '#777', fontSize: 13 }}>Нет показателей</p>}
+                  {metrics.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Нет показателей</p>}
                 </div>
               )}
             </div>

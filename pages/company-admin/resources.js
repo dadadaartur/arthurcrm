@@ -7,57 +7,83 @@ import DateRangePicker from '../../components/DateRangePicker'
 import { withAuth } from '../../components/withAuth'
 
 const TOPUP_RATE = { rub: 1000, karma: 100 }
-const card = { background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 22, border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }
+const card = { background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 22, border: '1px solid var(--border-subtle)', position: 'relative' }
 // Пилюля в стиле бейджа типа товара «Сертификат»
-const pillBtn = { padding: '4px 12px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.35)', color: '#FFD700', cursor: 'pointer', transition: 'all .2s', backdropFilter: 'blur(8px)' }
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }
-const hoverPill = (e, on) => { e.currentTarget.style.background = on ? 'rgba(255,215,0,0.22)' : 'rgba(255,215,0,0.12)'; e.currentTarget.style.borderColor = on ? '#FFD700' : 'rgba(255,215,0,0.35)' }
+const pillBtn = { padding: '4px 12px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: 'rgba(184,134,11,0.1)', border: '1px solid var(--border-gold)', color: '#8a6208', cursor: 'pointer', transition: 'all .2s' }
+const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
+const hoverPill = (e, on) => { e.currentTarget.style.background = on ? 'rgba(184,134,11,0.18)' : 'rgba(184,134,11,0.1)'; e.currentTarget.style.borderColor = on ? '#8a6208' : 'var(--border-gold)' }
 const Chevron = ({ color }) => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', top: 20, right: 20, opacity: 0.5 }}>
     <path d="M5 2l5 5-5 5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
   </svg>
 )
 
-// ============ АНИМАЦИЯ ЧЁРНОЙ ДЫРЫ (зачисление / ошибка) ============
+// ============ АНИМАЦИЯ ЗАЧИСЛЕНИЯ — премиальная монета вместо чёрной
+// дыры (по вашей просьбе от 29 августа 2026: было «мультяшно и
+// непонятно», нужно строго и кинематографично). Символ «К» — тот же
+// фирменный знак, что и на иконке PWA-приложения (золотая монета,
+// тёмная буква). Фон намеренно остаётся тёмным — это редкий,
+// полноэкранный момент-кульминация, а не обычный элемент интерфейса;
+// золото на тёмном здесь работает как приём премиальной подачи (так же
+// как инсталляция на главной странице остаётся тёмной специально).
 function PaymentHole({ mode, amount, errorText, onDone }) {
-  const glyphs = String(amount || 0).split('').filter(c => c !== ',')
-  while (glyphs.length < 6) glyphs.push(String(Math.floor(Math.random() * 10)))
-  const n = glyphs.length
+  const isError = mode === 'error'
   useEffect(() => {
-    const t = setTimeout(onDone, mode === 'success' ? 3400 : 4600)
+    const t = setTimeout(onDone, isError ? 5200 : 4200)
     return () => clearTimeout(t)
-  }, [mode, onDone])
+  }, [isError, onDone])
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.93)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 28 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'radial-gradient(circle at 50% 42%, #10162a 0%, #05070f 78%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 34 }}>
       <style>{`
-        @keyframes bhGrow { 0% { transform: scale(.2); opacity: 0 } 45% { transform: scale(1.12); opacity: 1 } 100% { transform: scale(1) } }
-        @keyframes bhSuck { 0% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0 } 18% { opacity: 1 } 100% { transform: translate(0,0) scale(.1); opacity: 0 } }
-        @keyframes bhReturn { 0% { transform: translate(0,0) scale(.1); opacity: 0 } 25% { opacity: 1 } 100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0 } }
-        @keyframes bhCheckDraw { to { stroke-dashoffset: 0 } }
-        @keyframes bhText { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+        @keyframes coinRise { 0% { transform: scale(.4) translateY(18px); opacity: 0 } 100% { transform: scale(1) translateY(0); opacity: 1 } }
+        @keyframes letterSettle { 0% { opacity: 0; transform: translateY(5px) scale(.86) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
+        @keyframes ringPulse { 0% { transform: scale(1); opacity: .5 } 100% { transform: scale(1.6); opacity: 0 } }
+        @keyframes markDraw { to { stroke-dashoffset: 0 } }
+        @keyframes resultReveal { 0% { opacity: 0; transform: translateY(12px) } 100% { opacity: 1; transform: translateY(0) } }
       `}</style>
-      <div style={{ position: 'relative', width: 240, height: 240 }}>
-        <div style={{ position: 'absolute', inset: 40, borderRadius: '50%', background: 'radial-gradient(circle, #000 0%, #060606 45%, transparent 74%)', border: '1px solid rgba(255,180,0,0.45)', boxShadow: '0 0 60px rgba(255,180,0,0.4), 0 0 130px rgba(255,140,0,0.2), inset 0 0 34px rgba(255,180,0,0.18)', animation: 'bhGrow 1s cubic-bezier(.2,.9,.3,1.15) both' }} />
-        {glyphs.map((g, i) => {
-          const ang = (i / n) * Math.PI * 2
-          const tx = Math.cos(ang) * 150
-          const ty = Math.sin(ang) * 150
-          return (
-            <span key={i} style={{ position: 'absolute', left: '50%', top: '50%', margin: '-10px 0 0 -6px', fontSize: 18, fontWeight: 700, color: '#FFD700', textShadow: '0 0 10px rgba(255,215,0,0.8)', ['--tx']: `${tx}px`, ['--ty']: `${ty}px`, animation: `${mode === 'success' ? 'bhSuck' : 'bhReturn'} .9s ease-in ${0.35 + i * 0.09}s both` }}>{g}</span>
-          )
-        })}
-        {mode === 'success' && (
-          <svg width="84" height="84" viewBox="0 0 64 64" fill="none" style={{ position: 'absolute', inset: 0, margin: 'auto', opacity: 0, animation: 'bhText .01s linear 1.5s both' }}>
-            <path d="M20 33 L28.5 41.5 L45 24" stroke="#FFD700" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'bhCheckDraw .6s ease-out 1.55s forwards', filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.9))' }} />
-          </svg>
+
+      <div style={{ position: 'relative', width: 156, height: 156, flexShrink: 0 }}>
+        {/* Кольцо-пульс — один спокойный импульс подтверждения, не повторяется по кругу */}
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `1.5px solid ${isError ? 'rgba(220,38,38,0.5)' : 'rgba(255,215,0,0.55)'}`, animation: 'ringPulse 1.1s cubic-bezier(0.16,1,0.3,1) 1.15s both' }} />
+
+        {/* Сама монета — золотой градиент, тёмная обводка, медленная явная сборка (1.1с) */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          background: 'radial-gradient(circle at 35% 30%, #ffe9a8, #d4a017 55%, #9a720b 100%)',
+          boxShadow: `0 0 0 1px rgba(255,255,255,0.25) inset, 0 18px 50px rgba(0,0,0,0.5), 0 0 60px ${isError ? 'rgba(220,38,38,0.15)' : 'rgba(255,193,7,0.28)'}`,
+          animation: 'coinRise 1.1s cubic-bezier(0.16,1,0.3,1) both',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          {/* Буква «К» — фирменный символ, появляется чуть позже монеты, оседая на месте */}
+          <span style={{ fontSize: 66, fontWeight: 800, color: '#14171f', fontFamily: 'Inter, sans-serif', animation: 'letterSettle .7s cubic-bezier(0.16,1,0.3,1) .55s both', textShadow: '0 1px 0 rgba(255,255,255,0.15)' }}>К</span>
+        </div>
+
+        {/* Маленький знак подтверждения/ошибки поверх нижнего края монеты */}
+        <div style={{ position: 'absolute', bottom: -4, right: -4, width: 40, height: 40, borderRadius: '50%', background: '#151a2e', border: `2px solid ${isError ? '#dc2626' : '#1a2332'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, animation: 'resultReveal .5s ease-out 1.3s both' }}>
+          {isError ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" /></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12.5l4.5 4.5L19 7" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray: 26, strokeDashoffset: 26, animation: 'markDraw .5s ease-out 1.55s forwards' }} />
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* Текст результата — появляется последним, спокойным сдвигом снизу вверх */}
+      <div style={{ textAlign: 'center', animation: 'resultReveal .6s cubic-bezier(0.16,1,0.3,1) 1.9s both' }}>
+        {isError ? (
+          <div style={{ color: '#f87171', fontSize: 15, fontWeight: 600, maxWidth: 320 }}>{errorText || 'Платёж не завершился'}</div>
+        ) : (
+          <>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#FFD700', letterSpacing: 0.2 }}>+{amount}</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 4, letterSpacing: 0.3 }}>кармиков зачислено</div>
+          </>
         )}
       </div>
-      {mode === 'error' && (
-        <div style={{ color: '#f87171', fontSize: 15, fontWeight: 600, textAlign: 'center', maxWidth: 320, animation: 'bhText .5s ease-out 1.2s both' }}>{errorText || 'Платёж не завершился'}</div>
-      )}
     </div>
   )
 }
@@ -168,7 +194,7 @@ function CompanyResources() {
   }
 
   if (loading) return <LoadingScreen />
-  if (error) return <div style={{ padding: '40px 32px', color: '#f87171' }}>{error}</div>
+  if (error) return <div style={{ padding: '40px 32px', color: '#dc2626' }}>{error}</div>
 
   const filteredEmployees = (employees || []).filter(e => !employeeSearch || e.name.toLowerCase().includes(employeeSearch.toLowerCase()))
   const filteredPayments = (payments || []).filter(p => {
@@ -180,11 +206,11 @@ function CompanyResources() {
   const topupRub = Math.round((topupKarma / TOPUP_RATE.karma) * TOPUP_RATE.rub)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление ресурсами" extra={
-          <button onClick={() => setShowHistoryModal(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#888', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#FFD700'} onMouseLeave={e => e.currentTarget.style.color = '#888'}>
+          <button onClick={() => setShowHistoryModal(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#8a6208'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" /><path d="M8 4.5V8l2.3 1.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
             История платежей
           </button>
@@ -197,29 +223,29 @@ function CompanyResources() {
           <div style={card}>
             <button onClick={openTopup} style={{ ...pillBtn, position: 'absolute', top: 14, right: 14 }}
               onMouseEnter={e => hoverPill(e, true)} onMouseLeave={e => hoverPill(e, false)}>Пополнить</button>
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Фонд компании</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: '#FFD700' }}>{fundBalance}</div>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>кармиков доступно</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Фонд компании</div>
+            <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--accent-gold)' }}>{fundBalance}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>кармиков доступно</div>
           </div>
 
           {/* В обороте — стрелка в модалку */}
-          <div onClick={() => setShowEmployeesModal(true)} style={{ ...card, cursor: 'pointer', transition: 'all .25s', border: '1px solid rgba(192,132,252,0.3)' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c084fc'; e.currentTarget.style.boxShadow = '0 0 16px rgba(192,132,252,0.3)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(192,132,252,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
-            <Chevron color="#c084fc" />
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>В обороте у сотрудников</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: '#c084fc' }}>{circulation}</div>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>кармиков накоплено</div>
+          <div onClick={() => setShowEmployeesModal(true)} style={{ ...card, cursor: 'pointer', transition: 'all .25s', border: '1px solid rgba(124,58,237,0.3)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}>
+            <Chevron color="#7c3aed" />
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>В обороте у сотрудников</div>
+            <div style={{ fontSize: 30, fontWeight: 700, color: '#7c3aed' }}>{circulation}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>кармиков накоплено</div>
           </div>
 
           {/* Текущий тариф — стрелка в модалку */}
-          <div onClick={() => setShowTariffModal(true)} style={{ ...card, cursor: 'pointer', transition: 'all .25s', border: '1px solid rgba(160,233,255,0.3)' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#a0e9ff'; e.currentTarget.style.boxShadow = '0 0 16px rgba(160,233,255,0.3)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(160,233,255,0.3)'; e.currentTarget.style.boxShadow = 'none' }}>
-            <Chevron color="#a0e9ff" />
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Текущий тариф</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{tariff?.name || '—'}</div>
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{tariff ? `${tariff.karma_per_employee} карм./сотр./мес` : ''}</div>
+          <div onClick={() => setShowTariffModal(true)} style={{ ...card, cursor: 'pointer', transition: 'all .25s', border: '1px solid rgba(14,116,144,0.3)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#0e7490'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(14,116,144,0.3)'; e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}>
+            <Chevron color="#0e7490" />
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Текущий тариф</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{tariff?.name || '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{tariff ? `${tariff.karma_per_employee} карм./сотр./мес` : ''}</div>
           </div>
 
           {/* Действует до + Продлить */}
@@ -228,30 +254,30 @@ function CompanyResources() {
               <button onClick={handleExtend} disabled={processing} style={{ ...pillBtn, position: 'absolute', top: 14, right: 14, opacity: processing ? 0.5 : 1 }}
                 onMouseEnter={e => hoverPill(e, true)} onMouseLeave={e => hoverPill(e, false)}>Продлить</button>
             )}
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Действует до</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{validUntil}</div>
-            <div style={{ fontSize: 12, color: daysLeft !== null && daysLeft <= 7 ? '#f87171' : '#666', marginTop: 4 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Действует до</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{validUntil}</div>
+            <div style={{ fontSize: 12, color: daysLeft !== null && daysLeft <= 7 ? '#dc2626' : 'var(--text-muted)', marginTop: 4 }}>
               {daysLeft !== null ? `осталось ${daysLeft} дн.` : 'окончание тарифа'}
             </div>
           </div>
         </div>
 
         {/* Доступные тарифы */}
-        <div style={{ background: 'rgba(15,20,35,0.8)', borderRadius: 16, padding: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Доступные тарифы</h3>
+        <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 24, border: '1px solid var(--border-subtle)' }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Доступные тарифы</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
             {(all_tariffs || []).map(t => {
               const isActive = tariff?.id === t.id
               const price = t.code === 'ultra' ? 10000 : t.price_per_employee_rub
               return (
-                <div key={t.id} style={{ background: isActive ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 18, border: `1px solid ${isActive ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.06)'}` }}>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 6 }}>{t.name}</div>
-                  <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>{t.karma_per_employee} карм./сотр. в мес</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#FFD700', marginBottom: 12 }}>{(price || 0).toLocaleString('ru')} ₽</div>
+                <div key={t.id} style={{ background: isActive ? 'rgba(184,134,11,0.06)' : 'var(--bg-page)', borderRadius: 14, padding: 18, border: `1px solid ${isActive ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{t.name}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{t.karma_per_employee} карм./сотр. в мес</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-gold)', marginBottom: 12 }}>{(price || 0).toLocaleString('ru')} ₽</div>
                   {!isActive && (
                     <button onClick={() => handleChangeTariff(t)} disabled={processing} style={{ ...ghostBtn, width: '100%', opacity: processing ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Перейти</button>
                   )}
-                  {isActive && <div style={{ textAlign: 'center', fontSize: 12, color: '#4ade80' }}>Активен</div>}
+                  {isActive && <div style={{ textAlign: 'center', fontSize: 12, color: '#137a39' }}>Активен</div>}
                 </div>
               )
             })}
@@ -264,24 +290,24 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowTopupModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Пополнить фонд</h3>
-              <button onClick={() => setShowTopupModal(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Пополнить фонд</h3>
+              <button onClick={() => setShowTopupModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
             </div>
-            <p style={{ fontSize: 13, color: '#888', marginBottom: 14, lineHeight: 1.5 }}>
-              Рекомендуем не менее 20% от тарифа «{tariff?.name}»: {perEmp} карм./сотр. × {employeesCount} сотр. = <b style={{ color: '#FFD700' }}>{recommended}</b> кармиков.
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
+              Рекомендуем не менее 20% от тарифа «{tariff?.name}»: {perEmp} карм./сотр. × {employeesCount} сотр. = <b style={{ color: 'var(--accent-gold)' }}>{recommended}</b> кармиков.
             </p>
-            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Сколько кармиков</label>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Сколько кармиков</label>
             <input type="number" min="1" value={topupKarma} onChange={e => setTopupKarma(parseInt(e.target.value) || 0)} className="input-field" style={{ width: '100%', marginBottom: 12 }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
               {[recommended, recommended * 2, recommended * 5].map(v => (
-                <button key={v} onClick={() => setTopupKarma(v)} style={{ ...pillBtn, background: topupKarma === v ? 'rgba(255,215,0,0.22)' : pillBtn.background, borderColor: topupKarma === v ? '#FFD700' : pillBtn.borderColor }}>{v}</button>
+                <button key={v} onClick={() => setTopupKarma(v)} style={{ ...pillBtn, background: topupKarma === v ? 'rgba(138,98,8,0.18)' : pillBtn.background, borderColor: topupKarma === v ? '#8a6208' : pillBtn.borderColor }}>{v}</button>
               ))}
             </div>
-            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ fontSize: 13, color: '#888' }}>К оплате: </span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>{topupRub.toLocaleString('ru')} ₽</span>
+            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>К оплате: </span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-gold)' }}>{topupRub.toLocaleString('ru')} ₽</span>
             </div>
             <button onClick={() => handleTopup(topupKarma)} disabled={processing || topupKarma <= 0} style={{ ...ghostBtn, width: '100%', opacity: processing || topupKarma <= 0 ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
               {processing ? 'Создаём…' : 'Оплатить'}
@@ -295,23 +321,23 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowEmployeesModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #c084fc, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Кармики сотрудников</h3>
-              <button onClick={() => setShowEmployeesModal(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #7c3aed, #8a6208)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Кармики сотрудников</h3>
+              <button onClick={() => setShowEmployeesModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
             </div>
             <div style={{ marginBottom: 16, position: 'relative' }}>
               <input type="text" placeholder="Поиск по имени…" value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)} className="input-field" style={{ paddingLeft: 40, width: '100%' }} />
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
-                <circle cx="7" cy="7" r="5" stroke="#a0e9ff" strokeWidth="1.4" /><path d="M11 11l3 3" stroke="#a0e9ff" strokeWidth="1.4" strokeLinecap="round" />
+                <circle cx="7" cy="7" r="5" stroke="#0e7490" strokeWidth="1.4" /><path d="M11 11l3 3" stroke="#0e7490" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredEmployees.length === 0 ? <p style={{ color: '#777', textAlign: 'center', padding: 20 }}>Сотрудников не найдено</p> : (
+              {filteredEmployees.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Сотрудников не найдено</p> : (
                 filteredEmployees.map(e => (
-                  <div key={e.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)' }}>
-                    <span style={{ color: '#fff', fontSize: 14 }}>{e.name}</span>
-                    <span style={{ color: '#FFD700', fontWeight: 700, fontSize: 14 }}>{e.balance} карм.</span>
+                  <div key={e.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 10, background: 'var(--bg-page)' }}>
+                    <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>{e.name}</span>
+                    <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: 14 }}>{e.balance} карм.</span>
                   </div>
                 ))
               )}
@@ -325,14 +351,14 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowTariffModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #a0e9ff, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Тариф «{tariff.name}»</h3>
-              <button onClick={() => setShowTariffModal(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #0e7490, #8a6208)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Тариф «{tariff.name}»</h3>
+              <button onClick={() => setShowTariffModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
             </div>
-            <div style={{ marginBottom: 14 }}><div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Эмиссия</div><div style={{ fontSize: 17, color: '#fff', fontWeight: 600 }}>{tariff.karma_per_employee} кармиков на сотрудника в месяц</div></div>
-            <div style={{ marginBottom: 14 }}><div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Стоимость</div><div style={{ fontSize: 20, color: '#FFD700', fontWeight: 700 }}>{(tariff.code === 'ultra' ? 10000 : tariff.price_per_employee_rub).toLocaleString('ru')} ₽/сотр./мес</div></div>
-            <div style={{ marginBottom: 18 }}><div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>Действует до</div><div style={{ fontSize: 15, color: '#fff' }}>{validUntil}{daysLeft !== null && <span style={{ fontSize: 12, color: daysLeft <= 7 ? '#f87171' : '#888', marginLeft: 8 }}>осталось {daysLeft} дн.</span>}</div></div>
+            <div style={{ marginBottom: 14 }}><div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>Эмиссия</div><div style={{ fontSize: 17, color: 'var(--text-primary)', fontWeight: 600 }}>{tariff.karma_per_employee} кармиков на сотрудника в месяц</div></div>
+            <div style={{ marginBottom: 14 }}><div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>Стоимость</div><div style={{ fontSize: 20, color: 'var(--accent-gold)', fontWeight: 700 }}>{(tariff.code === 'ultra' ? 10000 : tariff.price_per_employee_rub).toLocaleString('ru')} ₽/сотр./мес</div></div>
+            <div style={{ marginBottom: 18 }}><div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>Действует до</div><div style={{ fontSize: 15, color: 'var(--text-primary)' }}>{validUntil}{daysLeft !== null && <span style={{ fontSize: 12, color: daysLeft <= 7 ? '#dc2626' : 'var(--text-secondary)', marginLeft: 8 }}>осталось {daysLeft} дн.</span>}</div></div>
             <button onClick={() => { setShowTariffModal(false); handleExtend() }} style={{ ...ghostBtn, width: '100%' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Продлить тариф</button>
           </div>
         </div>
@@ -343,32 +369,32 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Движение средств компании</h3>
-              <button onClick={() => setShowHistoryModal(false)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Движение средств компании</h3>
+              <button onClick={() => setShowHistoryModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
             </div>
             <div style={{ marginBottom: 16 }}><DateRangePicker from={histRange.from} to={histRange.to} onChange={setHistRange} /></div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingRight: 6 }}>
-              {filteredPayments.length === 0 ? <p style={{ color: '#777', textAlign: 'center', padding: 24 }}>Платежей за период нет</p> : (
+              {filteredPayments.length === 0 ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>Платежей за период нет</p> : (
                 filteredPayments.map(p => (
-                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid rgba(212,175,55,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {p.payment_type === 'topup' ? (
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 8l4 4 4-4" stroke="#FFD700" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 14h10" stroke="#FFD700" strokeWidth="1.4" strokeLinecap="round" /></svg>
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 8l4 4 4-4" stroke="#8a6208" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 14h10" stroke="#8a6208" strokeWidth="1.4" strokeLinecap="round" /></svg>
                         ) : (
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3.5" width="12" height="9" rx="2" stroke="#a0e9ff" strokeWidth="1.3" /><path d="M2 6.5h12" stroke="#a0e9ff" strokeWidth="1.3" /></svg>
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3.5" width="12" height="9" rx="2" stroke="#0e7490" strokeWidth="1.3" /><path d="M2 6.5h12" stroke="#0e7490" strokeWidth="1.3" /></svg>
                         )}
                       </div>
                       <div>
-                        <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{p.payment_type === 'topup' ? `Пополнение фонда: +${p.karma_amount} кармиков` : `Смена тарифа: ${p.tariff_code}`}</div>
-                        <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{new Date(p.paid_at || p.created_at).toLocaleString('ru')}</div>
+                        <div style={{ color: 'var(--text-primary)', fontSize: 14, fontWeight: 500 }}>{p.payment_type === 'topup' ? `Пополнение фонда: +${p.karma_amount} кармиков` : `Смена тарифа: ${p.tariff_code}`}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>{new Date(p.paid_at || p.created_at).toLocaleString('ru')}</div>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ color: '#4ade80', fontWeight: 700, fontSize: 15 }}>{Number(p.amount_rub).toLocaleString('ru')} ₽</div>
-                      <div style={{ fontSize: 11, marginTop: 2, color: p.status === 'succeeded' ? '#4ade80' : p.status === 'canceled' ? '#f87171' : '#FFD700' }}>{p.status === 'succeeded' ? 'Оплачено' : p.status === 'canceled' ? 'Отменён' : 'Ожидает'}</div>
+                      <div style={{ color: '#137a39', fontWeight: 700, fontSize: 15 }}>{Number(p.amount_rub).toLocaleString('ru')} ₽</div>
+                      <div style={{ fontSize: 11, marginTop: 2, color: p.status === 'succeeded' ? '#137a39' : p.status === 'canceled' ? '#dc2626' : '#8a6208' }}>{p.status === 'succeeded' ? 'Оплачено' : p.status === 'canceled' ? 'Отменён' : 'Ожидает'}</div>
                     </div>
                   </div>
                 ))

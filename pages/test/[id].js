@@ -5,9 +5,9 @@ import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '10px 20px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }
+const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 20px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 export default function TestTake() {
   const router = useRouter()
@@ -70,28 +70,28 @@ export default function TestTake() {
   const ss = String(seconds % 60).padStart(2, '0')
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <BackArrow href="/goals" title={result ? 'Результат' : test?.title || 'Тест'} extra={
-          !result && <div style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 700, color: seconds < 60 ? '#f87171' : '#a0e9ff', fontVariantNumeric: 'tabular-nums' }}>{mm}:{ss}</div>
+          !result && <div style={{ marginLeft: 'auto', fontSize: 14, fontWeight: 700, color: seconds < 60 ? '#dc2626' : '#0e7490', fontVariantNumeric: 'tabular-nums' }}>{mm}:{ss}</div>
         } />
 
         {result ? (
-          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 40, textAlign: 'center', border: `1px solid ${result.passed ? 'rgba(74,222,128,0.4)' : 'rgba(244,67,54,0.4)'}` }}>
-            <div style={{ fontSize: 52, fontWeight: 800, color: result.passed ? '#4ade80' : '#f87171' }}>{result.score}%</div>
-            <div style={{ fontSize: 15, color: '#ccc', marginTop: 8 }}>{result.passed ? 'Тест сдан! Награды начислены.' : 'Не хватило до порога. Попробуйте ещё раз.'}</div>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 40, textAlign: 'center', border: `1px solid ${result.passed ? 'rgba(19,122,57,0.35)' : 'rgba(220,38,38,0.35)'}` }}>
+            <div style={{ fontSize: 52, fontWeight: 800, color: result.passed ? '#137a39' : '#dc2626' }}>{result.score}%</div>
+            <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 8 }}>{result.passed ? 'Тест сдан! Награды начислены.' : 'Не хватило до порога. Попробуйте ещё раз.'}</div>
             <button onClick={() => router.push('/goals')} style={{ ...ghostBtn, marginTop: 24 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>К целям</button>
           </div>
         ) : q && (
-          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#888', marginBottom: 14 }}>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 28, border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
               <span>Вопрос {idx + 1} из {questions.length}</span>
               <span>{q.points} балл.</span>
             </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', marginBottom: 20 }}>
-              <div style={{ height: '100%', width: `${((idx + 1) / questions.length) * 100}%`, background: 'linear-gradient(90deg, #c084fc, #FFD700)', borderRadius: 2 }} />
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--bg-page)', marginBottom: 20 }}>
+              <div style={{ height: '100%', width: `${((idx + 1) / questions.length) * 100}%`, background: 'linear-gradient(90deg, #7c3aed, #8a6208)', borderRadius: 2 }} />
             </div>
-            <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 20 }}>{q.text}</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 20, color: 'var(--text-primary)' }}>{q.text}</h3>
             {(q.type === 'single' || q.type === 'multi') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {q.options.map(o => {
@@ -100,9 +100,9 @@ export default function TestTake() {
                     <label key={o.id} onClick={() => {
                       if (q.type === 'single') setAns({ option_ids: [o.id] })
                       else setAns({ option_ids: sel ? ans.option_ids.filter(x => x !== o.id) : [...ans.option_ids, o.id] })
-                    }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer', border: `1px solid ${sel ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.1)'}`, background: sel ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.02)', transition: 'all 0.2s' }}>
-                      <span style={{ width: 16, height: 16, borderRadius: q.type === 'single' ? '50%' : 4, border: `2px solid ${sel ? '#FFD700' : '#555'}`, background: sel ? '#FFD700' : 'transparent', flexShrink: 0 }} />
-                      <span style={{ fontSize: 14, color: '#eee' }}>{o.text}</span>
+                    }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer', border: `1px solid ${sel ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: sel ? 'rgba(184,134,11,0.06)' : 'var(--bg-page)', transition: 'all 0.2s' }}>
+                      <span style={{ width: 16, height: 16, borderRadius: q.type === 'single' ? '50%' : 4, border: `2px solid ${sel ? '#8a6208' : 'var(--text-muted)'}`, background: sel ? '#8a6208' : 'transparent', flexShrink: 0 }} />
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{o.text}</span>
                     </label>
                   )
                 })}
@@ -115,7 +115,7 @@ export default function TestTake() {
               <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0} className="btn-outline" style={{ flex: 1, opacity: idx === 0 ? 0.4 : 1 }}>Назад</button>
               {idx < questions.length - 1
                 ? <button onClick={() => setIdx(i => i + 1)} style={{ ...ghostBtn, flex: 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Далее</button>
-                : <button onClick={() => submit()} style={{ ...ghostBtn, flex: 1, borderColor: 'rgba(74,222,128,0.5)', color: '#4ade80' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Завершить</button>}
+                : <button onClick={() => submit()} style={{ ...ghostBtn, flex: 1, borderColor: 'rgba(19,122,57,0.4)', color: '#137a39' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Завершить</button>}
             </div>
           </div>
         )}

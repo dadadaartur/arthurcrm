@@ -11,13 +11,15 @@ import { bandFor, bandRankOf, BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const shift = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return toISO(d) }
 const today = toISO(new Date())
-const dateInput = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: '#fff', fontSize: 12, padding: '6px 10px', outline: 'none', colorScheme: 'dark', width: 140 }
-const tiny = a => ({ padding: '5px 13px', borderRadius: 16, fontSize: 11, cursor: 'pointer', fontWeight: a ? 600 : 400, background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.03)', border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`, color: a ? '#FFD700' : '#aaa', transition: 'all 0.2s', whiteSpace: 'nowrap' })
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 10, padding: '7px 16px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s', whiteSpace: 'nowrap' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 12px rgba(255,215,0,0.25)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none' }
+const tiny = a => ({ padding: '5px 13px', borderRadius: 16, fontSize: 11, cursor: 'pointer', fontWeight: a ? 600 : 400, background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)', border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: a ? '#8a6208' : 'var(--text-secondary)', transition: 'all 0.2s', whiteSpace: 'nowrap' })
+const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 10, padding: '7px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s', whiteSpace: 'nowrap' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
+// Насыщенная версия BAND_COLORS — общий модуль подобран под тёмный фон,
+// используется в непеределанной админке, менять нельзя.
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
-const PALETTE = ['#FFD700', '#a0e9ff', '#c084fc', '#4ade80', '#fda4af', '#f87171', '#e2e8f0', '#86efac', '#60a5fa', '#f97316']
+const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
 
 function AnalyticsAdmin() {
@@ -116,27 +118,27 @@ function AnalyticsAdmin() {
   const gridCols = `180px repeat(${metrics.length}, minmax(90px, 1fr)) 70px`
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Аналитика команды" extra={
-          <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: scope === 'team' ? 'rgba(192,132,252,0.12)' : 'rgba(255,215,0,0.1)', color: scope === 'team' ? '#c084fc' : '#FFD700', border: `1px solid ${scope === 'team' ? 'rgba(192,132,252,0.35)' : 'rgba(255,215,0,0.3)'}` }}>
+          <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: scope === 'team' ? 'rgba(124,58,237,0.08)' : 'rgba(184,134,11,0.08)', color: scope === 'team' ? '#7c3aed' : '#8a6208', border: `1px solid ${scope === 'team' ? 'rgba(124,58,237,0.3)' : 'var(--border-gold)'}` }}>
             {scope === 'team' ? 'Ваша команда и вложенные отделы' : 'Вся компания'}
           </span>
         } />
 
         {/* Тонкая строка периода */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'rgba(15,20,35,0.85)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 18 }}>
-          <span style={{ fontSize: 12, color: '#888' }}>Период</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-subtle)', marginBottom: 18 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период</span>
           <DatePicker value={from} onChange={v => { setFrom(v); setP('') }} placeholder="С даты" />
-          <span style={{ color: '#555' }}>—</span>
+          <span style={{ color: 'var(--text-muted)' }}>—</span>
           <DatePicker value={to} onChange={v => { setTo(v); setP('') }} placeholder="По дату" />
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => applyPreset('yesterday')} style={tiny(p === 'yesterday')}>Вчера</button>
             <button onClick={() => applyPreset('week')} style={tiny(p === 'week')}>Неделя</button>
             <button onClick={() => applyPreset('month')} style={tiny(p === 'month')}>Месяц</button>
           </div>
-          <span style={{ fontSize: 11, color: '#666' }}>{days} дн.</span>
-          <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, marginLeft: 'auto', borderColor: 'rgba(255,215,0,0.5)', color: '#FFD700' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{days} дн.</span>
+          <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, marginLeft: 'auto', borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
         </div>
 
         {/* Карточки показателей */}
@@ -144,55 +146,55 @@ function AnalyticsAdmin() {
           {metricSummary.map(({ m, cv, delta, below, goal }) => {
             const b = bandOf(m, cv)
             return (
-              <div key={m.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: `1px solid ${b ? BAND_COLORS[b] + '33' : 'rgba(255,255,255,0.08)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_COLORS[b] : '#666', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   {delta != null && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: delta >= 0 ? '#4ade80' : '#f87171' }}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span>
                   )}
-                  <span style={{ fontSize: 11, color: '#888' }}>цель ≥ {goal}{m.unit}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>цель ≥ {goal}{m.unit}</span>
                 </div>
-                {below > 0 && <div style={{ fontSize: 11, color: '#f87171' }}>ниже порога: {below} чел.</div>}
+                {below > 0 && <div style={{ fontSize: 11, color: '#dc2626' }}>ниже порога: {below} чел.</div>}
               </div>
             )
           })}
-          {metricSummary.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Показателей пока нет</div>}
+          {metricSummary.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Показателей пока нет</div>}
         </div>
 
         {/* Топ периода + Требуют внимания */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 20, border: '1px solid rgba(74,222,128,0.2)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#4ade80', marginBottom: 6 }}>Топ периода</h3>
-            <p style={{ fontSize: 11, color: '#888', marginBottom: 12 }}>Средняя оценка = среднее уровней по показателям (0–4), где 0 — ниже порога, 1 — мин, 2 — средний, 3 — топ, 4 — ультра.</p>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(19,122,57,0.25)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#137a39', marginBottom: 6 }}>Топ периода</h3>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Средняя оценка = среднее уровней по показателям (0–4), где 0 — ниже порога, 1 — мин, 2 — средний, 3 — топ, 4 — ультра.</p>
             {top.map((r, i) => (
-              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: '#fff' }}>{i + 1}. {empName(r.emp.user_id)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: BAND_COLORS[overallBand(r.overall)] }}>{r.overall.toFixed(1)} / 4</span>
+              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{i + 1}. {empName(r.emp.user_id)}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: BAND_TEXT[overallBand(r.overall)] }}>{r.overall.toFixed(1)} / 4</span>
               </div>
             ))}
-            {top.length === 0 && <p style={{ fontSize: 12, color: '#666' }}>Нет данных за период</p>}
+            {top.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Нет данных за период</p>}
           </div>
-          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 20, border: '1px solid rgba(248,113,113,0.2)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#f87171', marginBottom: 6 }}>Требуют внимания</h3>
-            <p style={{ fontSize: 11, color: '#888', marginBottom: 12 }}>Число показателей ниже порога за период. Чем выше — тем больше зон риска у сотрудника.</p>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(220,38,38,0.2)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#dc2626', marginBottom: 6 }}>Требуют внимания</h3>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Число показателей ниже порога за период. Чем выше — тем больше зон риска у сотрудника.</p>
             {anti.map(r => (
-              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: '#fff' }}>{empName(r.emp.user_id)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#f87171' }}>{r.belowCount} показ.</span>
+              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{empName(r.emp.user_id)}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>{r.belowCount} показ.</span>
               </div>
             ))}
-            {anti.length === 0 && <p style={{ fontSize: 12, color: '#666' }}>Все показатели в норме</p>}
+            {anti.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Все показатели в норме</p>}
           </div>
         </div>
 
         {/* Динамика по дням */}
         {cm && cDates.length > 0 && (
-          <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 20, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0 }}>Динамика по дням</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Динамика по дням</h3>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {metrics.map(m => <button key={m.id} onClick={() => setChartId(m.id)} style={tiny(chartId === m.id)}>{m.name}</button>)}
               </div>
@@ -200,8 +202,8 @@ function AnalyticsAdmin() {
             <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
               {[{ k: 'min', v: cm.thr_min }, { k: 'mid', v: cm.thr_mid }, { k: 'top', v: cm.thr_top }, { k: 'ultra', v: cm.thr_ultra }].map(t => (
                 <g key={t.k}>
-                  <line x1={PL} x2={W - PR} y1={cy(t.v)} y2={cy(t.v)} stroke={BAND_COLORS[t.k]} strokeDasharray="5 5" strokeOpacity="0.5" strokeWidth="1" />
-                  <text x={W - PR - 2} y={cy(t.v) - 3} fontSize="9" fill={BAND_COLORS[t.k]} textAnchor="end" opacity="0.8">{BAND_LABELS[t.k]} {t.v}{cm.unit}</text>
+                  <line x1={PL} x2={W - PR} y1={cy(t.v)} y2={cy(t.v)} stroke={BAND_TEXT[t.k]} strokeDasharray="5 5" strokeOpacity="0.6" strokeWidth="1" />
+                  <text x={W - PR - 2} y={cy(t.v) - 3} fontSize="9" fill={BAND_TEXT[t.k]} textAnchor="end" opacity="0.9">{BAND_LABELS[t.k]} {t.v}{cm.unit}</text>
                 </g>
               ))}
               {chartEmps.map((r, ei) => (
@@ -215,14 +217,14 @@ function AnalyticsAdmin() {
                 </g>
               ))}
               {cDates.map((d, i) => (cDates.length <= 12 || i % Math.ceil(cDates.length / 12) === 0) && (
-                <text key={d} x={cx(i)} y={H - 8} fontSize="9" fill="#666" textAnchor="middle">{fmtDate(d)}</text>
+                <text key={d} x={cx(i)} y={H - 8} fontSize="9" fill="#5f6b80" textAnchor="middle">{fmtDate(d)}</text>
               ))}
             </svg>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 12 }}>
               {chartEmps.map((r, ei) => (
                 <div key={r.emp.user_id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 10, height: 10, borderRadius: '50%', background: PALETTE[ei % PALETTE.length] }} />
-                  <span style={{ fontSize: 11, color: '#ccc' }}>{empName(r.emp.user_id)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{empName(r.emp.user_id)}</span>
                 </div>
               ))}
             </div>
@@ -230,30 +232,30 @@ function AnalyticsAdmin() {
         )}
 
         {/* Таблица сотрудник × показатели */}
-        <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0 }}>Сотрудник × показатели</h3>
+        <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудник × показатели</h3>
             <button onClick={() => setSortAsc(a => !a)} style={tiny(false)}>{sortAsc ? 'Слабые первые' : 'Сильные первые'}</button>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 900 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <div>Сотрудник</div>
-                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center' }}><div style={{ color: '#fff', fontWeight: 600, fontSize: 11 }}>{m.name}</div><div style={{ color: '#666', fontSize: 10 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
+                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
               {rows.map(r => (
-                <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div style={{ fontSize: 13, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={empName(r.emp.user_id)}>{empName(r.emp.user_id)}</div>
+                <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={empName(r.emp.user_id)}>{empName(r.emp.user_id)}</div>
                   {r.cells.map(c => (
                     <div key={c.m.id} style={{ textAlign: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: c.band ? BAND_COLORS[c.band] : '#555' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
                     </div>
                   ))}
-                  <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: r.overall >= 0 ? BAND_COLORS[overallBand(r.overall)] : '#555' }}>{r.overall >= 0 ? r.overall.toFixed(1) : '—'}</div>
+                  <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: r.overall >= 0 ? BAND_TEXT[overallBand(r.overall)] : 'var(--text-muted)' }}>{r.overall >= 0 ? r.overall.toFixed(1) : '—'}</div>
                 </div>
               ))}
-              {rows.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: '#777' }}>Нет данных за период</div>}
+              {rows.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Нет данных за период</div>}
             </div>
           </div>
         </div>

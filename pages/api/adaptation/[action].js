@@ -187,9 +187,9 @@ export default async function handler(req, res) {
     const firstAvg = avgOf(first), lastAvg = avgOf(last)
     const dynamics = firstAvg != null && lastAvg != null ? lastAvg - firstAvg : 0
     let recommendation, color
-    if (pct >= 90 && pr.avgRating >= 4.5 && dynamics >= 0) { recommendation = 'Рекомендован к дальнейшей работе'; color = '#4ade80' }
-    else if (pct >= 70 && pr.avgRating >= 3.5) { recommendation = 'Требует доработки'; color = '#FFD700' }
-    else { recommendation = 'Не рекомендован'; color = '#f87171' }
+    if (pct >= 90 && pr.avgRating >= 4.5 && dynamics >= 0) { recommendation = 'Рекомендован к дальнейшей работе'; color = '#137a39' }
+    else if (pct >= 70 && pr.avgRating >= 3.5) { recommendation = 'Требует доработки'; color = '#8a6208' }
+    else { recommendation = 'Не рекомендован'; color = '#dc2626' }
     return res.status(200).json({ ...pr, pct, corrections, dynamics: Math.round(dynamics * 10) / 10, recommendation, color })
   }
 

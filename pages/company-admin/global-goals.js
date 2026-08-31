@@ -8,13 +8,13 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const CATEGORIES = [
-  { key: 'financial', label: 'Финансовые', color: '#FFD700' },
-  { key: 'operational', label: 'Операционные', color: '#a0e9ff' },
-  { key: 'quality', label: 'Качество', color: '#4ade80' },
-  { key: 'development', label: 'Развитие команды', color: '#c084fc' },
-  { key: 'innovation', label: 'Инновации', color: '#ffb3c6' },
-  { key: 'culture', label: 'Культура', color: '#fda4af' },
-  { key: 'strategic', label: 'Стратегические', color: '#e2e8f0' },
+  { key: 'financial', label: 'Финансовые', color: '#8a6208' },
+  { key: 'operational', label: 'Операционные', color: '#0e7490' },
+  { key: 'quality', label: 'Качество', color: '#137a39' },
+  { key: 'development', label: 'Развитие команды', color: '#7c3aed' },
+  { key: 'innovation', label: 'Инновации', color: '#db2777' },
+  { key: 'culture', label: 'Культура', color: '#be123c' },
+  { key: 'strategic', label: 'Стратегические', color: '#475569' },
 ]
 const PERIODS = [
   { key: 'week', label: 'Неделя' }, { key: 'month', label: 'Месяц' }, { key: 'quarter', label: 'Квартал' }, { key: 'year', label: 'Год' }
@@ -28,17 +28,17 @@ const TEMPLATES = [
   { title: 'Годовая цель по росту компании', category: 'strategic', metric: '% роста к прошлому году', target_value: 30, unit: '%', period: 'year' },
 ]
 const ghostBtn = {
-  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
-  padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border-gold)', borderRadius: 12,
+  padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pill = a => ({
   padding: '7px 16px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
-  border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
-  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)',
+  border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
+  color: a ? '#8a6208' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 
 function GlobalGoals() {
@@ -103,18 +103,18 @@ function GlobalGoals() {
   const filtered = filter === 'all' ? goals : goals.filter(g => g.category === filter)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Глобальные цели" />
 
         {/* Создание */}
-        <div style={{ maxWidth: 820, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: '#fff' }}>Новая глобальная цель</h3>
-          <p style={{ fontSize: 12, color: '#888', marginBottom: 14 }}>Можно начать с готового шаблона (заполнит поля ниже, дальше можно поправить) или заполнить вручную.</p>
+        <div style={{ maxWidth: 820, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 28, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
+          <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>Новая глобальная цель</h3>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>Можно начать с готового шаблона (заполнит поля ниже, дальше можно поправить) или заполнить вручную.</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
             {TEMPLATES.map((t, i) => (
               <button key={i} type="button" onClick={() => setForm(f => ({ ...f, ...t }))}
-                style={{ fontSize: 11, padding: '6px 14px', borderRadius: 20, background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.3)', color: '#c084fc', cursor: 'pointer' }}>
+                style={{ fontSize: 11, padding: '6px 14px', borderRadius: 20, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.3)', color: '#7c3aed', cursor: 'pointer' }}>
                 {t.title}
               </button>
             ))}
@@ -122,41 +122,41 @@ function GlobalGoals() {
           <form onSubmit={handleCreate}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
                 <input className="input-field" style={{ width: '100%' }} placeholder="Увеличить выручку на 15% за квартал" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Категория</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Категория</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                   {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Период</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Период</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.period} onChange={e => setForm({ ...form, period: e.target.value })}>
                   {PERIODS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
                 </select>
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Пример измерения</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Пример измерения</label>
                 <input className="input-field" style={{ width: '100%' }} placeholder="Сумма выручки, % выполнения, NPS" value={form.metric} onChange={e => setForm({ ...form, metric: e.target.value })} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Целевое значение</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Целевое значение</label>
                 <input type="number" step="0.1" className="input-field" style={{ width: '100%' }} value={form.target_value} onChange={e => setForm({ ...form, target_value: e.target.value })} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Единица</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Единица</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
                   <option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="балл">балл</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн</label>
                 <DatePicker value={form.deadline} onChange={v => setForm({ ...form, deadline: v })} placeholder="Без срока" />
               </div>
               <div style={{ gridColumn: 'span 3' }}>
-                <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Описание</label>
                 <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div style={{ gridColumn: 'span 4' }}>
@@ -177,7 +177,7 @@ function GlobalGoals() {
         {/* Список целей */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 14 }}>
           {filtered.length === 0 && (
-            <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
               Глобальных целей пока нет
             </div>
           )}
@@ -186,24 +186,24 @@ function GlobalGoals() {
             const pct = g.target_value > 0 ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0
             return (
               <div key={g.id} style={{
-                background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 20,
-                border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s',
+                background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20,
+                border: '1px solid var(--border-subtle)', transition: 'border-color 0.25s',
                 display: 'flex', flexDirection: 'column', gap: 12
               }}
               onMouseEnter={e => e.currentTarget.style.borderColor = `${cat.color}66`}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                   <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: 1, background: `${cat.color}18`, color: cat.color, border: `1px solid ${cat.color}44`, whiteSpace: 'nowrap' }}>{cat.label}</span>
-                  <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#f87171', fontSize: 11, cursor: 'pointer' }}>Удалить</button>
+                  <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer' }}>Удалить</button>
                 </div>
                 <div>
-                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{g.title}</div>
-                  {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>{g.description}</div>}
-                  {g.metric && <div style={{ color: '#a0e9ff', fontSize: 11, marginTop: 6 }}>Измерение: {g.metric}</div>}
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15 }}>{g.title}</div>
+                  {g.description && <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>{g.description}</div>}
+                  {g.metric && <div style={{ color: '#0e7490', fontSize: 11, marginTop: 6 }}>Измерение: {g.metric}</div>}
                 </div>
                 <div>
                   <ProgressBar3D value={g.current_value} marks={[{ key: 't', value: g.target_value }]} unit={g.unit} height={12} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888', marginTop: 5 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 5 }}>
                     <span>Сейчас: {g.current_value}{g.unit}</span>
                     <span>Цель: {g.target_value}{g.unit} · {pct}%</span>
                   </div>

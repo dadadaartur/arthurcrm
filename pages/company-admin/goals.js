@@ -135,21 +135,21 @@ function GoalsPage() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div className="max-w-full mx-auto px-6 py-8">
+    <div className="theme-light mx-auto px-6 py-8" style={{ maxWidth: 1600 }}>
       <BackArrow href="/company-admin" title="Управление целями" />
 
-      <div className="pastel-card mb-8">
+      <div className="pastel-card mb-8" style={{ maxWidth: 1100 }}>
         <h3 className="text-lg font-semibold mb-4">Новая цель</h3>
         <form onSubmit={handleCreateGoal} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-400">Тип цели</label>
+              <label className="text-sm" style={{ color: 'var(--text-secondary)' }}>Тип цели</label>
               <div className="flex items-center gap-3 mb-2">
-                <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+                <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-primary)' }}>
                   <input type="radio" checked={!form.use_custom_type} onChange={() => setForm({...form, use_custom_type: false})} className="accent-orange-500" />
                   Из списка
                 </label>
-                <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+                <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-primary)' }}>
                   <input type="radio" checked={form.use_custom_type} onChange={() => setForm({...form, use_custom_type: true})} className="accent-orange-500" />
                   Ручной ввод
                 </label>
@@ -167,20 +167,20 @@ function GoalsPage() {
                 </select>
               )}
               <div className="mt-2">
-                <label className="text-xs text-gray-400 block mb-1">Название (отображается у сотрудника)</label>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Название (отображается у сотрудника)</label>
                 <input type="text" className="input-field" placeholder="Необязательно — если оставить пустым, используется тип цели"
                   value={form.goal_title} onChange={e => setForm({...form, goal_title: e.target.value})} />
               </div>
             </div>
             <div>
-              <label className="text-sm text-gray-400">Количество</label>
+              <label className="text-sm" style={{ color: 'var(--text-secondary)' }}>Количество</label>
               <input type="number" className="input-field" value={form.target_value} onChange={e => setForm({...form, target_value: parseInt(e.target.value) || 0})} min="1" />
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-400">Период</label>
+              <label className="text-sm" style={{ color: 'var(--text-secondary)' }}>Период</label>
               <select className="input-field" value={form.period_type} onChange={e => setForm({...form, period_type: e.target.value})}>
                 <option value="day">День</option>
                 <option value="week">Неделя</option>
@@ -192,7 +192,7 @@ function GoalsPage() {
               )}
             </div>
             <div>
-              <label className="text-sm text-gray-400">Награда</label>
+              <label className="text-sm" style={{ color: 'var(--text-secondary)' }}>Награда</label>
               <select className="input-field" value={form.reward_mode} onChange={e => setForm({...form, reward_mode: e.target.value})}>
                 <option value="none">Без награды</option>
                 <option value="rubles">Только рубли</option>
@@ -211,19 +211,19 @@ function GoalsPage() {
           </div>
 
           <div className="space-y-4">
-            <label className="flex items-center gap-2 text-gray-400 text-sm">
+            <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <input type="checkbox" checked={form.assign_to_all} onChange={e => setForm({...form, assign_to_all: e.target.checked})} />
               Назначить всем сотрудникам
             </label>
             {!form.assign_to_all && (
               <div>
-                <label className="text-sm text-gray-400">Выберите сотрудников</label>
+                <label className="text-sm" style={{ color: 'var(--text-secondary)' }}>Выберите сотрудников</label>
                 <select multiple className="input-field h-32" value={form.user_ids} onChange={e => setForm({...form, user_ids: Array.from(e.target.selectedOptions, option => option.value)})}>
                   {employees.map(emp => (
                     <option key={emp.user_id} value={emp.user_id}>{emp.display_name || emp.email}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">Удерживайте Ctrl/Cmd для выбора нескольких</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Удерживайте Ctrl/Cmd для выбора нескольких</p>
               </div>
             )}
             <button type="submit" className="btn-gold mt-4" style={{ minWidth: 180 }}>Создать</button>
@@ -233,10 +233,10 @@ function GoalsPage() {
 
       <div className="pastel-card overflow-auto" style={{ maxHeight: '60vh' }}>
         {goals.length === 0 ? (
-          <p className="text-gray-400">Нет активных целей</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Нет активных целей</p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="text-gray-400 border-b border-gray-700">
+            <thead style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
               <tr>
                 <th className="py-2 pr-4">Сотрудник</th>
                 <th className="py-2 pr-4">Цель</th>
@@ -248,7 +248,7 @@ function GoalsPage() {
             </thead>
             <tbody>
               {goals.map(goal => (
-                <tr key={goal.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                <tr key={goal.id} style={{ borderBottom: '1px solid var(--border-subtle)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <td className="py-3 pr-4">{goal.profiles?.display_name || goal.profiles?.email}</td>
                   <td className="py-3 pr-4">{goal.title}</td>
                   <td className="py-3 pr-4 capitalize">{goal.goal_type}</td>
@@ -259,7 +259,7 @@ function GoalsPage() {
                     {!goal.reward_karma && !goal.reward_rubles && '—'}
                   </td>
                   <td className="py-3">
-                    <button onClick={() => handleDeleteGoal(goal.id)} className="text-xs text-red-400 hover:text-red-300">Удалить</button>
+                    <button onClick={() => handleDeleteGoal(goal.id)} className="text-xs" style={{ color: '#dc2626' }}>Удалить</button>
                   </td>
                 </tr>
               ))}

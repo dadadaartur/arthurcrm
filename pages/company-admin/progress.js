@@ -6,12 +6,12 @@ import { withAuth } from '../../components/withAuth'
 function ProgressAdmin() {
   const [open, setOpen] = useState(true)
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Архитектура прогресса" extra={
-          <button onClick={() => setOpen(true)} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '7px 16px', color: '#FFD700', cursor: 'pointer', fontSize: 12 }}>Открыть редактор</button>
+          <button onClick={() => setOpen(true)} style={{ marginLeft: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '7px 16px', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12 }}>Открыть редактор</button>
         } />
-        <p style={{ fontSize: 13, color: '#888', maxWidth: 700 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 700 }}>
           Здесь вы настраиваете уровни роста сотрудников: название, порог энергии, цвет и описание.
           Сотрудники видят этот путь в «Моих целях» и на главной — понимают, какой у них уровень сейчас и что нужно для следующего.
         </p>

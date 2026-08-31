@@ -9,25 +9,25 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = {
-  background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12,
-  padding: '10px 22px', color: '#fff', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border-gold)', borderRadius: 12,
+  padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#FFD700'; e.currentTarget.style.boxShadow = '0 0 14px rgba(255,215,0,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)' }
-const hoverOff = e => { e.currentTarget.style.borderColor = 'rgba(255,215,0,0.3)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pillTab = a => ({
   padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.04)',
-  border: `1px solid ${a ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.12)'}`,
-  color: a ? '#FFD700' : '#aaa', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)',
+  border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
+  color: a ? '#8a6208' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 const AUTO_LABELS = {
   all_min: 'Выполнить ВСЕ цели за день не ниже «мин»',
   all_mid: 'Выполнить ВСЕ цели за день не ниже «средн»',
   any_one: 'Выполнить хотя бы одну цель за день',
 }
-const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
-  <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}26, ${color}10)` : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`, color: active ? color : '#999', transition: 'all 0.2s ease' }}>{children}</button>
+const Seg = ({ active, onClick, children, color = '#8a6208' }) => (
+  <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>{children}</button>
 )
 
 function TasksPage() {
@@ -199,10 +199,10 @@ function TasksPage() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление заданиями" extra={
-          <div style={{ marginLeft: 'auto', fontSize: 12, color: '#888', alignSelf: 'center' }}>Активных: <b style={{ color: '#FFD700' }}>{tasks.length}</b></div>
+          <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>Активных: <b style={{ color: 'var(--accent-gold)' }}>{tasks.length}</b></div>
         } />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
@@ -218,40 +218,40 @@ function TasksPage() {
           const isExternal = tab === 'create-external'
           const relevantMetrics = isExternal ? metrics.filter(m => m.source === 'auto') : metrics
           return (
-          <div style={{ maxWidth: 820, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: `1px solid ${isExternal ? 'rgba(74,222,128,0.3)' : 'rgba(192,132,252,0.3)'}` }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: '#fff' }}>{isExternal ? 'Задание с внешней автопроверкой' : 'Задание по цели'}</h3>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>
+          <div style={{ maxWidth: 820, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 28, border: `1px solid ${isExternal ? 'rgba(19,122,57,0.3)' : 'rgba(124,58,237,0.3)'}` }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>{isExternal ? 'Задание с внешней автопроверкой' : 'Задание по цели'}</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20 }}>
               {isExternal
                 ? 'Показатель сам подтягивает значение из внешней системы (CRM, отчёт и т.п.) по расписанию — без ручного ввода. Настройка источника — в «Управлении целями», раздел «Источник значений».'
                 : 'Система сама проверяет, достиг ли сотрудник нужного уровня по показателю (введённому вручную или автоматически), и начисляет награду — без ручной проверки.'}
             </p>
             {isExternal && relevantMetrics.length === 0 && (
-              <div style={{ padding: 14, borderRadius: 12, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171', fontSize: 12, marginBottom: 16 }}>
+              <div style={{ padding: 14, borderRadius: 12, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', color: '#dc2626', fontSize: 12, marginBottom: 16 }}>
                 Ни у одного показателя не включён внешний источник. Откройте «Управление целями» → выберите или создайте показатель → «Источник значений» → «Авто (внешний источник)», затем вернитесь сюда.
               </div>
             )}
             {!isExternal && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <Seg active={form.auto_mode === 'general'} onClick={() => setForm({ ...form, auto_mode: 'general' })} color="#c084fc">По всем целям</Seg>
-                <Seg active={form.auto_mode === 'specific'} onClick={() => setForm({ ...form, auto_mode: 'specific' })} color="#c084fc">По одной цели</Seg>
+                <Seg active={form.auto_mode === 'general'} onClick={() => setForm({ ...form, auto_mode: 'general' })} color="#7c3aed">По всем целям</Seg>
+                <Seg active={form.auto_mode === 'specific'} onClick={() => setForm({ ...form, auto_mode: 'specific' })} color="#7c3aed">По одной цели</Seg>
               </div>
             )}
             <form onSubmit={handleCreateTask}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
                   <input className="input-field" style={{ width: '100%' }} placeholder="Например: Звонки на уровень Ультра" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
                   <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Отдел</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Отдел</label>
                   <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
                     {myScope === null && <option value="">Вся компания</option>}
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
@@ -268,14 +268,14 @@ function TasksPage() {
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12, marginBottom: 20 }}>
                   <div>
-                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Показатель{isExternal ? ' (с внешним источником)' : ''}</label>
+                    <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Показатель{isExternal ? ' (с внешним источником)' : ''}</label>
                     <select className="input-field" style={{ width: '100%' }} value={form.auto_metric_id} onChange={e => setForm({ ...form, auto_metric_id: e.target.value, auto_target_rank: 1 })}>
                       <option value="">Выберите показатель…</option>
                       {relevantMetrics.map(m => <option key={m.id} value={m.id}>{m.name}{m.source === 'auto' ? ' · авто-источник' : ''}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: 11, color: '#888', display: 'block', marginBottom: 4 }}>Уровень (не ниже)</label>
+                    <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Уровень (не ниже)</label>
                     <select className="input-field" style={{ width: '100%' }} value={form.auto_target_rank} onChange={e => setForm({ ...form, auto_target_rank: parseInt(e.target.value) })} disabled={!form.auto_metric_id}>
                       {form.auto_metric_id && resolveThresholds(metrics.find(m => m.id === form.auto_metric_id) || {}).map((t, i) => (
                         <option key={t.key} value={i + 1}>{t.label} ({t.value}{metrics.find(m => m.id === form.auto_metric_id)?.unit})</option>
@@ -284,7 +284,7 @@ function TasksPage() {
                   </div>
                 </div>
               )}
-              <p style={{ fontSize: 11, color: '#666', margin: '-14px 0 16px' }}>За выполнение начисляется +1 энергия автоматически — не редактируется отдельно.</p>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '-14px 0 16px' }}>За выполнение начисляется +1 энергия автоматически — не редактируется отдельно.</p>
               <button type="submit" className="btn-gold">Создать задание</button>
             </form>
           </div>
@@ -292,42 +292,42 @@ function TasksPage() {
         })()}
 
         {tab === 'create' && (
-          <div style={{ maxWidth: 900, background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: '#fff' }}>Создать задание</h3>
+          <div style={{ maxWidth: 900, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 28, border: '1px solid var(--border-subtle)' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 20, color: 'var(--text-primary)' }}>Создать задание</h3>
             <form onSubmit={handleCreateTask}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Название</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
                   <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
                   <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Описание</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Описание</label>
                   <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Дедлайн (фирменный календарь)</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн (фирменный календарь)</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Кому назначить</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Кому назначить</label>
                   <div style={{ display: 'flex', gap: 8, marginBottom: form.target_role === 'specific' ? 10 : 0 }}>
                     {[['all', 'Все'], ['new', 'Новые'], ['experienced', 'Опытные'], ['specific', 'Выбрать сотрудников']].map(([k, label]) => (
-                      <Seg key={k} active={form.target_role === k} onClick={() => setForm({ ...form, target_role: k })} color="#a0e9ff">{label}</Seg>
+                      <Seg key={k} active={form.target_role === k} onClick={() => setForm({ ...form, target_role: k })} color="#0e7490">{label}</Seg>
                     ))}
                   </div>
                   {form.target_role === 'specific' && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', maxHeight: 140, overflowY: 'auto' }}>
-                      {employees.length === 0 && <span style={{ fontSize: 11, color: '#777' }}>Нет сотрудников для выбора</span>}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderRadius: 10, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', maxHeight: 140, overflowY: 'auto' }}>
+                      {employees.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Нет сотрудников для выбора</span>}
                       {employees.map(e => {
                         const name = [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
                         const checked = form.specific_user_ids.includes(e.user_id)
                         return (
                           <label key={e.user_id} onClick={() => setForm(f => ({ ...f, specific_user_ids: checked ? f.specific_user_ids.filter(id => id !== e.user_id) : [...f.specific_user_ids, e.user_id] }))}
-                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', background: checked ? 'rgba(160,233,255,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${checked ? 'rgba(160,233,255,0.5)' : 'rgba(255,255,255,0.12)'}`, color: checked ? '#a0e9ff' : '#ccc' }}>
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', background: checked ? 'rgba(14,116,144,0.1)' : 'var(--bg-page)', border: `1px solid ${checked ? 'rgba(14,116,144,0.4)' : 'var(--border-subtle)'}`, color: checked ? '#0e7490' : 'var(--text-primary)' }}>
                             {name}
                           </label>
                         )
@@ -336,27 +336,27 @@ function TasksPage() {
                   )}
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Отдел</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Отдел</label>
                   <select className="input-field" style={{ width: '100%' }} value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })} disabled={form.target_role === 'specific'}>
                     {myScope === null && <option value="">Вся компания</option>}
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Изображение (необязательно)</label>
-                  <label htmlFor="task-image-upload" className="input-field" style={{ width: '100%', display: 'flex', alignItems: 'center', cursor: 'pointer', color: form.image_file ? '#fff' : '#777', boxSizing: 'border-box' }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Изображение (необязательно)</label>
+                  <label htmlFor="task-image-upload" className="input-field" style={{ width: '100%', display: 'flex', alignItems: 'center', cursor: 'pointer', color: form.image_file ? 'var(--text-primary)' : 'var(--text-muted)', boxSizing: 'border-box' }}>
                     {form.image_file ? form.image_file.name : 'Выбрать файл...'}
                   </label>
                   <input id="task-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, image_file: e.target.files?.[0] || null })} />
                 </div>
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} style={{ accentColor: '#8a6208' }} />
                     Требуется проверка
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#ccc', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({ ...form, requires_proof: e.target.checked })} style={{ accentColor: '#FFD700' }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({ ...form, requires_proof: e.target.checked })} style={{ accentColor: '#8a6208' }} />
                     Медиа-подтверждение
                   </label>
                   {form.requires_proof && (
@@ -366,7 +366,7 @@ function TasksPage() {
                   )}
                 </div>
               </div>
-              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border-subtle)' }}>
                 <button type="submit" disabled={creating} style={{ ...ghostBtn, opacity: creating ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
                   {creating ? 'Создаём...' : 'Создать задание'}
                 </button>
@@ -378,27 +378,27 @@ function TasksPage() {
         {tab === 'review' && (
           <div>
             {pendingReviews.length === 0 ? (
-              <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 50, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 24 }}>
+              <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 50, textAlign: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
                 Все задания проверены — новые отправки появятся здесь автоматически
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
                 {pendingReviews.map(item => (
-                  <div key={item.id} style={{ background: 'rgba(15,20,35,0.85)', backdropFilter: 'blur(14px)', borderRadius: 16, padding: 18, border: '1px solid rgba(249,115,22,0.3)' }}>
+                  <div key={item.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: '1px solid rgba(217,119,6,0.35)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: '#fff', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{item.task?.title}</div>
-                        <div style={{ color: '#aaa', fontSize: 13 }}>{item.employee_name}</div>
+                        <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{item.task?.title}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{item.employee_name}</div>
                         <div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, color: '#FFD700', fontWeight: 600 }}>+{item.task?.reward_karma} кармиков</span>
-                          {item.started_at && <span style={{ fontSize: 12, color: '#888' }}>отправлено {new Date(item.started_at).toLocaleString('ru')}</span>}
+                          <span style={{ fontSize: 13, color: 'var(--accent-gold)', fontWeight: 600 }}>+{item.task?.reward_karma} кармиков</span>
+                          {item.started_at && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>отправлено {new Date(item.started_at).toLocaleString('ru')}</span>}
                         </div>
                       </div>
                       <button onClick={() => { setSelectedReview(item); setReviewComment('') }} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Проверить</button>
                     </div>
                     {item.comment && (
-                      <div style={{ marginTop: 14, padding: 12, borderRadius: 10, fontSize: 13, color: '#ccc', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        Комментарий сотрудника: <span style={{ color: '#fff' }}>{item.comment}</span>
+                      <div style={{ marginTop: 14, padding: 12, borderRadius: 10, fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                        Комментарий сотрудника: <span style={{ color: 'var(--text-primary)' }}>{item.comment}</span>
                       </div>
                     )}
                   </div>
@@ -406,9 +406,9 @@ function TasksPage() {
               </div>
             )}
 
-            <div style={{ fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>История решений</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>История решений</div>
             {reviewHistory.length === 0 ? (
-              <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 40, textAlign: 'center', color: '#777', border: '1px solid rgba(255,255,255,0.06)' }}>Нет проверенных заданий</div>
+              <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 40, textAlign: 'center', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>Нет проверенных заданий</div>
             ) : (
               // Настоящая <table> вместо независимого grid на каждую
               // строку — раньше у каждой строки была своя колонка auto под
@@ -418,18 +418,18 @@ function TasksPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   {reviewHistory.map(item => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                      <td style={{ padding: '12px 10px', color: '#fff', fontSize: 14, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <tr key={item.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '12px 10px', color: 'var(--text-primary)', fontSize: 14, maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.task?.title}
-                        <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{item.employee_name}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2 }}>{item.employee_name}</div>
                       </td>
-                      <td style={{ padding: '12px 10px', color: '#888', fontSize: 12, whiteSpace: 'nowrap' }}>{item.completed_at && new Date(item.completed_at).toLocaleDateString('ru')}</td>
+                      <td style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: 12, whiteSpace: 'nowrap' }}>{item.completed_at && new Date(item.completed_at).toLocaleDateString('ru')}</td>
                       <td style={{ padding: '12px 10px' }}>
-                        <span style={{ display: 'inline-block', fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 600, background: item.status === 'completed' ? 'rgba(74,222,128,0.15)' : 'rgba(244,67,54,0.15)', color: item.status === 'completed' ? '#4ade80' : '#f87171', border: `1px solid ${item.status === 'completed' ? 'rgba(74,222,128,0.4)' : 'rgba(244,67,54,0.4)'}` }}>
+                        <span style={{ display: 'inline-block', fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 600, background: item.status === 'completed' ? 'rgba(19,122,57,0.1)' : 'rgba(220,38,38,0.1)', color: item.status === 'completed' ? '#137a39' : '#dc2626', border: `1px solid ${item.status === 'completed' ? 'rgba(19,122,57,0.35)' : 'rgba(220,38,38,0.35)'}` }}>
                           {item.status === 'completed' ? 'Одобрено' : 'Отклонено'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 10px', textAlign: 'right', color: '#FFD700', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>+{item.task?.reward_karma}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', color: 'var(--accent-gold)', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>+{item.task?.reward_karma}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -440,28 +440,28 @@ function TasksPage() {
 
         {tab === 'active' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
-            {tasks.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Нет активных заданий</div>}
+            {tasks.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Нет активных заданий</div>}
             {tasks.map(t => (
-              <div key={t.id} style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 16, padding: 18, border: '1px solid rgba(255,255,255,0.08)', transition: 'border-color 0.25s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}>
+              <div key={t.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: '1px solid var(--border-subtle)', transition: 'border-color 0.25s' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-gold)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>{t.title}</div>
-                  <span style={{ color: '#FFD700', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15 }}>{t.title}</div>
+                  <span style={{ color: 'var(--accent-gold)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
                 </div>
-                <span style={{ display: 'inline-block', fontSize: 9, padding: '1px 8px', borderRadius: 20, marginTop: 6, background: t.department_id ? 'rgba(160,233,255,0.1)' : 'rgba(255,215,0,0.1)', color: t.department_id ? '#a0e9ff' : '#FFD700', border: `1px solid ${t.department_id ? 'rgba(160,233,255,0.3)' : 'rgba(255,215,0,0.3)'}` }}>
+                <span style={{ display: 'inline-block', fontSize: 9, padding: '1px 8px', borderRadius: 20, marginTop: 6, background: t.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(184,134,11,0.08)', color: t.department_id ? '#0e7490' : '#8a6208', border: `1px solid ${t.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
                   {t.department_id ? (departments.find(d => d.id === t.department_id)?.name || 'Отдел') : 'Вся компания'}
                 </span>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
                   {t.is_auto_goal
                     ? (t.auto_metric_id
                         ? `Авто: «${metrics.find(m => m.id === t.auto_metric_id)?.name || '?'}» — уровень ${t.auto_target_rank || 1}+`
                         : `Авто: ${AUTO_LABELS[t.auto_goal_condition] || t.auto_goal_condition}`)
                     : (t.description?.slice(0, 70) || 'Без описания')}
                 </div>
-                {t.deadline_at && <div style={{ fontSize: 11, color: '#a0e9ff', marginTop: 6 }}>Дедлайн: {new Date(t.deadline_at).toLocaleDateString('ru')}</div>}
+                {t.deadline_at && <div style={{ fontSize: 11, color: '#0e7490', marginTop: 6 }}>Дедлайн: {new Date(t.deadline_at).toLocaleDateString('ru')}</div>}
                 <div style={{ marginTop: 12 }}>
-                  <button onClick={() => handleDelete(t.id)} style={{ background: 'rgba(244,67,54,0.08)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: 8, padding: '5px 14px', color: '#f87171', fontSize: 11, cursor: 'pointer' }}>Удалить</button>
+                  <button onClick={() => handleDelete(t.id)} style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, padding: '5px 14px', color: '#dc2626', fontSize: 11, cursor: 'pointer' }}>Удалить</button>
                 </div>
               </div>
             ))}
@@ -470,12 +470,12 @@ function TasksPage() {
 
         {tab === 'archived' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {archived.length === 0 && <div style={{ background: 'rgba(15,20,35,0.85)', borderRadius: 20, padding: 60, textAlign: 'center', color: '#777' }}>Архив пуст</div>}
+            {archived.length === 0 && <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Архив пуст</div>}
             {archived.map(t => (
-              <div key={t.id} style={{ background: 'rgba(15,20,35,0.7)', borderRadius: 14, padding: 16, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div key={t.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 14, padding: 16, border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#ccc', fontWeight: 500 }}>{t.title}</div>
-                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>В архиве с {t.archived_at ? new Date(t.archived_at).toLocaleDateString('ru') : '—'} · срок истёк</div>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{t.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>В архиве с {t.archived_at ? new Date(t.archived_at).toLocaleDateString('ru') : '—'} · срок истёк</div>
                 </div>
                 {restoreId === t.id ? (
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -492,43 +492,43 @@ function TasksPage() {
       </div>
 
       {selectedReview && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !reviewLoading && setSelectedReview(null)}>
-          <div style={{ background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 26, maxWidth: 480, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 16px', color: '#fff' }}>{selectedReview.task?.title}</h3>
-            <div style={{ padding: 16, borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 16 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !reviewLoading && setSelectedReview(null)}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 26, maxWidth: 480, width: '94%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 17, fontWeight: 600, margin: '0 0 16px', color: 'var(--text-primary)' }}>{selectedReview.task?.title}</h3>
+            <div style={{ padding: 16, borderRadius: 14, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div>
-                  <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>Сотрудник</div>
-                  <div style={{ color: '#fff', fontWeight: 500 }}>{selectedReview.employee_name}</div>
-                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{selectedReview.employee_email}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>Сотрудник</div>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{selectedReview.employee_name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{selectedReview.employee_email}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>Награда</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#FFD700' }}>+{selectedReview.task?.reward_karma}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>Награда</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-gold)' }}>+{selectedReview.task?.reward_karma}</div>
                 </div>
               </div>
               {selectedReview.comment && (
-                <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
-                  <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Комментарий сотрудника</div>
-                  <div style={{ fontSize: 13, color: '#fff' }}>{selectedReview.comment}</div>
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: 'var(--bg-page)' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Комментарий сотрудника</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{selectedReview.comment}</div>
                 </div>
               )}
             </div>
 
             {selectedReview.proof_urls?.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Подтверждение</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Подтверждение</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {selectedReview.proof_urls.map((url, i) => {
                     const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
                     const isVideo = url.match(/\.(mp4|mov|webm|avi)$/i)
                     return (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.15)' }}>
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
                         {isImage ? (
                           <img src={url} alt="" style={{ width: 110, height: 110, objectFit: 'cover', display: 'block' }} />
                         ) : (
-                          <div style={{ width: 110, height: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'rgba(255,255,255,0.04)', color: '#aaa' }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#a0e9ff' }}>{isVideo ? 'ВИДЕО' : 'ФАЙЛ'}</span>
+                          <div style={{ width: 110, height: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--bg-page)', color: 'var(--text-secondary)' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: '#0e7490' }}>{isVideo ? 'ВИДЕО' : 'ФАЙЛ'}</span>
                             <span style={{ fontSize: 10 }}>Открыть</span>
                           </div>
                         )}
@@ -539,15 +539,15 @@ function TasksPage() {
               </div>
             )}
 
-            <label style={{ fontSize: 12, color: '#888', display: 'block', marginBottom: 6 }}>Комментарий к решению</label>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Комментарий к решению</label>
             <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Необязательно — сотрудник получит его в уведомлении" className="input-field" style={{ width: '100%', marginBottom: 16 }} rows={3} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               <button onClick={() => !reviewLoading && setSelectedReview(null)} className="btn-outline" disabled={reviewLoading}>Отмена</button>
-              <button onClick={() => handleReview('reject')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'rgba(244,67,54,0.1)', border: '1px solid rgba(244,67,54,0.4)', color: '#f87171', cursor: 'pointer' }}>
+              <button onClick={() => handleReview('reject')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.35)', color: '#dc2626', cursor: 'pointer' }}>
                 {reviewLoading ? '...' : 'Отклонить'}
               </button>
-              <button onClick={() => handleReview('approve')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(74,222,128,0.15))', border: '1px solid rgba(255,215,0,0.5)', color: '#FFD700', cursor: 'pointer' }}>
+              <button onClick={() => handleReview('approve')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'linear-gradient(135deg, rgba(138,98,8,0.15), rgba(19,122,57,0.12))', border: '1px solid var(--border-gold)', color: '#8a6208', cursor: 'pointer' }}>
                 {reviewLoading ? '...' : 'Одобрить'}
               </button>
             </div>
