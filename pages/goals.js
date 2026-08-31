@@ -48,10 +48,9 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
   const [levels, setLevels] = useState([])
-  const [oldGoals, setOldGoals] = useState([])
   const [pathOpen, setPathOpen] = useState(false)
   const [tipsOpen, setTipsOpen] = useState(false)
-  const [mode, setMode] = useState('today')
+  const [mode, setMode] = useState('month')
   const [customDay, setCustomDay] = useState(todayISO)
   const [videoTraining, setVideoTraining] = useState(null)
   const [detailsMetric, setDetailsMetric] = useState(null)
@@ -78,8 +77,6 @@ export default function GoalsPage() {
       if (r3.ok) setGlobalGoals(await r3.json())
       const { data: p } = await supabase.from('profiles').select('wheel_spins_available').eq('user_id', user.id).maybeSingle()
       setWheelSpins(p?.wheel_spins_available || 0)
-      const { data: g } = await supabase.from('goals').select('*').eq('user_id', user.id).eq('is_active', true)
-      setOldGoals(g || [])
       // Личная статистика
       const { data: tr } = await supabase.from('test_attempts').select('*').eq('user_id', user.id).order('completed_at', { ascending: false })
       const { data: vw } = await supabase.from('training_views').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
@@ -113,6 +110,7 @@ export default function GoalsPage() {
     if (mode === 'today') return d === todayISO
     if (mode === 'yesterday') return d === shiftISO(-1)
     if (mode === 'custom') return d === customDay
+    if (mode === 'month') return d.slice(0, 7) === todayISO.slice(0, 7)
     if (mode === '7d') return d >= shiftISO(-6) && d <= todayISO
     if (mode === '30d') return d >= shiftISO(-29) && d <= todayISO
     return true
@@ -144,39 +142,32 @@ export default function GoalsPage() {
     }))
     forecast.sort((a, b) => a.days - b.days)
   }
-  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
+  const periodLabel = mode === 'today' ? 'за сегодня' : mode === 'yesterday' ? 'за вчера' : mode === 'custom' ? `за ${customDay}` : mode === 'month' ? 'накопительно за текущий месяц' : mode === '7d' ? 'накопительно за 7 дн.' : mode === '30d' ? 'накопительно за 30 дн.' : 'за всё время'
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/" title="Мои цели" />
-
-        {/* Цели компании — компактная горизонтальная лента, не вторая
-            колонка широкой строки-баннера, как раньше. Видна сразу,
-            но не отбирает у показателей вертикальное пространство. */}
-        {globalGoals.length > 0 && (
-          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: '12px 16px', border: '1px solid var(--border-gold)', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Цели компании</span>
-              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>командные и разовые — не привязаны к вашим личным показателям</span>
-            </div>
-            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 2 }}>
-              {globalGoals.map(g => {
-                const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
-                return (
-                  <div key={g.id} style={{ flex: '0 0 200px', padding: 10, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
-                    <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={6} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: 'var(--text-secondary)' }}>
-                      <span>{g.current_value || 0}/{g.target_value}{g.unit}</span>
-                      <span>{pct}%</span>
+        <BackArrow href="/" title="Мои цели" extra={
+          globalGoals.length > 0 && (
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, maxWidth: '58%', minWidth: 0 }}>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>Цели компании</span>
+              <div className="global-goals-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                {globalGoals.map(g => {
+                  const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
+                  return (
+                    <div key={g.id} title={`${g.title}: ${g.current_value || 0}/${g.target_value}${g.unit || ''} (${pct}%)`} style={{ flex: '0 0 118px', padding: '6px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{g.title}</div>
+                      <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#137a39' : '#8a6208' }} />
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>{pct}%</div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        } />
 
         {/* Постоянная сетка на весь остаток страницы: основной контент
             (фильтр периода + карточки показателей) слева, узкая колонка
@@ -186,6 +177,7 @@ export default function GoalsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: cur ? '1fr minmax(240px, 280px)' : '1fr', gap: 20, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Seg active={mode === 'month'} onClick={() => setMode('month')}>Текущий месяц</Seg>
               <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
               <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
               <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
@@ -299,32 +291,6 @@ export default function GoalsPage() {
             </div>
           )}
         </div>
-
-        {oldGoals.length > 0 && (
-          <>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Глобальные цели на период</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>Количественные цели руководителя. Прогресс обновляет руководитель.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
-              {oldGoals.map(g => {
-                const pct = Math.min(100, ((g.current_value || 0) / (g.target_value || 1)) * 100)
-                const done = pct >= 100
-                return (
-                  <div key={g.id} style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 18, border: '1px solid var(--border-subtle)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                      <span style={{ color: 'var(--text-primary)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 auto' }}>{g.title || g.goal_type}</span>
-                      <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0, background: done ? 'rgba(74,222,128,0.15)' : 'rgba(255,215,0,0.12)', color: done ? '#4ade80' : '#FFD700' }}>{done ? 'Выполнено' : `${Math.round(pct)}%`}</span>
-                    </div>
-                    <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={12} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 5 }}>
-                      <span>Сейчас: {g.current_value ?? 0}</span>
-                      <span>Цель: {g.target_value}</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
 
         {(myTests.length > 0 || myViews.length > 0) && (
           <div style={{ marginTop: 40 }}>

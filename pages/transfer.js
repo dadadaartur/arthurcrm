@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useRouter } from 'next/router'
 import BackArrow from '../components/BackArrow'
-import { useFeedback } from '../context/ActionFeedbackContext'
+import PaymentSeal from '../components/PaymentSeal'
 
 // РАНЬШЕ получатель выбирался вводом email вручную. Теперь — поиск по
 // коллегам из своей же компании (имя/фамилия/email) с выпадающим списком.
@@ -10,7 +10,6 @@ import { useFeedback } from '../context/ActionFeedbackContext'
 // view colleagues" на profiles уже разрешает видеть всех сотрудников своей
 // компании, отдельный API-роут для этого не нужен.
 export default function Transfer() {
-  const { showSuccess, showError } = useFeedback()
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [balance, setBalance] = useState(0)
@@ -23,6 +22,7 @@ export default function Transfer() {
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [seal, setSeal] = useState(null)
   const wrapRef = useRef(null)
 
   useEffect(() => {
@@ -136,10 +136,10 @@ export default function Transfer() {
         setError(result.error || 'Ошибка перевода')
       } else {
         setBalance(result.newBalance)
+        setSeal({ amount: transferAmount, name: colleagueName(selected) })
         clearSelection()
         setAmount('')
         setComment('')
-        showSuccess('Перевод выполнен')
       }
     } catch (err) {
       console.error('[transfer] client error', err)
@@ -259,6 +259,7 @@ export default function Transfer() {
           </button>
         </form>
       </div>
+      {seal && <PaymentSeal mode="success" amount={seal.amount} label={`кармиков отправлено · ${seal.name}`} onDone={() => setSeal(null)} />}
     </div>
   )
 }
