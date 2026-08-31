@@ -6,7 +6,7 @@ import DatePicker from '../components/DatePicker'
 import ProgressBar3D from '../components/ProgressBar3D'
 import LevelPathModal from '../components/LevelPathModal'
 import TrainingVideoModal from '../components/TrainingVideoModal'
-import WheelOfFortune from '../components/WheelOfFortune'
+import GiftRibbon from '../components/GiftRibbon'
 import { useFeedback } from '../context/ActionFeedbackContext'
 import { BAND_LABELS, BAND_COLORS, bandRankOf, bandFor, rangeValue, resolveThresholds } from '../lib/kpi'
 import PeriodHint, { PERIOD_LABELS } from '../components/PeriodHint'
@@ -149,92 +149,53 @@ export default function GoalsPage() {
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/" title="Мои цели" extra={
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
-            {wheelSpins > 0 && (
-              <button onClick={async () => {
-                setWheelResult(null); setWheelOpen(true)
-                if (!wheelConfig) {
-                  const { data: { session } } = await supabase.auth.getSession()
-                  const r = await fetch('/api/company-admin/wheel-config', { headers: { Authorization: `Bearer ${session.access_token}` } })
-                  if (r.ok) setWheelConfig(await r.json())
-                }
-              }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(192,132,252,0.2), rgba(255,215,0,0.15))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 3v9l6 3" /></svg>
-                Колесо фортуны · {wheelSpins}
-              </button>
-            )}
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Энергия</div>
-              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.1, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
-              {next && <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>ещё {remaining} до «{next.name}»</div>}
+        <BackArrow href="/" title="Мои цели" />
+
+        {/* Цели компании — компактная горизонтальная лента, не вторая
+            колонка широкой строки-баннера, как раньше. Видна сразу,
+            но не отбирает у показателей вертикальное пространство. */}
+        {globalGoals.length > 0 && (
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: '12px 16px', border: '1px solid var(--border-gold)', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Цели компании</span>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>командные и разовые — не привязаны к вашим личным показателям</span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 2 }}>
+              {globalGoals.map(g => {
+                const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
+                return (
+                  <div key={g.id} style={{ flex: '0 0 200px', padding: 10, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
+                    <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={6} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: 'var(--text-secondary)' }}>
+                      <span>{g.current_value || 0}/{g.target_value}{g.unit}</span>
+                      <span>{pct}%</span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
-        } />
+        )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: cur ? 'minmax(280px, 420px) 1fr' : '1fr', gap: 16, marginBottom: 24, alignItems: 'stretch' }}>
-          {cur && (
-            <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 16, border: `1px solid ${cur.color}33` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
-                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь прогресса</button>
-              </div>
-              {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
-              {next ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
-                  <span>ещё {remaining} до «{next.name}»</span>
-                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
-                </div>
-              ) : <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Максимальный уровень достигнут</div>}
-              {tipsOpen && next && (
-                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {forecast.length === 0 && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Нет активных показателей для прогноза</p>}
-                  {forecast.slice(0, 2).map((f, i) => (
-                    <div key={i} style={{ fontSize: 11, color: 'var(--text-primary)', padding: '6px 10px', borderRadius: 8, background: 'var(--bg-page)' }}>
-                      «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b>: +{f.e} эн./день → ≈{f.days} дн.
-                    </div>
-                  ))}
-                </div>
-              )}
+        {/* Постоянная сетка на весь остаток страницы: основной контент
+            (фильтр периода + карточки показателей) слева, узкая колонка
+            энергии/уровня справа — не отдельная широкая строка сверху,
+            как раньше. sticky — колонка остаётся на виду при прокрутке
+            длинного списка показателей. */}
+        <div style={{ display: 'grid', gridTemplateColumns: cur ? '1fr minmax(240px, 280px)' : '1fr', gap: 20, alignItems: 'start' }}>
+          <div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
+              <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
+              <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
+              <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
+              <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
+              <div style={{ width: 180 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
             </div>
-          )}
 
-          {/* Цели компании — раньше сотрудник вообще не видел, что цели
-              задаются не только лично ему, но и команде/компании в целом */}
-          {globalGoals.length > 0 && (
-            <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 16, border: '1px solid var(--border-gold)', overflow: 'hidden' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Цели компании</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10 }}>командные и разовые цели, которые ставит руководитель — не привязаны к вашим личным показателям</div>
-              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
-                {globalGoals.map(g => {
-                  const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
-                  return (
-                    <div key={g.id} style={{ flex: '0 0 220px', padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</div>
-                      <ProgressBar3D value={g.current_value || 0} marks={[{ key: 't', value: g.target_value }]} height={6} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: 'var(--text-secondary)' }}>
-                        <span>{g.current_value || 0}/{g.target_value}{g.unit}</span>
-                        <span>{pct}%</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
-          <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
-          <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
-          <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
-          <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
-          <div style={{ width: 180 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))', gap: 18, marginBottom: 40 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 18, marginBottom: 40 }}>
           {data.metrics.map(m => {
             const { value, band, thresholds } = metricView(m)
             const myRank = bandRankOf(m, band)
@@ -285,6 +246,58 @@ export default function GoalsPage() {
             )
           })}
           {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Руководитель ещё не задал показатели</div>}
+            </div>
+          </div>
+
+          {/* Боковая колонка — энергия, уровень, путь прогресса, советы,
+              лента подарков. Раньше это была отдельная широкая строка
+              сверху страницы (пункт 6 фидбека от 31 августа 2026 — «пол
+              экрана пустого») — теперь узкая постоянная колонка, не
+              отбирает место у самих карточек показателей. */}
+          {cur && (
+            <div style={{ position: 'sticky', top: 20, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 18, border: `1px solid ${cur.color}33` }}>
+              <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Энергия</div>
+                <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
+                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь →</button>
+              </div>
+              {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
+              {next ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
+                  <span>ещё {remaining} до «{next.name}»</span>
+                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
+                </div>
+              ) : <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Максимальный уровень достигнут</div>}
+              {tipsOpen && next && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {forecast.length === 0 && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Нет активных показателей для прогноза</p>}
+                  {forecast.slice(0, 2).map((f, i) => (
+                    <div key={i} style={{ fontSize: 11, color: 'var(--text-primary)', padding: '6px 10px', borderRadius: 8, background: 'var(--bg-page)' }}>
+                      «{f.name}» ≥ <b style={{ color: f.color }}>{f.thr}{f.unit}</b>: +{f.e} эн./день → ≈{f.days} дн.
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {wheelSpins > 0 && (
+                <button onClick={async () => {
+                  setWheelResult(null); setWheelOpen(true)
+                  if (!wheelConfig) {
+                    const { data: { session } } = await supabase.auth.getSession()
+                    const r = await fetch('/api/company-admin/wheel-config', { headers: { Authorization: `Bearer ${session.access_token}` } })
+                    if (r.ok) setWheelConfig(await r.json())
+                  }
+                }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 14, padding: '10px 14px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(184,134,11,0.12))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
+                  Лента подарков · {wheelSpins}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {oldGoals.length > 0 && (
@@ -346,11 +359,11 @@ export default function GoalsPage() {
       {wheelOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !wheelSpinning && setWheelOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' }}>Колесо фортуны</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' }}>Лента подарков</h3>
             {wheelConfig === null ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Загрузка...</p>
             ) : wheelConfig.prizes?.length ? (
-              <WheelOfFortune
+              <GiftRibbon
                 prizes={wheelConfig.prizes}
                 spinning={wheelSpinning}
                 result={wheelResult}
@@ -363,12 +376,12 @@ export default function GoalsPage() {
                     if (!r.ok) { showError?.(d.error); setWheelSpinning(false); return }
                     spinTo(d.prizeId)
                     setWheelSpins(d.spinsLeft)
-                    setTimeout(() => { setWheelResult(d.prize); setWheelSpinning(false) }, 4600)
-                  } catch (e) { setWheelSpinning(false) }
+                    setTimeout(() => { setWheelResult(d.prize); setWheelSpinning(false) }, 4300)
+                  } catch (e) { showError?.('Не получилось прокрутить ленту — проверьте соединение'); setWheelSpinning(false) }
                 }}
               />
             ) : (
-              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Колесо пока не настроено</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Лента подарков пока не настроена</p>
             )}
             <button onClick={() => setWheelOpen(false)} className="btn-outline" style={{ marginTop: 24, minWidth: 120 }}>Закрыть</button>
           </div>
