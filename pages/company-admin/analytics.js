@@ -148,7 +148,7 @@ function AnalyticsAdmin() {
             return (
               <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -246,7 +246,7 @@ function AnalyticsAdmin() {
               </div>
               {rows.map(r => (
                 <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={empName(r.emp.user_id)}>{empName(r.emp.user_id)}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(r.emp.user_id)}</div>
                   {r.cells.map(c => (
                     <div key={c.m.id} style={{ textAlign: 'center' }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>

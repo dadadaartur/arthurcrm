@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     const { enabled, levels_per_spin, prizes } = req.body || {}
     if (!Array.isArray(prizes)) return res.status(400).json({ error: 'Некорректный список призов' })
     const totalWeight = prizes.reduce((s, p) => s + (Number(p.weight) || 0), 0)
-    if (enabled && (prizes.length === 0 || totalWeight <= 0)) return res.status(400).json({ error: 'Добавьте хотя бы один приз с весом больше 0, чтобы включить колесо' })
+    if (enabled && (prizes.length === 0 || totalWeight <= 0)) return res.status(400).json({ error: 'Добавьте хотя бы один приз с весом больше 0, чтобы включить ленту подарков' })
     const { error } = await a.from('wheel_configs').upsert({
       company_id: companyId,
       enabled: !!enabled,

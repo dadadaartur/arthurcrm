@@ -17,6 +17,7 @@ const TEXT_COLOR = {
 }
 
 const CARDS = [
+  { key: 'analytics', title: 'Аналитика показателей', sub: 'Дашборды, динамика, тревоги', href: '/company-admin/analytics', color: '#4ade80', accent: '#FFD700', primary: true },
   { key: 'goals', title: 'Управление целями', sub: 'KPI, пороги, тренинги, типы расчёта', href: '/company-admin/mastery', color: '#FFD700', accent: '#c084fc', primary: true },
   { key: 'tasks', title: 'Управление заданиями', sub: 'Создание, назначение, награды', href: '/company-admin/tasks', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'employees', title: 'Команда', sub: 'Сотрудники, должности, доступы', href: '/company-admin/employees', color: '#a0e9ff', accent: '#FFD700', primary: true },
@@ -24,9 +25,8 @@ const CARDS = [
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
   { key: 'global', title: 'Глобальные цели', sub: 'Стратегические цели компании', href: '/company-admin/global-goals', color: '#FFD700', accent: '#ffb3c6', primary: true },
-  { key: 'wheel', title: 'Колесо фортуны', sub: 'Призы за рост уровня мастерства', href: '/company-admin/wheel', color: '#c084fc', accent: '#FFD700' },
+  { key: 'wheel', title: 'Лента подарков', sub: 'Призы за рост уровня мастерства', href: '/company-admin/wheel', color: '#7c3aed', accent: '#8a6208' },
   { key: 'results', title: 'Результаты команды', sub: 'Аналитика и динамика', href: '/company-admin/results', color: '#a0e9ff', accent: '#4ade80' },
-  { key: 'analytics', title: 'Аналитика показателей', sub: 'Дашборды, динамика, тревоги', href: '/company-admin/analytics', color: '#4ade80', accent: '#FFD700' },
   { key: 'learn', title: 'Обучение', sub: 'Тренинги и тесты, превью', href: '/company-admin/learn', color: '#c084fc', accent: '#4ade80' },
   { key: 'levels', title: 'Уровни прогресса', sub: 'Архитектура роста', href: '/company-admin/progress', color: '#c084fc', accent: '#ffb3c6' },
   { key: 'resources', title: 'Ресурсы', sub: 'Фонд, тариф, пополнение', href: '/company-admin/resources', color: '#FFD700', accent: '#a0e9ff' },
@@ -102,7 +102,7 @@ function CompanyAdminDashboard() {
       const [tR, eR, gR] = await Promise.all([
         supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('company_id', cid).eq('is_active', true).eq('is_archived', false),
         supabase.from('profiles').select('user_id', { count: 'exact', head: true }).eq('company_id', cid).is('deleted_at', null).eq('is_company_admin', false),
-        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('company_id', cid).eq('is_active', true)
+        supabase.from('kpi_metrics').select('id', { count: 'exact', head: true }).eq('company_id', cid).eq('is_active', true)
       ])
       const { data: tasks } = await supabase.from('tasks').select('id').eq('company_id', cid).eq('is_archived', false)
       const taskIds = (tasks || []).map(t => t.id)

@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const companyId = ctx.profile?.company_id
 
   const { data: config } = await a.from('wheel_configs').select('*').eq('company_id', companyId).maybeSingle()
-  if (!config?.enabled || !config.prizes?.length) return res.status(400).json({ error: 'Колесо фортуны не настроено' })
+  if (!config?.enabled || !config.prizes?.length) return res.status(400).json({ error: 'Лента подарков не настроена' })
 
   const { data: profile } = await a.from('profiles').select('wheel_spins_available').eq('user_id', ctx.user.id).maybeSingle()
   if (!profile || (profile.wheel_spins_available || 0) <= 0) return res.status(400).json({ error: 'Нет доступных попыток' })

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
-import WheelOfFortune from '../../components/WheelOfFortune'
+import GiftRibbon from '../../components/GiftRibbon'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
@@ -52,7 +52,7 @@ function WheelAdmin() {
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/company-admin" title="Колесо фортуны" extra={
+        <BackArrow href="/company-admin" title="Лента подарков" extra={
           <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: config.enabled ? '#137a39' : 'var(--text-secondary)', cursor: 'pointer' }}>
             <input type="checkbox" checked={config.enabled} onChange={e => setConfig({ ...config, enabled: e.target.checked })} style={{ accentColor: '#137a39' }} />
             {config.enabled ? 'Включено' : 'Выключено'}
@@ -87,7 +87,7 @@ function WheelAdmin() {
                   </button>
                 </div>
               ))}
-              {config.prizes.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Призов пока нет — добавьте хотя бы один, чтобы включить колесо.</p>}
+              {config.prizes.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Призов пока нет — добавьте хотя бы один, чтобы включить ленту.</p>}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={addPrize} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>+ Приз</button>
@@ -98,9 +98,9 @@ function WheelAdmin() {
           <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 26, border: '1px solid var(--border-gold)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>Предпросмотр</div>
             {config.prizes.length > 0 ? (
-              <WheelOfFortune prizes={config.prizes} onSpin={() => {}} spinning={false} result={null} />
+              <GiftRibbon prizes={config.prizes} onSpin={() => {}} spinning={false} result={null} />
             ) : (
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Добавьте призы, чтобы увидеть колесо</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Добавьте призы, чтобы увидеть ленту</p>
             )}
           </div>
         </div>

@@ -69,7 +69,6 @@ function ResultsAdmin() {
             <option value="">Все показатели</option>
             {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Сотрудников: {sorted.length}</span>
         </div>
 
         {/* Пьедестал */}

@@ -49,6 +49,8 @@ function GlobalGoals() {
   const [filter, setFilter] = useState('all')
   const [form, setForm] = useState({ title: '', category: 'financial', description: '', metric: '', target_value: 100, unit: '%', period: 'quarter', deadline: '' })
   const [editingProgress, setEditingProgress] = useState({})
+  const [savingProgress, setSavingProgress] = useState({})
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -72,12 +74,14 @@ function GlobalGoals() {
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) { showError('Укажите название цели'); return }
+    setCreating(true)
     const { error } = await supabase.from('global_goals').insert({
       company_id: companyId, title: form.title, category: form.category,
       description: form.description, metric: form.metric,
       target_value: Number(form.target_value) || 0, unit: form.unit,
       period: form.period, deadline: form.deadline || null
     })
+    setCreating(false)
     if (error) { showError('Ошибка создания: ' + error.message); return }
     showSuccess('Глобальная цель создана')
     setForm({ title: '', category: 'financial', description: '', metric: '', target_value: 100, unit: '%', period: 'quarter', deadline: '' })
@@ -87,7 +91,9 @@ function GlobalGoals() {
   const saveProgress = async (goal) => {
     const val = editingProgress[goal.id]
     if (val === undefined || val === '') { showError('Введите значение'); return }
+    setSavingProgress(p => ({ ...p, [goal.id]: true }))
     const { error } = await supabase.from('global_goals').update({ current_value: Number(val) }).eq('id', goal.id)
+    setSavingProgress(p => ({ ...p, [goal.id]: false }))
     if (error) { showError('Ошибка сохранения'); return }
     showSuccess('Прогресс обновлён')
     setEditingProgress(p => ({ ...p, [goal.id]: undefined }))
@@ -148,7 +154,7 @@ function GlobalGoals() {
               <div>
                 <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Единица</label>
                 <select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
-                  <option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="балл">балл</option>
+                  <option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="балл">балл</option><option value="мин">мин</option>
                 </select>
               </div>
               <div>
@@ -160,7 +166,7 @@ function GlobalGoals() {
                 <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div style={{ gridColumn: 'span 4' }}>
-                <button type="submit" style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
+                <button type="submit" disabled={creating} style={{ ...ghostBtn, opacity: creating ? 0.6 : 1, cursor: creating ? 'default' : 'pointer' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{creating ? 'Создаём...' : 'Создать цель'}</button>
               </div>
             </div>
           </form>
@@ -211,13 +217,19 @@ function GlobalGoals() {
                 <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
                   <input type="number" step="0.1" placeholder="Новое значение" className="input-field" style={{ flex: 1 }}
                     value={editingProgress[g.id] ?? ''} onChange={e => setEditingProgress(p => ({ ...p, [g.id]: e.target.value }))} />
-                  <button onClick={() => saveProgress(g)} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, whiteSpace: 'nowrap' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Обновить</button>
+                  <button onClick={() => saveProgress(g)} disabled={savingProgress[g.id]} style={{ ...ghostBtn, display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', fontSize: 12, whiteSpace: 'nowrap', opacity: savingProgress[g.id] ? 0.75 : 1, cursor: savingProgress[g.id] ? 'default' : 'pointer' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+                    {savingProgress[g.id] && <span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#8a6208', animation: 'ggSpin 0.7s linear infinite', flexShrink: 0 }} />}
+                    {savingProgress[g.id] ? 'Сохраняем...' : 'Обновить'}
+                  </button>
                 </div>
               </div>
             )
           })}
         </div>
       </div>
+      <style jsx>{`
+        @keyframes ggSpin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   )
 }
