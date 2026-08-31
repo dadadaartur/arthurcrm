@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-const ghostBtn = { background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '8px 18px', color: '#fff', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
+const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '8px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
 
 export default function LevelPathModal({ open, onClose, energy = 0, canEdit = false }) {
   const [levels, setLevels] = useState([])
@@ -43,11 +43,11 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
   levels.forEach((l, i) => { if (Number(energy) >= Number(l.energy_threshold)) currentIdx = i })
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 680, maxHeight: '88vh', overflowY: 'auto', background: 'linear-gradient(145deg, #152238, #0a1628)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 26 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(8px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 680, maxHeight: '88vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 26 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <h3 style={{ fontSize: 19, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #FFD700, #a0e9ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Путь прогресса в компании</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+          <h3 style={{ fontSize: 19, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Путь прогресса в компании</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
           </button>
         </div>
@@ -60,33 +60,33 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
             return (
               <div key={l.id} style={{ display: 'flex', gap: 14 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: isPassed || isCurrent ? l.color : 'rgba(255,255,255,0.1)', border: `2px solid ${l.color}`, boxShadow: isCurrent ? `0 0 14px ${l.color}` : 'none', flexShrink: 0 }} />
-                  {i < levels.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 26, background: isPassed ? l.color : 'rgba(255,255,255,0.1)' }} />}
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: isPassed || isCurrent ? l.color : 'var(--bg-page)', border: `2px solid ${l.color}`, boxShadow: isCurrent ? `0 0 14px ${l.color}` : 'none', flexShrink: 0 }} />
+                  {i < levels.length - 1 && <div style={{ width: 2, flex: 1, minHeight: 26, background: isPassed ? l.color : 'var(--border-subtle)' }} />}
                 </div>
                 <div style={{ flex: 1, paddingBottom: 18, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: isCurrent ? l.color : '#fff' }}>{l.name}</span>
-                    <span style={{ fontSize: 11, color: '#888' }}>от {l.energy_threshold} энергии</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>от {l.energy_threshold} энергии</span>
                     {isCurrent && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: `${l.color}22`, color: l.color, border: `1px solid ${l.color}55`, whiteSpace: 'nowrap' }}>вы здесь</span>}
-                    {isNext && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', color: '#aaa', border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>ещё {l.energy_threshold - energy} энергии</span>}
+                    {isNext && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'var(--bg-page)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)', whiteSpace: 'nowrap' }}>ещё {l.energy_threshold - energy} энергии</span>}
                   </div>
-                  {l.description && <p style={{ fontSize: 12, color: '#888', margin: '4px 0 0' }}>{l.description}</p>}
+                  {l.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{l.description}</p>}
                   {canEdit && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                       <button onClick={() => { setEditingId(l.id); setForm({ name: l.name, energy_threshold: l.energy_threshold, color: l.color, description: l.description || '' }) }} style={{ ...ghostBtn, padding: '4px 12px', fontSize: 11 }}>Изменить</button>
-                      <button onClick={() => del(l.id)} style={{ ...ghostBtn, padding: '4px 12px', fontSize: 11, borderColor: 'rgba(244,67,54,0.4)', color: '#f87171' }}>Удалить</button>
+                      <button onClick={() => del(l.id)} style={{ ...ghostBtn, padding: '4px 12px', fontSize: 11, borderColor: 'rgba(220,38,38,0.35)', color: '#dc2626' }}>Удалить</button>
                     </div>
                   )}
                 </div>
               </div>
             )
           })}
-          {levels.length === 0 && <p style={{ color: '#777', fontSize: 13 }}>Уровни ещё не настроены.</p>}
+          {levels.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Уровни ещё не настроены.</p>}
         </div>
 
         {canEdit && (
-          <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>{editingId ? 'Изменить уровень' : 'Добавить уровень'}</h4>
+          <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 10px' }}>{editingId ? 'Изменить уровень' : 'Добавить уровень'}</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 90px', gap: 8 }}>
               <input className="input-field" placeholder="Название уровня" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               <input className="input-field" type="number" placeholder="Энергия" value={form.energy_threshold} onChange={e => setForm({ ...form, energy_threshold: e.target.value })} />

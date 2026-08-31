@@ -193,6 +193,7 @@ export default function Layout({ children }) {
           <nav className="flex gap-2 flex-wrap">
             <Link href="/goals" style={navPill}>Мои цели</Link>
             {isSuperAdmin && <Link href="/admin" style={navPill}>Админ</Link>}
+            {isSuperAdmin && <Link href="/central-bank" style={navPill}>Центробанк</Link>}
             {isPlatformStaff && <Link href="/platform-admin" style={navPill}>Модерация площадки</Link>}
             {isCompanyAdmin && <Link href="/company-admin" style={navPill}>Управление</Link>}
             {isCompanyAdmin && <Link href="/company-admin/results" style={navPill}>Результаты</Link>}
