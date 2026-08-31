@@ -1,81 +1,66 @@
 import { useEffect, useState } from 'react'
 
+// Уведомление об успехе/ошибке действия — переделано 31 августа 2026
+// (по обратной связи: было «старое, чёрное», летящие кометы + взрыв
+// частиц + блокирующий весь экран оверлей, без автозакрытия). Это
+// используется в 23 местах проекта на любое рутинное действие
+// (сохранил профиль, создал сотрудника, отправил задание) — для такой
+// частоты полноэкранная кинематографичная сцена, как у зачисления
+// денег, была бы навязчивой, а не премиальной. Здесь другой принцип:
+// компактный, ненавязчивый тост сверху, не блокирует страницу под
+// собой, закрывается сам — премиальность через сдержанность, а не
+// через зрелищность.
 export default function ActionFeedback({ state, onClose }) {
-  const [stage, setStage] = useState('idle')
+  const [visible, setVisible] = useState(false)
   const nonce = state?.nonce
+
   useEffect(() => {
-    if (!state?.open) { setStage('idle'); return }
-    setStage('flying')
-    const t1 = setTimeout(() => setStage('explode'), 1000)
-    const t2 = setTimeout(() => setStage('show'), 1600)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    if (!state?.open) { setVisible(false); return }
+    // Кадр на смену DOM перед стартом transition — иначе браузер может
+    // схлопнуть появление и исчезновение в один кадр без анимации.
+    const raf = requestAnimationFrame(() => setVisible(true))
+    const hideAt = state.type === 'error' ? 5000 : 3200
+    const t = setTimeout(() => setVisible(false), hideAt)
+    const closeAt = hideAt + 400 // даём время на анимацию исчезновения
+    const t2 = setTimeout(onClose, closeAt)
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(t2) }
   }, [nonce, state?.open])
 
   if (!state?.open) return null
   const isSuccess = state.type === 'success'
-  const accent = isSuccess ? '#FFD700' : '#f87171'
-  const accent2 = isSuccess ? '#4ade80' : '#ef4444'
+  const accent = isSuccess ? '#137a39' : '#dc2626'
 
   return (
-    <div key={nonce} style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', animation: 'afOverlayIn 0.5s ease-out' }}>
-      <div style={{ position: 'absolute', left: stage === 'flying' ? '50%' : '-20%', top: stage === 'flying' ? '50%' : '30%', transform: 'translate(-50%,-50%) rotate(20deg)', transition: stage === 'flying' ? 'all 1s cubic-bezier(0.3,0.7,0.3,1)' : 'none', opacity: stage === 'flying' ? 1 : 0, filter: 'blur(1px)' }}><CometTail color={accent} /></div>
-      <div style={{ position: 'absolute', right: stage === 'flying' ? '50%' : '-20%', top: stage === 'flying' ? '50%' : '70%', transform: 'translate(50%,-50%) rotate(-20deg) scaleX(-1)', transition: stage === 'flying' ? 'all 1s cubic-bezier(0.3,0.7,0.3,1)' : 'none', opacity: stage === 'flying' ? 1 : 0, filter: 'blur(1px)' }}><CometTail color={accent2} /></div>
-
-      {(stage === 'explode' || stage === 'show') && (
-        <div style={{ position: 'absolute', left: '50%', top: '50%' }}>
-          {Array.from({ length: 26 }).map((_, i) => {
-            const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.3
-            const dist = 90 + Math.random() * 140
-            const size = 3 + Math.random() * 7
-            const c = i % 2 ? accent : accent2
-            return <span key={i} className="af-p" style={{ '--dx': Math.cos(angle) * dist + 'px', '--dy': Math.sin(angle) * dist + 'px', width: size, height: size, background: c, borderRadius: `${40 + Math.random() * 30}% ${60 - Math.random() * 30}% ${50 + Math.random() * 20}% ${50 - Math.random() * 20}%`, filter: `blur(${1 + Math.random() * 2}px)`, boxShadow: `0 0 ${size * 2.5}px ${c}` }} />
-          })}
-          <div className="af-ring" style={{ borderColor: accent, filter: 'blur(2px)' }} />
-          <div className="af-ring2" style={{ borderColor: accent2, filter: 'blur(4px)' }} />
-        </div>
-      )}
-
-      <div style={{ position: 'relative', zIndex: 2, maxWidth: 460, width: '90%', padding: '34px 30px 26px', borderRadius: 24, background: 'linear-gradient(150deg, rgba(24,30,54,0.96), rgba(10,14,28,0.98))', border: `1px solid ${accent}55`, boxShadow: `0 0 60px ${accent}33, 0 20px 60px rgba(0,0,0,0.6)`, backdropFilter: 'blur(16px)', textAlign: 'center', opacity: stage === 'show' ? 1 : 0, transform: stage === 'show' ? 'scale(1)' : 'scale(0.85)', transition: 'all 0.6s cubic-bezier(0.34,1.4,0.5,1)' }}>
-        <button onClick={onClose} className="af-close" title="Закрыть">
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-            <circle cx="17" cy="17" r="15" stroke={accent} strokeOpacity="0.5" strokeWidth="1" strokeDasharray="4 5" className="af-close-ring" />
-            <path d="M12 12 L22 22 M22 12 L12 22" stroke={accent} strokeWidth="2" strokeLinecap="round" className="af-close-x" />
-          </svg>
-        </button>
-        <div style={{ width: 92, height: 92, margin: '0 auto 18px', borderRadius: '50%', background: `radial-gradient(circle, ${accent}33, transparent 70%)`, border: `1.5px solid ${accent}77`, boxShadow: `0 0 40px ${accent}55, inset 0 0 24px ${accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div key={nonce} style={{ position: 'fixed', top: 20, left: 0, right: 0, zIndex: 9999, display: 'flex', justifyContent: 'center', pointerEvents: 'none', padding: '0 16px' }}>
+      <div
+        role="status"
+        style={{
+          pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 12,
+          maxWidth: 420, padding: '13px 18px 13px 14px', borderRadius: 16,
+          background: 'var(--bg-card, #fff)', border: `1px solid ${accent}40`,
+          boxShadow: '0 10px 30px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.08)',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0)' : 'translateY(-14px)',
+          transition: 'opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        <span style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: `${accent}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {isSuccess ? (
-            <svg width="46" height="46" viewBox="0 0 60 60" fill="none"><path className="af-draw" d="M14 31 L26 43 L46 18" stroke={accent} strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 12px ${accent})` }} /></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke={accent} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" className="af-draw" /></svg>
           ) : (
-            <svg width="46" height="46" viewBox="0 0 60 60" fill="none"><path className="af-draw" d="M18 18 L42 42" stroke={accent} strokeWidth="4.5" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 12px ${accent})` }} /><path className="af-draw2" d="M42 18 L18 42" stroke={accent} strokeWidth="4.5" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 12px ${accent})` }} /></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke={accent} strokeWidth="2.6" strokeLinecap="round" className="af-draw" /></svg>
           )}
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: '#fff', lineHeight: 1.5, textShadow: `0 0 20px ${accent}66` }}>{state.message}</div>
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #161b28)', lineHeight: 1.4, flex: 1 }}>{state.message}</span>
+        <button onClick={() => { setVisible(false); setTimeout(onClose, 300) }} aria-label="Закрыть" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0, color: 'var(--text-muted, #94a0b8)', display: 'flex' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+        </button>
       </div>
 
       <style jsx>{`
-        @keyframes afOverlayIn { from { opacity: 0; } to { opacity: 1; } }
-        .af-p { position: absolute; left: 0; top: 0; animation: afFly 1.4s cubic-bezier(0.15,0.9,0.25,1) forwards; }
-        @keyframes afFly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 70% { opacity: 0.9; } 100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; } }
-        .af-ring, .af-ring2 { position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 2px solid; animation: afRing 1.1s ease-out forwards; }
-        .af-ring2 { animation-delay: 0.15s; }
-        @keyframes afRing { 0% { transform: scale(0.3); opacity: 1; } 100% { transform: scale(9); opacity: 0; } }
-        .af-draw { stroke-dasharray: 70; stroke-dashoffset: 70; animation: afDraw 0.6s ease-out 0.1s forwards; }
-        .af-draw2 { stroke-dasharray: 40; stroke-dashoffset: 40; animation: afDraw 0.5s ease-out 0.35s forwards; }
+        .af-draw { stroke-dasharray: 24; stroke-dashoffset: 24; animation: afDraw 0.35s ease-out 0.15s forwards; }
         @keyframes afDraw { to { stroke-dashoffset: 0; } }
-        .af-close { position: absolute; top: 12px; right: 12px; background: none; border: none; cursor: pointer; padding: 4px; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-        .af-close:hover { transform: rotate(90deg) scale(1.12); }
-        .af-close-ring { transform-origin: 17px 17px; animation: afSpin 6s linear infinite; }
-        @keyframes afSpin { to { transform: rotate(360deg); } }
       `}</style>
-    </div>
-  )
-}
-
-function CometTail({ color }) {
-  return (
-    <div style={{ position: 'relative', width: 240, height: 8 }}>
-      <div style={{ position: 'absolute', left: 0, top: 2, width: 200, height: 4, borderRadius: 4, background: `linear-gradient(90deg, transparent, ${color}66, ${color})`, filter: 'blur(3px)' }} />
-      <div style={{ position: 'absolute', right: 0, top: 0, width: 12, height: 12, borderRadius: '50%', background: `radial-gradient(circle, #fff, ${color})`, boxShadow: `0 0 24px ${color}, 0 0 48px ${color}88`, filter: 'blur(0.5px)' }} />
     </div>
   )
 }

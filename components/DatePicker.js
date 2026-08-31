@@ -115,7 +115,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
         className="input-field flex items-center justify-between text-left"
         style={{ cursor: 'pointer', minHeight: 42 }}
       >
-        <span style={{ color: value ? '#eaf0fb' : '#66788f', fontSize: 14 }}>
+        <span style={{ opacity: value ? 1 : 0.55, fontSize: 14 }}>
           {value ? fmtHuman(value) : placeholder}
         </span>
         {/* Фирменный тонкий глиф календаря */}

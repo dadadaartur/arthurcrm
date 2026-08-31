@@ -32,12 +32,12 @@ export default function TrainingVideoModal({ training, onClose }) {
 
   if (!training) return null
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(880px, 94vw)', background: 'linear-gradient(150deg, rgba(24,30,54,0.97), rgba(10,14,28,0.98))', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 20, padding: 20, position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: '#888', cursor: 'pointer', zIndex: 6 }}><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: '0 0 14px', paddingRight: 30 }}>{training.title}</h3>
-        {err ? <p style={{ color: '#f87171', fontSize: 13 }}>{err}</p>
-          : !url ? <p style={{ color: '#888', fontSize: 13 }}>Получаем защищённую ссылку…</p>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(880px, 94vw)', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 20, position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', zIndex: 6 }}><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 14px', paddingRight: 30 }}>{training.title}</h3>
+        {err ? <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>
+          : !url ? <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Получаем защищённую ссылку…</p>
           : <VideoPlayer src={url}
               onProgress={(t, d) => { stateRef.current = { time: t, duration: d || stateRef.current.duration } }}
               onEnded={() => logView(true)} />}

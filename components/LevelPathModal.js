@@ -5,6 +5,7 @@ const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border
 
 export default function LevelPathModal({ open, onClose, energy = 0, canEdit = false }) {
   const [levels, setLevels] = useState([])
+  const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', energy_threshold: '', color: '#FFD700', description: '' })
 
@@ -16,8 +17,9 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
     const h = await auth()
     const r = await fetch('/api/kpi/levels', { headers: h })
     if (r.ok) setLevels(await r.json())
+    setLoading(false)
   }
-  useEffect(() => { if (open) load() }, [open])
+  useEffect(() => { if (open) { setLoading(true); load() } }, [open])
 
   const save = async () => {
     if (!form.name) return
@@ -53,6 +55,21 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div className="lp-skel" style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0 }} />
+                  {i < 3 && <div className="lp-skel" style={{ width: 2, flex: 1, minHeight: 26 }} />}
+                </div>
+                <div style={{ flex: 1, paddingBottom: 18, minWidth: 0 }}>
+                  <div className="lp-skel" style={{ width: `${120 + i * 20}px`, height: 15, borderRadius: 4, marginBottom: 8 }} />
+                  <div className="lp-skel" style={{ width: '70%', height: 11, borderRadius: 4 }} />
+                </div>
+              </div>
+            ))
+          ) : (
+          <>
           {levels.map((l, i) => {
             const isCurrent = i === currentIdx
             const isPassed = i < currentIdx
@@ -82,7 +99,14 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
             )
           })}
           {levels.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Уровни ещё не настроены.</p>}
+          </>
+          )}
         </div>
+
+        <style jsx>{`
+          .lp-skel { background: var(--border-subtle); animation: lpPulse 1.3s ease-in-out infinite; }
+          @keyframes lpPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        `}</style>
 
         {canEdit && (
           <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>

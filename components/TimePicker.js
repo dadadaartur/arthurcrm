@@ -79,7 +79,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
         className="input-field flex items-center justify-between text-left"
         style={{ cursor: 'pointer', minHeight: 42 }}
       >
-        <span style={{ color: value ? '#eaf0fb' : '#66788f', fontSize: 14 }}>{value || placeholder}</span>
+        <span style={{ opacity: value ? 1 : 0.55, fontSize: 14 }}>{value || placeholder}</span>
         {/* Тонкие золотые часы */}
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
           <circle cx="8" cy="8" r="6.5" stroke="#D4AF37" strokeWidth="1.2" />

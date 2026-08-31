@@ -90,7 +90,9 @@ export default function AdaptationPlanView({ kind, title, emptyText }) {
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <BackArrow href="/" title={title} />
 
-        {!plan ? (
+        {loading ? (
+          <LoadingScreen />
+        ) : !plan ? (
           <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>
             {emptyText}
           </div>
