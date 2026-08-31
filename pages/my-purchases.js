@@ -114,7 +114,7 @@ export default function MyPurchases() {
   const filteredPurchases = filterType === 'all' ? purchases : purchases.filter(p => p.status === filterType)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', fontFamily: 'Inter, sans-serif', color: '#fff', padding: '20px', position: 'relative' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '20px', position: 'relative' }}>
       <Head><title>Мои покупки | Кармический банк</title></Head>
 
       <div style={{ position: 'relative', zIndex: 1, margin: '0 auto' }}>
@@ -127,16 +127,7 @@ export default function MyPurchases() {
             <button
               key={status}
               onClick={() => setFilterType(status)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 20,
-                border: '1px solid rgba(255,215,0,0.3)',
-                background: filterType === status ? 'rgba(255,215,0,0.2)' : 'transparent',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: 13,
-                backdropFilter: 'blur(8px)'
-              }}
+              className={`filter-pill ${filterType === status ? 'active' : ''}`}
             >
               {status === 'all' ? 'Все' : statusLabels[status]}
             </button>
@@ -144,7 +135,7 @@ export default function MyPurchases() {
         </div>
 
         {filteredPurchases.length === 0 ? (
-          <p style={{ color: '#aaa' }}>Нет покупок</p>
+          <p style={{ color: 'var(--text-muted)' }}>Нет покупок</p>
         ) : (
           <div style={{
             display: 'grid',
@@ -156,8 +147,8 @@ export default function MyPurchases() {
               const word = getKarmikWord(p.cost)
               return (
                 <div key={p.id} style={{
-                  background: 'rgba(15, 20, 35, 0.8)', backdropFilter: 'blur(10px)', borderRadius: 20,
-                  border: '1px solid rgba(255,255,255,0.1)', padding: 20,
+                  background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20,
+                  border: '1px solid var(--border-subtle)', padding: 20,
                   display: 'flex', flexDirection: 'column',
                   minHeight: 360
                 }}>
@@ -165,34 +156,32 @@ export default function MyPurchases() {
                     <img src={p.image_url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 12, marginBottom: 12 }} />
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 11, color: '#aaa' }}>{new Date(p.created_at).toLocaleDateString('ru')}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{new Date(p.created_at).toLocaleDateString('ru')}</span>
                     <span style={{
                       padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                      background: p.status === 'approved' ? 'rgba(0,200,100,0.2)' : p.status === 'pending' ? 'rgba(255,200,0,0.2)' : p.status === 'rejected' ? 'rgba(255,0,0,0.2)' : 'rgba(100,100,255,0.2)',
-                      color: p.status === 'approved' ? '#0f0' : p.status === 'pending' ? '#FFD700' : p.status === 'rejected' ? '#f44' : '#aaf'
+                      background: p.status === 'approved' ? 'rgba(19,122,57,0.1)' : p.status === 'pending' ? 'rgba(180,83,9,0.1)' : p.status === 'rejected' ? 'rgba(220,38,38,0.1)' : 'rgba(37,99,235,0.1)',
+                      color: p.status === 'approved' ? '#137a39' : p.status === 'pending' ? '#b45309' : p.status === 'rejected' ? '#dc2626' : '#2563eb'
                     }}>
                       {statusLabels[p.status] || p.status}
                     </span>
                   </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>{p.reward_name}</h3>
-                  <p style={{ color: '#ccc', marginBottom: 10, fontSize: 13 }}>{p.cost} {word}</p>
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>{p.reward_name}</h3>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 10, fontSize: 13 }}>{p.cost} {word}</p>
 
                   {p.certificate_data && (
                     <div style={{
-                      background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,180,0,0.1))',
-                      border: '1px solid rgba(255,215,0,0.5)', borderRadius: 12, padding: 12, marginTop: 'auto'
+                      background: 'rgba(184,134,11,0.06)',
+                      border: '1px solid var(--border-gold)', borderRadius: 12, padding: 12, marginTop: 'auto'
                     }}>
-                      <h4 style={{ fontSize: 14, color: '#FFD700', marginBottom: 4 }}>Сертификат</h4>
-                      {p.certificate_data.valid_date && <p style={{ fontSize: 12 }}>Действителен: {p.certificate_data.valid_date === 'any' ? 'Любой день' : new Date(p.certificate_data.valid_date).toLocaleDateString('ru')}</p>}
-                      {p.certificate_data.comment && <p style={{ fontSize: 12, marginTop: 4, color: '#ddd' }}>Комментарий: {p.certificate_data.comment}</p>}
+                      <h4 style={{ fontSize: 14, color: 'var(--accent-gold)', marginBottom: 4 }}>Сертификат</h4>
+                      {p.certificate_data.valid_date && <p style={{ fontSize: 12, color: 'var(--text-primary)' }}>Действителен: {p.certificate_data.valid_date === 'any' ? 'Любой день' : new Date(p.certificate_data.valid_date).toLocaleDateString('ru')}</p>}
+                      {p.certificate_data.comment && <p style={{ fontSize: 12, marginTop: 4, color: 'var(--text-secondary)' }}>Комментарий: {p.certificate_data.comment}</p>}
                     </div>
                   )}
 
                   {p.status === 'new' && (
-                    <button onClick={() => setActivationModal({ show: true, purchase: p })} style={{
-                      marginTop: 12, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255,215,0,0.25)', borderRadius: 14, padding: '8px 0',
-                      color: '#fff', cursor: 'pointer', fontSize: 13, width: '100%'
+                    <button onClick={() => setActivationModal({ show: true, purchase: p })} className="btn-outline" style={{
+                      marginTop: 12, alignSelf: 'flex-start'
                     }}>Активировать</button>
                   )}
                 </div>
@@ -204,10 +193,10 @@ export default function MyPurchases() {
 
       {/* Модалка активации */}
       {activationModal.show && activationModal.purchase && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setActivationModal({ show: false })}>
-          <div style={{ background: '#1a1f2f', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 20, marginBottom: 16 }}>Активация сертификата</h3>
-            <p style={{ marginBottom: 16 }}>{activationModal.purchase.reward_name}</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setActivationModal({ show: false })}>
+          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 32, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 20, marginBottom: 16, color: 'var(--text-primary)' }}>Активация сертификата</h3>
+            <p style={{ marginBottom: 16, color: 'var(--text-primary)' }}>{activationModal.purchase.reward_name}</p>
             <div style={{ marginBottom: 16 }}>
               <DatePicker value={activationDate} onChange={setActivationDate} placeholder="Выберите дату" />
             </div>
@@ -215,19 +204,17 @@ export default function MyPurchases() {
               value={activationComment}
               onChange={e => setActivationComment(e.target.value)}
               placeholder="Комментарий для руководителя"
-              style={{ width: '100%', padding: 10, borderRadius: 10, background: '#111', border: '1px solid #333', color: '#fff', marginBottom: 16 }}
+              className="input-field"
+              style={{ width: '100%', marginBottom: 16 }}
               rows={2}
             />
-            <button onClick={handleActivate} style={{
-              background: '#0f0', color: '#000', border: 'none', borderRadius: 10,
-              padding: '12px 24px', width: '100%', cursor: 'pointer', fontWeight: 600
-            }}>Отправить на согласование</button>
+            <button onClick={handleActivate} className="btn-gold" style={{ minWidth: 220 }}>Отправить на согласование</button>
           </div>
         </div>
       )}
 
       <PremiumModal isOpen={notification.show} onClose={() => setNotification({ show: false })} title="Уведомление">
-        <p style={{ color: '#fff' }}>{notification.message}</p>
+        <p style={{ color: 'var(--text-primary)' }}>{notification.message}</p>
       </PremiumModal>
     </div>
   )

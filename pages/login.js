@@ -61,26 +61,26 @@ export default function Login() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12">
+    <div className="theme-light max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-white mb-4">Вход в Кармический банк</h1>
+        <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Вход в Кармический банк</h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="input-field" required />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" className="input-field" required />
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button type="submit" className="btn-gold w-full" disabled={loading}>
+          {error && <p className="text-sm" style={{ color: 'var(--accent-red)' }}>{error}</p>}
+          <button type="submit" className="btn-gold" style={{ minWidth: 160 }} disabled={loading}>
             {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
 
-        <button onClick={handleForgotPassword} className="mt-4 text-xs text-gray-400 hover:text-gold underline">
+        <button onClick={handleForgotPassword} className="mt-4 text-xs underline" style={{ color: 'var(--text-secondary)' }}>
           Забыли пароль?
         </button>
 
-        <div className="mt-6 text-center text-sm text-gray-400">
+        <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
           Нет аккаунта?{' '}
-          <a href="/create-company" className="text-gold hover:underline">
+          <a href="/create-company" className="hover:underline" style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>
             Создать компанию
           </a>
         </div>

@@ -121,27 +121,27 @@ export default function CreateCompany() {
 
   if (step === 'success') {
     return (
-      <div className="max-w-md mx-auto px-4 py-12">
+      <div className="theme-light max-w-md mx-auto px-4 py-12">
         <div className="premium-card text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Почти готово</h1>
-          <p className="text-gray-400 mb-2">
+          <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Почти готово</h1>
+          <p className="mb-2" style={{ color: 'var(--text-secondary)' }}>
             Мы отправили письмо для подтверждения на <b>{form.email.trim().toLowerCase()}</b>.
           </p>
-          <p className="text-gray-400">
+          <p style={{ color: 'var(--text-secondary)' }}>
             Подтвердите email, затем войдите — компания «{form.name.trim()}» уже создана
             и отправлена на модерацию администратору Кармического банка.
           </p>
-          <a href="/login" className="text-gold hover:underline mt-6 inline-block">Перейти ко входу</a>
+          <a href="/login" className="hover:underline mt-6 inline-block" style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>Перейти ко входу</a>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12">
+    <div className="theme-light max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-white mb-2">Регистрация компании</h1>
-        <p className="text-sm text-gray-400 mb-4">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Регистрация компании</h1>
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
           Эта форма — для руководителя, который заводит компанию с нуля.
           Если вас пригласили как сотрудника — используйте ссылку из письма-приглашения, а не эту форму.
         </p>
@@ -186,15 +186,15 @@ export default function CreateCompany() {
             className="input-field"
             required
           />
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button type="submit" className="btn-gold w-full" disabled={loading}>
+          {error && <p className="text-sm" style={{ color: 'var(--accent-red)' }}>{error}</p>}
+          <button type="submit" className="btn-gold" style={{ minWidth: 200 }} disabled={loading}>
             {loading ? 'Создаём...' : 'Создать компанию'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-400">
+        <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
           Уже есть аккаунт?{' '}
-          <a href="/login" className="text-gold hover:underline">Войти</a>
+          <a href="/login" className="hover:underline" style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>Войти</a>
         </div>
       </div>
     </div>

@@ -54,7 +54,7 @@ export default function Events() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="theme-light max-w-4xl mx-auto px-4 py-8">
       <BackArrow href="/" title="Журнал событий" />
 
       <div className="premium-card mb-8">

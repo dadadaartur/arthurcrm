@@ -20,10 +20,10 @@ export default function InviteDeprecated() {
   }, [router])
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12">
+    <div className="theme-light max-w-md mx-auto px-4 py-12">
       <div className="premium-card text-center">
-        <h1 className="text-2xl font-bold text-white mb-4">Ссылка устарела</h1>
-        <p className="text-gray-400 mb-6">
+        <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Ссылка устарела</h1>
+        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
           Формат приглашений изменился. Попросите администратора вашей компании отправить приглашение заново —
           новое письмо будет содержать актуальную защищённую ссылку.
         </p>

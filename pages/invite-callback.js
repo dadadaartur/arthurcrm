@@ -69,22 +69,22 @@ export default function InviteCallback() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-12">
+    <div className="theme-light max-w-md mx-auto px-4 py-12">
       <div className="premium-card">
-        <h1 className="text-2xl font-bold text-white mb-4">Активация приглашения</h1>
+        <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Активация приглашения</h1>
 
-        {status === 'checking' && <p className="text-gray-400">Проверяем ссылку...</p>}
+        {status === 'checking' && <p style={{ color: 'var(--text-secondary)' }}>Проверяем ссылку...</p>}
 
         {status === 'error' && (
           <>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
-            <a href="/login" className="btn-gold w-full inline-block text-center">На страницу входа</a>
+            <p className="text-sm mb-4" style={{ color: 'var(--accent-red)' }}>{error}</p>
+            <a href="/login" className="btn-gold inline-block text-center" style={{ minWidth: 200 }}>На страницу входа</a>
           </>
         )}
 
         {status === 'need_password' && (
           <form onSubmit={finishSetup} className="space-y-4">
-            <p className="text-sm text-gray-400">Придумайте пароль для входа в систему.</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Придумайте пароль для входа в систему.</p>
             <input
               type="password"
               value={newPassword}
@@ -94,14 +94,14 @@ export default function InviteCallback() {
               required
               autoComplete="new-password"
             />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-            <button type="submit" className="btn-gold w-full" disabled={saving}>
+            {error && <p className="text-sm" style={{ color: 'var(--accent-red)' }}>{error}</p>}
+            <button type="submit" className="btn-gold" style={{ minWidth: 200 }} disabled={saving}>
               {saving ? 'Активация...' : 'Войти в систему'}
             </button>
           </form>
         )}
 
-        {status === 'joined' && <p className="text-green-500">Готово! Переходим в личный кабинет...</p>}
+        {status === 'joined' && <p style={{ color: 'var(--accent-green)' }}>Готово! Переходим в личный кабинет...</p>}
       </div>
     </div>
   )

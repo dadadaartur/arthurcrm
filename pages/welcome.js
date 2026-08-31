@@ -72,20 +72,20 @@ export default function Welcome() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Проверка данных...</div>
+      <div className="theme-light min-h-screen flex items-center justify-center">
+        <div style={{ color: 'var(--text-secondary)' }}>Проверка данных...</div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 text-center">
+    <div className="theme-light max-w-2xl mx-auto px-6 py-12 text-center">
       <div className="premium-card">
-        <h1 className="text-3xl font-bold text-white mb-4">Добро пожаловать в экосистему</h1>
-        <p className="text-gray-400 mb-6">
+        <h1 className="text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Добро пожаловать в экосистему</h1>
+        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
           Ваш аккаунт ещё не привязан к компании. Обратитесь к администратору для получения приглашения.
         </p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           Если вы уже получили приглашение, перейдите по ссылке из письма ещё раз.
         </p>
       </div>

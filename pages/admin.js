@@ -5,10 +5,10 @@ import PremiumModal from '../components/PremiumModal'
 import BackArrow from '../components/BackArrow'
 
 const COLORS = {
-  red: { label: 'Срочный фикс', bg: 'rgba(239, 68, 68, 0.85)', border: 'rgba(239, 68, 68, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(239, 68, 68, 0.5)' },
-  yellow: { label: 'Срочно, но есть время', bg: 'rgba(234, 179, 8, 0.85)', border: 'rgba(234, 179, 8, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(234, 179, 8, 0.5)' },
-  green: { label: 'Идея на будущее', bg: 'rgba(34, 197, 94, 0.85)', border: 'rgba(34, 197, 94, 0.9)', text: '#FFFFFF', shadow: '0 0 25px rgba(34, 197, 94, 0.5)' },
-  blue: { label: 'Путь проекта', bg: 'rgba(59, 130, 246, 0.9)', border: 'rgba(59, 130, 246, 1)', text: '#FFFFFF', shadow: '0 0 30px rgba(59, 130, 246, 0.7)' },
+  red: { label: 'Срочный фикс', bg: '#dc2626', border: '#b91c1c', text: '#FFFFFF', shadow: '0 6px 20px rgba(220,38,38,0.3)' },
+  yellow: { label: 'Срочно, но есть время', bg: '#b45309', border: '#92400e', text: '#FFFFFF', shadow: '0 6px 20px rgba(180,83,9,0.3)' },
+  green: { label: 'Идея на будущее', bg: '#16a34a', border: '#15803d', text: '#FFFFFF', shadow: '0 6px 20px rgba(22,163,74,0.3)' },
+  blue: { label: 'Путь проекта', bg: '#2563eb', border: '#1d4ed8', text: '#FFFFFF', shadow: '0 6px 20px rgba(37,99,235,0.3)' },
 }
 
 const KB_TAGS = ['#архитектура', '#задача', '#заглушка', '#идея', '#интеграция', '#дизайн']
@@ -124,8 +124,12 @@ export default function Admin() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <BackArrow href="/" title="Админ" />
+    <div className="theme-light max-w-7xl mx-auto px-6 py-8">
+      <BackArrow href="/" title="Админ" extra={
+        <a href="/central-bank" style={{ marginLeft: 'auto', fontSize: 12, padding: '7px 16px', borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          Центробанк →
+        </a>
+      } />
       {/* Вкладки */}
       <div className="flex gap-4 mb-8">
         <button onClick={() => setTab('backlog')} className={`filter-pill ${tab === 'backlog' ? 'active' : ''}`}>
@@ -234,10 +238,10 @@ export default function Admin() {
                 const contentWithoutTags = entry.content.replace(/#\S+/g, '').trim()
                 const tags = entry.content.match(/#\S+/g) || []
                 return (
-                  <div key={entry.id} className="premium-card relative flex flex-col" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.4)', boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)', color: '#FFFFFF' }}>
+                  <div key={entry.id} className="premium-card relative flex flex-col" style={{ background: 'rgba(37,99,235,0.06)', borderColor: 'rgba(37,99,235,0.3)', boxShadow: 'var(--shadow-card)', color: 'var(--text-primary)' }}>
                     <div className="flex flex-wrap gap-1 mb-2">
                       {tags.map(tag => (
-                        <span key={tag} className="text-xs bg-gray-800 px-2 py-0.5 rounded-full text-gray-400">{tag}</span>
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(15,23,42,0.06)', color: 'var(--text-secondary)' }}>{tag}</span>
                       ))}
                     </div>
                     <p className="text-sm whitespace-pre-wrap">{contentWithoutTags}</p>

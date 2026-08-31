@@ -3,31 +3,16 @@ import { supabase } from '../lib/supabaseClient'
 import BackArrow from '../components/BackArrow'
 import DateRangePicker from '../components/DateRangePicker'
 
-// Подписи и иконки по типу операции — чтобы сразу было видно, откуда
-// начисление (задание/цель/тест/перевод/покупка), а не только читать
-// сплошное предложение в description. Цвета — насыщенные версии
-// (не пастельные), чтобы читались как текст на светлом фоне.
+// Подписи по типу операции — чтобы сразу было видно, откуда начисление
+// (задание/цель/тест/перевод/покупка), а не только читать сплошное
+// предложение в description. Цвета — насыщенные версии (не пастельные),
+// чтобы читались как текст на светлом фоне. Без иконок-значков рядом —
+// текстовая подпись сама по себе полностью читаема.
 const TX_TYPE = {
   task_reward: { label: 'Задание', color: '#137a39' },
   task_review: { label: 'Проверка задания', color: '#137a39' },
   kpi_bonus: { label: 'Цель (KPI)', color: '#0e7490' },
   test_reward: { label: 'Тестирование', color: '#7c3aed' },
-}
-const TypeIcon = ({ kind, color }) => {
-  const paths = {
-    transfer: <path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3" />,
-    purchase: <><path d="M6 2l1.5 5h9L18 2" /><path d="M3.5 7h17l-1.5 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" /></>,
-    task_reward: <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />,
-    task_review: <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />,
-    kpi_bonus: <path d="M3 3v18h18M18.7 8l-5.1 5.1-2.8-2.8L7 14" />,
-    test_reward: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h3" /></>,
-    default: <circle cx="12" cy="12" r="9" />,
-  }
-  return (
-    <span style={{ width: 34, height: 34, borderRadius: 10, background: `${color}18`, border: `1px solid ${color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[kind] || paths.default}</svg>
-    </span>
-  )
 }
 
 export default function History() {
@@ -106,7 +91,7 @@ export default function History() {
 
   return (
     <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-4 py-10">
-      <div className="premium-card mb-6">
+      <div className="premium-card mb-6" style={{ maxWidth: 900 }}>
         <BackArrow href="/" title="История операций" />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
           <div className="flex gap-2 flex-wrap">
@@ -133,7 +118,6 @@ export default function History() {
           const isPositive = (op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id)
           return (
             <div key={op.id + op.type} className="premium-card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <TypeIcon kind={op.type === 'transaction' ? op.type : op.type} color={color} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ minWidth: 0 }}>
