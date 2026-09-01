@@ -53,17 +53,36 @@ export default function MyPurchases() {
   }, [])
 
   async function loadPurchases(userId) {
-    const { data } = await supabase
-      .from('purchases')
-      .select('*, rewards ( image_url )')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    const [{ data: purchaseData }, { data: wheelData }] = await Promise.all([
+      supabase.from('purchases').select('*, rewards ( image_url )').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('wheel_spin_history').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    ])
 
-    const enriched = (data || []).map(p => ({
+    const enrichedPurchases = (purchaseData || []).map(p => ({
       ...p,
-      image_url: p.rewards?.image_url || null
+      image_url: p.rewards?.image_url || null,
+      isWheelPrize: false
     }))
-    setPurchases(enriched)
+
+    // Выигрыши ленты подарков приводим к той же форме, что и обычные
+    // покупки (reward_name, cost, status, created_at, image_url) — чтобы
+    // рендерить одним и тем же кодом карточки, не задваивая вёрстку.
+    // «cost» здесь условный — приз бесплатный, но карточка ожидает это
+    // поле для отображения суммы, поэтому 0.
+    const enrichedWheel = (wheelData || []).map(w => ({
+      id: `wheel-${w.id}`,
+      reward_name: w.prize_label,
+      cost: 0,
+      status: 'approved',
+      created_at: w.created_at,
+      image_url: w.prize_avatar_url,
+      prizeDescription: w.prize_description || null,
+      isWheelPrize: true,
+      wheelColor: w.prize_color || '#8a6208'
+    }))
+
+    const merged = [...enrichedPurchases, ...enrichedWheel].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    setPurchases(merged)
     setLoading(false)
   }
 
@@ -148,7 +167,7 @@ export default function MyPurchases() {
               return (
                 <div key={p.id} style={{
                   background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20,
-                  border: '1px solid var(--border-subtle)', padding: 20,
+                  border: p.isWheelPrize ? `1px solid ${p.wheelColor}55` : '1px solid var(--border-subtle)', padding: 20,
                   display: 'flex', flexDirection: 'column',
                   minHeight: 360
                 }}>
@@ -157,16 +176,24 @@ export default function MyPurchases() {
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{new Date(p.created_at).toLocaleDateString('ru')}</span>
-                    <span style={{
-                      padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                      background: p.status === 'approved' ? 'rgba(19,122,57,0.1)' : p.status === 'pending' ? 'rgba(180,83,9,0.1)' : p.status === 'rejected' ? 'rgba(220,38,38,0.1)' : 'rgba(37,99,235,0.1)',
-                      color: p.status === 'approved' ? '#137a39' : p.status === 'pending' ? '#b45309' : p.status === 'rejected' ? '#dc2626' : '#2563eb'
-                    }}>
-                      {statusLabels[p.status] || p.status}
-                    </span>
+                    {p.isWheelPrize ? (
+                      <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: `${p.wheelColor}18`, color: p.wheelColor, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /></svg>
+                        Лента подарков
+                      </span>
+                    ) : (
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                        background: p.status === 'approved' ? 'rgba(19,122,57,0.1)' : p.status === 'pending' ? 'rgba(180,83,9,0.1)' : p.status === 'rejected' ? 'rgba(220,38,38,0.1)' : 'rgba(37,99,235,0.1)',
+                        color: p.status === 'approved' ? '#137a39' : p.status === 'pending' ? '#b45309' : p.status === 'rejected' ? '#dc2626' : '#2563eb'
+                      }}>
+                        {statusLabels[p.status] || p.status}
+                      </span>
+                    )}
                   </div>
                   <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>{p.reward_name}</h3>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: 10, fontSize: 13 }}>{p.cost} {word}</p>
+                  {!p.isWheelPrize && <p style={{ color: 'var(--text-secondary)', marginBottom: 10, fontSize: 13 }}>{p.cost} {word}</p>}
+                  {p.isWheelPrize && p.prizeDescription && <p style={{ color: 'var(--text-secondary)', marginBottom: 10, fontSize: 13 }}>{p.prizeDescription}</p>}
 
                   {p.certificate_data && (
                     <div style={{
