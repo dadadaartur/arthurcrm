@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       company_id: companyId,
       enabled: !!enabled,
       levels_per_spin: Math.max(1, Number(levels_per_spin) || 1),
-      prizes: prizes.map(p => ({ id: p.id, label: String(p.label || '').slice(0, 30), color: p.color || '#FFD700', weight: Math.max(0.1, Number(p.weight) || 1), type: p.type === 'custom' ? 'custom' : 'karma', amount: Number(p.amount) || 0, text: p.text || '' })),
+      prizes: prizes.map(p => ({ id: p.id, label: String(p.label || '').slice(0, 30), color: p.color || '#FFD700', weight: Math.max(0.1, Number(p.weight) || 1), type: p.type === 'custom' ? 'custom' : 'karma', amount: Number(p.amount) || 0, text: p.text || '', avatar_url: p.avatar_url || null, description: String(p.description || '').slice(0, 200) })),
       updated_at: new Date().toISOString()
     }, { onConflict: 'company_id' })
     if (error) return res.status(500).json({ error: error.message })

@@ -114,7 +114,7 @@ export default function AppTransfer() {
         {sending ? 'Отправка...' : 'Отправить'}
       </button>
     </AppShell>
-    {seal && <PaymentSeal mode="success" amount={seal.amount} label={`кармиков отправлено · ${seal.name}`} onDone={() => setSeal(null)} />}
+    {seal && <PaymentSeal mode="success" amount={seal.amount} sign="-" onDone={() => setSeal(null)} />}
     </>
   )
 }

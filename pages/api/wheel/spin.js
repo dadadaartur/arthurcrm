@@ -38,7 +38,14 @@ export default async function handler(req, res) {
 
   await a.from('wheel_spin_history').insert({
     user_id: ctx.user.id, company_id: companyId,
-    prize_label: prize.label, prize_type: prize.type, prize_value: prize.type === 'karma' ? String(prize.amount) : prize.text
+    prize_label: prize.label, prize_type: prize.type, prize_value: prize.type === 'karma' ? String(prize.amount) : prize.text,
+    prize_color: prize.color || null, prize_avatar_url: prize.avatar_url || null, prize_description: prize.description || null
+  })
+
+  await a.from('notifications').insert({
+    user_id: ctx.user.id,
+    message: `Лента подарков: вам выпал приз «${prize.label}»!`,
+    link: '/my-purchases'
   })
 
   res.status(200).json({ prizeId: prize.id, prize, spinsLeft: profile.wheel_spins_available - 1 })

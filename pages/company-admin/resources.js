@@ -150,7 +150,7 @@ function CompanyResources() {
           </button>
         } />
 
-        {hole && <PaymentSeal mode={hole.mode} amount={hole.amount} errorText={hole.errorText} onDone={() => { setHole(null); load() }} />}
+        {hole && <PaymentSeal mode={hole.mode} amount={hole.amount} label="Фонд пополнен" errorText={hole.errorText} onDone={() => { setHole(null); load() }} />}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16, marginBottom: 28 }}>
           {/* Фонд компании + Пополнить */}
