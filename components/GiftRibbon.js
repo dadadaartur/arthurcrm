@@ -52,8 +52,8 @@ export default function GiftRibbon({ prizes, onSpin, spinning, result }) {
         }}>
           {reel.map((p, i) => (
             <div key={i} style={{ height: ITEM_H, display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px' }}>
-              <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${p.color}22`, border: `1px solid ${p.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color }} />
+              <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${p.color}22`, border: `1px solid ${p.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {p.avatar_url ? <img src={p.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color }} />}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</span>
             </div>
@@ -65,9 +65,15 @@ export default function GiftRibbon({ prizes, onSpin, spinning, result }) {
       </div>
 
       {result ? (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>Ваш подарок:</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: result.color || 'var(--accent-gold)' }}>{result.label}</div>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          {result.avatar_url && (
+            <img src={result.avatar_url} alt="" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'cover', border: `2px solid ${result.color || 'var(--accent-gold)'}` }} />
+          )}
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>Ваш подарок:</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: result.color || 'var(--accent-gold)' }}>{result.label}</div>
+            {result.description && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, maxWidth: 240 }}>{result.description}</div>}
+          </div>
         </div>
       ) : (
         <button
