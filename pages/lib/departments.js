@@ -1,0 +1,91 @@
+// Вычисление «зоны ответственности» руководителя по дереву отделов
+// (миграция 011). Один источник правды для всех мест, где нужно решить
+// «что видит/чем управляет этот конкретный человек» — вместо того, чтобы
+// повторять обход дерева в каждом файле по отдельности.
+
+/** { parentId -> [childId, ...] } */
+export function buildChildMap(departments) {
+  const map = {}
+  departments.forEach(d => {
+    const p = d.parent_department_id || null
+    if (!map[p]) map[p] = []
+    map[p].push(d.id)
+  })
+  return map
+}
+
+/** ID отдела + все вложенные на любую глубину (обход в ширину). */
+export function getSubtreeIds(departments, rootId) {
+  const childMap = buildChildMap(departments)
+  const result = new Set([rootId])
+  const queue = [rootId]
+  while (queue.length) {
+    const current = queue.shift()
+    ;(childMap[current] || []).forEach(childId => {
+      if (!result.has(childId)) { result.add(childId); queue.push(childId) }
+    })
+  }
+  return [...result]
+}
+
+/**
+ * Возвращает зону ответственности сотрудника:
+ * - null — вся компания целиком (админ компании, видит и управляет всем);
+ * - [] — не руководитель ни одного отдела, своей зоны нет;
+ * - [id, id, ...] — свой(и) отдел(ы) + все вложенные на любую глубину
+ *   (руководитель руководителей автоматически получает в зону все
+ *   команды своих подчинённых руководителей — дерево работает само по
+ *   себе, никакой отдельной логики "руководитель руководителей" не
+ *   нужно, просто идём по parent_department_id вглубь).
+ */
+export function getManagerScope(profile, allDepartments) {
+  if (profile.is_company_admin) return null
+  const myDepartments = (allDepartments || []).filter(d => d.manager_user_id === profile.user_id)
+  if (myDepartments.length === 0) return []
+  const scope = new Set()
+  myDepartments.forEach(d => getSubtreeIds(allDepartments, d.id).forEach(id => scope.add(id)))
+  return [...scope]
+}
+
+/**
+ * Возвращает ID отдела вместе со всеми отделами-родителями вверх до
+ * корня: [свой отдел, родитель, дед, ...]. Нужно для проверки видимости
+ * контента, назначенного «сверху» — «уровень доступа определяет
+ * вышестоящий уровень».
+ */
+export function getAncestorChain(departments, deptId) {
+  const byId = Object.fromEntries((departments || []).map(d => [d.id, d]))
+  const chain = []
+  let current = deptId
+  let guard = 0 // защита от зацикливания при повреждённых данных
+  while (current && guard++ < 100) {
+    chain.push(current)
+    current = byId[current]?.parent_department_id || null
+  }
+  return chain
+}
+
+/**
+ * Виден ли сотруднику показатель/задание с данным department_id.
+ * NULL у контента — общее для всей компании, видно всем. Иначе — видно
+ * только если отдел контента совпадает с отделом сотрудника ИЛИ является
+ * одним из отделов-родителей сотрудника (контент, назначенный «Продажи»,
+ * виден и «Продажи-Москва», и «Продажи-Питер» — но не наоборот, и не
+ * отделу «Логистика», который в этой ветке дерева вообще не участвует).
+ */
+export function isVisibleToEmployee(contentDepartmentId, employeeDepartmentId, departments) {
+  if (!contentDepartmentId) return true
+  if (!employeeDepartmentId) return false
+  return getAncestorChain(departments, employeeDepartmentId).includes(contentDepartmentId)
+}
+
+/**
+ * Список ID отделов, которые вправе видеть/редактировать контент —
+ * конкретный руководитель: null — вся компания (админ), иначе —
+ * getManagerScope (свой отдел + всё вложенное). Отдельная функция чисто
+ * для читаемости в местах, где создаётся/редактируется контент, а не
+ * определяется зона руководителя как таковая.
+ */
+export function getManageableDepartmentIds(profile, allDepartments) {
+  return getManagerScope(profile, allDepartments)
+}
