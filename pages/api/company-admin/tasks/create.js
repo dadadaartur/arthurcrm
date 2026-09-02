@@ -58,6 +58,7 @@ export default async function handler(req, res) {
     auto_metric_id: f.is_auto_goal && f.auto_mode === 'specific' && f.auto_metric_id ? f.auto_metric_id : null,
     auto_target_rank: f.is_auto_goal && f.auto_mode === 'specific' ? f.auto_target_rank : null,
     image_url: f.image_url || null,
+    video_url: f.video_url || null,
     recurrence_type: recurrenceType,
     reset_hour: Number.isFinite(f.reset_hour) ? f.reset_hour : 8,
     recurrence_weekday: recurrenceType === 'weekly' ? (f.recurrence_weekday || 1) : null,

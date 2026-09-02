@@ -129,7 +129,7 @@ function GlobalGoals() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
-                <input className="input-field" style={{ width: '100%' }} placeholder="Увеличить выручку на 15% за квартал" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                <input className="input-field" style={{ width: '100%' }} placeholder="Увеличить выручку на 15% за квартал" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Категория</label>

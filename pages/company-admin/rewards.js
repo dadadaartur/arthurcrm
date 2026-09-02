@@ -165,7 +165,7 @@ export default function RewardsAdmin() {
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
                   <input className="input-field" style={{ width: '100%' }} placeholder="Например: День вне очереди"
-                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Стоимость (кармики)</label>
@@ -204,8 +204,11 @@ export default function RewardsAdmin() {
                     <input className="input-field" style={{ width: '100%' }} placeholder="напр. МТС" value={form.partner_name} onChange={e => setForm({ ...form, partner_name: e.target.value })} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Ключ разблокировки</label>
-                    <input className="input-field" style={{ width: '100%' }} placeholder="совпадает с заданием" value={form.requires_unlock} onChange={e => setForm({ ...form, requires_unlock: e.target.value })} />
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Ключ разблокировки (необязательно)</label>
+                    <input className="input-field" style={{ width: '100%' }} placeholder="напр. mts-merch" value={form.requires_unlock} onChange={e => setForm({ ...form, requires_unlock: e.target.value })} />
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                      Если задано — товар останется под замком, пока сотрудник не выполнит партнёрское задание с точно таким же ключом (заводит суперадмин площадки в разделе партнёрских заданий). Оставьте пустым для обычного товара без ограничений.
+                    </p>
                   </div>
                   <div>
                     <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Промо-метка (попадёт в ленту)</label>

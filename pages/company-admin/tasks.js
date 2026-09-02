@@ -6,7 +6,6 @@ import LoadingScreen from '../../components/LoadingScreen'
 import { resolveThresholds } from '../../lib/kpi'
 import BackArrow from '../../components/BackArrow'
 import DatePicker from '../../components/DatePicker'
-import TimePicker from '../../components/TimePicker'
 import { RECURRENCE_LABELS } from '../../lib/recurrence'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
@@ -229,12 +228,20 @@ function TasksPage() {
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.image_file)
       if (!upErr) imageUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     }
+    let videoUrl = null
+    if (form.video_file) {
+      const ext = form.video_file.name.split('.').pop()
+      const path = `public/task-video-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, form.video_file)
+      if (upErr) showError('Видео не загрузилось — задание создастся без него')
+      else videoUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const isGoalLagging = (tab === 'create-goal' || tab === 'create-external') && form.auto_mode === 'specific' && goalAudienceMode === 'lagging'
       const submitBody = isGoalLagging
-        ? { ...form, target_role: 'metric_below', target_metric_id: form.auto_metric_id, target_metric_rank: form.auto_target_rank, image_url: imageUrl }
-        : { ...form, image_url: imageUrl }
+        ? { ...form, target_role: 'metric_below', target_metric_id: form.auto_metric_id, target_metric_rank: form.auto_target_rank, image_url: imageUrl, video_url: videoUrl }
+        : { ...form, image_url: imageUrl, video_url: videoUrl }
       const r = await fetch('/api/company-admin/tasks/create', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
@@ -243,7 +250,7 @@ function TasksPage() {
       const d = await r.json()
       if (!r.ok) { showError(d.error || 'Не удалось создать задание'); setCreating(false); return }
       showSuccess(d.assignedCount ? `Задание создано и назначено ${d.assignedCount} сотрудникам` : 'Задание создано (пока некому назначать)')
-      setForm({ ...form, title: '', description: '', image_file: null, deadline_date: '' })
+      setForm({ ...form, title: '', description: '', image_file: null, video_file: null, deadline_date: '' })
       loadData(companyId)
     } catch (err) {
       showError(err.message || 'Не удалось создать задание')
@@ -325,7 +332,7 @@ function TasksPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
-                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: Звонки на уровень Ультра" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: Звонки на уровень Ультра" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
@@ -411,7 +418,7 @@ function TasksPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Название</label>
-                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                  <input className="input-field" style={{ width: '100%' }} placeholder="Например: 30 звонков за смену" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
@@ -421,13 +428,17 @@ function TasksPage() {
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Описание</label>
                   <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </div>
-                <div>
-                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн — дата</label>
-                  <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн — время {!form.deadline_date && <span style={{ color: 'var(--text-muted)' }}>(нужна дата)</span>}</label>
-                  <TimePicker value={form.deadline_time} onChange={v => setForm({ ...form, deadline_time: v })} placeholder="До конца дня" disabled={!form.deadline_date} />
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн</label>
+                  <DatePicker
+                    withTime
+                    value={form.deadline_date ? `${form.deadline_date}T${form.deadline_time || ''}` : ''}
+                    onChange={v => {
+                      const [d, t] = (v || '').split('T')
+                      setForm({ ...form, deadline_date: d || '', deadline_time: t || '' })
+                    }}
+                    placeholder="Без дедлайна"
+                  />
                 </div>
 
                 <div style={{ gridColumn: 'span 3' }}>
@@ -565,6 +576,13 @@ function TasksPage() {
                     {form.image_file ? form.image_file.name : 'Выбрать файл...'}
                   </label>
                   <input id="task-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, image_file: e.target.files?.[0] || null })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Видео-трейлер (необязательно)</label>
+                  <label htmlFor="task-video-upload" className="input-field" style={{ width: '100%', display: 'flex', alignItems: 'center', cursor: 'pointer', color: form.video_file ? 'var(--text-primary)' : 'var(--text-muted)', boxSizing: 'border-box' }}>
+                    {form.video_file ? form.video_file.name : 'Выбрать видео...'}
+                  </label>
+                  <input id="task-video-upload" type="file" accept="video/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, video_file: e.target.files?.[0] || null })} />
                 </div>
 
                 <div style={{ gridColumn: 'span 3' }}>

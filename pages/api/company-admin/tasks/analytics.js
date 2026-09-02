@@ -38,8 +38,23 @@ export default async function handler(req, res) {
 
   const { data: assignments } = await a.from('task_assignments')
     .select('id, task_id, user_id, status, created_at, completed_at')
-    .gte('created_at', `${from}T00:00:00`).lte('created_at', `${to}T23:59:59`)
+    .gte('created_at', `${from}T00:00:00Z`).lte('created_at', `${to}T23:59:59Z`)
   const inScope = (assignments || []).filter(as => poolIds.has(as.user_id) && taskById[as.task_id])
+
+  // Диагностика на случай пустого результата — вместо молчаливого нуля
+  // объясняем самую вероятную причину. При ручном тестировании задания
+  // часто назначают себе же (администратору) — а профиль администратора
+  // (is_company_admin=true) намеренно не входит в пул «сотрудников» для
+  // этой аналитики, такие назначения не будут учтены никогда, это не
+  // баг, а осознанная граница подсчёта, но выглядит как «аналитика не
+  // работает», если не объяснить.
+  let hint = null
+  if (inScope.length === 0) {
+    const inRangeCount = (assignments || []).filter(as => taskById[as.task_id]).length
+    if (inRangeCount > 0) hint = 'assigned_to_admins_or_outside_scope'
+    else if ((assignments || []).length > 0) hint = 'no_matching_tasks_in_company'
+    else hint = 'no_assignments_in_range'
+  }
 
   const taskType = t => t.is_auto_goal ? 'auto_goal' : (t.partner_name ? 'partner' : 'regular')
   const hoursToComplete = as => as.completed_at ? (new Date(as.completed_at) - new Date(as.created_at)) / 3600000 : null
@@ -92,6 +107,7 @@ export default async function handler(req, res) {
   })).filter(r => r.assigned >= 2) // на одном назначении «доля выполнения» не имеет смысла
 
   res.status(200).json({
+    hint,
     summary: {
       total, completed: completed.length, rejected: rejected.length, missed: missed.length,
       completionRate: total ? Math.round((completed.length / total) * 100) : null,

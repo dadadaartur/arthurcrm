@@ -37,6 +37,20 @@ function TasksAnalytics() {
           <div style={{ marginLeft: 'auto' }}><DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} /></div>
         } />
 
+        {data?.hint && (
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            {data.hint === 'assigned_to_admins_or_outside_scope' && (
+              <>Все назначения за этот период ушли аккаунтам с правами администратора компании — они намеренно не входят в аналитику сотрудников (иначе тестовые действия администратора искажали бы реальную картину команды). Если вы тестировали, назначая задание себе — попробуйте на тестовом сотруднике без прав администратора.</>
+            )}
+            {data.hint === 'no_matching_tasks_in_company' && (
+              <>За этот период есть назначения, но ни одно не относится к заданиям этой компании — похоже на несовпадение данных, стоит перепроверить.</>
+            )}
+            {data.hint === 'no_assignments_in_range' && (
+              <>За выбранный период назначений не найдено вовсе — попробуйте расширить диапазон дат.</>
+            )}
+          </div>
+        )}
+
         {/* Сводка */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 20 }}>
           <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18 }}>

@@ -35,10 +35,10 @@ export default function TaskDetail() {
         const { data } = await supabase
           .from('task_assignments')
           .select(`id, status, started_at, deadline_at, comment, proof_urls, progress_count,
-            tasks( id, title, description, reward_karma, icon, requires_review,
+            tasks( id, title, description, reward_karma, image_url, video_url, requires_review,
                    requires_proof, proof_type, deadline_hours, is_auto_goal,
                    auto_goal_condition, auto_metric_id, auto_target_rank, partner_name,
-                   visual_tier, target_count, target_count_label )`)
+                   bonus_rewards, visual_tier, target_count, target_count_label )`)
           .eq('id', id)
           .single()
         setAssignment(data)
@@ -154,40 +154,71 @@ export default function TaskDetail() {
   if (loading || !assignment) return <LoadingScreen />
   const t = assignment.tasks
 
+  const tier = t?.visual_tier || 'normal'
+  const hasPrize = Array.isArray(t?.bonus_rewards) && t.bonus_rewards.find(b => b.type === 'prize')
+  const tierBorder = tier === 'premium' ? '1.5px solid var(--border-gold)' : tier === 'priority' ? '1px solid rgba(124,58,237,0.4)' : undefined
+
   return (
     <div className="theme-light max-w-2xl mx-auto px-4 py-8">
       <BackArrow href="/tasks" title="Задание" />
+      <style jsx>{`
+        @keyframes taskDetailGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 16px rgba(124,58,237,0.22); } }
+        @keyframes urgentPulse { 0%, 100% { box-shadow: 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 16px rgba(220,38,38,0.25); } }
+      `}</style>
 
-      <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 320 }}>
+      <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 320, position: 'relative', overflow: 'hidden', border: tierBorder, animation: tier === 'priority' ? 'taskDetailGlow 2.4s ease-in-out infinite' : 'none' }}>
+        {tier === 'premium' && (
+          <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '5px 14px 5px 16px', borderRadius: '0 0 0 14px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff', zIndex: 2 }}>ПРЕМИУМ</span>
+        )}
+
+        {(t.image_url || t.video_url) && (
+          <div style={{ position: 'relative', margin: '-24px -24px 16px', height: 220 }}>
+            {t.video_url ? (
+              <video src={t.video_url} poster={t.image_url || undefined} controls style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <img src={t.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mb-3">
           <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
           </span>
-          {t.image_url && <img src={t.image_url} alt="" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 16, marginBottom: 16 }} />}
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.3 }}>{t.title}</h1>
         </div>
 
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {t.is_auto_goal ? (
-            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.35)' }}>Засчитывается автоматически по цели</span>
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(19,122,57,0.1)', color: '#137a39', border: '1px solid rgba(19,122,57,0.3)' }}>Засчитывается автоматически по цели</span>
           ) : t.partner_name ? (
-            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.35)' }}>Партнёрское · {t.partner_name}</span>
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(184,134,11,0.1)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)' }}>Партнёрское · {t.partner_name}</span>
           ) : (
-            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(160,233,255,0.1)', color: '#a0e9ff', border: '1px solid rgba(160,233,255,0.3)' }}>Проверяет руководитель</span>
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(14,116,144,0.08)', color: 'var(--accent-cyan)', border: '1px solid rgba(14,116,144,0.3)' }}>Проверяет руководитель</span>
+          )}
+          {hasPrize && (
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(219,39,119,0.1)', color: '#db2777', border: '1px solid rgba(219,39,119,0.3)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2.2"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
+              Приз: {hasPrize.label}
+            </span>
           )}
         </div>
 
-        {t.description && <p className="text-gray-400 mb-4 text-sm">{t.description}</p>}
+        {hasPrize?.description && (
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 12px', padding: 10, borderRadius: 10, background: 'rgba(219,39,119,0.05)', border: '1px solid rgba(219,39,119,0.15)' }}>{hasPrize.description}</p>
+        )}
+
+        {t.description && <p className="mb-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{t.description}</p>}
 
         <div className="flex flex-wrap gap-4 text-sm mb-4">
           <div className="flex items-center gap-1">
-            <span className="text-gray-400">Награда:</span>
-            <span className="text-yellow-400 font-semibold">+{t.reward_karma} кармиков</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Награда:</span>
+            <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>+{t.reward_karma} кармиков</span>
           </div>
           {assignment.deadline_at && (
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">Дедлайн:</span>
-              <span className="text-white">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Дедлайн:</span>
+              <span style={{ color: 'var(--text-primary)' }}>{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
             </div>
           )}
         </div>
@@ -229,7 +260,6 @@ export default function TaskDetail() {
                 </div>
               )}
               {remaining <= 0 && <p style={{ fontSize: 13, color: '#137a39', fontWeight: 600, margin: '10px 0 0' }}>Цель достигнута — можно сдавать задание.</p>}
-              <style jsx>{`@keyframes urgentPulse { 0%, 100% { box-shadow: 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 16px rgba(220,38,38,0.25); } }`}</style>
             </div>
           )
         })()}

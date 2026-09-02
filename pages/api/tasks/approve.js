@@ -49,9 +49,25 @@ export default async function handler(req, res) {
     // 27 августа 2026, не редактируется админом), раньше подтверждённое
     // задание вообще не давало энергии, только кармики.
     const grantedEnergy = await creditEnergy(a, asg.user_id, 1)
-    // Партнёрские типы награды (п.11 ТЗ) — сверх обычных кармиков (если
-    // они тоже заданы) выдаём разблокировку категории магазина или буст.
-    if (rewardType === 'shop_unlock' && rewardConfig.unlock_key) {
+    // Партнёрские типы награды (п.11 ТЗ, расширено 1 сентября 2026 до
+    // комбо — сверх обычных кармиков можно выдать сразу несколько
+    // бонусов, не один). bonus_rewards — новые задания, reward_type —
+    // старые, созданные до этого расширения, продолжают работать как
+    // раньше без изменений.
+    const bonusRewards = asg.tasks?.bonus_rewards
+    if (Array.isArray(bonusRewards) && bonusRewards.length > 0) {
+      for (const bonus of bonusRewards) {
+        if (bonus.type === 'unlock' && bonus.unlockKey) {
+          await grantUnlock(a, { userId: asg.user_id, unlockKey: bonus.unlockKey, sourceTaskId: asg.task_id })
+          rewardNote += ' Открыт доступ к партнёрским товарам в магазине.'
+        } else if (bonus.type === 'boost' && bonus.percent) {
+          await grantKarmaBoost(a, { userId: asg.user_id, companyId: asg.tasks?.company_id, percent: bonus.percent, durationDays: bonus.durationDays || 30, source: asg.tasks?.partner_name, sourceTaskId: asg.task_id })
+          rewardNote += ` Активирован буст +${bonus.percent}% ко всем начислениям на ${bonus.durationDays || 30} дн.`
+        } else if (bonus.type === 'prize' && bonus.label) {
+          rewardNote += ` Приз: «${bonus.label}»${bonus.description ? ' — ' + bonus.description : ''}. Свяжитесь с администратором для получения.`
+        }
+      }
+    } else if (rewardType === 'shop_unlock' && rewardConfig.unlock_key) {
       await grantUnlock(a, { userId: asg.user_id, unlockKey: rewardConfig.unlock_key, sourceTaskId: asg.task_id })
       rewardNote = ' Открыт доступ к партнёрским товарам в магазине.'
     } else if (rewardType === 'karma_boost' && rewardConfig.percent) {

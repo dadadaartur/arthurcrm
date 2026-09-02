@@ -35,8 +35,21 @@ export default function PlatformAdmin() {
   const [newModName, setNewModName] = useState('')
   const [newModPerms, setNewModPerms] = useState({ approve_companies: false, suspend_companies: false, moderate_content: false, manage_partner_tasks: false })
   const [partnerTasks, setPartnerTasks] = useState([])
-  const [ptForm, setPtForm] = useState({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false, image_file: null })
+  const [ptForm, setPtForm] = useState({ title: '', description: '', partnerName: '', rewardKarma: 200, enableUnlock: false, unlockKey: '', enableBoost: false, boostPercent: 10, boostDurationDays: 30, enablePrize: false, prizeLabel: '', prizeDescription: '', deadlineDate: '', deadlineTime: '', companyIds: [], applyToAllCompanies: false, image_file: null })
+  const [unlockCheck, setUnlockCheck] = useState(null)
+  const [editingTask, setEditingTask] = useState(null)
+  const [editSaving, setEditSaving] = useState(false)
   const [ptSaving, setPtSaving] = useState(false)
+
+  useEffect(() => {
+    if (!ptForm.enableUnlock || !ptForm.unlockKey.trim()) { setUnlockCheck(null); return }
+    const t = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch(`/api/platform-admin/check-unlock-key?key=${encodeURIComponent(ptForm.unlockKey.trim())}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setUnlockCheck(await r.json())
+    }, 400)
+    return () => clearTimeout(t)
+  }, [ptForm.enableUnlock, ptForm.unlockKey])
 
   useEffect(() => {
     const init = async () => {
@@ -123,6 +136,28 @@ export default function PlatformAdmin() {
     if (res.ok) setPartnerTasks(await res.json())
   }
 
+  const saveEditedTask = async () => {
+    if (!editingTask.title.trim()) { showError('Название не может быть пустым'); return }
+    setEditSaving(true)
+    let imageUrl = editingTask.image_url
+    if (editingTask.image_file) {
+      const ext = editingTask.image_file.name.split('.').pop()
+      const path = `public/partner-task-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, editingTask.image_file)
+      if (!upErr) { const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path); imageUrl = pub.publicUrl }
+    }
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/platform-admin/partner-tasks', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ id: editingTask.id, title: editingTask.title, description: editingTask.description, rewardKarma: editingTask.rewardKarma, deadlineDate: editingTask.deadlineDate, deadlineTime: editingTask.deadlineTime, imageUrl })
+    })
+    setEditSaving(false)
+    if (!res.ok) { const d = await res.json(); showError(d.error || 'Не удалось сохранить'); return }
+    showSuccess('Задание обновлено')
+    setEditingTask(null)
+    loadPartnerTasks()
+  }
+
   const createPartnerTask = async () => {
     if (!ptForm.title.trim() || !ptForm.partnerName.trim()) { showError('Укажите название задания и партнёра'); return }
     if (!ptForm.applyToAllCompanies && ptForm.companyIds.length === 0) { showError('Выберите хотя бы одну компанию или «все компании»'); return }
@@ -142,7 +177,7 @@ export default function PlatformAdmin() {
     const data = await res.json()
     setPtSaving(false)
     if (!res.ok) { showError(data.error || 'Не удалось создать задание'); return }
-    setPtForm({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false, image_file: null })
+    setPtForm({ title: '', description: '', partnerName: '', rewardKarma: 200, enableUnlock: false, unlockKey: '', enableBoost: false, boostPercent: 10, boostDurationDays: 30, enablePrize: false, prizeLabel: '', prizeDescription: '', deadlineDate: '', deadlineTime: '', companyIds: [], applyToAllCompanies: false, image_file: null })
     loadPartnerTasks()
   }
 
@@ -258,36 +293,67 @@ export default function PlatformAdmin() {
             </div>
             <textarea className="input-field w-full mb-3" rows={2} placeholder="Описание (что нужно сделать)" value={ptForm.description} onChange={e => setPtForm({ ...ptForm, description: e.target.value })} />
 
-            <div className="flex gap-4 mb-3 text-sm flex-wrap">
-              {[['karma', 'Только кармики'], ['shop_unlock', 'Открыть товары в магазине'], ['karma_boost', 'Буст % к начислениям']].map(([k, label]) => (
-                <label key={k} className="flex items-center gap-2">
-                  <input type="radio" name="rewardType" checked={ptForm.rewardType === k} onChange={() => setPtForm({ ...ptForm, rewardType: k })} />
-                  {label}
-                </label>
-              ))}
+            <div className="mb-3">
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Кармиков сразу (0 — без них)</label>
+              <input type="number" className="input-field" style={{ width: 160 }} value={ptForm.rewardKarma} onChange={e => setPtForm({ ...ptForm, rewardKarma: e.target.value })} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-              <div>
-                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Кармиков сразу (0 — без них)</label>
-                <input type="number" className="input-field w-full" value={ptForm.rewardKarma} onChange={e => setPtForm({ ...ptForm, rewardKarma: e.target.value })} />
+            <div className="mb-3">
+              <label className="text-xs block mb-2" style={{ color: 'var(--text-secondary)' }}>Дополнительные награды — можно скомбинировать сколько угодно сразу, не только одну</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: `1px solid ${ptForm.enableUnlock ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={ptForm.enableUnlock} onChange={e => setPtForm({ ...ptForm, enableUnlock: e.target.checked })} />
+                    Открыть товары в магазине
+                  </label>
+                  {ptForm.enableUnlock && (
+                    <div style={{ marginTop: 10 }}>
+                      <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ключ разблокировки — произвольная строка, задайте точно такую же у товара в разделе «Награды» компании, поле «Открывается заданием» (requires_unlock)</label>
+                      <input className="input-field w-full" placeholder="mts-merch" value={ptForm.unlockKey} onChange={e => setPtForm({ ...ptForm, unlockKey: e.target.value })} />
+                      {ptForm.unlockKey.trim() && (
+                        <p style={{ fontSize: 11, marginTop: 6, color: unlockCheck?.count > 0 ? '#137a39' : '#b45309' }}>
+                          {unlockCheck == null ? 'Проверяем…' : unlockCheck.count === 0
+                            ? 'Пока ни один товар ни в одной компании не использует такой ключ — сотрудник разблокирует «пустоту», пока кто-то не заведёт товар с таким же значением.'
+                            : `Совпадает с ${unlockCheck.count} товар${unlockCheck.count === 1 ? 'ом' : 'ами'}: ${unlockCheck.items.map(i => `«${i.name}» (${i.company})`).join(', ')}`}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: `1px solid ${ptForm.enableBoost ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={ptForm.enableBoost} onChange={e => setPtForm({ ...ptForm, enableBoost: e.target.checked })} />
+                    Буст % к начислениям
+                  </label>
+                  {ptForm.enableBoost && (
+                    <div className="grid grid-cols-2 gap-3" style={{ marginTop: 10 }}>
+                      <div>
+                        <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Буст, %</label>
+                        <input type="number" className="input-field w-full" value={ptForm.boostPercent} onChange={e => setPtForm({ ...ptForm, boostPercent: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Длительность, дней</label>
+                        <input type="number" className="input-field w-full" value={ptForm.boostDurationDays} onChange={e => setPtForm({ ...ptForm, boostDurationDays: e.target.value })} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ padding: 12, borderRadius: 12, background: 'var(--bg-page)', border: `1px solid ${ptForm.enablePrize ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={ptForm.enablePrize} onChange={e => setPtForm({ ...ptForm, enablePrize: e.target.checked })} />
+                    Приз (физический/промокод/что угодно вне системы)
+                  </label>
+                  {ptForm.enablePrize && (
+                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <input className="input-field w-full" placeholder="Например: iPhone 15" value={ptForm.prizeLabel} onChange={e => setPtForm({ ...ptForm, prizeLabel: e.target.value })} />
+                      <input className="input-field w-full" placeholder="Как получить / промокод / условия (необязательно)" value={ptForm.prizeDescription} onChange={e => setPtForm({ ...ptForm, prizeDescription: e.target.value })} />
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Система только сообщит сотруднику о призе — выдача физического приза или промокода остаётся на вас, платформа это не автоматизирует.</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              {ptForm.rewardType === 'shop_unlock' && (
-                <div className="md:col-span-2">
-                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ключ разблокировки (задайте у товаров в rewards.requires_unlock такой же)</label>
-                  <input className="input-field w-full" placeholder="mts-merch" value={ptForm.unlockKey} onChange={e => setPtForm({ ...ptForm, unlockKey: e.target.value })} />
-                </div>
-              )}
-              {ptForm.rewardType === 'karma_boost' && (<>
-                <div>
-                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Буст, %</label>
-                  <input type="number" className="input-field w-full" value={ptForm.boostPercent} onChange={e => setPtForm({ ...ptForm, boostPercent: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Длительность, дней</label>
-                  <input type="number" className="input-field w-full" value={ptForm.boostDurationDays} onChange={e => setPtForm({ ...ptForm, boostDurationDays: e.target.value })} />
-                </div>
-              </>)}
             </div>
 
             <div className="mb-3">
@@ -300,7 +366,14 @@ export default function PlatformAdmin() {
 
             <div className="mb-3">
               <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Срок выполнения (необязательно)</label>
-              <div style={{ maxWidth: 200 }}><DatePicker value={ptForm.deadlineDate} onChange={v => setPtForm({ ...ptForm, deadlineDate: v })} placeholder="Без срока" /></div>
+              <div style={{ maxWidth: 240 }}>
+                <DatePicker
+                  withTime
+                  value={ptForm.deadlineDate ? `${ptForm.deadlineDate}T${ptForm.deadlineTime || ''}` : ''}
+                  onChange={v => { const [d, t] = (v || '').split('T'); setPtForm({ ...ptForm, deadlineDate: d || '', deadlineTime: t || '' }) }}
+                  placeholder="Без срока"
+                />
+              </div>
             </div>
 
             <div className="mb-4">
@@ -328,7 +401,7 @@ export default function PlatformAdmin() {
           <div className="pastel-card overflow-auto">
             <table className="w-full text-left text-sm">
               <thead style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <tr><th className="py-2 pr-4">Партнёр</th><th className="py-2 pr-4">Задание</th><th className="py-2 pr-4">Награда</th><th className="py-2">Создано</th></tr>
+                <tr><th className="py-2 pr-4">Партнёр</th><th className="py-2 pr-4">Задание</th><th className="py-2 pr-4">Награда</th><th className="py-2">Создано</th><th className="py-2"></th></tr>
               </thead>
               <tbody>
                 {partnerTasks.map(t => (
@@ -336,14 +409,59 @@ export default function PlatformAdmin() {
                     <td className="py-2 pr-4">{t.partner_name}</td>
                     <td className="py-2 pr-4">{t.title}</td>
                     <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      {t.reward_type === 'shop_unlock' ? `Товары: ${t.reward_config?.unlock_key || '—'}` : t.reward_type === 'karma_boost' ? `Буст +${t.reward_config?.percent}% на ${t.reward_config?.duration_days} дн.` : `${t.reward_karma} кармиков`}
+                      {t.rewardKarma || t.reward_karma > 0 ? `${t.reward_karma} карм.` : ''}
+                      {Array.isArray(t.bonus_rewards) && t.bonus_rewards.length > 0 ? ' + ' + t.bonus_rewards.map(b =>
+                        b.type === 'unlock' ? `товары (${b.unlockKey})` : b.type === 'boost' ? `буст +${b.percent}% на ${b.durationDays} дн.` : b.type === 'prize' ? `приз «${b.label}»` : ''
+                      ).join(', ') : (t.reward_type === 'shop_unlock' ? ` + товары: ${t.reward_config?.unlock_key || '—'}` : t.reward_type === 'karma_boost' ? ` + буст +${t.reward_config?.percent}% на ${t.reward_config?.duration_days} дн.` : '')}
                     </td>
                     <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>{new Date(t.created_at).toLocaleDateString('ru')}</td>
+                    <td className="py-2 text-right">
+                      <button onClick={() => setEditingTask({ id: t.id, title: t.title, description: t.description || '', rewardKarma: t.reward_karma, deadlineDate: t.deadline_at ? t.deadline_at.slice(0, 10) : '', deadlineTime: t.deadline_at ? t.deadline_at.slice(11, 16) : '', image_url: t.image_url || '', image_file: null })} style={{ fontSize: 11, color: '#0e7490', background: 'none', border: 'none', cursor: 'pointer' }}>Редактировать</button>
+                    </td>
                   </tr>
                 ))}
-                {partnerTasks.length === 0 && <tr><td colSpan={4} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>Партнёрских заданий пока нет</td></tr>}
+                {partnerTasks.length === 0 && <tr><td colSpan={5} className="py-6 text-center" style={{ color: 'var(--text-muted)' }}>Партнёрских заданий пока нет</td></tr>}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {editingTask && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 20 }} onClick={() => !editSaving && setEditingTask(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(480px, 94vw)', maxHeight: '86vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 24 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)' }}>Редактировать задание</h3>
+
+            <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Изображение</label>
+            <label htmlFor="edit-task-image" className="input-field w-full mb-3" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', boxSizing: 'border-box' }}>
+              {(editingTask.image_file || editingTask.image_url) && <img src={editingTask.image_file ? URL.createObjectURL(editingTask.image_file) : editingTask.image_url} alt="" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover' }} />}
+              <span style={{ color: editingTask.image_file ? 'var(--text-primary)' : 'var(--text-muted)' }}>{editingTask.image_file ? editingTask.image_file.name : editingTask.image_url ? 'Заменить изображение…' : 'Выбрать файл…'}</span>
+            </label>
+            <input id="edit-task-image" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setEditingTask({ ...editingTask, image_file: e.target.files?.[0] || null })} />
+
+            <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Название</label>
+            <input className="input-field w-full mb-3" value={editingTask.title} onChange={e => setEditingTask({ ...editingTask, title: e.target.value })} />
+
+            <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Описание</label>
+            <textarea className="input-field w-full mb-3" rows={2} value={editingTask.description} onChange={e => setEditingTask({ ...editingTask, description: e.target.value })} />
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Кармиков</label>
+                <input type="number" className="input-field w-full" value={editingTask.rewardKarma} onChange={e => setEditingTask({ ...editingTask, rewardKarma: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Дедлайн</label>
+                <DatePicker withTime value={editingTask.deadlineDate ? `${editingTask.deadlineDate}T${editingTask.deadlineTime || ''}` : ''} onChange={v => { const [d, t] = (v || '').split('T'); setEditingTask({ ...editingTask, deadlineDate: d || '', deadlineTime: t || '' }) }} placeholder="Без срока" />
+              </div>
+            </div>
+
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 16px' }}>Партнёр, компании-получатели и награды здесь не меняются — эта запись относится к одной конкретной компании, уже разосланная аудитория не пересматривается.</p>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setEditingTask(null)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+              <button onClick={saveEditedTask} disabled={editSaving} className="btn-gold" style={{ flex: 1 }}>{editSaving ? 'Сохраняем…' : 'Сохранить'}</button>
+            </div>
           </div>
         </div>
       )}
