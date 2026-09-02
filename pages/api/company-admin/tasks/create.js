@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth, hasPermission } from '../../../../lib/auth'
-import { getManagerScope, getSubtreeIds } from '../../../../lib/departments'
+import { getManagerScope } from '../../../../lib/departments'
+import { currentPeriodKey } from '../../../../lib/recurrence'
+import { resolveTaskAudience } from '../../../../lib/taskAudience'
 
 // Создание задания — перенесено с прямой клиентской вставки на сервер
 // (миграция 013, изоляция команд): раньше admin.js писал прямо в
@@ -35,51 +37,50 @@ export default async function handler(req, res) {
     if (!scope.includes(departmentId)) return res.status(403).json({ error: 'Этот отдел вне вашей зоны ответственности' })
   }
 
-  const deadlineAt = f.deadline_date ? new Date(f.deadline_date + 'T23:59:59').toISOString() : null
+  // Точное время дедлайна — раньше дедлайн был только датой (до конца
+  // дня, 23:59:59), из-за чего короткие задания вроде «прозвонить базу
+  // за 2 часа» нельзя было выразить точно. Если время не задано —
+  // поведение как раньше, конец дня.
+  const deadlineAt = f.deadline_date
+    ? new Date(`${f.deadline_date}T${f.deadline_time || '23:59:59'}`).toISOString()
+    : null
+  const recurrenceType = ['hourly', 'daily', 'weekly'].includes(f.recurrence_type) ? f.recurrence_type : 'once'
   const { data: task, error } = await a.from('tasks').insert({
     company_id: companyId, department_id: departmentId,
     title: f.title, description: f.description,
     reward_karma: f.reward_karma, task_type: f.is_auto_goal ? 'auto_goal' : f.task_type,
-    frequency: f.frequency, target_role: f.target_role,
+    frequency: recurrenceType, target_role: f.target_role,
     requires_review: f.is_auto_goal ? false : f.requires_review,
     requires_proof: f.requires_proof, proof_type: f.requires_proof ? (f.proof_type || 'any') : 'any',
-    deadline_at: deadlineAt, is_active: true,
+    deadline_at: deadlineAt, deadline_time: f.deadline_time || null, is_active: true,
     is_auto_goal: f.is_auto_goal, auto_goal_condition: f.is_auto_goal && f.auto_mode === 'general' ? f.auto_goal_condition : null,
     auto_energy: f.is_auto_goal ? f.auto_energy : 0,
     auto_metric_id: f.is_auto_goal && f.auto_mode === 'specific' && f.auto_metric_id ? f.auto_metric_id : null,
     auto_target_rank: f.is_auto_goal && f.auto_mode === 'specific' ? f.auto_target_rank : null,
-    image_url: f.image_url || null
+    image_url: f.image_url || null,
+    recurrence_type: recurrenceType,
+    reset_hour: Number.isFinite(f.reset_hour) ? f.reset_hour : 8,
+    recurrence_weekday: recurrenceType === 'weekly' ? (f.recurrence_weekday || 1) : null,
+    recurrence_start_date: f.recurrence_start_date || null,
+    recurrence_end_date: f.recurrence_end_date || null,
+    target_user_ids: f.target_role === 'specific' ? (f.specific_user_ids || []) : null,
+    target_level_ids: f.target_role === 'level' ? (f.target_level_ids || []) : null,
+    target_metric_id: f.target_role === 'metric_below' ? (f.target_metric_id || null) : null,
+    target_metric_rank: f.target_role === 'metric_below' ? (f.target_metric_rank || 1) : null,
+    target_bottom_n: f.target_role === 'energy_bottom' ? (Number(f.target_bottom_n) || 5) : null,
+    visual_tier: ['priority', 'premium'].includes(f.visual_tier) ? f.visual_tier : 'normal',
+    target_count: f.target_count ? Number(f.target_count) : null,
+    target_count_label: f.target_count && f.target_count_label ? String(f.target_count_label).slice(0, 40) : null
   }).select().single()
   if (error) return res.status(500).json({ error: error.message })
 
-  // Назначение. Раньше target_role сохранялся в задании, но никак не
-  // влиял на то, кому реально уходило назначение (только отдел сужал
-  // список) — теперь фильтрует по-настоящему:
-  // specific — только явно выбранные сотрудники (отдел в этом режиме не
-  //   участвует, это осознанный выбор конкретных людей);
-  // new/experienced — по дате трудоустройства (порог 30 дней);
-  // all — все сотрудники в зоне (вся компания или конкретный отдел).
-  let targetUserIds = null
-  if (f.target_role === 'specific') {
-    targetUserIds = Array.isArray(f.specific_user_ids) ? f.specific_user_ids : []
-    if (targetUserIds.length === 0) return res.status(400).json({ error: 'Выберите хотя бы одного сотрудника' })
-  } else {
-    let empQuery = a.from('profiles').select('user_id, hire_date').eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
-    if (departmentId) {
-      const targetDeptIds = getSubtreeIds(allDepartments || [], departmentId)
-      empQuery = empQuery.in('department_id', targetDeptIds)
-    }
-    const { data: emps } = await empQuery
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30)
-    const filtered = (emps || []).filter(e => {
-      if (f.target_role === 'new') return e.hire_date && new Date(e.hire_date) > cutoff
-      if (f.target_role === 'experienced') return !e.hire_date || new Date(e.hire_date) <= cutoff
-      return true
-    })
-    targetUserIds = filtered.map(e => e.user_id)
+  // Назначение — единый резолвер lib/taskAudience.js (используется и
+  // здесь, и в cron-регенерации периодов регулярных заданий, чтобы
+  // правило "кому назначить" не расходилось в двух реализациях).
+  if (f.target_role === 'specific' && !(f.specific_user_ids || []).length) {
+    return res.status(400).json({ error: 'Выберите хотя бы одного сотрудника' })
   }
-
-  if (targetUserIds === null) targetUserIds = []
+  let targetUserIds = await resolveTaskAudience(a, task, { allDepartments: allDepartments || [] })
   if (f.target_role === 'specific' && scope !== null && targetUserIds.length) {
     const { data: picked } = await a.from('profiles').select('user_id, department_id').in('user_id', targetUserIds).eq('company_id', companyId)
     const outOfScope = (picked || []).some(p => !scope.includes(p.department_id))
@@ -87,8 +88,9 @@ export default async function handler(req, res) {
   }
 
   if (targetUserIds.length) {
+    const periodKey = currentPeriodKey(task, new Date())
     const { error: asErr } = await a.from('task_assignments').insert(
-      targetUserIds.map(userId => ({ task_id: task.id, user_id: userId, status: 'assigned', deadline_at: deadlineAt }))
+      targetUserIds.map(userId => ({ task_id: task.id, user_id: userId, status: 'assigned', deadline_at: deadlineAt, period_key: periodKey }))
     )
     if (asErr) return res.status(500).json({ error: 'Задание создано, но не удалось назначить: ' + asErr.message })
 

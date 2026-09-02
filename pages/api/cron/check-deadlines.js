@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { bandFor, bandRankOf, energyFor, karmaFor } from '../../../lib/kpi'
 import { pullAutoValues } from '../../../lib/kpiSource'
 import { creditEnergy } from '../../../lib/energy'
+import { currentPeriodKey, isWithinRecurrenceWindow } from '../../../lib/recurrence'
+import { resolveTaskAudience } from '../../../lib/taskAudience'
 
 // РАНЬШЕ: этот хендлер не проверял вообще ничего — vercel.json настраивает
 // только РАСПИСАНИЕ вызова, а сам URL /api/cron/check-deadlines оставался
@@ -24,6 +26,79 @@ export default async function handler(req, res) {
   const now = new Date()
   const soon = new Date(now.getTime() + 24 * 3600 * 1000)
   const today = now.toISOString().slice(0, 10)
+
+  // 0) Генерация периодов регулярных заданий (движок регулярности,
+  // 1 сентября 2026). РАНЬШЕ recurrence_type/frequency нигде не
+  // обрабатывался — «ежедневное» задание работало как разовое. Теперь на
+  // каждый период (час/день/неделя) создаётся отдельная строка
+  // назначения — не переиспользуем одну и ту же, чтобы была честная
+  // история по периодам для будущей аналитики.
+  const { data: recurringTasks } = await a.from('tasks')
+    .select('*')
+    .eq('is_active', true).eq('is_archived', false)
+    .neq('recurrence_type', 'once')
+
+  let periodsGenerated = 0
+  for (const task of recurringTasks || []) {
+    if (!isWithinRecurrenceWindow(task, now)) {
+      // Окно действия завершилось (recurrence_end_date в прошлом) —
+      // регулярность закончилась, дальше не генерируем и архивируем,
+      // чтобы задание не висело вечно активным без смысла.
+      if (task.recurrence_end_date && today > task.recurrence_end_date) {
+        await a.from('tasks').update({ is_archived: true, archived_at: now.toISOString() }).eq('id', task.id)
+      }
+      continue
+    }
+    const periodKey = currentPeriodKey(task, now)
+    if (!periodKey) continue
+
+    // Аудитория — единый резолвер lib/taskAudience.js (та же логика,
+    // что при создании задания в tasks/create.js). Для specific — из
+    // сохранённого на задаче target_user_ids; для остальных режимов
+    // (включая новые level/metric_below/energy_bottom) пересчитывается
+    // заново на каждый период — это даёт корректный список даже если
+    // состав команды или показатели с тех пор изменились.
+    const targetUserIds = await resolveTaskAudience(a, task, {})
+    if (!targetUserIds.length) continue
+
+    // Дедлайн этого конкретного периода — до следующего сброса, а не
+    // произвольная дата задания (у регулярного задания смысл именно в
+    // «успеть до следующего часа/дня/недели», не в конце календарного
+    // месяца).
+    let periodDeadline = null
+    if (task.recurrence_type === 'hourly') { const d = new Date(now); d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1); periodDeadline = d.toISOString() }
+    if (task.recurrence_type === 'daily') { const d = new Date(now); d.setHours(task.reset_hour ?? 8, 0, 0, 0); if (d <= now) d.setDate(d.getDate() + 1); periodDeadline = d.toISOString() }
+    if (task.recurrence_type === 'weekly') { const d = new Date(now); d.setHours(task.reset_hour ?? 8, 0, 0, 0); const day = d.getDay() || 7; d.setDate(d.getDate() + ((8 - day) % 7 || 7)); periodDeadline = d.toISOString() }
+
+    // Вставляем только тех, у кого назначения на ЭТОТ период ещё нет —
+    // уникальный индекс (task_id, user_id, period_key) на всякий случай
+    // подстрахует от дублирования при параллельном запуске, но дешевле
+    // сначала просто проверить.
+    const { data: existing } = await a.from('task_assignments')
+      .select('user_id').eq('task_id', task.id).eq('period_key', periodKey)
+    const already = new Set((existing || []).map(x => x.user_id))
+    const toInsert = targetUserIds.filter(id => !already.has(id))
+    if (toInsert.length) {
+      const { error: insErr } = await a.from('task_assignments').insert(
+        toInsert.map(userId => ({ task_id: task.id, user_id: userId, status: 'assigned', period_key: periodKey, deadline_at: periodDeadline }))
+      )
+      if (!insErr) {
+        periodsGenerated += toInsert.length
+        await a.from('notifications').insert(
+          toInsert.map(userId => ({ user_id: userId, message: `Новое задание: «${task.title}»`, link: '/tasks' }))
+        )
+      }
+    }
+
+    // Незавершённые назначения ПРОШЛЫХ периодов этого же задания —
+    // помечаем missed, а не оставляем висеть в assigned навсегда (иначе
+    // счётчик «активных заданий» бесконтрольно растёт, и в аналитике
+    // не будет видно, что сотрудник период просто пропустил).
+    await a.from('task_assignments')
+      .update({ status: 'missed' })
+      .eq('task_id', task.id).neq('period_key', periodKey).not('period_key', 'is', null)
+      .in('status', ['assigned', 'in_progress'])
+  }
 
   // 1) Напоминания (дедлайн в течение 24ч, ещё не напоминали)
   const { data: remind } = await a.from('task_assignments')
@@ -241,5 +316,5 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, reminded: (remind || []).length, archived: (overdueTasks || []).length, planEventsNotified, autoGranted })
+  res.status(200).json({ ok: true, periodsGenerated, reminded: (remind || []).length, archived: (overdueTasks || []).length, planEventsNotified, autoGranted })
 }

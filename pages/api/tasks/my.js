@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   const [{ data: active }, { data: history }] = await Promise.all([
     a.from('task_assignments')
-      .select('id, status, started_at, deadline_at, task_id, tasks(id, title, description, reward_karma, image_url, is_auto_goal, auto_goal_condition, auto_metric_id, auto_target_rank, reward_type, reward_config, partner_name, requires_proof, proof_type)')
+      .select('id, status, started_at, deadline_at, task_id, progress_count, tasks(id, title, description, reward_karma, image_url, is_auto_goal, auto_goal_condition, auto_metric_id, auto_target_rank, reward_type, reward_config, partner_name, requires_proof, proof_type, visual_tier, target_count, target_count_label)')
       .eq('user_id', userId).in('status', ['assigned', 'in_progress', 'pending_review']).limit(50),
     a.from('task_assignments')
       .select('id, status, comment, started_at, completed_at, task_id, tasks(id, title, reward_karma, is_auto_goal, partner_name)')

@@ -18,6 +18,7 @@ export default function TaskDetail() {
   const [user, setUser] = useState(null)
   const [assignment, setAssignment] = useState(null)
   const [autoProgress, setAutoProgress] = useState(null)
+  const [progressCount, setProgressCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [submitModal, setSubmitModal] = useState({ show: false, comment: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -33,13 +34,15 @@ export default function TaskDetail() {
       if (id) {
         const { data } = await supabase
           .from('task_assignments')
-          .select(`id, status, started_at, deadline_at, comment, proof_urls,
+          .select(`id, status, started_at, deadline_at, comment, proof_urls, progress_count,
             tasks( id, title, description, reward_karma, icon, requires_review,
                    requires_proof, proof_type, deadline_hours, is_auto_goal,
-                   auto_goal_condition, auto_metric_id, auto_target_rank, partner_name )`)
+                   auto_goal_condition, auto_metric_id, auto_target_rank, partner_name,
+                   visual_tier, target_count, target_count_label )`)
           .eq('id', id)
           .single()
         setAssignment(data)
+        setProgressCount(data?.progress_count || 0)
 
         // Авто-зачётное задание — подтягиваем прогресс по показателю
         // отдельно, страница деталей задания не должна знать бизнес-логику
@@ -103,6 +106,18 @@ export default function TaskDetail() {
     return urls
   }
 
+  const updateProgress = async (next) => {
+    setProgressCount(next) // оптимистично — не ждём ответа сервера, чтобы +1/-1 чувствовались мгновенно
+    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      const r = await fetch('/api/tasks/update-progress', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ assignmentId: id, progress: next })
+      })
+      if (!r.ok) { showError('Не удалось сохранить прогресс'); setProgressCount(assignment.progress_count || 0) }
+    } catch (e) { showError('Сетевая ошибка — попробуйте ещё раз'); setProgressCount(assignment.progress_count || 0) }
+  }
+
   const handleSubmit = async () => {
     if (!assignment || !user) return
     const requiresProof = assignment.tasks?.requires_proof
@@ -148,7 +163,8 @@ export default function TaskDetail() {
           <span style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
           </span>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }} style={{ lineHeight: 1.3 }}>{t.title}</h1>
+          {t.image_url && <img src={t.image_url} alt="" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 16, marginBottom: 16 }} />}
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.3 }}>{t.title}</h1>
         </div>
 
         <div style={{ marginBottom: 12 }}>
@@ -177,17 +193,46 @@ export default function TaskDetail() {
         </div>
 
         {t.is_auto_goal && autoProgress && (
-          <div style={{ marginBottom: 16, padding: 14, borderRadius: 12, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
-            <p style={{ fontSize: 12, color: '#4ade80', margin: '0 0 10px' }}>
+          <div style={{ marginBottom: 16, padding: 14, borderRadius: 12, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}>
+            <p style={{ fontSize: 12, color: '#137a39', margin: '0 0 10px' }}>
               Ничего нажимать не нужно — система сама проверит показатель «{autoProgress.metricName}» и засчитает задание при достижении уровня «{autoProgress.targetLabel}».
             </p>
             <ProgressBar3D value={autoProgress.currentValue} marks={[{ key: 't', value: autoProgress.targetValue ?? 1 }]} height={8} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12 }}>
               <span style={{ color: BAND_COLORS[autoProgress.currentBand] }}>Сейчас: {autoProgress.currentValue}{autoProgress.unit} ({BAND_LABELS[autoProgress.currentBand]})</span>
-              {autoProgress.achievedToday && <span style={{ color: '#4ade80' }}>Выполнено сегодня</span>}
+              {autoProgress.achievedToday && <span style={{ color: '#137a39' }}>Выполнено сегодня</span>}
             </div>
           </div>
         )}
+
+        {t.target_count > 0 && ['assigned', 'in_progress'].includes(assignment.status) && (() => {
+          const remaining = t.target_count - progressCount
+          const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
+          const urgent = remaining > 0 && hoursLeft != null && hoursLeft > 0 && hoursLeft < 3
+          return (
+            <div style={{ marginBottom: 16, padding: 16, borderRadius: 14, background: urgent ? 'rgba(220,38,38,0.06)' : 'rgba(124,58,237,0.05)', border: `1px solid ${urgent ? 'rgba(220,38,38,0.3)' : 'rgba(124,58,237,0.2)'}`, animation: urgent ? 'urgentPulse 1.6s ease-in-out infinite' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Прогресс: {progressCount} / {t.target_count} {t.target_count_label || ''}</span>
+                {remaining > 0 && <span style={{ fontSize: 12, color: urgent ? '#dc2626' : 'var(--text-secondary)', fontWeight: urgent ? 700 : 400 }}>{urgent ? `Осталось всего ${Math.round(hoursLeft * 60)} мин!` : `Осталось: ${remaining}`}</span>}
+              </div>
+              <ProgressBar3D value={progressCount} marks={[{ key: 't', value: t.target_count }]} height={8} />
+              {urgent && remaining > 0 && (
+                <p style={{ fontSize: 13, color: '#dc2626', fontWeight: 600, margin: '10px 0 0' }}>
+                  Сделайте ещё {remaining} {t.target_count_label || ''}, чтобы точно получить кармики — время почти вышло!
+                </p>
+              )}
+              {remaining > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button onClick={() => updateProgress(Math.max(0, progressCount - 1))} disabled={progressCount <= 0} className="btn-outline" style={{ padding: '6px 14px', fontSize: 13 }}>−1</button>
+                  <button onClick={() => updateProgress(Math.min(t.target_count, progressCount + 1))} className="btn-outline" style={{ padding: '6px 14px', fontSize: 13 }}>+1</button>
+                  <input type="number" min="0" max={t.target_count} value={progressCount} onChange={e => updateProgress(Math.max(0, Math.min(t.target_count, parseInt(e.target.value) || 0)))} className="input-field" style={{ width: 80, textAlign: 'center', padding: '6px 10px', fontSize: 13 }} />
+                </div>
+              )}
+              {remaining <= 0 && <p style={{ fontSize: 13, color: '#137a39', fontWeight: 600, margin: '10px 0 0' }}>Цель достигнута — можно сдавать задание.</p>}
+              <style jsx>{`@keyframes urgentPulse { 0%, 100% { box-shadow: 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 16px rgba(220,38,38,0.25); } }`}</style>
+            </div>
+          )
+        })()}
 
         {t.requires_proof && (
           <div className="mb-4 px-4 py-2 rounded-xl text-sm flex items-center gap-2"

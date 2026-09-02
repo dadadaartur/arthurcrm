@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, description, partnerName, rewardType, rewardKarma, unlockKey, boostPercent, boostDurationDays, deadlineDate, companyIds, applyToAllCompanies } = req.body || {}
+    const { title, description, partnerName, rewardType, rewardKarma, unlockKey, boostPercent, boostDurationDays, deadlineDate, companyIds, applyToAllCompanies, imageUrl } = req.body || {}
     if (!title?.trim() || !partnerName?.trim()) return res.status(400).json({ error: 'Укажите название задания и партнёра' })
     if (!applyToAllCompanies && (!companyIds || companyIds.length === 0)) return res.status(400).json({ error: 'Выберите хотя бы одну компанию или «все компании»' })
 
@@ -48,6 +48,7 @@ export default async function handler(req, res) {
         reward_karma: Number(rewardKarma) || 0, task_type: 'one_time', frequency: 'once', target_role: 'all',
         requires_review: true, requires_proof: false, proof_type: 'any', is_active: true, is_archived: false, deadline_at: deadlineAt,
         partner_name: partnerName.trim(), reward_type: rewardType || 'karma', reward_config: rewardConfig,
+        image_url: imageUrl || null,
       }).select().single()
       if (taskErr || !task) continue
       created.push(task)

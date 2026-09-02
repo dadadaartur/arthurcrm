@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import { resolveThresholds } from '../../lib/kpi'
 import BackArrow from '../../components/BackArrow'
 import DatePicker from '../../components/DatePicker'
+import TimePicker from '../../components/TimePicker'
+import { RECURRENCE_LABELS } from '../../lib/recurrence'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
@@ -37,6 +40,7 @@ function TasksPage() {
   const [tasks, setTasks] = useState([])
   const [archived, setArchived] = useState([])
   const [metrics, setMetrics] = useState([])
+  const [levels, setLevels] = useState([])
   const [departments, setDepartments] = useState([])
   const [employees, setEmployees] = useState([])
   const [myScope, setMyScope] = useState(null)
@@ -46,13 +50,21 @@ function TasksPage() {
   const [restoreDate, setRestoreDate] = useState('')
   const [form, setForm] = useState({
     title: '', description: '', reward_karma: 10,
-    task_type: 'one_time', frequency: 'once', target_role: 'all',
+    task_type: 'one_time', recurrence_type: 'once', target_role: 'all',
     requires_review: true, requires_proof: false, proof_type: 'any',
-    deadline_date: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 1,
+    deadline_date: '', deadline_time: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 1,
     auto_mode: 'general', auto_metric_id: '', auto_target_rank: 1,
+    reset_hour: 8, recurrence_weekday: 1, recurrence_start_date: '', recurrence_end_date: '',
+    visual_tier: 'normal', target_count: '', target_count_label: '',
     department_id: '', specific_user_ids: [], image_file: null
   })
   const [creating, setCreating] = useState(false)
+  const [audiencePreview, setAudiencePreview] = useState(null)
+  const [audienceLoading, setAudienceLoading] = useState(false)
+  const [recommendations, setRecommendations] = useState(null)
+  const [recsLoading, setRecsLoading] = useState(false)
+  const [goalAudienceMode, setGoalAudienceMode] = useState('all') // all | lagging — отдельно от обычного target_role, это специфика формы «По цели»
+  const [goalAudiencePreview, setGoalAudiencePreview] = useState(null)
   const [pendingReviews, setPendingReviews] = useState([])
   const [reviewHistory, setReviewHistory] = useState([])
   const [selectedReview, setSelectedReview] = useState(null)
@@ -60,10 +72,65 @@ function TasksPage() {
   const [reviewLoading, setReviewLoading] = useState(false)
 
   useEffect(() => {
-    if (router.query.tab && ['create', 'create-goal', 'create-external', 'review', 'active', 'archived'].includes(router.query.tab)) {
+    if (router.query.tab && ['create', 'create-goal', 'create-external', 'recommendations', 'review', 'active', 'archived'].includes(router.query.tab)) {
       setTab(router.query.tab)
     }
   }, [router.query.tab])
+
+  useEffect(() => {
+    if (form.target_role === 'specific' || tab !== 'create') { setAudiencePreview(null); return }
+    if (form.target_role === 'metric_below' && !form.target_metric_id) { setAudiencePreview(null); return }
+    if (form.target_role === 'level' && !(form.target_level_ids || []).length) { setAudiencePreview(null); return }
+    const t = setTimeout(async () => {
+      setAudienceLoading(true)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const r = await fetch('/api/company-admin/tasks/audience-preview', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ target_role: form.target_role, department_id: form.department_id, target_level_ids: form.target_level_ids, target_metric_id: form.target_metric_id, target_bottom_n: form.target_bottom_n })
+        })
+        if (r.ok) setAudiencePreview(await r.json())
+      } catch (e) { /* тихо — это подсказка, не критичный запрос */ }
+      setAudienceLoading(false)
+    }, 350) // небольшая задержка — не дёргаем API на каждое нажатие клавиши при вводе N
+    return () => clearTimeout(t)
+  }, [form.target_role, form.department_id, form.target_level_ids, form.target_metric_id, form.target_bottom_n, tab])
+
+  useEffect(() => {
+    if (recommendations !== null || loading) return
+    const load = async () => {
+      setRecsLoading(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/company-admin/tasks/recommendations', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setRecommendations((await r.json()).recommendations || [])
+      setRecsLoading(false)
+    }
+    load()
+  }, [loading, recommendations])
+
+  useEffect(() => {
+    if ((tab !== 'create-goal' && tab !== 'create-external') || form.auto_mode !== 'specific' || !form.auto_metric_id) { setGoalAudiencePreview(null); return }
+    const t = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/company-admin/tasks/audience-preview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ target_role: 'metric_below', department_id: form.department_id, target_metric_id: form.auto_metric_id, target_metric_rank: form.auto_target_rank })
+      })
+      if (r.ok) setGoalAudiencePreview(await r.json())
+    }, 350)
+    return () => clearTimeout(t)
+  }, [tab, form.auto_mode, form.auto_metric_id, form.auto_target_rank, form.department_id])
+
+  const applyRecommendation = (rec) => {
+    setForm(f => ({
+      ...f, is_auto_goal: false, target_role: 'specific',
+      specific_user_ids: rec.laggingEmployees.map(e => e.user_id),
+      title: rec.suggestedTitle, description: rec.suggestedDescription,
+      deadline_date: new Date(Date.now() + rec.suggestedDeadlineDays * 86400000).toISOString().slice(0, 10),
+      recurrence_type: 'once'
+    }))
+    setTab('create')
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -76,6 +143,8 @@ function TasksPage() {
       const dr = await fetch('/api/company-admin/departments', { headers: { Authorization: `Bearer ${session.access_token}` } })
       let scope = null
       if (dr.ok) { const dd = await dr.json(); setDepartments(dd.departments || []); setEmployees(dd.employees || []); setMyScope(dd.scope); scope = dd.scope }
+      const lr = await fetch('/api/kpi/levels', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (lr.ok) setLevels(await lr.json())
       await loadData(p.company_id, scope)
       setLoading(false)
     }
@@ -162,10 +231,14 @@ function TasksPage() {
     }
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      const isGoalLagging = (tab === 'create-goal' || tab === 'create-external') && form.auto_mode === 'specific' && goalAudienceMode === 'lagging'
+      const submitBody = isGoalLagging
+        ? { ...form, target_role: 'metric_below', target_metric_id: form.auto_metric_id, target_metric_rank: form.auto_target_rank, image_url: imageUrl }
+        : { ...form, image_url: imageUrl }
       const r = await fetch('/api/company-admin/tasks/create', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, image_url: imageUrl })
+        body: JSON.stringify(submitBody)
       })
       const d = await r.json()
       if (!r.ok) { showError(d.error || 'Не удалось создать задание'); setCreating(false); return }
@@ -202,13 +275,20 @@ function TasksPage() {
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление заданиями" extra={
-          <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>Активных: <b style={{ color: 'var(--accent-gold)' }}>{tasks.length}</b></div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Link href="/company-admin/tasks-analytics" style={{ fontSize: 12, color: '#8a6208', textDecoration: 'none', fontWeight: 600 }}>Аналитика →</Link>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Активных: <b style={{ color: 'var(--accent-gold)' }}>{tasks.length}</b></div>
+          </div>
         } />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
           <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: false })); setTab('create') }} style={pillTab(tab === 'create')}>Обычное задание</button>
-          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific' })); setTab('create-goal') }} style={pillTab(tab === 'create-goal')}>По цели</button>
-          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific' })); setTab('create-external') }} style={pillTab(tab === 'create-external')}>С внешней автопроверкой</button>
+          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific', target_role: 'all' })); setTab('create-goal') }} style={pillTab(tab === 'create-goal')}>По цели</button>
+          <button onClick={() => { setForm(f => ({ ...f, is_auto_goal: true, auto_mode: 'specific', target_role: 'all' })); setTab('create-external') }} style={pillTab(tab === 'create-external')}>С внешней автопроверкой</button>
+          <button onClick={() => setTab('recommendations')} style={{ ...pillTab(tab === 'recommendations'), position: 'relative' }}>
+            Рекомендации{recommendations?.length > 0 && ` · ${recommendations.length}`}
+            {recommendations?.length > 0 && tab !== 'recommendations' && <span style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#7c3aed' }} />}
+          </button>
           <button onClick={() => setTab('review')} style={pillTab(tab === 'review')}>На проверке{pendingReviews.length > 0 && ` · ${pendingReviews.length}`}</button>
           <button onClick={() => setTab('active')} style={pillTab(tab === 'active')}>Активные</button>
           <button onClick={() => setTab('archived')} style={pillTab(tab === 'archived')}>Архив · {archived.length}</button>
@@ -225,9 +305,14 @@ function TasksPage() {
                 ? 'Показатель сам подтягивает значение из внешней системы (CRM, отчёт и т.п.) по расписанию — без ручного ввода. Настройка источника — в «Управлении целями», раздел «Источник значений».'
                 : 'Система сама проверяет, достиг ли сотрудник нужного уровня по показателю (введённому вручную или автоматически), и начисляет награду — без ручной проверки.'}
             </p>
+            {isExternal && (
+              <div style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.25)', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+                <b style={{ color: '#0e7490' }}>Как это устроено:</b> задание с внешней автопроверкой — это две отдельные настройки. Сначала показатель получает «внешний источник» (в управлении целями — ссылка, откуда раз в день подтягиваются значения). Здесь, на этой вкладке, вы только выбираете уже готовый такой показатель и уровень, при достижении которого задание засчитается само, без ручной проверки.
+              </div>
+            )}
             {isExternal && relevantMetrics.length === 0 && (
               <div style={{ padding: 14, borderRadius: 12, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', color: '#dc2626', fontSize: 12, marginBottom: 16 }}>
-                Ни у одного показателя не включён внешний источник. Откройте «Управление целями» → выберите или создайте показатель → «Источник значений» → «Авто (внешний источник)», затем вернитесь сюда.
+                Ни у одного показателя пока не включён внешний источник. <Link href="/company-admin/mastery" style={{ color: '#dc2626', fontWeight: 600, textDecoration: 'underline' }}>Открыть управление целями →</Link>
               </div>
             )}
             {!isExternal && (
@@ -257,6 +342,13 @@ function TasksPage() {
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name} (и вложенные)</option>)}
                   </select>
                 </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Изображение задания (необязательно)</label>
+                  <label htmlFor="goal-task-image-upload" className="input-field" style={{ width: '100%', display: 'flex', alignItems: 'center', cursor: 'pointer', color: form.image_file ? 'var(--text-primary)' : 'var(--text-muted)', boxSizing: 'border-box' }}>
+                    {form.image_file ? form.image_file.name : 'Выбрать файл...'}
+                  </label>
+                  <input id="goal-task-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, image_file: e.target.files?.[0] || null })} />
+                </div>
               </div>
 
               {!isExternal && form.auto_mode === 'general' ? (
@@ -281,6 +373,27 @@ function TasksPage() {
                         <option key={t.key} value={i + 1}>{t.label} ({t.value}{metrics.find(m => m.id === form.auto_metric_id)?.unit})</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {form.auto_mode === 'specific' && form.auto_metric_id && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.25)', fontSize: 12, marginBottom: 10 }}>
+                    {goalAudiencePreview ? (
+                      goalAudiencePreview.count === 0 ? (
+                        <span style={{ color: '#137a39' }}>Отлично — сейчас уже все достигают этого уровня.</span>
+                      ) : (
+                        <span style={{ color: '#7c3aed' }}>
+                          Пока не достигают: <b>{goalAudiencePreview.count}</b> {goalAudiencePreview.count === 1 ? 'сотрудник' : 'сотрудников'}
+                          {goalAudiencePreview.count <= 8 && ` — ${goalAudiencePreview.employees.map(e => e.name).join(', ')}`}
+                        </span>
+                      )
+                    ) : <span style={{ color: 'var(--text-muted)' }}>Считаем, кто ещё не достигает этого уровня…</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Seg active={goalAudienceMode === 'all'} onClick={() => setGoalAudienceMode('all')} color="#7c3aed">Назначить всем</Seg>
+                    <Seg active={goalAudienceMode === 'lagging'} onClick={() => setGoalAudienceMode('lagging')} color="#7c3aed">Только тем, кто ещё не достиг</Seg>
                   </div>
                 </div>
               )}
@@ -309,16 +422,101 @@ function TasksPage() {
                   <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн (фирменный календарь)</label>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн — дата</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн — время {!form.deadline_date && <span style={{ color: 'var(--text-muted)' }}>(нужна дата)</span>}</label>
+                  <TimePicker value={form.deadline_time} onChange={v => setForm({ ...form, deadline_time: v })} placeholder="До конца дня" disabled={!form.deadline_date} />
+                </div>
+
+                <div style={{ gridColumn: 'span 3' }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Регулярность</label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: form.recurrence_type !== 'once' ? 10 : 0 }}>
+                    {Object.entries(RECURRENCE_LABELS).map(([k, label]) => (
+                      <Seg key={k} active={form.recurrence_type === k} onClick={() => setForm({ ...form, recurrence_type: k })} color="#7c3aed">{label}</Seg>
+                    ))}
+                  </div>
+                  {form.recurrence_type !== 'once' && (
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', padding: 12, borderRadius: 10, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                      {form.recurrence_type !== 'hourly' && (
+                        <div>
+                          <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Час сброса счётчика</label>
+                          <select className="input-field" style={{ width: 90, fontSize: 12 }} value={form.reset_hour} onChange={e => setForm({ ...form, reset_hour: parseInt(e.target.value) })}>
+                            {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
+                          </select>
+                        </div>
+                      )}
+                      {form.recurrence_type === 'weekly' && (
+                        <div>
+                          <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>День недели</label>
+                          <select className="input-field" style={{ width: 130, fontSize: 12 }} value={form.recurrence_weekday} onChange={e => setForm({ ...form, recurrence_weekday: parseInt(e.target.value) })}>
+                            {['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'].map((d, i) => <option key={i} value={i + 1}>{d}</option>)}
+                          </select>
+                        </div>
+                      )}
+                      <div>
+                        <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Действует с</label>
+                        <DatePicker value={form.recurrence_start_date} onChange={v => setForm({ ...form, recurrence_start_date: v })} placeholder="С момента создания" />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Действует по</label>
+                        <DatePicker value={form.recurrence_end_date} onChange={v => setForm({ ...form, recurrence_end_date: v })} placeholder="Без ограничения" />
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', maxWidth: 220 }}>
+                        {form.recurrence_type === 'hourly' && 'Счётчик и новое назначение — каждый час.'}
+                        {form.recurrence_type === 'daily' && `Каждый день в ${String(form.reset_hour).padStart(2, '0')}:00 задание сбрасывается заново.`}
+                        {form.recurrence_type === 'weekly' && `Раз в неделю задание выдаётся заново.`}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Кому назначить</label>
-                  <div style={{ display: 'flex', gap: 8, marginBottom: form.target_role === 'specific' ? 10 : 0 }}>
-                    {[['all', 'Все'], ['new', 'Новые'], ['experienced', 'Опытные'], ['specific', 'Выбрать сотрудников']].map(([k, label]) => (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                    {[['all', 'Все'], ['new', 'Новые'], ['experienced', 'Опытные'], ['level', 'По уровню'], ['metric_below', 'Не выполняет показатель'], ['energy_bottom', 'Антитоп по энергии'], ['specific', 'Выбрать сотрудников']].map(([k, label]) => (
                       <Seg key={k} active={form.target_role === k} onClick={() => setForm({ ...form, target_role: k })} color="#0e7490">{label}</Seg>
                     ))}
                   </div>
+
+                  {(form.target_role === 'new' || form.target_role === 'experienced') && (
+                    <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px' }}>
+                      Правило: трудоустроены {form.target_role === 'new' ? 'менее' : '30 и более'} 30 дней назад (по дате найма в карточке сотрудника).
+                    </p>
+                  )}
+
+                  {form.target_role === 'level' && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                      {levels.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Уровни мастерства не настроены</span>}
+                      {levels.map(l => {
+                        const checked = (form.target_level_ids || []).includes(l.id)
+                        return (
+                          <label key={l.id} onClick={() => setForm(f => ({ ...f, target_level_ids: checked ? (f.target_level_ids || []).filter(id => id !== l.id) : [...(f.target_level_ids || []), l.id] }))}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, fontSize: 11, cursor: 'pointer', background: checked ? `${l.color}18` : 'var(--bg-page)', border: `1px solid ${checked ? l.color + '55' : 'var(--border-subtle)'}`, color: checked ? l.color : 'var(--text-primary)' }}>
+                            {l.name}
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {form.target_role === 'metric_below' && (
+                    <div style={{ marginBottom: 10 }}>
+                      <select className="input-field" style={{ width: '100%', fontSize: 12 }} value={form.target_metric_id} onChange={e => setForm({ ...form, target_metric_id: e.target.value })}>
+                        <option value="">Выберите показатель…</option>
+                        {metrics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>Попадут те, кто сегодня ниже минимального порога по этому показателю — включая тех, кто ещё не внёс значение вовсе.</p>
+                    </div>
+                  )}
+
+                  {form.target_role === 'energy_bottom' && (
+                    <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Сколько сотрудников с наименьшей энергией:</span>
+                      <input type="number" min="1" className="input-field" style={{ width: 70, fontSize: 12 }} value={form.target_bottom_n} onChange={e => setForm({ ...form, target_bottom_n: parseInt(e.target.value) || 5 })} />
+                    </div>
+                  )}
+
                   {form.target_role === 'specific' && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderRadius: 10, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', maxHeight: 140, overflowY: 'auto' }}>
                       {employees.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Нет сотрудников для выбора</span>}
@@ -332,6 +530,25 @@ function TasksPage() {
                           </label>
                         )
                       })}
+                    </div>
+                  )}
+
+                  {form.target_role !== 'specific' && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 10, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', fontSize: 12 }}>
+                      {audienceLoading ? (
+                        <span style={{ color: 'var(--text-secondary)' }}>Считаем…</span>
+                      ) : audiencePreview ? (
+                        audiencePreview.count === 0 ? (
+                          <span style={{ color: '#dc2626' }}>Под условие пока никто не попадает</span>
+                        ) : (
+                          <span style={{ color: '#8a6208' }}>
+                            Получат задание: <b>{audiencePreview.count}</b> {audiencePreview.count === 1 ? 'сотрудник' : 'сотрудников'}
+                            {audiencePreview.count <= 8 && audiencePreview.employees?.length > 0 && ` — ${audiencePreview.employees.map(e => e.name).join(', ')}`}
+                          </span>
+                        )
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Выберите условие, чтобы увидеть, кто попадёт под задание</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -348,6 +565,29 @@ function TasksPage() {
                     {form.image_file ? form.image_file.name : 'Выбрать файл...'}
                   </label>
                   <input id="task-image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setForm({ ...form, image_file: e.target.files?.[0] || null })} />
+                </div>
+
+                <div style={{ gridColumn: 'span 3' }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Визуальный вес на странице сотрудника</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Seg active={form.visual_tier === 'normal'} onClick={() => setForm({ ...form, visual_tier: 'normal' })} color="#5b6478">Обычное</Seg>
+                    <Seg active={form.visual_tier === 'priority'} onClick={() => setForm({ ...form, visual_tier: 'priority' })} color="#7c3aed">Приоритетное — мягкое мерцание</Seg>
+                    <Seg active={form.visual_tier === 'premium'} onClick={() => setForm({ ...form, visual_tier: 'premium' })} color="#8a6208">Премиум — золотой бейдж</Seg>
+                  </div>
+                </div>
+
+                <div style={{ gridColumn: 'span 3', display: 'flex', gap: 12, alignItems: 'flex-end', padding: 12, borderRadius: 10, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ flex: '0 0 120px' }}>
+                    <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Количественная цель</label>
+                    <input type="number" min="1" className="input-field" placeholder="напр. 30" value={form.target_count} onChange={e => setForm({ ...form, target_count: e.target.value })} />
+                  </div>
+                  <div style={{ flex: '0 0 160px' }}>
+                    <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Единица</label>
+                    <input className="input-field" placeholder="напр. контактов" value={form.target_count_label} onChange={e => setForm({ ...form, target_count_label: e.target.value })} disabled={!form.target_count} />
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', flex: 1, minWidth: 180 }}>
+                    Необязательно. Если задано — сотрудник сам отмечает прогресс («сделал ещё N»), и система подскажет дожать остаток, если время поджимает.
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -372,6 +612,44 @@ function TasksPage() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {tab === 'recommendations' && (
+          <div>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 18, maxWidth: 640 }}>
+              Система сравнивает сотрудников друг с другом по каждому показателю и находит тех, кто заметно отстаёт от большинства команды — не просто «ниже порога», а именно «хуже почти всех коллег». Рекомендация ничего не создаёт сама — только показывает находку, решение всегда за вами.
+            </p>
+            {recsLoading && <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Анализируем показатели команды…</p>}
+            {!recsLoading && recommendations?.length === 0 && (
+              <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 50, textAlign: 'center', color: 'var(--text-muted)' }}>
+                Явных отстающих не найдено — либо команда ровно справляется, либо данных пока недостаточно для сравнения.
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {(recommendations || []).map(rec => (
+                <div key={rec.metric_id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 22, border: '1px solid rgba(124,58,237,0.25)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>«{rec.metric_name}»</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <b style={{ color: '#7c3aed' }}>{rec.laggingCount} из {rec.teamSize}</b> сотрудников заметно отстают от остальной команды по этому показателю
+                      </div>
+                    </div>
+                    <button onClick={() => applyRecommendation(rec)} style={{ ...ghostBtn, borderColor: 'rgba(124,58,237,0.4)', color: '#7c3aed', whiteSpace: 'nowrap' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+                      Создать задание для них →
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                    {rec.laggingEmployees.map(e => (
+                      <span key={e.user_id} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                        {e.name}{!e.hasData && ' (нет данных)'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

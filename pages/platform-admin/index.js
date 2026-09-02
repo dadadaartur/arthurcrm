@@ -35,7 +35,7 @@ export default function PlatformAdmin() {
   const [newModName, setNewModName] = useState('')
   const [newModPerms, setNewModPerms] = useState({ approve_companies: false, suspend_companies: false, moderate_content: false, manage_partner_tasks: false })
   const [partnerTasks, setPartnerTasks] = useState([])
-  const [ptForm, setPtForm] = useState({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false })
+  const [ptForm, setPtForm] = useState({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false, image_file: null })
   const [ptSaving, setPtSaving] = useState(false)
 
   useEffect(() => {
@@ -127,15 +127,22 @@ export default function PlatformAdmin() {
     if (!ptForm.title.trim() || !ptForm.partnerName.trim()) { showError('Укажите название задания и партнёра'); return }
     if (!ptForm.applyToAllCompanies && ptForm.companyIds.length === 0) { showError('Выберите хотя бы одну компанию или «все компании»'); return }
     setPtSaving(true)
+    let imageUrl = null
+    if (ptForm.image_file) {
+      const ext = ptForm.image_file.name.split('.').pop()
+      const path = `public/partner-task-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, ptForm.image_file)
+      if (!upErr) { const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path); imageUrl = pub.publicUrl }
+    }
     const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/platform-admin/partner-tasks', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify(ptForm)
+      body: JSON.stringify({ ...ptForm, imageUrl })
     })
     const data = await res.json()
     setPtSaving(false)
     if (!res.ok) { showError(data.error || 'Не удалось создать задание'); return }
-    setPtForm({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false })
+    setPtForm({ title: '', description: '', partnerName: '', rewardType: 'karma', rewardKarma: 200, unlockKey: '', boostPercent: 10, boostDurationDays: 30, deadlineDate: '', companyIds: [], applyToAllCompanies: false, image_file: null })
     loadPartnerTasks()
   }
 
@@ -281,6 +288,14 @@ export default function PlatformAdmin() {
                   <input type="number" className="input-field w-full" value={ptForm.boostDurationDays} onChange={e => setPtForm({ ...ptForm, boostDurationDays: e.target.value })} />
                 </div>
               </>)}
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Изображение задания (необязательно)</label>
+              <label htmlFor="partner-task-image" className="input-field w-full" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: ptForm.image_file ? 'var(--text-primary)' : 'var(--text-muted)', boxSizing: 'border-box' }}>
+                {ptForm.image_file ? ptForm.image_file.name : 'Выбрать файл...'}
+              </label>
+              <input id="partner-task-image" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setPtForm({ ...ptForm, image_file: e.target.files?.[0] || null })} />
             </div>
 
             <div className="mb-3">
