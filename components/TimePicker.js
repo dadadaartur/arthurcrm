@@ -7,7 +7,7 @@ const pad = n => String(n).padStart(2, '0')
 
 // Выбор времени в фирменном стиле: сетка часов + сетка минут (шаг 5),
 // кнопки "Сейчас" и "Очистить". Рендерится через портал в body.
-export default function TimePicker({ value, onChange, placeholder = 'Время' }) {
+export default function TimePicker({ value, onChange, placeholder = 'Время', disabled = false }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const [hourSel, setHourSel] = useState(null)
@@ -28,6 +28,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
   }, [])
 
   const openPanel = () => {
+    if (disabled) return
     const next = !open
     if (next && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
@@ -77,7 +78,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
         type="button"
         onClick={openPanel}
         className="input-field flex items-center justify-between text-left"
-        style={{ cursor: 'pointer', minHeight: 42 }}
+        style={{ cursor: disabled ? 'not-allowed' : 'pointer', minHeight: 42, opacity: disabled ? 0.55 : 1 }}
       >
         <span style={{ opacity: value ? 1 : 0.55, fontSize: 14 }}>{value || placeholder}</span>
         {/* Тонкие золотые часы */}
