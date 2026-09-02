@@ -57,6 +57,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
     return Math.floor(y / 12) * 12
   })
   const [time, setTime] = useState(valueTime || '09:00')
+  const [showTimeRow, setShowTimeRow] = useState(!!valueTime)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const btnRef = useRef(null)
   const panelRef = useRef(null)
@@ -218,21 +219,38 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
               </div>
 
               {withTime && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle, rgba(15,23,42,0.09))' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary, #5b6478)' }}>Время:</span>
-                  <input
-                    type="time"
-                    value={time}
-                    onChange={e => changeTime(e.target.value)}
+                showTimeRow ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle, rgba(15,23,42,0.09))' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary, #5b6478)' }}>Время:</span>
+                    <input
+                      type="time"
+                      value={time}
+                      onChange={e => changeTime(e.target.value)}
+                      autoFocus
+                      style={{
+                        flex: 1, padding: '6px 10px', fontSize: 13, borderRadius: 10,
+                        background: 'var(--bg-page, #f3f4f8)',
+                        border: '1px solid var(--border-subtle, rgba(15,23,42,0.09))',
+                        color: 'var(--text-primary, #161b28)',
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowTimeRow(true)}
                     style={{
-                      flex: 1, padding: '6px 10px', fontSize: 13, borderRadius: 10,
-                      background: 'var(--bg-page, #f3f4f8)',
-                      border: '1px solid var(--border-subtle, rgba(15,23,42,0.09))',
-                      color: 'var(--text-primary, #161b28)',
+                      display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, paddingTop: 14,
+                      borderTop: '1px solid var(--border-subtle, rgba(15,23,42,0.09))', width: '100%',
+                      background: 'none', border: 'none', borderTopWidth: 1, borderTopStyle: 'solid',
+                      cursor: 'pointer', fontSize: 12, color: '#8a6208', fontWeight: 500,
                     }}
-                  />
-                </div>
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></svg>
+                    Добавить точное время
+                  </button>
+                )
               )}
             </>
           ) : (
