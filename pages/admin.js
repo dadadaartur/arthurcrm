@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import LoadingScreen from '../components/LoadingScreen'
 import PremiumModal from '../components/PremiumModal'
 import BackArrow from '../components/BackArrow'
+import { useFeedback } from '../context/ActionFeedbackContext'
 
 const COLORS = {
   red: { label: 'Срочный фикс', bg: '#dc2626', border: '#b91c1c', text: '#FFFFFF', shadow: '0 6px 20px rgba(220,38,38,0.3)' },
@@ -14,6 +15,7 @@ const COLORS = {
 const KB_TAGS = ['#архитектура', '#задача', '#заглушка', '#идея', '#интеграция', '#дизайн']
 
 export default function Admin() {
+  const { showError } = useFeedback()
   const [user, setUser] = useState(null)
   const [stickers, setStickers] = useState([])
   const [content, setContent] = useState('')
@@ -76,7 +78,7 @@ export default function Admin() {
 
   async function createSticker(e) {
     e.preventDefault()
-    if (!content.trim()) return
+    if (!content.trim()) { showError('Введите текст записи'); return }
     await supabase.from('admin_stickers').insert({ user_id: user.id, content, color })
     setContent('')
     fetchStickers()
@@ -94,7 +96,7 @@ export default function Admin() {
   // --- База знаний ---
   async function createKbEntry(e) {
     e.preventDefault()
-    if (!kbContent.trim()) return
+    if (!kbContent.trim()) { showError('Введите описание'); return }
     const fullContent = `${kbTags.join(' ')} ${kbContent}`
     await supabase.from('admin_stickers').insert({ user_id: user.id, content: fullContent, color: 'blue' })
     setKbContent('')
@@ -167,7 +169,7 @@ export default function Admin() {
             <div className="dash-card mb-6">
               <h3>Новый стикер</h3>
               <form onSubmit={createSticker} className="space-y-4 mt-4">
-                <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Опишите задачу или идею..." className="input-field" rows={3} required />
+                <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Опишите задачу или идею..." className="input-field" rows={3} />
                 <div className="flex gap-3 items-center">
                   <select value={color} onChange={e => setColor(e.target.value)} className="input-field w-auto">
                     {Object.entries(COLORS).map(([key, c]) => (
@@ -221,7 +223,7 @@ export default function Admin() {
             <div className="dash-card mb-6">
               <h3>Новая запись в базу знаний</h3>
               <form onSubmit={createKbEntry} className="space-y-4 mt-4">
-                <textarea value={kbContent} onChange={e => setKbContent(e.target.value)} placeholder="Описание технического решения, заглушки или идеи..." className="input-field" rows={4} required />
+                <textarea value={kbContent} onChange={e => setKbContent(e.target.value)} placeholder="Описание технического решения, заглушки или идеи..." className="input-field" rows={4} />
                 <div className="flex flex-wrap gap-2">
                   {KB_TAGS.map(tag => (
                     <button key={tag} type="button" onClick={() => toggleKbTag(tag)} className={`filter-pill ${kbTags.includes(tag) ? 'active' : ''}`}

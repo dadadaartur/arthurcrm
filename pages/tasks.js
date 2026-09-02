@@ -39,71 +39,112 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
   const ap = assignment.autoProgress
   const tier = t?.visual_tier || 'normal'
   const hasCount = t?.target_count > 0
+  const hasPrize = Array.isArray(t?.bonus_rewards) && t.bonus_rewards.some(b => b.type === 'prize')
+  const isExpensive = (t?.reward_karma || 0) >= 100
+  const media = t?.video_url || t?.image_url
+
+  const stop = fn => e => { e.preventDefault(); e.stopPropagation(); fn() }
+
   return (
-    <div style={{
-      background: 'var(--bg-card)', boxShadow: tier === 'priority' ? 'var(--shadow-card)' : undefined,
-      borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column',
-      width: variant === 'carousel' ? 300 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
-      position: 'relative', overflow: 'hidden',
+    <Link href={t ? `/task/${assignment.id}` : '#'} style={{
+      background: 'var(--bg-card)', textDecoration: 'none', color: 'inherit',
+      borderRadius: 18, display: 'flex', flexDirection: 'column',
+      width: variant === 'carousel' ? 320 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
+      position: 'relative', overflow: 'hidden', cursor: 'pointer',
+      transition: 'transform 0.2s ease',
       ...tierCardStyle(tier),
-    }}>
-      {tier === 'premium' && (
-        <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '3px 10px 3px 12px', borderRadius: '0 0 0 10px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>
-      )}
-      <div className="flex items-start gap-3 mb-2">
-        {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
-        <div className="flex-1 min-w-0">
-          <h3 style={{ color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="font-semibold">
-            {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
-          </h3>
-          <div style={{ marginTop: 4 }}><TypeBadge task={t} /></div>
-        </div>
-      </div>
-      {t?.description && <p style={{ color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="text-sm mb-3">{t.description}</p>}
-
-      {ap ? (
-        <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}>
-          <p style={{ fontSize: 11, color: '#137a39', margin: '0 0 8px' }}>
-            Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
-          </p>
-          <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-            <span style={{ color: '#137a39' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
-            {ap.achievedToday && <span style={{ color: 'var(--accent-green)' }}>Выполнено сегодня</span>}
+    }}
+    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+    >
+      {/* Медиа-зона — крупная, не мелкий квадратик как раньше. Видео
+          намёком через play-иконку (само видео проигрывается на
+          странице деталей, не автоматически в ленте — тяжело и
+          отвлекает, когда карточек много). */}
+      <div style={{ position: 'relative', height: 132, background: media ? undefined : 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(184,134,11,0.1))', overflow: 'hidden', flexShrink: 0 }}>
+        {media && <img src={t.image_url || t.video_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        {!media && (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.4" opacity="0.4"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.3" fill="#7c3aed" /></svg>
           </div>
-        </div>
-      ) : null}
-
-      {hasCount && (
-        <div style={{ marginBottom: 12, fontSize: 11 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Прогресс</span>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{assignment.progress_count || 0} / {t.target_count} {t.target_count_label || ''}</span>
+        )}
+        {t?.video_url && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#161b28"><path d="M8 5v14l11-7z" /></svg>
+            </span>
           </div>
-          <ProgressBar3D value={assignment.progress_count || 0} marks={[{ key: 't', value: t.target_count }]} height={5} />
-        </div>
-      )}
-
-      <div className="flex justify-between items-center text-xs mb-3">
-        <span style={{ color: 'var(--accent-gold)', fontWeight: tier === 'premium' ? 700 : 400 }}>+ {t?.reward_karma ?? '?'} кармиков</span>
-        {assignment.deadline_at && (
-          <span style={{ color: 'var(--text-muted)' }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+        )}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 44, background: 'linear-gradient(transparent, rgba(15,23,42,0.55))' }} />
+        <div style={{ position: 'absolute', bottom: 8, left: 10 }}><TypeBadge task={t} /></div>
+        {tier === 'premium' && (
+          <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 12px 4px 14px', borderRadius: '0 0 0 12px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>
+        )}
+        {hasPrize && (
+          <span style={{ position: 'absolute', top: 8, left: 10, display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 700, padding: '3px 9px 3px 7px', borderRadius: 20, background: 'rgba(219,39,119,0.95)', color: '#fff' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
+            ПРИЗ
+          </span>
         )}
       </div>
 
-      <div style={{ marginTop: 'auto' }}>
-        {!t?.is_auto_goal && assignment.status === 'assigned' && (
-          <button onClick={() => onStart(assignment.id)} className="action-btn w-full text-xs py-1.5">Начать</button>
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <h3 style={{ color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: 15, marginBottom: 6 }} className="font-semibold">
+          {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
+        </h3>
+        {t?.description && <p style={{ color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="text-sm mb-3">{t.description}</p>}
+
+        {ap ? (
+          <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}>
+            <p style={{ fontSize: 11, color: '#137a39', margin: '0 0 8px' }}>
+              Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
+            </p>
+            <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+              <span style={{ color: '#137a39' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
+              {ap.achievedToday && <span style={{ color: 'var(--accent-green)' }}>Выполнено сегодня</span>}
+            </div>
+          </div>
+        ) : null}
+
+        {hasCount && (
+          <div style={{ marginBottom: 12, fontSize: 11 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Прогресс</span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{assignment.progress_count || 0} / {t.target_count} {t.target_count_label || ''}</span>
+            </div>
+            <ProgressBar3D value={assignment.progress_count || 0} marks={[{ key: 't', value: t.target_count }]} height={5} />
+          </div>
         )}
-        {!t?.is_auto_goal && assignment.status === 'in_progress' && (
-          <button onClick={() => onSubmit(assignment.id)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
-        )}
-        {!t?.is_auto_goal && assignment.status === 'pending_review' && (
-          <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
-        )}
+
+        <div className="flex justify-between items-center mb-3">
+          <span style={{ color: 'var(--accent-gold)', fontWeight: isExpensive ? 800 : 500, fontSize: isExpensive ? 18 : 13 }}>+ {t?.reward_karma ?? '?'} {isExpensive ? '' : 'кармиков'}</span>
+          {assignment.deadline_at && (
+            <span style={{ color: 'var(--text-muted)', fontSize: 11 }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+          )}
+        </div>
+
+        <div style={{ marginTop: 'auto' }}>
+          {!t?.is_auto_goal && assignment.status === 'assigned' && (
+            <button onClick={stop(() => onStart(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              Начать <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          )}
+          {!t?.is_auto_goal && assignment.status === 'in_progress' && (
+            <button onClick={stop(() => onSubmit(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              Отправить на проверку <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          )}
+          {!t?.is_auto_goal && assignment.status === 'pending_review' && (
+            <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
+          )}
+          {t?.is_auto_goal && (
+            <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--text-muted)' }}>Подробнее →</div>
+          )}
+        </div>
       </div>
       <style jsx>{`@keyframes taskPriorityGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 14px rgba(124,58,237,0.28); } }`}</style>
-    </div>
+    </Link>
   )
 }
 
@@ -137,7 +178,6 @@ export default function TasksPage() {
         .maybeSingle()
       if (!profile?.company_id || profile.deleted_at) { router.push('/welcome'); return }
       setUser(user)
-      setLoading(false)
     }
     init()
   }, [])
@@ -154,6 +194,7 @@ export default function TasksPage() {
       setActiveTasks(d.active || [])
       setHistory(d.history || [])
     }
+    setLoading(false)
   }
 
   const handleStart = async (assignmentId) => {
@@ -227,35 +268,38 @@ export default function TasksPage() {
   return (
     <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-6 py-8">
       <BackArrow href="/" title="Мои задания" extra={
-        <Link href="/tasks-analytics" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: 600 }}>Моя аналитика →</Link>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div className="flex gap-2">
+            {[
+              { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
+              { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress' && !t.tasks?.is_auto_goal).length },
+              { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
+              { key: 'history', label: 'История', count: history.length }
+            ].map(tab => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`filter-pill relative ${activeTab === tab.key ? 'active' : ''}`}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span
+                    className={`ml-2 inline-flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold
+                      ${tab.key === 'new' && activeTab !== 'new'
+                        ? 'bg-[#FFD700] text-[#0a1628] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]'
+                        : 'bg-gray-200 text-gray-600'
+                      }`}
+                    style={{ padding: '0 6px', fontSize: 11 }}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <Link href="/tasks-analytics" style={{ fontSize: 12, color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Моя аналитика →</Link>
+        </div>
       } />
 
-      <div className="flex gap-4 mb-6">
-        {[
-          { key: 'new', label: 'Новые', count: activeTasks.filter(t => t.status === 'assigned').length },
-          { key: 'in_progress', label: 'В работе', count: activeTasks.filter(t => t.status === 'in_progress' && !t.tasks?.is_auto_goal).length },
-          { key: 'pending_review', label: 'На проверке', count: activeTasks.filter(t => t.status === 'pending_review').length },
-          { key: 'history', label: 'История', count: history.length }
-        ].map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            className={`filter-pill relative ${activeTab === tab.key ? 'active' : ''}`}
-          >
-            {tab.label}
-            {tab.count > 0 && (
-              <span
-                className={`ml-2 inline-flex items-center justify-center min-w-5 h-5 rounded-full text-xs font-bold
-                  ${tab.key === 'new' && activeTab !== 'new'
-                    ? 'bg-[#FFD700] text-[#0a1628] animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.8)]'
-                    : 'bg-gray-200 text-gray-600'
-                  }`}
-                style={{ padding: '0 6px', fontSize: 11 }}
-              >
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <div style={{ marginBottom: 20 }} />
 
       {activeTab !== 'history' && (
         filteredTasks.length === 0 ? (
@@ -264,12 +308,22 @@ export default function TasksPage() {
           <>
             {partnerTasks.length > 0 && (
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>От партнёров</div>
-                <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>От партнёров</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{partnerTasks.length} {partnerTasks.length === 1 ? 'предложение' : 'предложений'}</span>
+                </div>
+                <div className="partner-ribbon" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x proximity' }}>
                   {partnerTasks.map(assignment => (
-                    <TaskCard key={assignment.id} assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} />
+                    <div key={assignment.id} style={{ scrollSnapAlign: 'start' }}>
+                      <TaskCard assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} />
+                    </div>
                   ))}
                 </div>
+                <style jsx>{`
+                  .partner-ribbon::-webkit-scrollbar { height: 5px; }
+                  .partner-ribbon::-webkit-scrollbar-thumb { background: rgba(176,128,16,0.35); border-radius: 4px; }
+                  .partner-ribbon { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.35) transparent; }
+                `}</style>
               </div>
             )}
             {regularTasks.length > 0 && (

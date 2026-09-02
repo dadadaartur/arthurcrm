@@ -35,7 +35,7 @@ export default function Events() {
 
   async function handleCreateEvent(e) {
     e.preventDefault()
-    if (!description || !amount) return
+    if (!description || !amount) { showError('Заполните описание и количество баллов'); return }
     const { error } = await supabase.from('karma_events').insert({
       user_id: user.id,
       description,
@@ -66,7 +66,6 @@ export default function Events() {
             value={description}
             onChange={e => setDescription(e.target.value)}
             className="input-field"
-            required
           />
           <input
             type="number"
@@ -74,7 +73,6 @@ export default function Events() {
             value={amount}
             onChange={e => setAmount(e.target.value)}
             className="input-field"
-            required
           />
           <label className="flex items-center gap-2">
             <input
