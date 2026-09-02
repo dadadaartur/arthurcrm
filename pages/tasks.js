@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
 import LoadingScreen from '../components/LoadingScreen'
@@ -12,12 +13,98 @@ import { BAND_COLORS, BAND_LABELS } from '../lib/kpi'
 // кнопкой «Начать», даже там, где нажимать нечего.
 const TypeBadge = ({ task }) => {
   if (task?.is_auto_goal) {
-    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.35)' }}>Авто по цели</span>
+    return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(19,122,57,0.1)', color: '#137a39', border: '1px solid rgba(19,122,57,0.3)' }}>Авто по цели</span>
   }
   if (task?.partner_name) {
     return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(184,134,11,0.1)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)' }}>Партнёр: {task.partner_name}</span>
   }
   return <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(14,116,144,0.08)', color: 'var(--accent-cyan)', border: '1px solid rgba(14,116,144,0.3)' }}>Ручная проверка</span>
+}
+
+// Визуальный вес карточки по настройке админа (пункт 9, 1 сентября
+// 2026) — раньше все задания выглядели одинаково независимо от
+// важности. priority — мягкое мерцающая рамка (привлекает взгляд, не
+// раздражает постоянным движением — цикл длинный, 2.4с). premium —
+// золотой бейдж в углу и статичная золотая рамка потолще, без анимации
+// (премиальность через сдержанность, тот же принцип, что уже
+// применялся для карточки перевода кармиков).
+const tierCardStyle = tier => {
+  if (tier === 'premium') return { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(184,134,11,0.12), var(--shadow-card)' }
+  if (tier === 'priority') return { border: '1px solid rgba(124,58,237,0.4)', animation: 'taskPriorityGlow 2.4s ease-in-out infinite' }
+  return { border: '1px solid var(--border-subtle)' }
+}
+
+function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
+  const t = assignment.tasks
+  const ap = assignment.autoProgress
+  const tier = t?.visual_tier || 'normal'
+  const hasCount = t?.target_count > 0
+  return (
+    <div style={{
+      background: 'var(--bg-card)', boxShadow: tier === 'priority' ? 'var(--shadow-card)' : undefined,
+      borderRadius: 16, padding: 18, display: 'flex', flexDirection: 'column',
+      width: variant === 'carousel' ? 300 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
+      position: 'relative', overflow: 'hidden',
+      ...tierCardStyle(tier),
+    }}>
+      {tier === 'premium' && (
+        <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '3px 10px 3px 12px', borderRadius: '0 0 0 10px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>
+      )}
+      <div className="flex items-start gap-3 mb-2">
+        {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+        <div className="flex-1 min-w-0">
+          <h3 style={{ color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="font-semibold">
+            {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
+          </h3>
+          <div style={{ marginTop: 4 }}><TypeBadge task={t} /></div>
+        </div>
+      </div>
+      {t?.description && <p style={{ color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="text-sm mb-3">{t.description}</p>}
+
+      {ap ? (
+        <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}>
+          <p style={{ fontSize: 11, color: '#137a39', margin: '0 0 8px' }}>
+            Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
+          </p>
+          <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+            <span style={{ color: '#137a39' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
+            {ap.achievedToday && <span style={{ color: 'var(--accent-green)' }}>Выполнено сегодня</span>}
+          </div>
+        </div>
+      ) : null}
+
+      {hasCount && (
+        <div style={{ marginBottom: 12, fontSize: 11 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Прогресс</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{assignment.progress_count || 0} / {t.target_count} {t.target_count_label || ''}</span>
+          </div>
+          <ProgressBar3D value={assignment.progress_count || 0} marks={[{ key: 't', value: t.target_count }]} height={5} />
+        </div>
+      )}
+
+      <div className="flex justify-between items-center text-xs mb-3">
+        <span style={{ color: 'var(--accent-gold)', fontWeight: tier === 'premium' ? 700 : 400 }}>+ {t?.reward_karma ?? '?'} кармиков</span>
+        {assignment.deadline_at && (
+          <span style={{ color: 'var(--text-muted)' }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
+        )}
+      </div>
+
+      <div style={{ marginTop: 'auto' }}>
+        {!t?.is_auto_goal && assignment.status === 'assigned' && (
+          <button onClick={() => onStart(assignment.id)} className="action-btn w-full text-xs py-1.5">Начать</button>
+        )}
+        {!t?.is_auto_goal && assignment.status === 'in_progress' && (
+          <button onClick={() => onSubmit(assignment.id)} className="action-btn w-full text-xs py-1.5">Отправить на проверку</button>
+        )}
+        {!t?.is_auto_goal && assignment.status === 'pending_review' && (
+          <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
+        )}
+      </div>
+      <style jsx>{`@keyframes taskPriorityGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 14px rgba(124,58,237,0.28); } }`}</style>
+    </div>
+  )
 }
 
 export default function TasksPage() {
@@ -129,11 +216,19 @@ export default function TasksPage() {
     filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
   }
 
+  // Партнёрские задания — отдельная горизонтальная лента, не общая
+  // сетка (пункт 9, 1 сентября 2026: «регулярка это один вид, от
+  // партнёров другой, например в скролл ленте»).
+  const partnerTasks = filteredTasks.filter(a => a.tasks?.partner_name)
+  const regularTasks = filteredTasks.filter(a => !a.tasks?.partner_name)
+
   if (loading) return <LoadingScreen />
 
   return (
     <div style={{ maxWidth: 1600, margin: '0 auto' }} className="theme-light px-6 py-8">
-      <BackArrow href="/" title="Мои задания" />
+      <BackArrow href="/" title="Мои задания" extra={
+        <Link href="/tasks-analytics" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: 600 }}>Моя аналитика →</Link>
+      } />
 
       <div className="flex gap-4 mb-6">
         {[
@@ -166,68 +261,25 @@ export default function TasksPage() {
         filteredTasks.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)' }}>Нет заданий</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-            {filteredTasks.map(assignment => {
-              const t = assignment.tasks
-              const ap = assignment.autoProgress
-              return (
-                <div key={assignment.id} style={{
-                  background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)',
-                  border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 18,
-                  display: 'flex', flexDirection: 'column'
-                }}>
-                  <div className="flex items-start gap-3 mb-2">
-                    {t?.image_url && <img src={t.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
-                    <div className="flex-1 min-w-0">
-                      <h3 style={{ color: 'var(--text-primary)' }} className="font-semibold" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                        {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
-                      </h3>
-                      <div style={{ marginTop: 4 }}><TypeBadge task={t} /></div>
-                    </div>
-                  </div>
-                  {t?.description && <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-3" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{t.description}</p>}
-
-                  {ap ? (
-                    <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
-                      <p style={{ fontSize: 11, color: '#4ade80', margin: '0 0 8px' }}>
-                        Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
-                      </p>
-                      <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-                        <span style={{ color: '#137a39' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
-                        {ap.achievedToday && <span style={{ color: 'var(--accent-green)' }}>Выполнено сегодня</span>}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="flex justify-between items-center text-xs mb-3">
-                    <span style={{ color: 'var(--accent-gold)' }}>+ {t?.reward_karma ?? '?'} кармиков</span>
-                    {assignment.deadline_at && (
-                      <span style={{ color: 'var(--text-muted)' }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
-                    )}
-                  </div>
-
-                  <div style={{ marginTop: 'auto' }}>
-                    {!t?.is_auto_goal && assignment.status === 'assigned' && (
-                      <button onClick={() => handleStart(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                        Начать
-                      </button>
-                    )}
-                    {!t?.is_auto_goal && assignment.status === 'in_progress' && (
-                      <button onClick={() => openSubmitModal(assignment.id)} className="action-btn w-full text-xs py-1.5">
-                        Отправить на проверку
-                      </button>
-                    )}
-                    {!t?.is_auto_goal && assignment.status === 'pending_review' && (
-                      <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>
-                        Ожидает проверки
-                      </div>
-                    )}
-                  </div>
+          <>
+            {partnerTasks.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>От партнёров</div>
+                <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 6 }}>
+                  {partnerTasks.map(assignment => (
+                    <TaskCard key={assignment.id} assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} />
+                  ))}
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )}
+            {regularTasks.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+                {[...regularTasks].sort((a, b) => (b.tasks?.visual_tier === 'premium' ? 1 : 0) - (a.tasks?.visual_tier === 'premium' ? 1 : 0)).map(assignment => (
+                  <TaskCard key={assignment.id} assignment={assignment} variant="grid" onStart={handleStart} onSubmit={openSubmitModal} />
+                ))}
+              </div>
+            )}
+          </>
         )
       )}
 
