@@ -65,6 +65,10 @@ export default async function handler(req, res) {
           rewardNote += ` Активирован буст +${bonus.percent}% ко всем начислениям на ${bonus.durationDays || 30} дн.`
         } else if (bonus.type === 'prize' && bonus.label) {
           rewardNote += ` Приз: «${bonus.label}»${bonus.description ? ' — ' + bonus.description : ''}. Свяжитесь с администратором для получения.`
+          await a.from('prize_awards').insert({
+            company_id: asg.tasks?.company_id, user_id: asg.user_id, source: 'partner_task', source_task_id: asg.task_id,
+            label: bonus.label, description: bonus.description || null,
+          })
         }
       }
     } else if (rewardType === 'shop_unlock' && rewardConfig.unlock_key) {

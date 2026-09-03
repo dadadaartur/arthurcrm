@@ -159,7 +159,11 @@ export default function TaskDetail() {
   const tierBorder = tier === 'premium' ? '1.5px solid var(--border-gold)' : tier === 'priority' ? '1px solid rgba(124,58,237,0.4)' : undefined
 
   return (
-    <div className="theme-light max-w-2xl mx-auto px-4 py-8">
+    <div className="theme-light" style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'fixed', top: '-10%', left: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,134,11,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', bottom: '-14%', right: '-10%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.08), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+
+      <div className="max-w-3xl mx-auto px-4 py-8" style={{ maxWidth: 820, position: 'relative' }}>
       <BackArrow href="/tasks" title="Задание" />
       <style jsx>{`
         @keyframes taskDetailGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 16px rgba(124,58,237,0.22); } }
@@ -414,6 +418,7 @@ export default function TaskDetail() {
           </div>
         </div>
       </PremiumModal>
+      </div>
     </div>
   )
 }

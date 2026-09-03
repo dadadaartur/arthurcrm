@@ -209,6 +209,12 @@ export default function RewardsAdmin() {
                     <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '4px 0 0' }}>
                       Если задано — товар останется под замком, пока сотрудник не выполнит партнёрское задание с точно таким же ключом (заводит суперадмин площадки в разделе партнёрских заданий). Оставьте пустым для обычного товара без ограничений.
                     </p>
+                    {form.requires_unlock && (
+                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', fontSize: 11, color: '#8a6208', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{form.requires_unlock}</span>
+                        <span>← это же значение должно быть у соответствующего партнёрского задания</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Промо-метка (попадёт в ленту)</label>

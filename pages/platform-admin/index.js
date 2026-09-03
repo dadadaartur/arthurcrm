@@ -20,7 +20,7 @@ const PERM_LABELS = {
 }
 
 export default function PlatformAdmin() {
-  const { showError } = useFeedback()
+  const { showSuccess, showError } = useFeedback()
   const [access, setAccess] = useState('checking') // checking | denied | granted
   const [me, setMe] = useState(null)
   const [companies, setCompanies] = useState([])
@@ -35,6 +35,8 @@ export default function PlatformAdmin() {
   const [newModName, setNewModName] = useState('')
   const [newModPerms, setNewModPerms] = useState({ approve_companies: false, suspend_companies: false, moderate_content: false, manage_partner_tasks: false })
   const [partnerTasks, setPartnerTasks] = useState([])
+  const [prizeAwards, setPrizeAwards] = useState([])
+  const [prizeFilter, setPrizeFilter] = useState('pending')
   const [ptForm, setPtForm] = useState({ title: '', description: '', partnerName: '', rewardKarma: 200, enableUnlock: false, unlockKey: '', enableBoost: false, boostPercent: 10, boostDurationDays: 30, enablePrize: false, prizeLabel: '', prizeDescription: '', deadlineDate: '', deadlineTime: '', companyIds: [], applyToAllCompanies: false, image_file: null })
   const [unlockCheck, setUnlockCheck] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
@@ -136,6 +138,22 @@ export default function PlatformAdmin() {
     if (res.ok) setPartnerTasks(await res.json())
   }
 
+  const loadPrizeAwards = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/platform-admin/prizes', { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (res.ok) setPrizeAwards((await res.json()).awards || [])
+  }
+
+  const togglePrizeFulfilled = async (award) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/platform-admin/prizes', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ id: award.id, fulfilled: !award.fulfilled })
+    })
+    if (res.ok) { showSuccess(award.fulfilled ? 'Отмечено как невыданное' : 'Отмечено как выдано'); loadPrizeAwards() }
+    else showError('Не удалось обновить')
+  }
+
   const saveEditedTask = async () => {
     if (!editingTask.title.trim()) { showError('Название не может быть пустым'); return }
     setEditSaving(true)
@@ -184,6 +202,7 @@ export default function PlatformAdmin() {
   useEffect(() => {
     if (tab === 'moderators' && me?.isSuperAdmin) loadModerators()
     if (tab === 'partner-tasks') loadPartnerTasks()
+    if (tab === 'prizes') loadPrizeAwards()
   }, [tab, me])
 
   if (access === 'checking') {
@@ -231,6 +250,14 @@ export default function PlatformAdmin() {
             style={tab === 'partner-tasks' ? { color: '#8a6208', borderBottom: '2px solid #8a6208' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Задания от партнёров
+          </button>
+        )}
+        {(me?.isSuperAdmin || me?.permissions?.includes('manage_partner_tasks')) && (
+          <button
+            onClick={() => setTab('prizes')}
+            style={tab === 'prizes' ? { color: '#8a6208', borderBottom: '2px solid #8a6208' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
+          >
+            Призы к выдаче
           </button>
         )}
       </div>
@@ -308,7 +335,30 @@ export default function PlatformAdmin() {
                   </label>
                   {ptForm.enableUnlock && (
                     <div style={{ marginTop: 10 }}>
-                      <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ключ разблокировки — произвольная строка, задайте точно такую же у товара в разделе «Награды» компании, поле «Открывается заданием» (requires_unlock)</label>
+                      {/* Наглядная схема вместо ещё одной текстовой попытки объяснить —
+                          текст дважды не сработал (пункт 2 фидбека от 2 сентября 2026),
+                          значит проблема не в формулировке, а в том, что механику нужно
+                          увидеть, а не прочитать. */}
+                      <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 14, padding: 14, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>1. ВЫ ЗДЕСЬ</div>
+                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#8a6208' }}>{ptForm.unlockKey || 'mts-merch'}</div>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 4 }}>вписываете ключ в задание</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: 'var(--text-muted)' }}>=</div>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>2. АДМИН КОМПАНИИ</div>
+                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#8a6208' }}>{ptForm.unlockKey || 'mts-merch'}</div>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 4 }}>тот же ключ у товара в магазине</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: 'var(--text-muted)' }}>→</div>
+                        <div style={{ flex: 1, textAlign: 'center' }}>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>3. СОТРУДНИК</div>
+                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'rgba(19,122,57,0.08)', border: '1px solid rgba(19,122,57,0.3)', fontSize: 11, color: '#137a39' }}>Товар открыт</div>
+                          <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 4 }}>выполнил задание — замок снят</div>
+                        </div>
+                      </div>
+                      <label className="text-xs block mb-1" style={{ color: 'var(--text-secondary)' }}>Ключ разблокировки — произвольная строка, задайте точно такую же у товара в разделе «Награды» компании, поле «Открывается заданием»</label>
                       <input className="input-field w-full" placeholder="mts-merch" value={ptForm.unlockKey} onChange={e => setPtForm({ ...ptForm, unlockKey: e.target.value })} />
                       {ptForm.unlockKey.trim() && (
                         <p style={{ fontSize: 11, marginTop: 6, color: unlockCheck?.count > 0 ? '#137a39' : '#b45309' }}>
@@ -462,6 +512,34 @@ export default function PlatformAdmin() {
               <button onClick={() => setEditingTask(null)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
               <button onClick={saveEditedTask} disabled={editSaving} className="btn-gold" style={{ flex: 1 }}>{editSaving ? 'Сохраняем…' : 'Сохранить'}</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'prizes' && (me?.isSuperAdmin || me?.permissions?.includes('manage_partner_tasks')) && (
+        <div>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)', maxWidth: 640 }}>
+            Призы от партнёрских заданий, требующие ручной выдачи (не кармики, буст или доступ к товарам — те зачисляются автоматически). По всем компаниям платформы сразу.
+          </p>
+          <div className="flex gap-2 mb-4">
+            <button onClick={() => setPrizeFilter('pending')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'pending' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'pending' ? 'rgba(184,134,11,0.08)' : 'var(--bg-card)', color: prizeFilter === 'pending' ? '#8a6208' : 'var(--text-secondary)', cursor: 'pointer' }}>Не выдано</button>
+            <button onClick={() => setPrizeFilter('all')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'all' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'all' ? 'rgba(184,134,11,0.08)' : 'var(--bg-card)', color: prizeFilter === 'all' ? '#8a6208' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+          </div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
+            {(prizeFilter === 'pending' ? prizeAwards.filter(a => !a.fulfilled) : prizeAwards).length === 0 && (
+              <p className="text-sm text-center" style={{ padding: 30, color: 'var(--text-muted)' }}>{prizeFilter === 'pending' ? 'Невыданных призов нет' : 'Призов пока не было'}</p>
+            )}
+            {(prizeFilter === 'pending' ? prizeAwards.filter(a => !a.fulfilled) : prizeAwards).map(a => (
+              <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 18px', borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{a.userName} — «{a.label}»</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)', marginTop: 3 }}>{a.companyName} · {new Date(a.awarded_at).toLocaleDateString('ru')}</div>
+                </div>
+                <button onClick={() => togglePrizeFulfilled(a)} style={{ flexShrink: 0, fontSize: 12, padding: '6px 14px', borderRadius: 10, border: `1px solid ${a.fulfilled ? 'rgba(19,122,57,0.3)' : 'var(--border-gold)'}`, background: a.fulfilled ? 'rgba(19,122,57,0.08)' : 'rgba(184,134,11,0.08)', color: a.fulfilled ? '#137a39' : '#8a6208', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {a.fulfilled ? 'Выдано' : 'Отметить выданным'}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -42,6 +42,18 @@ export default async function handler(req, res) {
     prize_color: prize.color || null, prize_avatar_url: prize.avatar_url || null, prize_description: prize.description || null
   })
 
+  // Структурированный учёт для того, что нужно выдать вручную — кармики
+  // уже авто-зачислены строкой выше, им отдельный учёт не нужен (по
+  // проверке от 2 сентября 2026: раньше «настоящий» приз лежал только в
+  // тексте уведомления, ни один админ не мог посмотреть, кому и что
+  // нужно выдать).
+  if (prize.type !== 'karma') {
+    await a.from('prize_awards').insert({
+      company_id: companyId, user_id: ctx.user.id, source: 'wheel',
+      label: prize.label, description: prize.text || prize.description || null,
+    })
+  }
+
   await a.from('notifications').insert({
     user_id: ctx.user.id,
     message: `Лента подарков: вам выпал приз «${prize.label}»!`,

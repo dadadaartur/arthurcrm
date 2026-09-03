@@ -16,8 +16,12 @@ export default async function handler(req, res) {
   if (!companyId) return res.status(400).json({ error: 'У вас нет компании' })
   const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-  const from = req.query.from || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
-  const to = req.query.to || new Date().toISOString().slice(0, 10)
+  // Пустая строка от пресета «Всё время» — это НЕ «параметр не передан»,
+  // а осознанный выбор «без ограничения по датам». Раньше `|| дефолт`
+  // путал одно с другим — пустая строка тоже ложна в JS, поэтому «Всё
+  // время» молча откатывалось к тем же 30 дням, что и обычный дефолт.
+  const from = req.query.from !== undefined ? req.query.from : new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
+  const to = req.query.to !== undefined ? req.query.to : new Date().toISOString().slice(0, 10)
 
   const { data: allDepartments } = await a.from('departments').select('id, parent_department_id, manager_user_id').eq('company_id', companyId)
   const scope = getManagerScope(ctx.profile, allDepartments || [])
@@ -36,9 +40,11 @@ export default async function handler(req, res) {
   const taskById = {}
   ;(tasks || []).forEach(t => { taskById[t.id] = t })
 
-  const { data: assignments } = await a.from('task_assignments')
+  let assignmentsQuery = a.from('task_assignments')
     .select('id, task_id, user_id, status, created_at, completed_at')
-    .gte('created_at', `${from}T00:00:00Z`).lte('created_at', `${to}T23:59:59Z`)
+  if (from) assignmentsQuery = assignmentsQuery.gte('created_at', `${from}T00:00:00Z`)
+  if (to) assignmentsQuery = assignmentsQuery.lte('created_at', `${to}T23:59:59Z`)
+  const { data: assignments } = await assignmentsQuery
   const inScope = (assignments || []).filter(as => poolIds.has(as.user_id) && taskById[as.task_id])
 
   // Диагностика на случай пустого результата — вместо молчаливого нуля
