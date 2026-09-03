@@ -48,7 +48,7 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
   return (
     <Link href={t ? `/task/${assignment.id}` : '#'} style={{
       background: 'var(--bg-card)', textDecoration: 'none', color: 'inherit',
-      borderRadius: 18, display: 'flex', flexDirection: 'column',
+      borderRadius: 18, display: 'flex', flexDirection: 'column', height: '100%',
       width: variant === 'carousel' ? 320 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
       position: 'relative', overflow: 'hidden', cursor: 'pointer',
       transition: 'transform 0.2s ease',
@@ -62,8 +62,8 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
           странице деталей, не автоматически в ленте — тяжело и
           отвлекает, когда карточек много). */}
       <div style={{ position: 'relative', height: 132, background: media ? undefined : 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(184,134,11,0.1))', overflow: 'hidden', flexShrink: 0 }}>
-        {media && <img src={t.image_url || t.video_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-        {!media && (
+        {t?.image_url && <img src={t.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 22%' }} />}
+        {!t?.image_url && (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.4" opacity="0.4"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.3" fill="#7c3aed" /></svg>
           </div>
@@ -125,16 +125,22 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
         </div>
 
         <div style={{ marginTop: 'auto' }}>
-          {!t?.is_auto_goal && assignment.status === 'assigned' && (
-            <button onClick={stop(() => onStart(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              Начать <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
-          )}
-          {!t?.is_auto_goal && assignment.status === 'in_progress' && (
-            <button onClick={stop(() => onSubmit(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              Отправить на проверку <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
-          )}
+          {(() => {
+            const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
+            const urgent = hoursLeft != null && hoursLeft > 0 && hoursLeft < 24 && ['assigned', 'in_progress'].includes(assignment.status)
+            return (<>
+              {!t?.is_auto_goal && assignment.status === 'assigned' && (
+                <button onClick={stop(() => onStart(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+                  {urgent ? `Осталось ${Math.max(1, Math.round(hoursLeft))} ч — начните` : 'Начать'} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+              )}
+              {!t?.is_auto_goal && assignment.status === 'in_progress' && (
+                <button onClick={stop(() => onSubmit(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+                  {urgent ? `Осталось ${Math.max(1, Math.round(hoursLeft))} ч — отправьте` : 'Отправить на проверку'} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+              )}
+            </>)
+          })()}
           {!t?.is_auto_goal && assignment.status === 'pending_review' && (
             <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
           )}
@@ -143,7 +149,10 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit }) {
           )}
         </div>
       </div>
-      <style jsx>{`@keyframes taskPriorityGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 14px rgba(124,58,237,0.28); } }`}</style>
+      <style jsx>{`
+        @keyframes taskPriorityGlow { 0%, 100% { box-shadow: 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 14px rgba(124,58,237,0.28); } }
+        @keyframes taskCardUrgent { 0%, 100% { box-shadow: 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 12px rgba(220,38,38,0.4); } }
+      `}</style>
     </Link>
   )
 }

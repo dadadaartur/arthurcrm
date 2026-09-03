@@ -21,8 +21,10 @@ export default function MyTasksAnalytics() {
   if (!data) return null
 
   return (
-    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 780, margin: '0 auto' }}>
+    <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'fixed', top: '-10%', right: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,134,11,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', bottom: '-14%', left: '-10%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.08), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+      <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative' }}>
         <BackArrow href="/tasks" title="Моя аналитика по заданиям" />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 22 }}>
