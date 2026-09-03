@@ -475,7 +475,7 @@ function TasksPage() {
                         <DatePicker value={form.recurrence_end_date} onChange={v => setForm({ ...form, recurrence_end_date: v })} placeholder="Без ограничения" />
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', maxWidth: 220 }}>
-                        {form.recurrence_type === 'hourly' && 'Счётчик и новое назначение — каждый час.'}
+                        {form.recurrence_type === 'hourly' && 'Проверка сейчас идёт раз в сутки (ограничение бесплатного тарифа Vercel) — фактически будет обновляться раз в день, не каждый час. Станет честно часовым, если тариф хостинга это позволит.'}
                         {form.recurrence_type === 'daily' && `Каждый день в ${String(form.reset_hour).padStart(2, '0')}:00 задание сбрасывается заново.`}
                         {form.recurrence_type === 'weekly' && `Раз в неделю задание выдаётся заново.`}
                       </div>
