@@ -71,7 +71,7 @@ export default function DateRangePicker({ from, to, onChange }) {
   const pick = (iso) => {
     if (!from || (from && to)) onChange({ from: iso, to: '' })
     else if (iso < from) onChange({ from: iso, to: '' })
-    else onChange({ from, to: iso })
+    else { onChange({ from, to: iso }); setOpen(false) }
   }
 
   const prevMonth = () => setView(v => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }))
@@ -152,7 +152,7 @@ export default function DateRangePicker({ from, to, onChange }) {
               return (
                 <button
                   key={p.label}
-                  onClick={() => onChange(p.fn())}
+                  onClick={() => { onChange(p.fn()); setOpen(false) }}
                   className="text-left text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
                     color: isActive ? '#8a6208' : 'var(--text-secondary)',
