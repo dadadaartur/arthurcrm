@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
 import BackArrow from '../components/BackArrow'
 import LoadingScreen from '../components/LoadingScreen'
@@ -61,14 +62,15 @@ export default function MyTasksAnalytics() {
                 Если выполнить все текущие задания с дедлайном на этой неделе — заработаете ещё <b style={{ color: 'var(--accent-gold)' }}>+{data.forecast.thisWeekPotential}</b> кармиков, баланс станет <b style={{ color: 'var(--text-primary)' }}>{data.forecast.forecastBalance}</b>.
               </p>
               {data.forecast.bestForecast && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
+                <Link href="/shop" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                   {data.forecast.bestForecast.image_url && <img src={data.forecast.bestForecast.image_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover' }} />}
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>С этим балансом станет доступно:</div>
                     <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{data.forecast.bestForecast.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--accent-gold)', fontWeight: 600 }}>{data.forecast.bestForecast.cost} кармиков</div>
                   </div>
-                </div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>→</span>
+                </Link>
               )}
             </>
           ) : (
@@ -77,13 +79,14 @@ export default function MyTasksAnalytics() {
         </div>
 
         {data.bestNow && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', marginBottom: 20 }}>
+          <Link href="/shop" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', marginBottom: 20, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
             {data.bestNow.image_url && <img src={data.bestNow.image_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />}
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Уже сейчас доступно в магазине:</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{data.bestNow.name} · {data.bestNow.cost} карм.</div>
             </div>
-          </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>→</span>
+          </Link>
         )}
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

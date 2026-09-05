@@ -24,69 +24,66 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
   const isExpensive = (t?.reward_karma || 0) >= 100
 
   const stop = fn => e => { e.preventDefault(); e.stopPropagation(); fn() }
-  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(184,134,11,0.12), var(--shadow-card)' }
+  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(184,134,11,0.12), var(--shadow-card-hover)' }
     : tier === 'priority' ? { border: '1px solid rgba(124,58,237,0.4)', animation: 'taskPriorityGlow 2.4s ease-in-out infinite' }
     : { border: `1px solid ${accentColor}` }
+
+  const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
+  const urgent = hoursLeft != null && hoursLeft > 0 && hoursLeft < 24 && ['assigned', 'in_progress'].includes(assignment.status)
 
   return (
     <Link href={t ? `/task/${assignment.id}` : '#'} style={{
       background: 'var(--bg-card)', textDecoration: 'none', color: 'inherit',
-      borderRadius: 16, display: 'flex', flexDirection: 'column', height: '100%', padding: 18,
-      width: variant === 'carousel' ? 320 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
-      position: 'relative', overflow: 'hidden', cursor: 'pointer',
-      transition: 'transform 0.2s ease',
+      borderRadius: 18, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden',
+      width: variant === 'carousel' ? 280 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
+      position: 'relative', cursor: 'pointer', boxShadow: 'var(--shadow-card)',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       ...tierStyle,
     }}
-    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
+    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}
     >
-      {tier === 'premium' && (
-        <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 12px 4px 14px', borderRadius: '0 16px 0 12px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>
-      )}
-      {hasPrize && (
-        <span style={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 700, padding: '3px 9px 3px 7px', borderRadius: 20, background: 'rgba(219,39,119,0.95)', color: '#fff' }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
-          ПРИЗ
+      {/* Бейджи поверх визуальной зоны */}
+      <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 2 }}>
+        <span>
+          {tier === 'premium' && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 11px', borderRadius: 20, background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>}
         </span>
-      )}
-
-      {/* Квадратный аватар, не широкий баннер — object-fit: cover на
-          квадратной области не обрезает типовое квадратное изображение
-          вообще (в отличие от прежнего варианта 2.5:1, где терялось
-          до 60% кадра по вертикали независимо от точки обрезки). */}
-      <div className="flex items-start gap-3 mb-3">
-        <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: t?.image_url ? undefined : 'linear-gradient(135deg, rgba(124,58,237,0.14), rgba(184,134,11,0.12))' }}>
-          {t?.image_url ? (
-            <img src={t.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.4" opacity="0.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.3" fill="#7c3aed" /></svg>
-            </div>
-          )}
-          {t?.video_url && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="#161b28"><path d="M8 5v14l11-7z" /></svg>
-              </span>
-            </div>
-          )}
-        </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <h3 style={{ color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>
-            {t ? t.title : `Задача ID: ${assignment.task_id} (не найдена)`}
-          </h3>
-          {t?.partner_name && <div style={{ fontSize: 11, color: 'var(--accent-gold)', marginTop: 3 }}>Партнёр: {t.partner_name}</div>}
-        </div>
+        {hasPrize && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 700, padding: '4px 10px 4px 8px', borderRadius: 20, background: 'rgba(219,39,119,0.95)', color: '#fff' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
+            ПРИЗ
+          </span>
+        )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      {/* Крупная визуальная зона — изображение на всю ширину, если
+          есть, иначе название задания стилизованным крупным шрифтом
+          играет роль «обложки» (по вашему референсу — там тоже нет
+          фотографии, роль главного визуала играет крупное название). */}
+      <div style={{ position: 'relative', height: 128, flexShrink: 0, background: t?.image_url ? undefined : `linear-gradient(135deg, ${accentColor}25, ${accentColor}08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {t?.image_url ? (
+          <img src={t.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <span style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', opacity: 0.5, padding: '0 20px', textAlign: 'center', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{t?.title}</span>
+        )}
+        {t?.video_url && (
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#161b28"><path d="M8 5v14l11-7z" /></svg>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {t?.image_url && (
+          <h3 style={{ color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', fontSize: 15, fontWeight: 600, lineHeight: 1.3, marginBottom: 6 }}>{t.title}</h3>
+        )}
         {t?.description && <p style={{ color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} className="text-sm mb-3">{t.description}</p>}
 
         {ap ? (
           <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}>
-            <p style={{ fontSize: 11, color: '#137a39', margin: '0 0 8px' }}>
-              Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}» — нажимать ничего не нужно.
-            </p>
+            <p style={{ fontSize: 11, color: '#137a39', margin: '0 0 8px' }}>Засчитается автоматически при достижении «{ap.targetLabel}» по показателю «{ap.metricName}».</p>
             <ProgressBar3D value={ap.currentValue} marks={[{ key: 't', value: ap.targetValue ?? 1 }]} height={6} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
               <span style={{ color: '#137a39' }}>Сейчас: {ap.currentValue}{ap.unit} ({BAND_LABELS[ap.currentBand]})</span>
@@ -105,35 +102,34 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
           </div>
         )}
 
-        <div className="flex justify-between items-center mb-3">
-          <span style={{ color: 'var(--accent-gold)', fontWeight: isExpensive ? 800 : 500, fontSize: isExpensive ? 18 : 13 }}>+ {t?.reward_karma ?? '?'} {isExpensive ? '' : 'кармиков'}</span>
-          {assignment.deadline_at && (
-            <span style={{ color: 'var(--text-muted)', fontSize: 11 }} className="font-mono">{new Date(assignment.deadline_at).toLocaleString('ru')}</span>
-          )}
+        {/* Блок награды — отдельная плашка, как «Бесплатных вращений: 100» на референсе */}
+        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 10 }}>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 2 }}>Награда</div>
+          <div style={{ color: 'var(--accent-gold)', fontWeight: 800, fontSize: isExpensive ? 22 : 18 }}>+{t?.reward_karma ?? '?'} <span style={{ fontSize: 12, fontWeight: 500 }}>кармиков</span></div>
+        </div>
+
+        {/* Строка источника — как «REALSLOTS» на референсе */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, fontSize: 12 }}>
+          <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{t?.partner_name ? t.partner_name : t?.is_auto_goal ? 'По цели' : 'От руководителя'}</span>
+          {assignment.deadline_at && <span style={{ color: urgent ? '#dc2626' : 'var(--text-muted)', fontWeight: urgent ? 700 : 400 }}>{urgent ? `${Math.max(1, Math.round(hoursLeft))} ч осталось` : new Date(assignment.deadline_at).toLocaleDateString('ru')}</span>}
         </div>
 
         <div style={{ marginTop: 'auto' }}>
-          {(() => {
-            const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
-            const urgent = hoursLeft != null && hoursLeft > 0 && hoursLeft < 24 && ['assigned', 'in_progress'].includes(assignment.status)
-            return (<>
-              {!t?.is_auto_goal && assignment.status === 'assigned' && (
-                <button onClick={stop(() => onStart(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
-                  {urgent ? `Осталось ${Math.max(1, Math.round(hoursLeft))} ч — начните` : 'Начать'} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
-                </button>
-              )}
-              {!t?.is_auto_goal && assignment.status === 'in_progress' && (
-                <button onClick={stop(() => onSubmit(assignment.id))} className="action-btn w-full text-xs py-1.5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
-                  {urgent ? `Осталось ${Math.max(1, Math.round(hoursLeft))} ч — отправьте` : 'Отправить на проверку'} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
-                </button>
-              )}
-            </>)
-          })()}
+          {!t?.is_auto_goal && assignment.status === 'assigned' && (
+            <button onClick={stop(() => onStart(assignment.id))} className="w-full text-sm py-3" style={{ borderRadius: 12, fontWeight: 700, color: '#fff', background: urgent ? '#dc2626' : 'linear-gradient(135deg, #8a6208, #b45309)', border: 'none', cursor: 'pointer', animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+              Начать
+            </button>
+          )}
+          {!t?.is_auto_goal && assignment.status === 'in_progress' && (
+            <button onClick={stop(() => onSubmit(assignment.id))} className="w-full text-sm py-3" style={{ borderRadius: 12, fontWeight: 700, color: '#fff', background: urgent ? '#dc2626' : 'linear-gradient(135deg, #8a6208, #b45309)', border: 'none', cursor: 'pointer', animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+              Отправить на проверку
+            </button>
+          )}
           {!t?.is_auto_goal && assignment.status === 'pending_review' && (
-            <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
+            <div className="w-full text-center text-xs py-2" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
           )}
           {t?.is_auto_goal && (
-            <div className="w-full text-center text-xs py-1.5" style={{ color: 'var(--text-muted)' }}>Подробнее →</div>
+            <div className="w-full text-center text-xs py-2" style={{ color: 'var(--text-muted)' }}>Подробнее →</div>
           )}
         </div>
       </div>
@@ -153,13 +149,7 @@ export default function TasksPage() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
-
-  useEffect(() => {
-    if (activeTasks.length > 0) {
-      const inProgress = activeTasks.filter(t => t.status === 'in_progress')
-      if (inProgress.length > 0) setActiveTab('in_progress')
-    }
-  }, [activeTasks])
+  const [typeFilter, setTypeFilter] = useState('all')
 
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -254,13 +244,16 @@ export default function TasksPage() {
     filteredTasks.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
   }
 
-  // Три настоящих раздела, не сетка с мелкой меткой в углу (по фидбеку
-  // от 2 сентября 2026: «типы заданий никак не разделены, всё в куче
-  // непонятно») — партнёрские лентой, авто-целевые и обычные каждые в
-  // своей секции с заголовком и своим акцентным цветом карточек.
   const partnerTasks = filteredTasks.filter(a => a.tasks?.partner_name)
   const autoGoalTasks = filteredTasks.filter(a => !a.tasks?.partner_name && a.tasks?.is_auto_goal)
   const manualTasks = filteredTasks.filter(a => !a.tasks?.partner_name && !a.tasks?.is_auto_goal)
+
+  const SECTIONS = [
+    { key: 'partner', label: 'От партнёров', dot: 'var(--accent-gold)', accent: 'rgba(184,134,11,0.35)', items: partnerTasks },
+    { key: 'goal', label: 'По вашим целям', dot: '#137a39', accent: 'rgba(19,122,57,0.3)', items: autoGoalTasks },
+    { key: 'manual', label: 'От руководителя', dot: 'var(--accent-cyan)', accent: 'rgba(14,116,144,0.3)', items: manualTasks },
+  ]
+  const visibleSections = SECTIONS.filter(s => s.items.length > 0 && (typeFilter === 'all' || typeFilter === s.key))
 
   if (loading) return <LoadingScreen />
 
@@ -298,87 +291,72 @@ export default function TasksPage() {
         </div>
       } />
 
-      <div style={{ marginBottom: 20 }} />
+      {activeTab !== 'history' && SECTIONS.some(s => s.items.length > 0) && (
+        <div style={{ display: 'flex', gap: 8, margin: '20px 0', flexWrap: 'wrap' }}>
+          <button onClick={() => setTypeFilter('all')} style={{ fontSize: 12.5, fontWeight: 600, padding: '7px 16px', borderRadius: 20, border: `1px solid ${typeFilter === 'all' ? 'var(--text-primary)' : 'var(--border-subtle)'}`, background: typeFilter === 'all' ? 'var(--text-primary)' : 'var(--bg-card)', color: typeFilter === 'all' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+          {SECTIONS.filter(s => s.items.length > 0).map(s => (
+            <button key={s.key} onClick={() => setTypeFilter(s.key)} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, padding: '7px 16px', borderRadius: 20, border: `1px solid ${typeFilter === s.key ? s.dot : 'var(--border-subtle)'}`, background: typeFilter === s.key ? `${s.accent}` : 'var(--bg-card)', color: typeFilter === s.key ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: s.dot }} />
+              {s.label} · {s.items.length}
+            </button>
+          ))}
+        </div>
+      )}
+      {activeTab === 'history' && <div style={{ marginBottom: 20 }} />}
 
       {activeTab !== 'history' && (
         filteredTasks.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Нет заданий</p>
+          <p style={{ color: 'var(--text-secondary)', padding: '40px 0', textAlign: 'center' }}>Нет заданий</p>
         ) : (
-          <>
-            {partnerTasks.length > 0 && (
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-gold)' }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>От партнёров</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{partnerTasks.length} {partnerTasks.length === 1 ? 'предложение' : 'предложений'} — особые условия от компаний-партнёров</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+            {visibleSections.map(s => (
+              <div key={s.key}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: s.dot }} />
+                  <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Georgia, serif' }}>{s.label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', background: 'var(--bg-page)', padding: '2px 10px', borderRadius: 20 }}>{s.items.length}</span>
                 </div>
-                <div className="partner-ribbon" style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x proximity' }}>
-                  {partnerTasks.map(assignment => (
+                <div className={`task-ribbon-${s.key}`} style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x proximity' }}>
+                  {[...s.items].sort((a, b) => (b.tasks?.visual_tier === 'premium' ? 1 : 0) - (a.tasks?.visual_tier === 'premium' ? 1 : 0)).map(assignment => (
                     <div key={assignment.id} style={{ scrollSnapAlign: 'start' }}>
-                      <TaskCard assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} accentColor="rgba(184,134,11,0.35)" />
+                      <TaskCard assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} accentColor={s.accent} />
                     </div>
                   ))}
                 </div>
                 <style jsx>{`
-                  .partner-ribbon::-webkit-scrollbar { height: 5px; }
-                  .partner-ribbon::-webkit-scrollbar-thumb { background: rgba(176,128,16,0.35); border-radius: 4px; }
-                  .partner-ribbon { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.35) transparent; }
+                  .task-ribbon-${s.key}::-webkit-scrollbar { height: 5px; }
+                  .task-ribbon-${s.key}::-webkit-scrollbar-thumb { background: ${s.accent}; border-radius: 4px; }
+                  .task-ribbon-${s.key} { scrollbar-width: thin; scrollbar-color: ${s.accent} transparent; }
                 `}</style>
               </div>
-            )}
-            {autoGoalTasks.length > 0 && (
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#137a39' }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>По вашим целям</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{autoGoalTasks.length} — засчитаются сами при достижении показателя, нажимать не нужно</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-                  {autoGoalTasks.map(assignment => (
-                    <TaskCard key={assignment.id} assignment={assignment} variant="grid" onStart={handleStart} onSubmit={openSubmitModal} accentColor="rgba(19,122,57,0.3)" />
-                  ))}
-                </div>
-              </div>
-            )}
-            {manualTasks.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)' }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>От руководителя</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{manualTasks.length} — выполните и отправьте на проверку</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-                  {[...manualTasks].sort((a, b) => (b.tasks?.visual_tier === 'premium' ? 1 : 0) - (a.tasks?.visual_tier === 'premium' ? 1 : 0)).map(assignment => (
-                    <TaskCard key={assignment.id} assignment={assignment} variant="grid" onStart={handleStart} onSubmit={openSubmitModal} accentColor="rgba(14,116,144,0.3)" />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+            ))}
+          </div>
         )
       )}
 
       {activeTab === 'history' && (
         history.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Нет завершённых заданий</p>
+          <p style={{ color: 'var(--text-secondary)', padding: '40px 0', textAlign: 'center' }}>Нет завершённых заданий</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 500, overflowY: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
             {history.map(h => {
               const t = h.tasks
               if (!t) return null
               return (
-                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs flex-shrink-0 ${h.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
-                      </span>
-                    </div>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{new Date(h.completed_at).toLocaleString('ru')}</p>
+                <Link key={h.id} href={`/task/${h.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', padding: 14, borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card)', transition: 'transform 0.15s ease' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: 13.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>{t.title}</span>
+                    <span style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 600, padding: '3px 9px', borderRadius: 20, background: h.status === 'completed' ? 'rgba(19,122,57,0.1)' : 'rgba(220,38,38,0.1)', color: h.status === 'completed' ? '#137a39' : '#dc2626' }}>
+                      {h.status === 'completed' ? 'Выполнено' : 'Отклонено'}
+                    </span>
                   </div>
-                  <span style={{ color: 'var(--accent-gold)' }} className="text-sm flex-shrink-0">+ {t.reward_karma} кармиков</span>
-                </div>
+                  {t.description && <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: 8 }}>{t.description}</p>}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(h.completed_at).toLocaleDateString('ru')}</span>
+                    <span style={{ color: 'var(--accent-gold)', fontSize: 12.5, fontWeight: 700 }}>+{t.reward_karma} карм.</span>
+                  </div>
+                </Link>
               )
             })}
           </div>
