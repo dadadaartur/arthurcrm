@@ -24,7 +24,15 @@ export default async function handler(req, res) {
   const to = req.query.to !== undefined ? req.query.to : new Date().toISOString().slice(0, 10)
 
   const { data: allDepartments } = await a.from('departments').select('id, parent_department_id, manager_user_id').eq('company_id', companyId)
-  const scope = getManagerScope(ctx.profile, allDepartments || [])
+  const rawScope = getManagerScope(ctx.profile, allDepartments || [])
+  // Модератор с общим правом can_review_tasks, но без отдела, где он
+  // назначен менеджером напрямую — это не «нет доступа», это доступ по
+  // всей компании (право выдано компанией, не привязано к иерархии
+  // отделов). Раньше пустой массив от getManagerScope (в отличие от
+  // null) схлопывал пул сотрудников до нуля даже при реально
+  // выполненных заданиях — самая вероятная причина «аналитика
+  // показывает 0», подтверждённая по коду.
+  const scope = (rawScope && rawScope.length === 0 && ctx.profile?.can_review_tasks) ? null : rawScope
   let empQuery = a.from('profiles').select('user_id, first_name, last_name, display_name, email, department_id')
     .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
   const { data: allEmps } = await empQuery
