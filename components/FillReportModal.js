@@ -1,87 +1,116 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import DatePicker from './DatePicker'
 import { supabase } from '../lib/supabaseClient'
 import { useFeedback } from '../context/ActionFeedbackContext'
 
-// Полная переработка (31 августа 2026, по фидбеку: «сломана и вёрстка,
-// и непонятно как вручную вносить данные») — не только цвета, но и сама
-// структура: раньше вводимые и вычисляемые формулой колонки визуально
-// ничем не отличались в плотной таблице, дата пряталась мелкой строкой
-// сбоку, у кнопки «Сохранить» не было состояния загрузки вовсе.
+// Ручное заполнение показателей — переработано 2 сентября 2026 по
+// прямому запросу: раньше это была одна большая форма с кнопкой
+// «Сохранить», которая закрывала окно целиком — заполнить несколько
+// дней подряд означало открывать модалку заново после каждого. Плюс
+// режим «за период» с делением введённого числа поровну по дням
+// оказался путающим («непонятна фраза из скрипта») и не нужен, если
+// сохранение теперь происходит сразу.
+//
+// Новая механика — как в гугл-таблице: одна ячейка = один день одного
+// показателя одного сотрудника. Вписал число → само сохранилось при
+// уходе из поля (без отдельной кнопки), в углу ячейки на секунду
+// появляется галочка. Чтобы поправить — просто стираешь и вписываешь
+// другое. Переключение дня — просто смена даты сверху, окно не
+// закрывается никогда само, только по вашему явному действию.
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const today = toISO(new Date())
 
-const tiny = a => ({
-  padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: a ? 600 : 400,
-  background: a ? 'rgba(184,134,11,0.1)' : 'var(--bg-page)', border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#8a6208' : 'var(--text-secondary)', transition: 'all 0.2s', whiteSpace: 'nowrap'
-})
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s', whiteSpace: 'nowrap' }
 const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 export default function FillReportModal({ open, onClose, onSaved }) {
-  const { showSuccess, showError } = useFeedback()
+  const { showError } = useFeedback()
   const [metrics, setMetrics] = useState([])
   const [employees, setEmployees] = useState([])
   const [tab, setTab] = useState('table')
-  const [fillMode, setFillMode] = useState('day')
   const [date, setDate] = useState(today)
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
   const [values, setValues] = useState({})
+  const [cellState, setCellState] = useState({}) // 'saving' | 'saved' | undefined, ключ `${uid}:${key}`
   const [importTab, setImportTab] = useState('paste')
   const [pasteText, setPasteText] = useState('')
   const [gUrl, setGUrl] = useState('')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const savedTimers = useRef({})
 
-  useEffect(() => { if (open) load() }, [open])
+  useEffect(() => { if (open) load() }, [open, date])
   const load = async () => {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     const h = { Authorization: `Bearer ${session.access_token}` }
     const r = await fetch('/api/company-admin/kpi/metrics', { headers: h })
-    setMetrics(r.ok ? (await r.json()) || [] : [])
+    const metricsList = r.ok ? (await r.json()) || [] : []
+    setMetrics(metricsList)
     const { data: { user } } = await supabase.auth.getUser()
     const { data: prof } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single()
     const { data: emps } = await supabase.from('profiles').select('user_id, first_name, last_name, display_name, email').eq('company_id', prof.company_id).is('deleted_at', null).eq('is_company_admin', false)
     setEmployees(emps || [])
+
+    // Подгружаем уже внесённые за эту дату значения — ячейки приходят
+    // предзаполненными, а не пустыми, если день уже частично заполнен.
+    const directMetricIds = metricsList.filter(m => !m.formula).map(m => m.id)
+    const inputKeys = {}
+    metricsList.forEach(x => (x.inputs || []).forEach(i => { inputKeys[i.key] = true }))
+    if (directMetricIds.length) {
+      const { data: existing } = await supabase.from('kpi_entries').select('user_id, metric_id, value').in('metric_id', directMetricIds).eq('entry_date', date)
+      const next = {}
+      ;(existing || []).forEach(e => { next[e.user_id] = { ...(next[e.user_id] || {}) }; next[e.user_id]['m' + e.metric_id] = String(e.value) })
+      setValues(next)
+    } else {
+      setValues({})
+    }
     setLoading(false)
   }
 
   const pool = (() => { const p = {}; metrics.forEach(x => (x.inputs || []).forEach(i => { p[i.key] = i })); return Object.values(p) })()
-  const directCols = metrics.filter(m => !m.formula).map(m => ({ key: 'm' + m.id, label: m.name, unit: m.unit, inverse: m.kpi_type === 'inverse' }))
+  const directCols = metrics.filter(m => !m.formula).map(m => ({ id: m.id, key: 'm' + m.id, label: m.name, unit: m.unit, inverse: m.kpi_type === 'inverse' }))
   const cols = [...pool.map(c => ({ ...c, inverse: false })), ...directCols]
   const formulaMetrics = metrics.filter(m => m.formula)
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
 
-  const datesInRange = () => { if (!from || !to) return []; const out = [], d = new Date(from + 'T00:00:00'), end = new Date(to + 'T00:00:00'); while (d <= end) { out.push(toISO(d)); d.setDate(d.getDate() + 1) } return out }
   const computeValue = (m, uid) => {
     if (m.formula) { const den = Number(values[uid]?.[m.formula.den]) || 0, num = Number(values[uid]?.[m.formula.num]) || 0; return den > 0 ? Math.round((num / den) * (m.formula.mult || 100) * 10) / 10 : null }
     const v = values[uid]?.['m' + m.id]; return v === '' || v == null ? null : Number(v)
   }
   const filledCount = employees.filter(emp => cols.some(c => { const v = values[emp.user_id]?.[c.key]; return v !== undefined && v !== '' })).length
 
-  const save = async () => {
-    const dates = fillMode === 'day' ? (date ? [date] : []) : datesInRange()
-    if (!dates.length) { showError(fillMode === 'day' ? 'Выберите дату' : 'Выберите период «с/до»'); return }
-    setSaving(true)
+  // Автосохранение одной ячейки — вызывается при уходе из поля
+  // (onBlur), не на каждое нажатие клавиши, чтобы не слать запрос на
+  // каждую введённую цифру. col.id — реальный id прямого показателя;
+  // для колонок-инпутов формулы (pool) своего id показателя нет, они
+  // не сохраняются напрямую, только участвуют в расчёте формульных.
+  const saveCell = async (uid, col) => {
+    if (!col.id) return // это инпут формулы (pool), не отдельный показатель — сохранять нечего
+    const raw = values[uid]?.[col.key]
+    if (raw === undefined || raw === '') return
+    const cellKey = `${uid}:${col.key}`
+    setCellState(s => ({ ...s, [cellKey]: 'saving' }))
     const { data: { session } } = await supabase.auth.getSession()
-    const entries = []
-    employees.forEach(emp => metrics.forEach(m => { const raw = computeValue(m, emp.user_id); if (raw == null) return; const perDay = dates.length > 1 ? Math.round((raw / dates.length) * 10) / 10 : raw; dates.forEach(d => entries.push({ metricId: m.id, userId: emp.user_id, value: perDay, date: d })) }))
-    if (!entries.length) { showError('Нет заполненных значений'); setSaving(false); return }
     try {
-      const res = await fetch('/api/company-admin/kpi/entries-bulk', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ entries }) })
-      if (res.ok) { showSuccess(`Сохранено: ${entries.length} записей`); setValues({}); onClose(); if (onSaved) onSaved() }
-      else showError('Ошибка сохранения')
-    } catch (e) { showError('Сетевая ошибка — проверьте соединение') }
-    setSaving(false)
+      const res = await fetch('/api/company-admin/kpi/entries-bulk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ entries: [{ metricId: col.id, userId: uid, value: Number(raw), date }] })
+      })
+      if (!res.ok) throw new Error()
+      setCellState(s => ({ ...s, [cellKey]: 'saved' }))
+      clearTimeout(savedTimers.current[cellKey])
+      savedTimers.current[cellKey] = setTimeout(() => setCellState(s => ({ ...s, [cellKey]: undefined })), 1600)
+      if (onSaved) onSaved()
+    } catch (e) {
+      setCellState(s => ({ ...s, [cellKey]: undefined }))
+      showError('Не сохранилось — проверьте соединение и попробуйте снова')
+    }
   }
-  const applyRows = rows => { if (!rows?.length) return 'Пустые данные'; const header = rows[0].map(h => (h || '').trim()); const emailIdx = header.findIndex(h => /email|почта/i.test(h)); if (emailIdx < 0) return 'Не найдена колонка «Email»'; const ltk = {}; cols.forEach(c => ltk[c.label.toLowerCase()] = c.key); const colMap = header.map((h, i) => ({ i, key: ltk[h.toLowerCase()] })).filter(x => x.key); let applied = 0; const next = { ...values }; rows.slice(1).forEach(r => { const email = (r[emailIdx] || '').trim().toLowerCase(); const emp = employees.find(e => (e.email || '').toLowerCase() === email); if (!emp) return; next[emp.user_id] = { ...(next[emp.user_id] || {}) }; colMap.forEach(({ i, key }) => { const v = parseFloat(String(r[i]).replace(',', '.')); if (!isNaN(v)) { next[emp.user_id][key] = v; applied++ } }) }); setValues(next); return `Применено значений: ${applied}` }
+
+  const applyRows = rows => { if (!rows?.length) return 'Пустые данные'; const header = rows[0].map(h => (h || '').trim()); const emailIdx = header.findIndex(h => /email|почта/i.test(h)); if (emailIdx < 0) return 'Не найдена колонка «Email»'; const ltk = {}; cols.forEach(c => ltk[c.label.toLowerCase()] = c.key); const colMap = header.map((h, i) => ({ i, key: ltk[h.toLowerCase()] })).filter(x => x.key); let applied = 0; const next = { ...values }; const toSave = []; rows.slice(1).forEach(r => { const email = (r[emailIdx] || '').trim().toLowerCase(); const emp = employees.find(e => (e.email || '').toLowerCase() === email); if (!emp) return; next[emp.user_id] = { ...(next[emp.user_id] || {}) }; colMap.forEach(({ i, key }) => { const v = parseFloat(String(r[i]).replace(',', '.')); if (!isNaN(v)) { next[emp.user_id][key] = String(v); applied++; const col = cols.find(c => c.key === key); if (col?.id) toSave.push({ uid: emp.user_id, col, v }) } }) }); setValues(next); toSave.forEach(({ uid, col }) => setTimeout(() => saveCell(uid, col), 0)); return `Применено значений: ${applied}` }
   const parseText = t => { const d = t.includes('\t') ? '\t' : (t.split(';').length > t.split(',').length ? ';' : ','); return t.split(/\r?\n/).filter(l => l.trim()).map(l => l.split(d)) }
-  const fetchGoogle = async () => { const id = (gUrl.match(/\/d\/([\w-]+)/) || [])[1]; if (!id) { showError('Неверная ссылка'); return } try { const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`); const msg = applyRows(parseText(await r.text())); if (msg.startsWith('Применено')) { showSuccess(msg); setTab('table') } else showError(msg) } catch (e) { showError('Не удалось скачать') } }
-  const copyTemplate = async () => { const header = ['Email', ...cols.map(c => c.label)]; const ex = ['ivanov@company.ru', ...cols.map(() => '0')]; try { await navigator.clipboard.writeText([header.join('\t'), ex.join('\t')].join('\n')); showSuccess('Шаблон скопирован — вставьте Ctrl+V') } catch (e) { showError('Не удалось') } }
+  const fetchGoogle = async () => { const id = (gUrl.match(/\/d\/([\w-]+)/) || [])[1]; if (!id) { showError('Неверная ссылка'); return } try { const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`); const msg = applyRows(parseText(await r.text())); if (msg.startsWith('Применено')) { setTab('table') } else showError(msg) } catch (e) { showError('Не удалось скачать') } }
+  const copyTemplate = async () => { const header = ['Email', ...cols.map(c => c.label)]; const ex = ['ivanov@company.ru', ...cols.map(() => '0')]; try { await navigator.clipboard.writeText([header.join('\t'), ex.join('\t')].join('\n')) } catch (e) { showError('Не удалось скопировать') } }
 
   if (!open) return null
   return (
@@ -92,8 +121,7 @@ export default function FillReportModal({ open, onClose, onSaved }) {
         <div style={{ marginBottom: 4 }}>
           <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Заполнить показатели вручную</h3>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0', maxWidth: 640 }}>
-            Впишите значения в таблицу ниже (или вставьте данные из своей таблицы через «Импорт») и нажмите «Сохранить» —
-            значения запишутся за выбранную дату или равномерно распределятся по всем дням выбранного периода.
+            Впишите значение и уйдите из поля (клик в сторону или Tab) — сохранится само, без отдельной кнопки. Чтобы поправить — сотрите и впишите другое число, как в обычной таблице.
           </p>
         </div>
 
@@ -101,42 +129,23 @@ export default function FillReportModal({ open, onClose, onSaved }) {
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Способ</div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setTab('table')} style={tiny(tab === 'table')}>Таблица</button>
-              <button onClick={() => setTab('import')} style={tiny(tab === 'import')}>Импорт</button>
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Период</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setFillMode('day')} style={tiny(fillMode === 'day')}>За день</button>
-              <button onClick={() => setFillMode('period')} style={tiny(fillMode === 'period')}>За диапазон</button>
+              <button onClick={() => setTab('table')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'table' ? 600 : 400, background: tab === 'table' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'table' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'table' ? '#8a6208' : 'var(--text-secondary)' }}>Таблица</button>
+              <button onClick={() => setTab('import')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'import' ? 600 : 400, background: tab === 'import' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'import' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'import' ? '#8a6208' : 'var(--text-secondary)' }}>Импорт</button>
             </div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
-              {fillMode === 'day' ? 'Дата записи' : 'Диапазон дат'}
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {fillMode === 'day'
-                ? <div style={{ width: 170 }}><DatePicker value={date} onChange={setDate} placeholder="Дата" /></div>
-                : <><div style={{ width: 150 }}><DatePicker value={from} onChange={setFrom} placeholder="С" /></div><span style={{ color: 'var(--text-muted)' }}>—</span><div style={{ width: 150 }}><DatePicker value={to} onChange={setTo} placeholder="По" /></div></>}
-            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Дата записи</div>
+            <div style={{ width: 180 }}><DatePicker value={date} onChange={setDate} placeholder="Дата" /></div>
           </div>
         </div>
-
-        {fillMode === 'period' && from && to && (
-          <div style={{ padding: '9px 14px', borderRadius: 10, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', color: '#8a6208', fontSize: 12, marginBottom: 14 }}>
-            Введённое число разделится поровну на каждый день периода {from} — {to}.
-          </div>
-        )}
 
         {loading ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Загружаем показатели и сотрудников…</div>
         ) : tab === 'table' ? (
           <>
             <div style={{ display: 'flex', gap: 14, marginBottom: 10, fontSize: 11, color: 'var(--text-secondary)' }}>
-              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', marginRight: 5, verticalAlign: -1 }} />вводится вручную</span>
-              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'rgba(184,134,11,0.15)', border: '1px solid var(--border-gold)', marginRight: 5, verticalAlign: -1 }} />считается автоматически по формуле</span>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', marginRight: 5, verticalAlign: -1 }} />вводите сами — число за этот день</span>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'rgba(184,134,11,0.15)', border: '1px solid var(--border-gold)', marginRight: 5, verticalAlign: -1 }} />считает сама система — это формула из соседних колонок, вводить не нужно</span>
               <span style={{ marginLeft: 'auto' }}>Заполнено строк: {filledCount} из {employees.length}</span>
             </div>
             <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
@@ -146,14 +155,14 @@ export default function FillReportModal({ open, onClose, onSaved }) {
                     <th style={{ textAlign: 'left', padding: '10px 12px', color: 'var(--text-secondary)', fontWeight: 500, minWidth: 190, position: 'sticky', left: 0, background: 'var(--bg-page)', zIndex: 3 }}>Сотрудник</th>
                     {cols.map(c => (
                       <th key={c.key} style={{ padding: '10px 8px', minWidth: 110, background: 'var(--bg-card)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.label}</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.label}>{c.label}</div>
                         <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 400 }}>{c.inverse ? 'меньше = лучше' : (c.unit || '—')}</div>
                       </th>
                     ))}
                     {formulaMetrics.map(m => (
                       <th key={m.id} style={{ padding: '10px 8px', minWidth: 110, background: 'rgba(184,134,11,0.06)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#8a6208', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                        <div style={{ fontSize: 9, color: '#8a6208', fontWeight: 400 }}>авто</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#8a6208', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</div>
+                        <div style={{ fontSize: 9, color: '#8a6208', fontWeight: 400 }}>считает система</div>
                       </th>
                     ))}
                   </tr>
@@ -162,11 +171,31 @@ export default function FillReportModal({ open, onClose, onSaved }) {
                   {employees.map((emp, i) => (
                     <tr key={emp.user_id} style={{ background: i % 2 ? 'var(--bg-page)' : 'transparent' }}>
                       <td style={{ padding: '6px 12px', color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', position: 'sticky', left: 0, background: i % 2 ? 'var(--bg-page)' : 'var(--bg-card)' }}>{empName(emp)}</td>
-                      {cols.map(c => (
-                        <td key={c.key} style={{ padding: '4px 6px' }}>
-                          <input type="number" step="0.1" value={values[emp.user_id]?.[c.key] ?? ''} onChange={ev => setValues(v => ({ ...v, [emp.user_id]: { ...v[emp.user_id], [c.key]: ev.target.value } }))} className="input-field" style={{ width: '100%', textAlign: 'center', padding: '7px 4px' }} />
-                        </td>
-                      ))}
+                      {cols.map(c => {
+                        const cellKey = `${emp.user_id}:${c.key}`
+                        const st = cellState[cellKey]
+                        return (
+                          <td key={c.key} style={{ padding: '4px 6px', position: 'relative' }}>
+                            <input
+                              type="number" step="0.1"
+                              value={values[emp.user_id]?.[c.key] ?? ''}
+                              onChange={ev => setValues(v => ({ ...v, [emp.user_id]: { ...v[emp.user_id], [c.key]: ev.target.value } }))}
+                              onBlur={() => saveCell(emp.user_id, c)}
+                              onKeyDown={ev => { if (ev.key === 'Enter') ev.target.blur() }}
+                              className="input-field"
+                              style={{ width: '100%', textAlign: 'center', padding: '7px 20px 7px 4px', borderColor: st === 'saved' ? 'rgba(19,122,57,0.4)' : undefined }}
+                            />
+                            {st === 'saving' && (
+                              <span style={{ position: 'absolute', right: 10, top: '50%', marginTop: -6, width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#8a6208', animation: 'frmSpin 0.7s linear infinite' }} />
+                            )}
+                            {st === 'saved' && (
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: 8, top: '50%', marginTop: -6, animation: 'frmPop .3s ease-out' }}>
+                                <path d="M5 12.5l4.5 4.5L19 7" stroke="#137a39" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </td>
+                        )
+                      })}
                       {formulaMetrics.map(m => { const v = computeValue(m, emp.user_id); return (
                         <td key={m.id} style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 600, color: v != null ? '#8a6208' : 'var(--text-muted)' }}>{v != null ? v + (m.unit || '') : '—'}</td>
                       )})}
@@ -176,29 +205,24 @@ export default function FillReportModal({ open, onClose, onSaved }) {
               </table>
               {employees.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 12, padding: 16 }}>Нет сотрудников</p>}
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button onClick={onClose} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
-              <button onClick={save} disabled={saving} style={{ ...ghostBtn, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: saving ? 0.7 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-                {saving && <span style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#8a6208', animation: 'frmSpin 0.7s linear infinite' }} />}
-                {saving ? 'Сохраняем...' : 'Сохранить'}
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={onClose} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Готово</button>
             </div>
           </>
         ) : (
           <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, maxWidth: 560 }}>
-              Скопируйте шаблон, заполните его в своей таблице (первая колонка — email сотрудника) и вставьте обратно сюда,
-              либо укажите ссылку на опубликованную Google Таблицу — данные подставятся в форму на вкладке «Таблица».
+              Скопируйте шаблон, заполните его в своей таблице (первая колонка — email сотрудника) и вставьте обратно сюда на выбранную выше дату, либо укажите ссылку на опубликованную Google Таблицу.
             </p>
             <button onClick={copyTemplate} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, marginBottom: 16 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Скопировать шаблон таблицы</button>
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-              <button onClick={() => setImportTab('paste')} style={tiny(importTab === 'paste')}>Вставить данные</button>
-              <button onClick={() => setImportTab('google')} style={tiny(importTab === 'google')}>Ссылка на Google Таблицу</button>
+              <button onClick={() => setImportTab('paste')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'paste' ? 600 : 400, background: importTab === 'paste' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'paste' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'paste' ? '#8a6208' : 'var(--text-secondary)' }}>Вставить данные</button>
+              <button onClick={() => setImportTab('google')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'google' ? 600 : 400, background: importTab === 'google' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'google' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'google' ? '#8a6208' : 'var(--text-secondary)' }}>Ссылка на Google Таблицу</button>
             </div>
             {importTab === 'paste' ? (
               <>
                 <textarea className="input-field" style={{ width: '100%' }} rows={8} placeholder={'Email\tКол-во звонков\nivanov@co.ru\t120'} value={pasteText} onChange={e => setPasteText(e.target.value)} />
-                <button onClick={() => { const msg = applyRows(parseText(pasteText)); if (msg.startsWith('Применено')) { showSuccess(msg); setTab('table') } else showError(msg) }} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Применить к таблице</button>
+                <button onClick={() => { const msg = applyRows(parseText(pasteText)); if (msg.startsWith('Применено')) setTab('table'); else showError(msg) }} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Применить к таблице</button>
               </>
             ) : (
               <>
@@ -211,6 +235,7 @@ export default function FillReportModal({ open, onClose, onSaved }) {
       </div>
       <style jsx>{`
         @keyframes frmSpin { to { transform: rotate(360deg); } }
+        @keyframes frmPop { 0% { opacity: 0; transform: scale(.4); } 100% { opacity: 1; transform: scale(1); } }
       `}</style>
     </div>
   )
