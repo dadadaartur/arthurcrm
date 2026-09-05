@@ -15,7 +15,37 @@ import { BAND_COLORS, BAND_LABELS } from '../lib/kpi'
 // золотой бейдж в углу и статичная золотая рамка потолще, без анимации
 // (премиальность через сдержанность, тот же принцип, что уже
 // применялся для карточки перевода кармиков).
-function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor = 'var(--border-subtle)' }) {
+function PremiumActionButton({ onClick, urgent, children }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="w-full text-sm py-3"
+      style={{
+        position: 'relative', overflow: 'hidden', borderRadius: 12, fontWeight: 700, color: '#fff',
+        background: urgent ? 'linear-gradient(135deg, #dc2626, #991b1b)' : 'linear-gradient(135deg, #a4770f, #8a6208 45%, #6b4a06)',
+        border: 'none', cursor: 'pointer',
+        boxShadow: hover ? '0 6px 18px rgba(138,98,8,0.4), inset 0 1px 0 rgba(255,255,255,0.25)' : '0 3px 10px rgba(138,98,8,0.28), inset 0 1px 0 rgba(255,255,255,0.18)',
+        transform: hover ? 'translateY(-1px)' : 'translateY(0)',
+        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+        animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none',
+      }}
+    >
+      <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>{children}</span>
+      {/* Полоса блеска, проходящая слева направо при наведении — премиальный
+          интерактивный отклик вместо плоской статичной заливки. */}
+      <span style={{
+        position: 'absolute', top: 0, bottom: 0, width: '55%',
+        background: 'linear-gradient(100deg, transparent, rgba(255,255,255,0.32), transparent)',
+        left: hover ? '120%' : '-60%', transition: 'left 0.6s ease',
+      }} />
+    </button>
+  )
+}
+
+function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor = 'var(--border-subtle)', isPartner = false }) {
   const t = assignment.tasks
   const ap = assignment.autoProgress
   const tier = t?.visual_tier || 'normal'
@@ -26,6 +56,7 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
   const stop = fn => e => { e.preventDefault(); e.stopPropagation(); fn() }
   const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(184,134,11,0.12), var(--shadow-card-hover)' }
     : tier === 'priority' ? { border: '1px solid rgba(124,58,237,0.4)', animation: 'taskPriorityGlow 2.4s ease-in-out infinite' }
+    : isPartner ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 24px -6px rgba(184,134,11,0.35), var(--shadow-card)' }
     : { border: `1px solid ${accentColor}` }
 
   const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
@@ -35,7 +66,7 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
     <Link href={t ? `/task/${assignment.id}` : '#'} style={{
       background: 'var(--bg-card)', textDecoration: 'none', color: 'inherit',
       borderRadius: 18, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden',
-      width: variant === 'carousel' ? 280 : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
+      width: variant === 'carousel' ? (isPartner ? 320 : 280) : undefined, flexShrink: variant === 'carousel' ? 0 : undefined,
       position: 'relative', cursor: 'pointer', boxShadow: 'var(--shadow-card)',
       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       ...tierStyle,
@@ -60,9 +91,9 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
           есть, иначе название задания стилизованным крупным шрифтом
           играет роль «обложки» (по вашему референсу — там тоже нет
           фотографии, роль главного визуала играет крупное название). */}
-      <div style={{ position: 'relative', height: 128, flexShrink: 0, background: t?.image_url ? undefined : `linear-gradient(135deg, ${accentColor}25, ${accentColor}08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: isPartner ? 152 : 128, flexShrink: 0, background: `linear-gradient(135deg, ${accentColor}30, ${accentColor}0a)`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {t?.image_url ? (
-          <img src={t.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={t.image_url} alt="" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }} />
         ) : (
           <span style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', opacity: 0.5, padding: '0 20px', textAlign: 'center', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{t?.title}</span>
         )}
@@ -116,14 +147,16 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
 
         <div style={{ marginTop: 'auto' }}>
           {!t?.is_auto_goal && assignment.status === 'assigned' && (
-            <button onClick={stop(() => onStart(assignment.id))} className="w-full text-sm py-3" style={{ borderRadius: 12, fontWeight: 700, color: '#fff', background: urgent ? '#dc2626' : 'linear-gradient(135deg, #8a6208, #b45309)', border: 'none', cursor: 'pointer', animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+            <PremiumActionButton onClick={stop(() => onStart(assignment.id))} urgent={urgent}>
               Начать
-            </button>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+            </PremiumActionButton>
           )}
           {!t?.is_auto_goal && assignment.status === 'in_progress' && (
-            <button onClick={stop(() => onSubmit(assignment.id))} className="w-full text-sm py-3" style={{ borderRadius: 12, fontWeight: 700, color: '#fff', background: urgent ? '#dc2626' : 'linear-gradient(135deg, #8a6208, #b45309)', border: 'none', cursor: 'pointer', animation: urgent ? 'taskCardUrgent 1.6s ease-in-out infinite' : 'none' }}>
+            <PremiumActionButton onClick={stop(() => onSubmit(assignment.id))} urgent={urgent}>
               Отправить на проверку
-            </button>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M9 6l6 6-6 6" /></svg>
+            </PremiumActionButton>
           )}
           {!t?.is_auto_goal && assignment.status === 'pending_review' && (
             <div className="w-full text-center text-xs py-2" style={{ color: 'var(--accent-purple)' }}>Ожидает проверки</div>
@@ -148,8 +181,9 @@ export default function TasksPage() {
   const [activeTasks, setActiveTasks] = useState([])
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('new')
+  const [activeTab, setActiveTabRaw] = useState('new')
   const [typeFilter, setTypeFilter] = useState('all')
+  const setActiveTab = (tab) => { setActiveTabRaw(tab); setTypeFilter('all') }
 
   const [submitModal, setSubmitModal] = useState({ show: false, assignmentId: null, comment: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -287,7 +321,10 @@ export default function TasksPage() {
               </button>
             ))}
           </div>
-          <Link href="/tasks-analytics" style={{ fontSize: 12, color: 'var(--accent-gold)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Моя аналитика →</Link>
+          <Link href="/tasks-analytics" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#8a6208', textDecoration: 'none', whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: 20, background: 'rgba(184,134,11,0.08)', border: '1px solid var(--border-gold)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-3-3-4 4" /></svg>
+            Моя аналитика
+          </Link>
         </div>
       } />
 
@@ -319,7 +356,7 @@ export default function TasksPage() {
                 <div className={`task-ribbon-${s.key}`} style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x proximity' }}>
                   {[...s.items].sort((a, b) => (b.tasks?.visual_tier === 'premium' ? 1 : 0) - (a.tasks?.visual_tier === 'premium' ? 1 : 0)).map(assignment => (
                     <div key={assignment.id} style={{ scrollSnapAlign: 'start' }}>
-                      <TaskCard assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} accentColor={s.accent} />
+                      <TaskCard assignment={assignment} variant="carousel" onStart={handleStart} onSubmit={openSubmitModal} accentColor={s.accent} isPartner={s.key === 'partner'} />
                     </div>
                   ))}
                 </div>
