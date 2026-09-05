@@ -232,7 +232,7 @@ function AnalyticsAdmin() {
             <div style={{ minWidth: 900 }}>
               <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <div>Сотрудник</div>
-                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
+                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
               {rows.map(r => (
