@@ -18,6 +18,7 @@ import { useFeedback } from '../context/ActionFeedbackContext'
 // другое. Переключение дня — просто смена даты сверху, окно не
 // закрывается никогда само, только по вашему явному действию.
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
+const shift = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return toISO(d) }
 const today = toISO(new Date())
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s', whiteSpace: 'nowrap' }
@@ -84,17 +85,18 @@ export default function FillReportModal({ open, onClose, onSaved }) {
   // каждую введённую цифру. col.id — реальный id прямого показателя;
   // для колонок-инпутов формулы (pool) своего id показателя нет, они
   // не сохраняются напрямую, только участвуют в расчёте формульных.
-  const saveCell = async (uid, col) => {
+  const saveCell = async (uid, col, dateOverride) => {
     if (!col.id) return // это инпут формулы (pool), не отдельный показатель — сохранять нечего
     const raw = values[uid]?.[col.key]
     if (raw === undefined || raw === '') return
+    const targetDate = dateOverride || date
     const cellKey = `${uid}:${col.key}`
     setCellState(s => ({ ...s, [cellKey]: 'saving' }))
     const { data: { session } } = await supabase.auth.getSession()
     try {
       const res = await fetch('/api/company-admin/kpi/entries-bulk', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ entries: [{ metricId: col.id, userId: uid, value: Number(raw), date }] })
+        body: JSON.stringify({ entries: [{ metricId: col.id, userId: uid, value: Number(raw), date: targetDate }] })
       })
       if (!res.ok) throw new Error()
       setCellState(s => ({ ...s, [cellKey]: 'saved' }))
@@ -107,10 +109,47 @@ export default function FillReportModal({ open, onClose, onSaved }) {
     }
   }
 
-  const applyRows = rows => { if (!rows?.length) return 'Пустые данные'; const header = rows[0].map(h => (h || '').trim()); const emailIdx = header.findIndex(h => /email|почта/i.test(h)); if (emailIdx < 0) return 'Не найдена колонка «Email»'; const ltk = {}; cols.forEach(c => ltk[c.label.toLowerCase()] = c.key); const colMap = header.map((h, i) => ({ i, key: ltk[h.toLowerCase()] })).filter(x => x.key); let applied = 0; const next = { ...values }; const toSave = []; rows.slice(1).forEach(r => { const email = (r[emailIdx] || '').trim().toLowerCase(); const emp = employees.find(e => (e.email || '').toLowerCase() === email); if (!emp) return; next[emp.user_id] = { ...(next[emp.user_id] || {}) }; colMap.forEach(({ i, key }) => { const v = parseFloat(String(r[i]).replace(',', '.')); if (!isNaN(v)) { next[emp.user_id][key] = String(v); applied++; const col = cols.find(c => c.key === key); if (col?.id) toSave.push({ uid: emp.user_id, col, v }) } }) }); setValues(next); toSave.forEach(({ uid, col }) => setTimeout(() => saveCell(uid, col), 0)); return `Применено значений: ${applied}` }
+  const applyRows = rows => {
+    if (!rows?.length) return 'Пустые данные'
+    const header = rows[0].map(h => (h || '').trim())
+    const emailIdx = header.findIndex(h => /email|почта/i.test(h))
+    if (emailIdx < 0) return 'Не найдена колонка «Email»'
+    // Колонка «Дата» необязательна — если её нет, все строки идут на
+    // дату, выбранную выше в модалке (прежнее поведение). Если есть —
+    // каждая строка сохраняется на СВОЮ дату, это и даёт массовую
+    // загрузку сразу за много дней одной вставкой (пункт 3 фидбека от
+    // 2 сентября 2026: раньше без даты в шаблоне заполнить период
+    // можно было только по одному дню за раз).
+    const dateIdx = header.findIndex(h => /дата|date/i.test(h))
+    const ltk = {}
+    cols.forEach(c => ltk[c.label.toLowerCase()] = c.key)
+    const colMap = header.map((h, i) => ({ i, key: ltk[h.toLowerCase()] })).filter(x => x.key)
+    let applied = 0
+    const next = { ...values }
+    const toSave = []
+    rows.slice(1).forEach(r => {
+      const email = (r[emailIdx] || '').trim().toLowerCase()
+      const emp = employees.find(e => (e.email || '').toLowerCase() === email)
+      if (!emp) return
+      const rowDate = dateIdx >= 0 && r[dateIdx]?.trim() ? r[dateIdx].trim() : null
+      if (!rowDate || rowDate === date) next[emp.user_id] = { ...(next[emp.user_id] || {}) }
+      colMap.forEach(({ i, key }) => {
+        const v = parseFloat(String(r[i]).replace(',', '.'))
+        if (!isNaN(v)) {
+          applied++
+          const col = cols.find(c => c.key === key)
+          if (!rowDate || rowDate === date) next[emp.user_id][key] = String(v)
+          if (col?.id) toSave.push({ uid: emp.user_id, col, v, rowDate })
+        }
+      })
+    })
+    setValues(next)
+    toSave.forEach(({ uid, col, v, rowDate }) => setTimeout(() => { setValues(vv => ({ ...vv, [uid]: { ...(vv[uid] || {}), [col.key]: String(v) } })); saveCell(uid, col, rowDate) }, 0))
+    return `Применено значений: ${applied}${dateIdx >= 0 ? ' (по датам из колонки «Дата»)' : ''}`
+  }
   const parseText = t => { const d = t.includes('\t') ? '\t' : (t.split(';').length > t.split(',').length ? ';' : ','); return t.split(/\r?\n/).filter(l => l.trim()).map(l => l.split(d)) }
   const fetchGoogle = async () => { const id = (gUrl.match(/\/d\/([\w-]+)/) || [])[1]; if (!id) { showError('Неверная ссылка'); return } try { const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`); const msg = applyRows(parseText(await r.text())); if (msg.startsWith('Применено')) { setTab('table') } else showError(msg) } catch (e) { showError('Не удалось скачать') } }
-  const copyTemplate = async () => { const header = ['Email', ...cols.map(c => c.label)]; const ex = ['ivanov@company.ru', ...cols.map(() => '0')]; try { await navigator.clipboard.writeText([header.join('\t'), ex.join('\t')].join('\n')) } catch (e) { showError('Не удалось скопировать') } }
+  const copyTemplate = async () => { const header = ['Email', 'Дата', ...cols.map(c => c.label)]; const ex1 = ['ivanov@company.ru', date, ...cols.map(() => '0')]; const ex2 = ['ivanov@company.ru', shift(date, -1), ...cols.map(() => '0')]; try { await navigator.clipboard.writeText([header.join('\t'), ex1.join('\t'), ex2.join('\t')].join('\n')) } catch (e) { showError('Не удалось скопировать') } }
 
   if (!open) return null
   return (
