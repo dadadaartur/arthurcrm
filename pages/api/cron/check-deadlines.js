@@ -33,6 +33,37 @@ export default async function handler(req, res) {
   // каждый период (час/день/неделя) создаётся отдельная строка
   // назначения — не переиспользуем одну и ту же, чтобы была честная
   // история по периодам для будущей аналитики.
+  // 0б) Итоги месячной гонки — 1 числа определяем топ-3 ПРОШЕДШЕГО
+  // месяца по кармикам, заработанным за него (марафон ИИ-аналитика,
+  // часть 2, 6 сентября 2026). Идемпотентно — если победители за этот
+  // цикл уже записаны (cron мог сработать несколько раз 1 числа при
+  // часовом расписании), повторно не считаем и не уведомляем заново.
+  if (now.getDate() === 1) {
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1)
+    const cycleMonth = prevMonthStart.toISOString().slice(0, 10)
+    const { data: companies } = await a.from('companies').select('id').eq('status', 'active')
+    for (const company of companies || []) {
+      const { data: already } = await a.from('race_winners').select('id').eq('company_id', company.id).eq('cycle_month', cycleMonth).limit(1)
+      if (already?.length) continue
+      const { data: emps } = await a.from('profiles').select('user_id').eq('company_id', company.id).eq('is_company_admin', false).is('deleted_at', null)
+      const empIds = (emps || []).map(e => e.user_id)
+      if (!empIds.length) continue
+      const { data: txns } = await a.from('karma_transactions').select('user_id, amount')
+        .in('user_id', empIds).gte('created_at', prevMonthStart.toISOString()).lt('created_at', prevMonthEnd.toISOString()).gt('amount', 0)
+      const earned = {}
+      ;(txns || []).forEach(t => { earned[t.user_id] = (earned[t.user_id] || 0) + Number(t.amount) })
+      const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
+      if (!top3.length) continue
+      await a.from('race_winners').insert(top3.map(([userId, karma], i) => ({ company_id: company.id, cycle_month: cycleMonth, rank: i + 1, user_id: userId, karma_earned: karma })))
+      await a.from('notifications').insert(top3.map(([userId], i) => ({
+        user_id: userId, link: '/race',
+        message: i === 0 ? `Вы — победитель месячной гонки! 1 место, заработано ${earned[userId]} кармиков. Доступна привилегия — создать до 2 шуточных заданий коллегам.`
+          : `Вы в топ-3 месячной гонки — ${i + 1} место! Доступна привилегия — создать до 2 шуточных заданий коллегам.`,
+      })))
+    }
+  }
+
   const { data: recurringTasks } = await a.from('tasks')
     .select('*')
     .eq('is_active', true).eq('is_archived', false)
