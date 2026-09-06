@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
 import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -71,11 +70,117 @@ function ForecastBanner({ forecast, onCreateTask }) {
   )
 }
 
+function ActionMenu({ insight, onPick }) {
+  const [open, setOpen] = useState(false)
+  const options = [
+    { key: 'task', label: 'Мотивирующее задание', color: '#8a6208', icon: <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /> },
+    { key: 'training', label: 'Назначить тренинг', color: '#0e7490', icon: <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5" /> },
+    { key: 'test', label: 'Создать срез знаний', color: '#7c3aed', icon: <path d="M9 11l3 3L22 4M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6" /> },
+  ]
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(v => !v)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(184,134,11,0.08))', border: '1px solid rgba(124,58,237,0.3)', color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        Назначить действие
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}><path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 30, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', overflow: 'hidden', minWidth: 220 }}>
+          {options.map(o => (
+            <button key={o.key} onClick={() => { setOpen(false); onPick(o.key, insight) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: 'var(--text-primary)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={o.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{o.icon}</svg>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ActionModal({ draft, onClose, onSaved }) {
+  const { showSuccess, showError } = useFeedback()
+  const [form, setForm] = useState({ title: draft.insight.metricName ? `Подтянуть «${draft.insight.metricName}»` : '', reason: draft.insight.text || '', deadline: '', rewardKarma: 20, testId: '', trainingNote: '' })
+  const [tests, setTests] = useState([])
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (draft.type !== 'test') return
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/kpi/tests', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setTests((await r.json()) || [])
+    }
+    load()
+  }, [draft.type])
+
+  const submit = async () => {
+    if (!form.title.trim()) { showError('Укажите название'); return }
+    if (draft.type === 'test' && !form.testId) { showError('Выберите тест'); return }
+    setSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const r = await fetch('/api/company-admin/development/assign', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ actionType: draft.type, userId: draft.insight.userId, title: form.title, reason: form.reason, deadline: form.deadline || null, rewardKarma: form.rewardKarma, testId: form.testId || null, trainingNote: form.trainingNote })
+    })
+    setSaving(false)
+    if (r.ok) { showSuccess('Назначено — зафиксировано в плане развития сотрудника'); onSaved() } else showError((await r.json()).error || 'Не удалось назначить')
+  }
+
+  const typeLabel = { task: 'Мотивирующее задание', training: 'Тренинг', test: 'Срез знаний' }[draft.type]
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={onClose}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 26, maxWidth: 460, width: '100%', boxShadow: 'var(--shadow-card-hover)' }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{typeLabel} — {draft.insight.userName}</h3>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Зафиксируется в плане развития сотрудника с отслеживаемым дедлайном.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название</label>
+            <input className="input-field" style={{ width: '100%' }} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus />
+          </div>
+          {draft.type === 'test' && (
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Какой тест</label>
+              <select className="input-field" style={{ width: '100%' }} value={form.testId} onChange={e => setForm({ ...form, testId: e.target.value })}>
+                <option value="">Выберите тест…</option>
+                {tests.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+              </select>
+            </div>
+          )}
+          {draft.type === 'training' && (
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Что изучить (свободный текст)</label>
+              <textarea className="input-field" style={{ width: '100%' }} rows={2} value={form.trainingNote} onChange={e => setForm({ ...form, trainingNote: e.target.value })} />
+            </div>
+          )}
+          {draft.type === 'task' && (
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Награда, кармиков</label>
+              <input type="number" className="input-field" style={{ width: 120 }} value={form.rewardKarma} onChange={e => setForm({ ...form, rewardKarma: e.target.value })} />
+            </div>
+          )}
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Дедлайн</label>
+            <input type="date" className="input-field" style={{ width: 180 }} value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button onClick={onClose} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+            <button onClick={submit} disabled={saving} className="btn-gold" style={{ flex: 1 }}>{saving ? 'Назначаем…' : 'Назначить'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const INSIGHT_STYLE = {
   risk: { color: '#dc2626', bg: 'linear-gradient(135deg, rgba(220,38,38,0.06), rgba(220,38,38,0.02))', border: 'rgba(220,38,38,0.3)', label: 'Требует внимания' },
   anomaly: { color: '#7c3aed', bg: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(124,58,237,0.02))', border: 'rgba(124,58,237,0.28)', label: 'Аномалия' },
   training: { color: '#0e7490', bg: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))', border: 'rgba(14,116,144,0.28)', label: 'Обучение' },
   win: { color: '#137a39', bg: 'linear-gradient(135deg, rgba(19,122,57,0.06), rgba(19,122,57,0.02))', border: 'rgba(19,122,57,0.28)', label: 'Победа' },
+  consistent: { color: '#8a6208', bg: 'linear-gradient(135deg, rgba(184,134,11,0.07), rgba(184,134,11,0.02))', border: 'rgba(184,134,11,0.3)', label: 'На признание' },
 }
 
 function InsightCard({ insight, onCreateTask, compact }) {
@@ -99,39 +204,34 @@ function InsightCard({ insight, onCreateTask, compact }) {
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 10px', fontStyle: 'italic' }}>{insight.advice}</p>
       )}
       {(insight.type === 'risk' || insight.type === 'anomaly') && onCreateTask && (
-        <button onClick={() => onCreateTask(insight)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: 'var(--bg-card)', border: `1px solid ${s.border}`, color: s.color, cursor: 'pointer' }}>
-          Назначить задание →
-        </button>
+        <ActionMenu insight={insight} onPick={onCreateTask} />
       )}
     </div>
   )
 }
 
 function InsightsPanel({ from, to, empName }) {
-  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState([])
   const [forecast, setForecast] = useState(null)
+  const [middlePerformers, setMiddlePerformers] = useState([])
   const [filter, setFilter] = useState('all')
   const [showAllWins, setShowAllWins] = useState(false)
+  const [actionDraft, setActionDraft] = useState(null)
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
-      if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null) }
-      setLoading(false)
-    }
-    load()
-  }, [from, to])
-
-  const createTaskFor = (insight) => {
-    router.push(`/company-admin/tasks?tab=create&prefill_user=${insight.userId}&prefill_title=${encodeURIComponent(`Подтянуть «${insight.metricName}»`)}`)
+  const load = async () => {
+    setLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+    if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null); setMiddlePerformers(d.middlePerformers || []) }
+    setLoading(false)
   }
+  useEffect(() => { load() }, [from, to])
+
+  const openAction = (type, insight) => setActionDraft({ type, insight })
 
   const priority = insights.filter(i => i.type === 'risk' || i.type === 'anomaly' || i.type === 'training')
-  const wins = insights.filter(i => i.type === 'win')
+  const wins = insights.filter(i => i.type === 'win' || i.type === 'consistent')
   const shownPriority = filter === 'all' ? priority : priority.filter(i => i.type === filter)
   const shownWins = filter === 'all' || filter === 'win' ? (showAllWins ? wins : wins.slice(0, 3)) : []
   const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, training: insights.filter(i => i.type === 'training').length, win: wins.length }
@@ -158,7 +258,7 @@ function InsightsPanel({ from, to, empName }) {
         <>
           {shownPriority.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginBottom: shownWins.length > 0 ? 18 : 0 }}>
-              {shownPriority.map((ins, i) => <InsightCard key={i} insight={ins} onCreateTask={createTaskFor} />)}
+              {shownPriority.map((ins, i) => <InsightCard key={i} insight={ins} onCreateTask={openAction} />)}
             </div>
           )}
           {shownWins.length > 0 && (
@@ -174,11 +274,24 @@ function InsightsPanel({ from, to, empName }) {
               )}
             </div>
           )}
+          {middlePerformers.length > 0 && filter === 'all' && (
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>
+                Без явных сигналов, стоит проверять периодически, чтобы не забыть ({middlePerformers.length})
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {middlePerformers.map((name, i) => (
+                  <span key={i} style={{ fontSize: 11.5, color: 'var(--text-secondary)', padding: '3px 11px', borderRadius: 20, background: 'var(--bg-page)' }}>{name}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </>
           )}
         </>
       )}
       <style jsx global>{`@keyframes insightPulse { 0%, 100% { box-shadow: 0 0 0 1px rgba(220,38,38,0.08), 0 4px 16px rgba(220,38,38,0.1); } 50% { box-shadow: 0 0 0 1px rgba(220,38,38,0.16), 0 4px 22px rgba(220,38,38,0.18); } }`}</style>
+      {actionDraft && <ActionModal draft={actionDraft} onClose={() => setActionDraft(null)} onSaved={() => setActionDraft(null)} />}
     </div>
   )
 }
@@ -210,7 +323,7 @@ function AnalyticsAdmin() {
       ])
       if (r1.ok) { const d = await r1.json(); setMetrics(d.metrics || []); setEmployees(d.employees || []); setCur(d.entries || []); setChartId(c => c || d.metrics?.[0]?.id || null); setScope(d.scope || 'company') }
       else showError('Не удалось загрузить аналитику')
-      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) }
+      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) } else { setPrev([]); showError('Не удалось загрузить предыдущий период для сравнения') }
     } catch (e) { showError('Сетевая ошибка') }
     setLoading(false)
   }
@@ -324,10 +437,19 @@ function AnalyticsAdmin() {
                 {perEntryAvg != null && (
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>в среднем {perEntryAvg}{m.unit} в день на сотрудника</div>
                 )}
+                {!suspicious && delta != null && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 9, background: delta >= 0 ? 'rgba(19,122,57,0.08)' : 'rgba(220,38,38,0.08)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={delta >= 0 ? '#137a39' : '#dc2626'} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={delta >= 0 ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                    </svg>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '+' : ''}{delta}%</span>
+                    <span style={{ fontSize: 10.5, color: 'var(--text-secondary)' }}>к предыдущим {days} дн.</span>
+                  </div>
+                )}
+                {!suspicious && delta == null && cv != null && (
+                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Нет данных за предыдущий период для сравнения</div>
+                )}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {delta != null && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span>
-                  )}
                   <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>цель ≥ {goal}{m.unit}</span>
                 </div>
                 {below > 0 && <div style={{ fontSize: 11, color: '#dc2626' }}>ниже порога: {below} чел.</div>}
@@ -399,7 +521,8 @@ function AnalyticsAdmin() {
               {rows.map((r, ri) => (
                 <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '11px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', background: ri % 2 ? 'var(--bg-page)' : 'transparent', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.background = ri % 2 ? 'var(--bg-page)' : 'transparent'}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(r.emp.user_id)}</div>
+                  <a href={`/company-admin/development-plan?userId=${r.emp.user_id}&name=${encodeURIComponent(empName(r.emp.user_id))}`} style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>{empName(r.emp.user_id)}</a>
                   {r.cells.map(c => {
                     const prevVal = agg(c.m, prev.filter(e => e.user_id === r.emp.user_id && e.metric_id === c.m.id))
                     const trendUp = prevVal != null && c.v != null ? (c.m.kpi_type === 'inverse' ? c.v < prevVal : c.v > prevVal) : null
