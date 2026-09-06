@@ -3,7 +3,15 @@ import { requireAuth, hasPermission } from '../../../../lib/auth'
 import { getManagerScope } from '../../../../lib/departments'
 
 const clean = b => {
-  const { num, den, mode, id, ...rest } = b || {}
+  // Поля, которые существуют только в состоянии формы на фронтенде и
+  // никогда не были колонками в kpi_metrics — раньше список вычищал
+  // только 4 из них, не обновлялся по мере того как форма обрастала
+  // новыми полями (customTiers/useCustom для кастомных уровней,
+  // reward_preview_url для превью картinki и т.д.), из-за чего лишние
+  // поля просачивались напрямую в insert/update и падали с ошибкой
+  // «колонка не найдена в схеме» — подтверждено по факту 6 сентября
+  // 2026 на customTiers конкретно, но список расширен на все похожие.
+  const { num, den, mult, mode, id, useCustom, customTiers, reward_image_file, reward_preview_url, ...rest } = b || {}
   return rest
 }
 
