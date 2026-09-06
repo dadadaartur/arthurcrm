@@ -121,6 +121,7 @@ export default function Home() {
     { title: 'Чемпионат', sub: 'менеджеров', left: 77, top: 24, colors: ['#7AC78F', '#c084fc'] },
     { title: 'Магазин', sub: 'награды', left: 85, top: 42, colors: ['#F28B82', '#FFD700'] },
     { title: 'Моя компания', sub: 'данные и новости', left: 77, top: 60, colors: ['#c084fc', '#F28B82'] },
+    { title: 'Гонка месяца', sub: 'живой рейтинг', left: 15, top: 78, colors: ['#FFD700', '#7c3aed'] },
     { title: 'Покупки', sub: 'мои награды', left: 58, top: 68, colors: ['#ffe29f', '#b3f0ff'] },
     { title: 'База знаний', sub: 'лучшие практики', left: 39, top: 60, colors: ['#c084fc', '#7AC78F'] },
     { title: planKind === 'onboarding' ? 'План адаптации' : 'План развития', sub: planKind === 'onboarding' ? 'твой путь' : 'расти дальше', left: 31, top: 42, colors: ['#7AC78F', '#F28B82'] },
@@ -134,7 +135,7 @@ export default function Home() {
     return { angle, length }
   })
   const routes = {
-    'Чемпионат': '/leaderboard', 'Моя компания': '/company', 'База знаний': '/knowledge',
+    'Чемпионат': '/leaderboard', 'Моя компания': '/company', 'База знаний': '/knowledge', 'Гонка месяца': '/race',
     'План адаптации': '/onboarding', 'План развития': '/development', 'Цели': '/goals', 'Задания': '/tasks',
     'Магазин': '/shop', 'Покупки': '/my-purchases',
   }

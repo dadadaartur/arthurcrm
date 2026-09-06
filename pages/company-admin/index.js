@@ -22,6 +22,7 @@ const CARDS = [
   { key: 'tasks', title: 'Управление заданиями', sub: 'Создание, назначение, награды', href: '/company-admin/tasks', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'employees', title: 'Команда', sub: 'Сотрудники, должности, доступы', href: '/company-admin/employees', color: '#a0e9ff', accent: '#FFD700', primary: true },
   { key: 'prizes', title: 'Выигранные призы', sub: 'Кому и что нужно выдать вручную', href: '/company-admin/prizes', color: '#f472b6', accent: '#FFD700' },
+  { key: 'peer-tasks', title: 'Шуточные задания', sub: 'Модерация заявок от победителей гонки', href: '/company-admin/peer-tasks', color: '#FFD700', accent: '#7c3aed' },
   { key: 'departments', title: 'Отделы компании', sub: 'Структура, руководители, подчинённые', href: '/company-admin/departments', color: '#c084fc', accent: '#a0e9ff', primary: true },
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
