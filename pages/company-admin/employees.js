@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -16,7 +17,7 @@ const PERMISSION_FIELDS = [
   { key: 'can_delete_employees', label: 'Удаление сотрудников' },
 ]
 const emptyPermissions = { can_create_tasks: false, can_review_tasks: false, can_manage_employees: false, can_delete_employees: false }
-const GRID = '2.2fr 1.4fr 1fr 1.2fr 0.9fr 110px'
+const GRID = '28px 2.2fr 1.4fr 1fr 1.2fr 0.9fr 110px'
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 20px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
 const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
@@ -33,6 +34,9 @@ function EmployeesPage() {
   const [energyMap, setEnergyMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [editingEmployee, setEditingEmployee] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkRoleId, setBulkRoleId] = useState('')
+  const [bulkApplying, setBulkApplying] = useState(false)
   const [editForm, setEditForm] = useState({ email: '', first_name: '', last_name: '', position_id: '', role_id: '', ...emptyPermissions })
   const [pendingInvites, setPendingInvites] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
@@ -128,6 +132,17 @@ function EmployeesPage() {
     else showError('Ошибка сохранения')
   }
 
+  const applyBulkRole = async () => {
+    if (!bulkRoleId || selectedIds.size === 0) return
+    setBulkApplying(true)
+    const { error } = await supabase.from('profiles').update({ role_id: bulkRoleId }).in('user_id', [...selectedIds])
+    setBulkApplying(false)
+    if (!error) { showSuccess(`Роль назначена ${selectedIds.size} сотрудникам`); setSelectedIds(new Set()); setBulkRoleId(''); loadData(companyId) }
+    else showError('Не удалось назначить роль')
+  }
+  const toggleSelect = (id) => setSelectedIds(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleSelectAll = () => setSelectedIds(s => s.size === employees.length ? new Set() : new Set(employees.map(e => e.user_id)))
+
   const handleDeleteEmployee = async (id) => {
     if (!(myProfile?.can_delete_employees || isCompanyAdmin(myProfile))) { showError('Нет прав на удаление'); return }
     const { error } = await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('user_id', id)
@@ -149,15 +164,32 @@ function EmployeesPage() {
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление командой" extra={
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <Link href="/company-admin/departments" style={{ ...ghostBtn, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V7l9-4 9 4v14" /><path d="M9 21V12h6v9" /></svg>
+              Отделы компании
+            </Link>
             <button onClick={() => setAddPositionOpen(true)} style={ghostBtn} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Должность</button>
             <button onClick={() => setShowAddModal(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Сотрудник</button>
           </div>
         } />
 
         {/* Таблица с жёсткой сеткой — шапка и строки совпадают */}
+        {selectedIds.size > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', marginBottom: 12, borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>Выбрано: {selectedIds.size}</span>
+            <select className="input-field" style={{ fontSize: 12, width: 220 }} value={bulkRoleId} onChange={e => setBulkRoleId(e.target.value)}>
+              <option value="">Назначить роль…</option>
+              {companyRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+            <button onClick={applyBulkRole} disabled={!bulkRoleId || bulkApplying} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: '#8a6208', opacity: !bulkRoleId ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{bulkApplying ? 'Применяем…' : 'Применить ко всем выбранным'}</button>
+            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>Снять выбор</button>
+          </div>
+        )}
+
         <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: 12, padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: 12, padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, alignItems: 'center' }}>
+            <input type="checkbox" checked={employees.length > 0 && selectedIds.size === employees.length} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} />
             <div>Сотрудник</div><div>Должность</div><div>Роль</div><div>Уровень</div><div>Энергия</div><div></div>
           </div>
           {employees.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>В команде пока нет сотрудников</div>}
@@ -168,6 +200,7 @@ function EmployeesPage() {
                 style={{ display: 'grid', gridTemplateColumns: GRID, gap: 12, padding: '14px 24px', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'background 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <input type="checkbox" checked={selectedIds.has(emp.user_id)} onChange={() => toggleSelect(emp.user_id)} onClick={e => e.stopPropagation()} style={{ cursor: 'pointer' }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(emp)}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.email}</div>

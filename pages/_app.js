@@ -31,6 +31,12 @@ export default function App({ Component, pageProps }) {
   // После успешного входа login.js сам решает, куда вести дальше —
   // в /app на маленьком экране, на десктоп на большом.
   const skipMobileBlock = isMobileApp || router.pathname === '/landing' || router.pathname === '/login'
+  // Главная — тёмная космическая инсталляция (орбитальные блоки,
+  // кометы, туманность), белая шапка поверх нее режет глаз (фидбек от
+  // 2 сентября 2026). Прячем шапку по умолчанию именно на этой
+  // странице, раскрывается при наведении — тот же путь по pathname,
+  // что уже применяется для мобильного приложения выше.
+  const autoHideHeader = router.pathname === '/'
   if (isMobileApp) {
     return (
       <ProfileProvider>
@@ -45,7 +51,7 @@ export default function App({ Component, pageProps }) {
     <ProfileProvider>
       <ActionFeedbackProvider>
         {!skipMobileBlock && <MobileBlock />}
-        <Layout>
+        <Layout autoHideHeader={autoHideHeader}>
           <Component {...pageProps} />
         </Layout>
         <FeedbackOverlay />
