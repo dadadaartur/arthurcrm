@@ -227,7 +227,7 @@ export default async function handler(req, res) {
       coveredUserIds.add(e.user_id)
     }
   }
-  const middlePerformers = pool.filter(e => !coveredUserIds.has(e.user_id)).map(e => empName(e))
+  const middlePerformers = pool.filter(e => !coveredUserIds.has(e.user_id)).map(e => ({ userId: e.user_id, name: empName(e) }))
 
   // Риски — первыми (важнее всего успеть среагировать), потом аномалии, потом победы.
   // Тренинги и тесты — используем уже существующую систему (tests,
