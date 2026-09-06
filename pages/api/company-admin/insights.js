@@ -200,6 +200,35 @@ export default async function handler(req, res) {
     }
   }
 
+  // Четыре сегмента команды (по итогам обсуждения от 6 сентября 2026):
+  // антитоп по показателю (anomaly) и отрицательная динамика (risk) уже
+  // считаются выше. Добавляем два новых — стабильно хорошие (достойны
+  // признания, не просто «выросли», а держат уровень) и «середняки»,
+  // которые не попадают ни в топ, ни в антитоп — их не видно нигде, и
+  // именно поэтому ими легко перестать заниматься.
+  const coveredUserIds = new Set(insights.map(i => i.userId).filter(Boolean))
+  const overallByEmp = {}
+  for (const e of pool) {
+    let totalRank = 0, count = 0, allTopEveryPeriod = true
+    for (const m of metrics || []) {
+      const metricEntries = (entries || []).filter(x => x.metric_id === m.id)
+      const periodVals = periods.map(p => agg(m, metricEntries.filter(x => x.user_id === e.user_id && x.entry_date >= p.from && x.entry_date <= p.to)))
+      if (periodVals.some(v => v == null)) continue
+      periodVals.forEach(v => { const r = bandRankOf(m, bandFor(v, m)); totalRank += r; count++; if (r < 3) allTopEveryPeriod = false })
+    }
+    if (count > 0) overallByEmp[e.user_id] = { avgRank: totalRank / count, allTopEveryPeriod }
+  }
+
+  for (const e of pool) {
+    if (coveredUserIds.has(e.user_id)) continue
+    const info = overallByEmp[e.user_id]
+    if (info?.allTopEveryPeriod) {
+      insights.push({ type: 'consistent', userId: e.user_id, userName: empName(e), text: `${empName(e)} — стабильно на топ-уровне все три отрезка периода, не просто разовый рывок.` })
+      coveredUserIds.add(e.user_id)
+    }
+  }
+  const middlePerformers = pool.filter(e => !coveredUserIds.has(e.user_id)).map(e => empName(e))
+
   // Риски — первыми (важнее всего успеть среагировать), потом аномалии, потом победы.
   // Тренинги и тесты — используем уже существующую систему (tests,
   // test_attempts), не строим параллельную (пункт 4 фидбека от
@@ -222,8 +251,8 @@ export default async function handler(req, res) {
     }
   }
 
-  const order = { risk: 0, training: 1, anomaly: 2, win: 3 }
+  const order = { risk: 0, training: 1, anomaly: 2, win: 3, consistent: 4 }
   insights.sort((x, y) => order[x.type] - order[y.type] || (y.changePct || 0) - (x.changePct || 0))
 
-  res.status(200).json({ insights, periods, forecast: { ready: forecastReady, daysLeft: daysTotal - daysSoFar, items: forecast, atRiskCount, totalCount: forecast.length } })
+  res.status(200).json({ insights, periods, middlePerformers, forecast: { ready: forecastReady, daysLeft: daysTotal - daysSoFar, items: forecast, atRiskCount, totalCount: forecast.length } })
 }
