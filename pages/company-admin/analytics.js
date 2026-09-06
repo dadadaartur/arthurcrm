@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
-import BackArrow from '../../components/BackArrow'
 import FillReportModal from '../../components/FillReportModal'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
@@ -53,7 +52,7 @@ function AnalyticsAdmin() {
     } catch (e) { showError('Сетевая ошибка') }
     setLoading(false)
   }
-  useEffect(() => { load() }, [from, to])
+  useEffect(() => { if (from && to) load() }, [from, to])
 
   const days = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1)
   const empName = id => { const e = employees.find(x => x.user_id === id); return e ? ([e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email) : '—' }
@@ -118,18 +117,19 @@ function AnalyticsAdmin() {
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/company-admin" title="Аналитика команды" extra={
-          <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: scope === 'team' ? 'rgba(124,58,237,0.08)' : 'rgba(184,134,11,0.08)', color: scope === 'team' ? '#7c3aed' : '#8a6208', border: `1px solid ${scope === 'team' ? 'rgba(124,58,237,0.3)' : 'var(--border-gold)'}` }}>
-            {scope === 'team' ? 'Ваша команда и вложенные отделы' : 'Вся компания'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border-subtle)' }}>
+          <a href="/company-admin" style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none', transition: 'all .2s' }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 10px rgba(138,98,8,0.3)' }} onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none' }}>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#8a6208" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </a>
+          <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Аналитика команды</h1>
+          <span style={{ fontSize: 10.5, padding: '3px 11px', borderRadius: 20, background: scope === 'team' ? 'rgba(124,58,237,0.08)' : 'rgba(184,134,11,0.08)', color: scope === 'team' ? '#7c3aed' : '#8a6208', border: `1px solid ${scope === 'team' ? 'rgba(124,58,237,0.3)' : 'var(--border-gold)'}`, whiteSpace: 'nowrap' }}>
+            {scope === 'team' ? 'Команда' : 'Вся компания'}
           </span>
-        } />
-
-        {/* Тонкая строка периода */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-subtle)', marginBottom: 18 }}>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период</span>
-          <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{days} дн.</span>
-          <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, marginLeft: 'auto', borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />
+            <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
+          </div>
         </div>
 
         {/* Карточки показателей */}
@@ -139,7 +139,7 @@ function AnalyticsAdmin() {
             return (
               <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                  <span title={m.name} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -187,7 +187,7 @@ function AnalyticsAdmin() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Динамика по дням</h3>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {metrics.map(m => <button key={m.id} title={m.name} onClick={() => setChartId(m.id)} style={{ ...tiny(chartId === m.id), maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</button>)}
+                {metrics.map(m => <button key={m.id} title={m.name} onClick={() => setChartId(m.id)} style={{ ...tiny(chartId === m.id), maxWidth: 200, whiteSpace: 'normal', lineHeight: 1.3, textAlign: 'center' }}>{m.name}</button>)}
               </div>
             </div>
             <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -232,7 +232,7 @@ function AnalyticsAdmin() {
             <div style={{ minWidth: 900 }}>
               <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <div>Сотрудник</div>
-                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
+                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
               {rows.map(r => (
@@ -251,7 +251,7 @@ function AnalyticsAdmin() {
           </div>
         </div>
       </div>
-      <FillReportModal open={fillOpen} onClose={() => setFillOpen(false)} onSaved={load} />
+      <FillReportModal open={fillOpen} onClose={() => { setFillOpen(false); load() }} />
     </div>
   )
 }
