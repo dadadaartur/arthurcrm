@@ -53,6 +53,13 @@ export default function Race() {
           Позиции — по кармикам, заработанным в этом календарном месяце. 1 числа гонка обнуляется, топ-3 получают приз и право создать до 2 шуточных заданий коллегам.
         </p>
 
+        {data?.myAdvice && (
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(184,134,11,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', display: 'block', marginBottom: 6 }}>Совет ИИ-аналитика</span>
+            {data.myAdvice}
+          </div>
+        )}
+
         {data?.myPrivilege && (
           <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>

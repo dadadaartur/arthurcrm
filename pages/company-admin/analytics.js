@@ -22,25 +22,84 @@ const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' 
 const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
 
-const INSIGHT_STYLE = {
-  risk: { color: '#dc2626', bg: 'rgba(220,38,38,0.05)', border: 'rgba(220,38,38,0.25)', label: 'Риск' },
-  anomaly: { color: '#7c3aed', bg: 'rgba(124,58,237,0.05)', border: 'rgba(124,58,237,0.25)', label: 'Аномалия' },
-  win: { color: '#137a39', bg: 'rgba(19,122,57,0.05)', border: 'rgba(19,122,57,0.25)', label: 'Победа' },
+function ForecastBanner({ forecast, onCreateTask }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!forecast || !forecast.ready) {
+    return (
+      <div style={{ padding: '14px 18px', borderRadius: 14, background: 'var(--bg-page)', marginBottom: 16, fontSize: 12, color: 'var(--text-muted)' }}>
+        Прогноз на месяц появится после первых 3 дней данных в текущем календарном месяце.
+      </div>
+    )
+  }
+  const allGood = forecast.atRiskCount === 0
+  return (
+    <div style={{
+      borderRadius: 16, padding: 18, marginBottom: 18,
+      background: allGood ? 'linear-gradient(135deg, rgba(19,122,57,0.08), rgba(19,122,57,0.02))' : 'linear-gradient(135deg, rgba(220,38,38,0.08), rgba(220,38,38,0.02))',
+      border: `1px solid ${allGood ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}`,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Прогноз на месяц при текущем темпе</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: allGood ? '#137a39' : '#dc2626' }}>
+            {allGood ? `Все ${forecast.totalCount} цели — на пути к выполнению` : `${forecast.totalCount - forecast.atRiskCount} из ${forecast.totalCount} целей на пути, ${forecast.atRiskCount} — под угрозой`}
+          </div>
+        </div>
+        <button onClick={() => setExpanded(v => !v)} style={{ fontSize: 12, fontWeight: 600, color: allGood ? '#137a39' : '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>
+          {expanded ? 'Свернуть' : 'Разбор по целям →'}
+        </button>
+      </div>
+      {expanded && (
+        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {forecast.items.map(f => (
+            <div key={f.metricId} style={{ padding: 12, borderRadius: 10, background: 'var(--bg-card)', border: `1px solid ${f.onTrack ? 'rgba(19,122,57,0.2)' : 'rgba(220,38,38,0.2)'}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{f.metricName}</span>
+                <span style={{ color: f.onTrack ? '#137a39' : '#dc2626', fontWeight: 700 }}>{f.projected}{f.unit} к концу месяца (цель {f.onTrack ? '≥' : '≥'} {f.goal}{f.unit})</span>
+              </div>
+              {f.lowConfidence && <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>Прогноз предварительный — мало данных с начала месяца</div>}
+              {!f.onTrack && f.cause?.length > 0 && (
+                <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6 }}>
+                  При текущих тенденциях команду вниз тянут: <b style={{ color: 'var(--text-primary)' }}>{f.cause.join(', ')}</b>. Чтобы изменить тренд — начните с них.
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
-function InsightCard({ insight, onCreateTask }) {
+const INSIGHT_STYLE = {
+  risk: { color: '#dc2626', bg: 'linear-gradient(135deg, rgba(220,38,38,0.06), rgba(220,38,38,0.02))', border: 'rgba(220,38,38,0.3)', label: 'Требует внимания' },
+  anomaly: { color: '#7c3aed', bg: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(124,58,237,0.02))', border: 'rgba(124,58,237,0.28)', label: 'Аномалия' },
+  training: { color: '#0e7490', bg: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))', border: 'rgba(14,116,144,0.28)', label: 'Обучение' },
+  win: { color: '#137a39', bg: 'linear-gradient(135deg, rgba(19,122,57,0.06), rgba(19,122,57,0.02))', border: 'rgba(19,122,57,0.28)', label: 'Победа' },
+}
+
+function InsightCard({ insight, onCreateTask, compact }) {
   const s = INSIGHT_STYLE[insight.type]
+  const isPriority = insight.type === 'risk'
   return (
-    <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 14, padding: 16, border: `1px solid ${s.border}` }}>
+    <div style={{
+      background: 'var(--bg-card)', backgroundImage: s.bg, borderRadius: 14,
+      padding: compact ? 12 : 16, border: `1px solid ${s.border}`,
+      boxShadow: isPriority ? '0 0 0 1px rgba(220,38,38,0.08), 0 4px 16px rgba(220,38,38,0.1)' : 'var(--shadow-card)',
+      animation: isPriority ? 'insightPulse 3s ease-in-out infinite' : 'none',
+    }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '3px 10px', borderRadius: 20, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>{s.label}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '3px 10px', borderRadius: 20, background: 'var(--bg-card)', color: s.color, border: `1px solid ${s.border}` }}>{s.label}</span>
         {insight.changePct != null && (
           <span style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{insight.changePct > 0 ? '+' : ''}{insight.changePct}%</span>
         )}
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, margin: '0 0 10px' }}>{insight.text}</p>
+      <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, margin: '0 0 8px' }}>{insight.text}</p>
+      {insight.advice && !compact && (
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 10px', fontStyle: 'italic' }}>{insight.advice}</p>
+      )}
       {(insight.type === 'risk' || insight.type === 'anomaly') && onCreateTask && (
-        <button onClick={() => onCreateTask(insight)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: s.bg, border: `1px solid ${s.border}`, color: s.color, cursor: 'pointer' }}>
+        <button onClick={() => onCreateTask(insight)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: 'var(--bg-card)', border: `1px solid ${s.border}`, color: s.color, cursor: 'pointer' }}>
           Назначить задание →
         </button>
       )}
@@ -52,14 +111,16 @@ function InsightsPanel({ from, to, empName }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState([])
+  const [forecast, setForecast] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [showAllWins, setShowAllWins] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
       const { data: { session } } = await supabase.auth.getSession()
       const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
-      if (r.ok) setInsights((await r.json()).insights || [])
+      if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null) }
       setLoading(false)
     }
     load()
@@ -69,30 +130,57 @@ function InsightsPanel({ from, to, empName }) {
     router.push(`/company-admin/tasks?tab=create&prefill_user=${insight.userId}&prefill_title=${encodeURIComponent(`Подтянуть «${insight.metricName}»`)}`)
   }
 
-  const shown = filter === 'all' ? insights : insights.filter(i => i.type === filter)
-  const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, win: insights.filter(i => i.type === 'win').length }
+  const priority = insights.filter(i => i.type === 'risk' || i.type === 'anomaly' || i.type === 'training')
+  const wins = insights.filter(i => i.type === 'win')
+  const shownPriority = filter === 'all' ? priority : priority.filter(i => i.type === filter)
+  const shownWins = filter === 'all' || filter === 'win' ? (showAllWins ? wins : wins.slice(0, 3)) : []
+  const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, training: insights.filter(i => i.type === 'training').length, win: wins.length }
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.03), rgba(184,134,11,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>ИИ-аналитик</h3>
-        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: 0 }}>Сам находит, что заслуживает внимания, вместо графика, который приходится расшифровывать</p>
+    <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.04), rgba(184,134,11,0.04) 50%, rgba(19,122,57,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, background: 'linear-gradient(135deg, #7c3aed, #8a6208)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ИИ-аналитик</h3>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: 0 }}>Сам находит, что заслуживает внимания</p>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', flexWrap: 'wrap' }}>
           <button onClick={() => setFilter('all')} style={tiny(filter === 'all')}>Все · {insights.length}</button>
-          {counts.risk > 0 && <button onClick={() => setFilter('risk')} style={{ ...tiny(filter === 'risk'), color: filter === 'risk' ? '#dc2626' : undefined, borderColor: filter === 'risk' ? 'rgba(220,38,38,0.4)' : undefined }}>Риски · {counts.risk}</button>}
+          {counts.risk > 0 && <button onClick={() => setFilter('risk')} style={{ ...tiny(filter === 'risk'), color: filter === 'risk' ? '#dc2626' : undefined, borderColor: filter === 'risk' ? 'rgba(220,38,38,0.4)' : undefined }}>Внимание · {counts.risk}</button>}
           {counts.anomaly > 0 && <button onClick={() => setFilter('anomaly')} style={{ ...tiny(filter === 'anomaly'), color: filter === 'anomaly' ? '#7c3aed' : undefined, borderColor: filter === 'anomaly' ? 'rgba(124,58,237,0.4)' : undefined }}>Аномалии · {counts.anomaly}</button>}
+          {counts.training > 0 && <button onClick={() => setFilter('training')} style={{ ...tiny(filter === 'training'), color: filter === 'training' ? '#0e7490' : undefined, borderColor: filter === 'training' ? 'rgba(14,116,144,0.4)' : undefined }}>Обучение · {counts.training}</button>}
           {counts.win > 0 && <button onClick={() => setFilter('win')} style={{ ...tiny(filter === 'win'), color: filter === 'win' ? '#137a39' : undefined, borderColor: filter === 'win' ? 'rgba(19,122,57,0.4)' : undefined }}>Победы · {counts.win}</button>}
         </div>
       </div>
       {loading ? (
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Анализируем показатели команды…</p>
-      ) : shown.length === 0 ? (
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>{insights.length === 0 ? 'За этот период явных находок нет — команда идёт ровно.' : 'В этой категории пусто.'}</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
-          {shown.map((ins, i) => <InsightCard key={i} insight={ins} onCreateTask={createTaskFor} />)}
-        </div>
+        <>
+          <ForecastBanner forecast={forecast} />
+          {insights.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>За этот период явных находок нет — команда идёт ровно.</p>
+      ) : (
+        <>
+          {shownPriority.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginBottom: shownWins.length > 0 ? 18 : 0 }}>
+              {shownPriority.map((ins, i) => <InsightCard key={i} insight={ins} onCreateTask={createTaskFor} />)}
+            </div>
+          )}
+          {shownWins.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Победы</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+                {shownWins.map((ins, i) => <InsightCard key={i} insight={ins} compact />)}
+              </div>
+              {wins.length > 3 && filter !== 'win' && (
+                <button onClick={() => setShowAllWins(v => !v)} style={{ marginTop: 10, fontSize: 11.5, color: '#137a39', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  {showAllWins ? 'Свернуть' : `Показать все победы (${wins.length})`}
+                </button>
+              )}
+            </div>
+          )}
+        </>
+          )}
+        </>
       )}
+      <style jsx global>{`@keyframes insightPulse { 0%, 100% { box-shadow: 0 0 0 1px rgba(220,38,38,0.08), 0 4px 16px rgba(220,38,38,0.1); } 50% { box-shadow: 0 0 0 1px rgba(220,38,38,0.16), 0 4px 22px rgba(220,38,38,0.18); } }`}</style>
     </div>
   )
 }
@@ -142,7 +230,14 @@ function AnalyticsAdmin() {
     const cv = agg(m, cl), pv = agg(m, pl)
     const below = employees.filter(emp => bandOf(m, agg(m, cl.filter(e => e.user_id === emp.user_id))) === 'none').length
     const delta = cv != null && pv ? Math.round(((cv - pv) / pv) * 100) : null
-    return { m, cv, delta, below, goal: scaled(m).thr_top }
+    // Для накопительных — среднее на запись отдельно от суммы (пункт 3
+    // фидбека от 6 сентября 2026: «звонки нужно 2 цифры, общее
+    // количество и среднее»). Для процентных типов — подозрение на
+    // неверный тип, если сумма (а не честная доля) выдаёт нереальное
+    // значение — явно на карточке, не только в переписке.
+    const perEntryAvg = isSum(m) && cl.length ? Math.round((cl.reduce((s, e) => s + Number(e.value), 0) / cl.length) * 10) / 10 : null
+    const suspicious = (m.kpi_type === 'ratio' || m.kpi_type === 'plan') && cv != null && cv > 200
+    return { m, cv, delta, below, goal: scaled(m).thr_top, perEntryAvg, suspicious }
   })
 
   const rows = employees.map(emp => {
@@ -210,14 +305,22 @@ function AnalyticsAdmin() {
 
         {/* Карточки показателей */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14, marginBottom: 24 }}>
-          {metricSummary.map(({ m, cv, delta, below, goal }) => {
+          {metricSummary.map(({ m, cv, delta, below, goal, perEntryAvg, suspicious }) => {
             const b = bandOf(m, cv)
             return (
-              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span title={m.name} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: suspicious ? '#dc2626' : b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
                 </div>
+                {suspicious && (
+                  <div style={{ fontSize: 10.5, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8, padding: '6px 10px', lineHeight: 1.4 }}>
+                    Значение выше 200% для показателя-доли — похоже, тип задан как «Накопительное» (суммирует за период) вместо «Доля/конверсия» (усредняет). Проверьте тип в управлении целями.
+                  </div>
+                )}
+                {perEntryAvg != null && (
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>в среднем {perEntryAvg}{m.unit} за запись</div>
+                )}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   {delta != null && (
                     <span style={{ fontSize: 12, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span>
