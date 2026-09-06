@@ -206,7 +206,7 @@ export default function Home() {
             </div>
           )
         })}
-        <div style={{ position: 'absolute', left: '2.5%', top: 10, zIndex: 20, animation: 'driftBalance 55s ease-in-out infinite alternate', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 340, padding: '14px 40px' }}>
+        <div style={{ position: 'absolute', left: '2.5%', top: 100, zIndex: 20, animation: 'driftBalance 55s ease-in-out infinite alternate', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 340, padding: '14px 40px' }}>
           <div style={{ fontSize: 10, fontWeight: 300, letterSpacing: 4, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', textShadow: '0 0 8px rgba(160,233,255,0.6)', marginBottom: 8 }}>Баланс</div>
           <div style={{ fontSize: 58, fontWeight: 600, lineHeight: 1, background: 'linear-gradient(135deg, #a0e9ff, #ffb3c6, #ffe29f, #b3f0ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 14px rgba(100,200,255,0.9)) drop-shadow(0 0 28px rgba(255,150,200,0.6))', animation: 'rainbowShift 12s ease-in-out infinite alternate', marginBottom: 6 }}>{balance}</div>
           <div style={{ fontSize: 12, fontWeight: 300, color: 'rgba(255,255,255,0.85)', textShadow: '0 0 8px rgba(100,200,255,0.7)', letterSpacing: 2, marginBottom: 20 }}>{karmikWord}</div>
