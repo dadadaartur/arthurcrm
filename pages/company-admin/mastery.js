@@ -448,7 +448,19 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: 'var(--text-primary)' }}>{initial ? 'Редактировать цель' : 'Новая цель'} · {TYPE_LABELS[form.kpi_type]}</h3>
             {isInverse && <div style={{ marginBottom: 14, padding: 12, borderRadius: 12, background: 'rgba(14,116,144,0.06)', border: '1px solid rgba(14,116,144,0.25)', color: '#0e7490', fontSize: 12 }}>Меньше — лучше. Заполняйте от лучшего (малого) к допустимому (большому).</div>}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
-              <div style={{ gridColumn: 'span 2' }}><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название (до 24)</label><input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название (до 24)</label>
+                <input maxLength={24} className="input-field" style={{ width: '100%' }} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                {/* По названию похоже на долю/конверсию, но выбрано
+                    Накопительное — почти наверняка ошибка (сумма
+                    процентов за период даёт нереальные числа вроде
+                    1000%+, конверсия физически не может быть больше
+                    100%). Предупреждаем на этапе создания, не постфактум
+                    в аналитике (пункт 2 фидбека от 6 сентября 2026). */}
+                {form.kpi_type === 'cumulative' && /конверси|\bcr\b|conversion/i.test(form.name) && (
+                  <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Похоже на долю/конверсию по названию, но выбран тип «Накопительное» — он суммирует за период, а не считает долю. Конверсия физически не может быть больше 100%. Скорее всего, нужен тип «Доля/конверсия» ниже.</p>
+                )}
+              </div>
               <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
               <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
               {form.kpi_type === 'ratio' && (<>
@@ -458,6 +470,11 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
                 <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}><input className="input-field" style={{ flex: 1 }} placeholder="Новый параметр" value={newParam.label} onChange={e => setNewParam({ ...newParam, label: e.target.value })} /><button onClick={addParam} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11 }}>+</button></div>
               </>)}
             </div>
+            {form.unit === '%' && form.kpi_type === 'cumulative' && (
+              <div style={{ fontSize: 11.5, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, lineHeight: 1.5 }}>
+                Показатель в процентах с типом «Накопительное» просуммирует проценты за все дни периода — 30 дней по 60% дадут 1800%, такого не бывает. Если это единое число, которое вводится за каждый день (например, конверсия за смену), смените тип на «Среднее за период» — тогда команда покажет честное среднее, не сумму.
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>

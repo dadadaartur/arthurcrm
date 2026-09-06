@@ -139,8 +139,6 @@ function InsightsPanel({ from, to, empName }) {
   return (
     <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.04), rgba(184,134,11,0.04) 50%, rgba(19,122,57,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, background: 'linear-gradient(135deg, #7c3aed, #8a6208)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ИИ-аналитик</h3>
-        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: 0 }}>Сам находит, что заслуживает внимания</p>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', flexWrap: 'wrap' }}>
           <button onClick={() => setFilter('all')} style={tiny(filter === 'all')}>Все · {insights.length}</button>
           {counts.risk > 0 && <button onClick={() => setFilter('risk')} style={{ ...tiny(filter === 'risk'), color: filter === 'risk' ? '#dc2626' : undefined, borderColor: filter === 'risk' ? 'rgba(220,38,38,0.4)' : undefined }}>Внимание · {counts.risk}</button>}
@@ -252,7 +250,8 @@ function AnalyticsAdmin() {
     // разницы нет вообще.
     const overall = rated.length ? rated.reduce((s, c) => s + bandRankOf(c.m, c.band), 0) / rated.length : -1
     const belowCount = cells.filter(c => c.band === 'none').length
-    return { emp, cells, overall, belowCount, hasData: rated.length > 0 }
+    const belowMetrics = cells.filter(c => c.band === 'none').map(c => c.m.name)
+    return { emp, cells, overall, belowCount, belowMetrics, hasData: rated.length > 0 }
   }).filter(r => r.hasData)
   rows.sort((a, b) => sortAsc ? a.overall - b.overall : b.overall - a.overall)
 
@@ -340,34 +339,47 @@ function AnalyticsAdmin() {
 
         {/* Топ периода + Требуют внимания */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(19,122,57,0.25)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#137a39', marginBottom: 6 }}>Топ периода</h3>
+          <div style={{ background: 'var(--bg-card)', backgroundImage: 'linear-gradient(135deg, rgba(19,122,57,0.07), rgba(19,122,57,0.01) 60%)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(19,122,57,0.3)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#137a39', marginBottom: 6 }}>Топ периода</h3>
             <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Средняя оценка = среднее уровней по показателям (0–4), где 0 — ниже порога, 1 — мин, 2 — средний, 3 — топ, 4 — ультра.</p>
             {top.map((r, i) => (
-              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{i + 1}. {empName(r.emp.user_id)}</span>
+              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: i === 0 ? 'linear-gradient(90deg, rgba(19,122,57,0.1), rgba(19,122,57,0.03))' : 'var(--bg-page)', marginBottom: 8, border: i === 0 ? '1px solid rgba(19,122,57,0.3)' : '1px solid transparent', transition: 'transform .2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateX(3px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}>
+                <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: i === 0 ? 600 : 400, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {i === 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="#137a39"><path d="M5 16L3 5l5.5 4L12 4l3.5 5L21 5l-2 11H5zm0 2h14v2H5v-2z" /></svg>}{i + 1}. {empName(r.emp.user_id)}
+                </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: BAND_TEXT[overallBand(r.overall)] }}>{r.overall.toFixed(1)} / 4</span>
               </div>
             ))}
             {top.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Нет данных за период</p>}
           </div>
-          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(220,38,38,0.2)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: '#dc2626', marginBottom: 6 }}>Требуют внимания</h3>
-            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Число показателей ниже порога за период. Чем выше — тем больше зон риска у сотрудника.</p>
+          <div style={{ background: 'var(--bg-card)', backgroundImage: 'linear-gradient(135deg, rgba(220,38,38,0.07), rgba(220,38,38,0.01) 60%)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(220,38,38,0.3)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>Требуют внимания</h3>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Какие именно показатели ниже порога за период — не только у кого, но и что конкретно чинить.</p>
             {anti.map(r => (
-              <div key={r.emp.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{empName(r.emp.user_id)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>{r.belowCount} показ.</span>
+              <div key={r.emp.user_id} style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8, borderLeft: '3px solid #dc2626', transition: 'transform .2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateX(3px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: r.belowMetrics.length ? 8 : 0 }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>{empName(r.emp.user_id)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', background: 'rgba(220,38,38,0.08)', padding: '2px 9px', borderRadius: 20 }}>{r.belowCount} показ. ниже порога</span>
+                </div>
+                {r.belowMetrics.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {r.belowMetrics.map((name, mi) => (
+                      <span key={mi} style={{ fontSize: 11, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', padding: '2px 9px', borderRadius: 20 }}>{name}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {anti.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Все показатели в норме</p>}
           </div>
         </div>
 
-        {/* ИИ-аналитик — вместо диаграммы, которая становится
-            нечитаемой при большом числе сотрудников (фидбек от
-            6 сентября 2026), система сама находит, что заслуживает
-            внимания, и объясняет простым языком. */}
+        {/* Панель находок — без подписи (по прямому запросу от
+            6 сентября 2026: «не надо писать ИИ Аналитик, можно вообще
+            никак не подписывать») — тематическая рамка и цветные
+            бейджи находок сами дают понять, что это за блок. */}
         <InsightsPanel from={from} to={to} empName={empName} />
 
 
@@ -384,15 +396,25 @@ function AnalyticsAdmin() {
                 {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
-              {rows.map(r => (
-                <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(r.emp.user_id)}</div>
-                  {r.cells.map(c => (
-                    <div key={c.m.id} style={{ textAlign: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
-                    </div>
-                  ))}
-                  <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, color: r.overall >= 0 ? BAND_TEXT[overallBand(r.overall)] : 'var(--text-muted)' }}>{r.overall >= 0 ? r.overall.toFixed(1) : '—'}</div>
+              {rows.map((r, ri) => (
+                <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '11px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', background: ri % 2 ? 'var(--bg-page)' : 'transparent', transition: 'background .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.background = ri % 2 ? 'var(--bg-page)' : 'transparent'}>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(r.emp.user_id)}</div>
+                  {r.cells.map(c => {
+                    const prevVal = agg(c.m, prev.filter(e => e.user_id === r.emp.user_id && e.metric_id === c.m.id))
+                    const trendUp = prevVal != null && c.v != null ? (c.m.kpi_type === 'inverse' ? c.v < prevVal : c.v > prevVal) : null
+                    return (
+                      <div key={c.m.id} style={{ textAlign: 'center', padding: '6px 4px', borderRadius: 8, background: c.band ? BAND_TEXT[c.band] + '1c' : 'transparent', border: trendUp != null ? `1px solid ${trendUp ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}` : '1px solid transparent' }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
+                        {trendUp != null && (
+                          <svg width="9" height="9" viewBox="0 0 24 24" style={{ marginLeft: 4, verticalAlign: 1 }} fill="none" stroke={trendUp ? '#137a39' : '#dc2626'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d={trendUp ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                          </svg>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, padding: '5px 4px', borderRadius: 7, background: r.overall >= 0 ? BAND_TEXT[overallBand(r.overall)] + '1c' : 'transparent', color: r.overall >= 0 ? BAND_TEXT[overallBand(r.overall)] : 'var(--text-muted)' }}>{r.overall >= 0 ? r.overall.toFixed(1) : '—'}</div>
                 </div>
               ))}
               {rows.length === 0 && <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Нет данных за период</div>}
