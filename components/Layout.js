@@ -106,10 +106,12 @@ function NotificationBell() {
 
 const navPill = { flex: '0 0 auto', fontSize: 12, fontWeight: 500, background: '#fff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 50, padding: '8px 16px', color: '#5b6478', textDecoration: 'none', transition: 'all 0.2s', whiteSpace: 'nowrap' }
 
-export default function Layout({ children }) {
+export default function Layout({ children, autoHideHeader = false }) {
   const { user, profile, loading } = useProfile()
   const [companyName, setCompanyName] = useState('')
+  const [companyLogo, setCompanyLogo] = useState('')
   const [isPlatformStaff, setIsPlatformStaff] = useState(false)
+  const [headerRevealed, setHeaderRevealed] = useState(false)
   useEffect(() => {
     if (user) {
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -121,8 +123,8 @@ export default function Layout({ children }) {
       })
     }
     if (profile?.company_id && !companyName) {
-      supabase.from('companies').select('name').eq('id', profile.company_id).single()
-        .then(({ data: comp }) => { if (comp) setCompanyName(comp.name) })
+      supabase.from('companies').select('name, logo_url').eq('id', profile.company_id).single()
+        .then(({ data: comp }) => { if (comp) { setCompanyName(comp.name); setCompanyLogo(comp.logo_url || '') } })
     }
   }, [user, profile])
   async function handleLogout() {
@@ -185,7 +187,43 @@ export default function Layout({ children }) {
   }
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
-      <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
+      {autoHideHeader && (
+        <>
+          {/* Зона-датчик наведения — невидимая, стабильного размера
+              (не зависит от состояния раскрытия), поэтому движение
+              курсора от стрелки вверх к раскрывшейся шапке не
+              прерывает наведение рывком. Ниже шапки по z-index, чтобы
+              клики по самой шапке, когда она раскрыта, доставались ей,
+              а не этому датчику. */}
+          <div onMouseEnter={() => setHeaderRevealed(true)} onMouseLeave={() => setHeaderRevealed(false)}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 74, zIndex: 49 }} />
+          {/* Стрелка-подсказка — всегда видна, мягкое дыхание, лёгкий
+              разворот и угасание при раскрытой шапке (по фидбеку от
+              2 сентября 2026: «легко обозначить премиум стрелкой с
+              анимацией»). */}
+          <div style={{ position: 'fixed', top: headerRevealed ? 58 : 10, left: '50%', transform: 'translateX(-50%)', zIndex: 51, pointerEvents: 'none', transition: 'top 0.45s cubic-bezier(0.22,1,0.36,1)' }}>
+            <div style={{
+              width: 30, height: 18, borderRadius: '0 0 14px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.16)', borderTop: 'none',
+              opacity: headerRevealed ? 0.35 : 1, animation: headerRevealed ? 'none' : 'headerHintBreathe 2.6s ease-in-out infinite',
+            }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: headerRevealed ? 'rotate(180deg)' : 'none', transition: 'transform 0.45s ease' }}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
+          </div>
+          <style jsx global>{`@keyframes headerHintBreathe { 0%, 100% { opacity: 0.55; transform: translateY(0); } 50% { opacity: 1; transform: translateY(2px); } }`}</style>
+        </>
+      )}
+      <header className="flex justify-between items-center px-6 py-3 relative" style={{
+        background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)',
+        ...(autoHideHeader ? {
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+          transform: headerRevealed ? 'translateY(0)' : 'translateY(-100%)',
+          transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
+          boxShadow: headerRevealed ? '0 8px 30px rgba(15,23,42,0.12)' : 'none',
+        } : { zIndex: 10 }),
+      }}>
         <div className="flex items-center gap-3 flex-wrap">
           <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
@@ -200,7 +238,12 @@ export default function Layout({ children }) {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-xs font-medium">
-          {companyName && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{companyName}</span>}
+          {companyName && (
+            <Link href="/company" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+              {companyLogo && <img src={companyLogo} alt="" style={{ width: 18, height: 18, borderRadius: 5, objectFit: 'cover' }} />}
+              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{companyName}</span>
+            </Link>
+          )}
           <NotificationBell />
           <Link href="/profile" className="flex items-center gap-2 transition-colors" style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
             {profile?.avatar_url ? (
