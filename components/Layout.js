@@ -187,46 +187,80 @@ export default function Layout({ children, autoHideHeader = false }) {
   }
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
-      <header
-        onMouseEnter={autoHideHeader ? () => setHeaderRevealed(true) : undefined}
-        onMouseLeave={autoHideHeader ? () => setHeaderRevealed(false) : undefined}
-        className="flex justify-between items-center px-6 py-3 relative" style={{
-        background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)',
-        ...(autoHideHeader ? {
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-          // Скрыта не полностью — снизу нарочно остаётся видимый край
-          // высотой с сам крючок-подсказку (см. ниже), чтобы наведение
-          // и подсказка были частью ОДНОГО элемента, а не отдельного
-          // невидимого слоя поверх/под шапкой (раньше именно разведение
-          // по трём слоям с разным z-index вызывало дребезг при
-          // движении курсора между ними — фидбек от 2 сентября 2026).
-          transform: headerRevealed ? 'translateY(0)' : 'translateY(calc(-100% + 14px))',
-          transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
-          boxShadow: headerRevealed ? '0 10px 34px rgba(15,23,42,0.14)' : 'none',
-        } : { zIndex: 10 }),
-      }}>
-        {autoHideHeader && (
-          <div style={{ position: 'absolute', bottom: -13, left: '50%', transform: 'translateX(-50%)', width: 54, height: 13, overflow: 'hidden', pointerEvents: 'none' }}>
-            {/* Премиальный крючок-подсказка — золотая капсула со
-                встроенным блеском, часть нижнего края самой шапки, не
-                отдельная стрелка сбоку от всего механизма. */}
-            <div style={{
-              width: 54, height: 26, borderRadius: '0 0 20px 20px', position: 'relative', overflow: 'hidden',
-              background: 'linear-gradient(160deg, #a4770f, #8a6208 55%, #6b4a06)',
-              boxShadow: '0 4px 12px rgba(138,98,8,0.35)',
-              display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 3,
-            }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: headerRevealed ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s ease', opacity: 0.95 }}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-              {!headerRevealed && (
-                <span className="header-hint-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: 'linear-gradient(100deg, transparent, rgba(255,255,255,0.4), transparent)', left: '-70%' }} />
-              )}
+      {autoHideHeader ? (
+        <div
+          onMouseEnter={() => setHeaderRevealed(true)}
+          onMouseLeave={() => setHeaderRevealed(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 80, zIndex: 50 }}
+        >
+          {/* Шапка скрыта полностью (translateY -100%, без остатка) —
+              раньше край в 14px оставался виден всегда, это и была
+              жалоба «панель слегка видна». Один родитель с наведением
+              вместо трёх конкурирующих слоёв — источник прошлого
+              дребезга. */}
+          <header className="flex justify-between items-center px-6 py-3" style={{
+            background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)',
+            position: 'absolute', top: 0, left: 0, right: 0,
+            transform: headerRevealed ? 'translateY(0)' : 'translateY(-100%)',
+            transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
+            boxShadow: headerRevealed ? '0 10px 34px rgba(15,23,42,0.14)' : 'none',
+          }}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+                Кармический банк
+              </Link>
+              <nav className="flex gap-2 flex-wrap">
+                <Link href="/goals" style={navPill}>Мои цели</Link>
+                {isSuperAdmin && <Link href="/admin" style={navPill}>Админ</Link>}
+                {isSuperAdmin && <Link href="/central-bank" style={navPill}>Центробанк</Link>}
+                {isPlatformStaff && <Link href="/platform-admin" style={navPill}>Модерация площадки</Link>}
+                {isCompanyAdmin && <Link href="/company-admin" style={navPill}>Управление</Link>}
+                {isCompanyAdmin && <Link href="/company-admin/results" style={navPill}>Результаты</Link>}
+              </nav>
             </div>
+            <div className="flex items-center gap-3 text-xs font-medium">
+              {companyName && (
+                <Link href="/company" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+                  {companyLogo && <img src={companyLogo} alt="" style={{ width: 18, height: 18, borderRadius: 5, objectFit: 'cover' }} />}
+                  <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{companyName}</span>
+                </Link>
+              )}
+              <NotificationBell />
+              <Link href="/profile" className="flex items-center gap-2 transition-colors" style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)' }}>
+                    {getInitials()}
+                  </div>
+                )}
+                <span style={{ fontSize: 12 }}>{profile?.display_name || user.email}</span>
+              </Link>
+              <button onClick={handleLogout} style={navPill}>Выйти</button>
+            </div>
+          </header>
+
+          {/* Молния — уникальный премиальный крючок-подсказка вместо
+              обычной стрелки (по прямому запросу от 2 сентября 2026).
+              Тонкий геометричный контур, золотой градиент, мягкое
+              свечение, лёгкое дыхание — не мультяшная иконка. Гаснет,
+              когда шапка раскрыта, ей нечего подсказывать в этот момент. */}
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', opacity: headerRevealed ? 0 : 1, transition: 'opacity 0.3s ease' }}>
+            <svg width="15" height="24" viewBox="0 0 64 90" style={{ animation: 'boltBreathe 2.8s ease-in-out infinite', filter: 'drop-shadow(0 0 5px rgba(255,215,120,0.55))' }}>
+              <defs>
+                <linearGradient id="layoutBoltGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#fff9e6" />
+                  <stop offset="45%" stopColor="#ffd76a" />
+                  <stop offset="100%" stopColor="#b8860b" />
+                </linearGradient>
+              </defs>
+              <path d="M40 0 L14 42 L34 42 L26 78 L64 30 L42 30 L52 0 Z" fill="url(#layoutBoltGrad)" />
+            </svg>
           </div>
-        )}
-        <div className="flex items-center gap-3 flex-wrap">
+        </div>
+      ) : (
+        <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
+          <div className="flex items-center gap-3 flex-wrap">
           <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
           </Link>
@@ -260,9 +294,9 @@ export default function Layout({ children, autoHideHeader = false }) {
           <button onClick={handleLogout} style={navPill}>Выйти</button>
         </div>
       </header>
+      )}
       <style jsx global>{`
-        @keyframes headerHintShine { 0% { left: -70%; } 100% { left: 140%; } }
-        .header-hint-shine { animation: headerHintShine 3.2s ease-in-out infinite; }
+        @keyframes boltBreathe { 0%, 100% { opacity: 0.75; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.04); } }
       `}</style>
       <main className="flex-grow relative z-10">{children}</main>
       <footer className="text-center py-4 text-xs relative z-10" style={{ color: 'var(--text-muted)' }}>
