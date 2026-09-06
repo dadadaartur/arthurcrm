@@ -1,0 +1,53 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import { BAND_LABELS, BAND_COLORS, bandFor } from '../lib/kpi'
+import ProgressBar3D from './ProgressBar3D'
+
+export default function KpiBlock() {
+  const [data, setData] = useState(null)
+  const [levels, setLevels] = useState([])
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const h = { Authorization: `Bearer ${session.access_token}` }
+      const [r1, r2] = await Promise.all([fetch('/api/kpi/my', { headers: h }), fetch('/api/kpi/levels', { headers: h })])
+      if (r1.ok) setData(await r1.json())
+      if (r2.ok) setLevels(await r2.json())
+    })()
+  }, [])
+  if (!data) return null
+  const energy = data.energy || 0
+  let cur = null, next = null
+  levels.forEach(l => { if (energy >= l.energy_threshold) cur = l })
+  next = levels.find(l => l.energy_threshold > energy) || null
+  return (
+    <div style={{ position: 'absolute', left: '2.5%', top: 250, zIndex: 20, width: 360, padding: '0 40px', boxSizing: 'border-box', animation: 'driftGoals 60s ease-in-out infinite alternate' }}>
+      <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(255,215,0,0.4)', marginBottom: 2 }}>Кармическая энергия</div>
+        <div style={{ fontSize: 26, fontWeight: 700, background: 'linear-gradient(135deg, #FFD700, #ffb3c6, #a0e9ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.7))' }}>{energy}</div>
+        {cur && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{cur.name}{next ? ` → ${next.name}: ещё ${next.energy_threshold - energy} эн.` : ''}</div>}
+      </div>
+      {cur && next && (
+        <div style={{ marginBottom: 12 }}>
+          <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={10} />
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {data.metrics.length === 0 && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>Руководитель ещё не задал показатели</p>}
+        {data.metrics.map(m => {
+          const band = m.current != null ? bandFor(m.current, m) : 'none'
+          return (
+            <div key={m.id}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', textShadow: '0 0 6px rgba(255,255,255,0.3)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                <span style={{ fontSize: 11, color: BAND_COLORS[band], textShadow: `0 0 6px ${BAND_COLORS[band]}`, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{m.current != null ? `${m.current}${m.unit}` : '—'}</span>
+              </div>
+              <ProgressBar3D value={m.current ?? 0} height={8} marks={[{ key: 'min', value: m.thr_min }, { key: 'mid', value: m.thr_mid }, { key: 'top', value: m.thr_top }, { key: 'ultra', value: m.thr_ultra }]} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
