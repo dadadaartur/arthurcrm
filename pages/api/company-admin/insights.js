@@ -77,6 +77,7 @@ export default async function handler(req, res) {
   // куда идём при текущем темпе, и если промах — кто именно тянет
   // вниз (переиспользует ту же логику сравнения с командой, что и
   // аномалии, не отдельный алгоритм).
+  const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   const today = now
