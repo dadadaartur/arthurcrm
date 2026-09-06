@@ -74,7 +74,10 @@ function TasksPage() {
     if (router.query.tab && ['create', 'create-goal', 'create-external', 'recommendations', 'review', 'active', 'archived'].includes(router.query.tab)) {
       setTab(router.query.tab)
     }
-  }, [router.query.tab])
+    if (router.query.prefill_user) {
+      setForm(f => ({ ...f, target_role: 'specific', specific_user_ids: [router.query.prefill_user], title: router.query.prefill_title ? String(router.query.prefill_title) : f.title }))
+    }
+  }, [router.query.tab, router.query.prefill_user, router.query.prefill_title])
 
   useEffect(() => {
     if (form.target_role === 'specific' || tab !== 'create') { setAudiencePreview(null); return }

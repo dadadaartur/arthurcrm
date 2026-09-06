@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -20,6 +21,81 @@ const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
 const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
+
+const INSIGHT_STYLE = {
+  risk: { color: '#dc2626', bg: 'rgba(220,38,38,0.05)', border: 'rgba(220,38,38,0.25)', label: 'Риск' },
+  anomaly: { color: '#7c3aed', bg: 'rgba(124,58,237,0.05)', border: 'rgba(124,58,237,0.25)', label: 'Аномалия' },
+  win: { color: '#137a39', bg: 'rgba(19,122,57,0.05)', border: 'rgba(19,122,57,0.25)', label: 'Победа' },
+}
+
+function InsightCard({ insight, onCreateTask }) {
+  const s = INSIGHT_STYLE[insight.type]
+  return (
+    <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 14, padding: 16, border: `1px solid ${s.border}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '3px 10px', borderRadius: 20, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>{s.label}</span>
+        {insight.changePct != null && (
+          <span style={{ fontSize: 13, fontWeight: 700, color: s.color }}>{insight.changePct > 0 ? '+' : ''}{insight.changePct}%</span>
+        )}
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5, margin: '0 0 10px' }}>{insight.text}</p>
+      {(insight.type === 'risk' || insight.type === 'anomaly') && onCreateTask && (
+        <button onClick={() => onCreateTask(insight)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: s.bg, border: `1px solid ${s.border}`, color: s.color, cursor: 'pointer' }}>
+          Назначить задание →
+        </button>
+      )}
+    </div>
+  )
+}
+
+function InsightsPanel({ from, to, empName }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [insights, setInsights] = useState([])
+  const [filter, setFilter] = useState('all')
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setInsights((await r.json()).insights || [])
+      setLoading(false)
+    }
+    load()
+  }, [from, to])
+
+  const createTaskFor = (insight) => {
+    router.push(`/company-admin/tasks?tab=create&prefill_user=${insight.userId}&prefill_title=${encodeURIComponent(`Подтянуть «${insight.metricName}»`)}`)
+  }
+
+  const shown = filter === 'all' ? insights : insights.filter(i => i.type === filter)
+  const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, win: insights.filter(i => i.type === 'win').length }
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.03), rgba(184,134,11,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>ИИ-аналитик</h3>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: 0 }}>Сам находит, что заслуживает внимания, вместо графика, который приходится расшифровывать</p>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <button onClick={() => setFilter('all')} style={tiny(filter === 'all')}>Все · {insights.length}</button>
+          {counts.risk > 0 && <button onClick={() => setFilter('risk')} style={{ ...tiny(filter === 'risk'), color: filter === 'risk' ? '#dc2626' : undefined, borderColor: filter === 'risk' ? 'rgba(220,38,38,0.4)' : undefined }}>Риски · {counts.risk}</button>}
+          {counts.anomaly > 0 && <button onClick={() => setFilter('anomaly')} style={{ ...tiny(filter === 'anomaly'), color: filter === 'anomaly' ? '#7c3aed' : undefined, borderColor: filter === 'anomaly' ? 'rgba(124,58,237,0.4)' : undefined }}>Аномалии · {counts.anomaly}</button>}
+          {counts.win > 0 && <button onClick={() => setFilter('win')} style={{ ...tiny(filter === 'win'), color: filter === 'win' ? '#137a39' : undefined, borderColor: filter === 'win' ? 'rgba(19,122,57,0.4)' : undefined }}>Победы · {counts.win}</button>}
+        </div>
+      </div>
+      {loading ? (
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Анализируем показатели команды…</p>
+      ) : shown.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>{insights.length === 0 ? 'За этот период явных находок нет — команда идёт ровно.' : 'В этой категории пусто.'}</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
+          {shown.map((ins, i) => <InsightCard key={i} insight={ins} onCreateTask={createTaskFor} />)}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function AnalyticsAdmin() {
   const { showError } = useFeedback()
@@ -181,46 +257,12 @@ function AnalyticsAdmin() {
           </div>
         </div>
 
-        {/* Динамика по дням */}
-        {cm && cDates.length > 0 && (
-          <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Динамика по дням</h3>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {metrics.map(m => <button key={m.id} title={m.name} onClick={() => setChartId(m.id)} style={{ ...tiny(chartId === m.id), maxWidth: 200, whiteSpace: 'normal', lineHeight: 1.3, textAlign: 'center' }}>{m.name}</button>)}
-              </div>
-            </div>
-            <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-              {[{ k: 'min', v: cm.thr_min }, { k: 'mid', v: cm.thr_mid }, { k: 'top', v: cm.thr_top }, { k: 'ultra', v: cm.thr_ultra }].map(t => (
-                <g key={t.k}>
-                  <line x1={PL} x2={W - PR} y1={cy(t.v)} y2={cy(t.v)} stroke={BAND_TEXT[t.k]} strokeDasharray="5 5" strokeOpacity="0.6" strokeWidth="1" />
-                  <text x={W - PR - 2} y={cy(t.v) - 3} fontSize="9" fill={BAND_TEXT[t.k]} textAnchor="end" opacity="0.9">{BAND_LABELS[t.k]} {t.v}{cm.unit}</text>
-                </g>
-              ))}
-              {chartEmps.map((r, ei) => (
-                <g key={r.emp.user_id}>
-                  {segsFor(r.emp.user_id).map((seg, si) => (
-                    <polyline key={si} points={seg.map(pt => `${pt.x},${pt.y}`).join(' ')} fill="none" stroke={PALETTE[ei % PALETTE.length]} strokeWidth="1.8" strokeOpacity="0.85" />
-                  ))}
-                  {segsFor(r.emp.user_id).flatMap((seg, si) => seg.map((pt, pi) => (
-                    <circle key={`${si}-${pi}`} cx={pt.x} cy={pt.y} r="2.4" fill={PALETTE[ei % PALETTE.length]} />
-                  )))}
-                </g>
-              ))}
-              {cDates.map((d, i) => (cDates.length <= 12 || i % Math.ceil(cDates.length / 12) === 0) && (
-                <text key={d} x={cx(i)} y={H - 8} fontSize="9" fill="#5f6b80" textAnchor="middle">{fmtDate(d)}</text>
-              ))}
-            </svg>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 12 }}>
-              {chartEmps.map((r, ei) => (
-                <div key={r.emp.user_id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: PALETTE[ei % PALETTE.length] }} />
-                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{empName(r.emp.user_id)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ИИ-аналитик — вместо диаграммы, которая становится
+            нечитаемой при большом числе сотрудников (фидбек от
+            6 сентября 2026), система сама находит, что заслуживает
+            внимания, и объясняет простым языком. */}
+        <InsightsPanel from={from} to={to} empName={empName} />
+
 
         {/* Таблица сотрудник × показатели */}
         <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
