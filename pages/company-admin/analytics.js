@@ -311,15 +311,19 @@ function AnalyticsAdmin() {
               <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span title={m.name} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: suspicious ? '#dc2626' : b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
+                  {suspicious ? (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', whiteSpace: 'nowrap' }}>Тип настроен неверно</span>
+                  ) : (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
+                  )}
                 </div>
                 {suspicious && (
                   <div style={{ fontSize: 10.5, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8, padding: '6px 10px', lineHeight: 1.4 }}>
-                    Значение выше 200% для показателя-доли — похоже, тип задан как «Накопительное» (суммирует за период) вместо «Доля/конверсия» (усредняет). Проверьте тип в управлении целями.
+                    Сумма за период вместо честной доли ({cv}{m.unit} — так не бывает). Откройте «Управление целями» → этот показатель → смените тип на «Доля/конверсия».
                   </div>
                 )}
                 {perEntryAvg != null && (
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>в среднем {perEntryAvg}{m.unit} за запись</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>в среднем {perEntryAvg}{m.unit} в день на сотрудника</div>
                 )}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   {delta != null && (
