@@ -70,6 +70,67 @@ export default async function handler(req, res) {
   const { data: entries } = await a.from('kpi_entries').select('metric_id, user_id, value, entry_date')
     .gte('entry_date', from).lte('entry_date', to).in('user_id', [...poolIds])
 
+  // Прогноз выполнения целей на текущий календарный месяц — считается
+  // ВСЕГДА по календарному месяцу, независимо от выбранного на
+  // странице диапазона дат (иначе «прогноз на месяц» значил бы разное
+  // в зависимости от случайно выбранных from/to). По каждой цели —
+  // куда идём при текущем темпе, и если промах — кто именно тянет
+  // вниз (переиспользует ту же логику сравнения с командой, что и
+  // аномалии, не отдельный алгоритм).
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  const today = now
+  const daysSoFar = Math.max(1, Math.round((today - monthStart) / 86400000) + 1)
+  const daysTotal = monthEnd.getDate()
+  const monthStartISO = monthStart.toISOString().slice(0, 10)
+  const todayISO = today.toISOString().slice(0, 10)
+
+  const { data: monthEntries } = daysSoFar >= 3
+    ? await a.from('kpi_entries').select('metric_id, user_id, value, entry_date').gte('entry_date', monthStartISO).lte('entry_date', todayISO).in('user_id', [...poolIds])
+    : { data: [] }
+
+  const forecast = []
+  if (daysSoFar >= 3) {
+    for (const m of metrics || []) {
+      const metricMonthEntries = (monthEntries || []).filter(e => e.metric_id === m.id)
+      if (metricMonthEntries.length < 3) continue
+      const midpoint = monthStartISO <= todayISO ? new Date(monthStart.getTime() + (today - monthStart) / 2) : monthStart
+      const midISO = midpoint.toISOString().slice(0, 10)
+      const early = metricMonthEntries.filter(e => e.entry_date < midISO)
+      const recent = metricMonthEntries.filter(e => e.entry_date >= midISO)
+      const earlyAvg = agg(m, early), recentAvg = agg(m, recent)
+      if (earlyAvg == null || recentAvg == null) continue
+
+      // Скорость изменения в день по последней половине месяца,
+      // спроецированная на оставшиеся дни — не наивное «просто
+      // продолжить линию с первого дня», а актуальный, недавний темп.
+      const halfDays = Math.max(1, daysSoFar / 2)
+      const dailyRate = (recentAvg - earlyAvg) / halfDays
+      const daysLeft = daysTotal - daysSoFar
+      const projected = Math.round((recentAvg + dailyRate * daysLeft) * 10) / 10
+      const goal = Number(m.thr_top)
+      const onTrack = m.kpi_type === 'inverse' ? projected <= goal : projected >= goal
+
+      let cause = null
+      if (!onTrack) {
+        const ranked = pool.map(e => {
+          const val = agg(m, metricMonthEntries.filter(x => x.user_id === e.user_id))
+          return { emp: e, val, band: val != null ? bandFor(val, m) : 'none' }
+        })
+        const withData = ranked.filter(r => r.val != null)
+        if (withData.length) {
+          const avgRank = withData.reduce((s, r) => s + bandRankOf(m, r.band), 0) / withData.length
+          const worst = withData.filter(r => bandRankOf(m, r.band) <= avgRank - 1.5).sort((a, b) => bandRankOf(m, a.band) - bandRankOf(m, b.band))
+          if (worst.length) cause = worst.slice(0, 3).map(w => empName(w.emp))
+        }
+      }
+
+      forecast.push({ metricId: m.id, metricName: m.name, unit: m.unit, projected, goal, onTrack, cause, lowConfidence: daysSoFar < 7 })
+    }
+  }
+  const forecastReady = daysSoFar >= 3
+  const atRiskCount = forecast.filter(f => !f.onTrack).length
+
   const insights = []
 
   for (const m of metrics || []) {
@@ -94,6 +155,7 @@ export default async function handler(req, res) {
           type: 'risk', metricId: m.id, metricName: m.name, userId: emp.user_id, userName: empName(emp),
           changePct, from: Math.round(vals[0] * 10) / 10, to: Math.round(vals[vals.length - 1] * 10) / 10, unit: m.unit,
           text: `${empName(emp)} — устойчивое падение по «${m.name}»: было ${Math.round(vals[0] * 10) / 10}${m.unit || ''}, сейчас ${Math.round(vals[vals.length - 1] * 10) / 10}${m.unit || ''} (${changePct}%)`,
+          advice: 'Стоит для начала просто поговорить — падение три отрезка подряд обычно про конкретную причину (перегруз, личная ситуация, непонятная задача), не про лень. Задание с наградой — не первый шаг.',
         })
       }
     }
@@ -130,6 +192,7 @@ export default async function handler(req, res) {
           insights.push({
             type: 'anomaly', metricId: m.id, metricName: m.name, userId: o.emp.user_id, userName: empName(o.emp),
             text: `${empName(o.emp)} заметно отстаёт от команды по «${m.name}»`,
+            advice: 'Прежде чем ставить задание — проверьте, не разовый ли это случай за последние 3 записи, а не хроническое отставание.',
           })
         })
       }
@@ -137,8 +200,29 @@ export default async function handler(req, res) {
   }
 
   // Риски — первыми (важнее всего успеть среагировать), потом аномалии, потом победы.
-  const order = { risk: 0, anomaly: 1, win: 2 }
+  // Тренинги и тесты — используем уже существующую систему (tests,
+  // test_attempts), не строим параллельную (пункт 4 фидбека от
+  // 6 сентября 2026: «должен уметь контролировать кто сколько
+  // тренингов прошёл, сколько тестов сдал, на какой балл»).
+  const { data: activeTests } = await a.from('tests').select('id, title').eq('company_id', companyId).eq('is_active', true)
+  if (activeTests?.length) {
+    const { data: attempts } = await a.from('test_attempts').select('test_id, user_id, score, is_passed').in('test_id', activeTests.map(t => t.id)).in('user_id', [...poolIds])
+    for (const t of activeTests) {
+      const attemptsByUser = {}
+      ;(attempts || []).filter(a2 => a2.test_id === t.id).forEach(a2 => { attemptsByUser[a2.user_id] = a2 })
+      const notPassed = pool.filter(e => !attemptsByUser[e.user_id]?.is_passed)
+      if (notPassed.length > 0 && notPassed.length < pool.length) {
+        insights.push({
+          type: 'training', metricName: t.title,
+          text: `«${t.title}» — не сдали ${notPassed.length} из ${pool.length}: ${notPassed.slice(0, 5).map(e => empName(e)).join(', ')}${notPassed.length > 5 ? ` и ещё ${notPassed.length - 5}` : ''}`,
+          advice: 'Не обязательно новое задание — можно просто напомнить в общем чате или назначить пересдачу.',
+        })
+      }
+    }
+  }
+
+  const order = { risk: 0, training: 1, anomaly: 2, win: 3 }
   insights.sort((x, y) => order[x.type] - order[y.type] || (y.changePct || 0) - (x.changePct || 0))
 
-  res.status(200).json({ insights, periods })
+  res.status(200).json({ insights, periods, forecast: { ready: forecastReady, daysLeft: daysTotal - daysSoFar, items: forecast, atRiskCount, totalCount: forecast.length } })
 }

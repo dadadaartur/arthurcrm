@@ -38,6 +38,19 @@ export default async function handler(req, res) {
   }
   if (pool.length < 4) return res.status(200).json({ recommendations: [] }) // слишком маленькая команда — сравнение с "большинством" не имеет смысла
 
+  // Барьер частоты — кому уже назначили 3+ задания за последнюю
+  // неделю, того не предлагаем снова, независимо от показателей (по
+  // итогам аудита от 6 сентября 2026 — решает сразу два вопроса: не
+  // даёт превратить рекомендации в бесконечный цикл «занизил →
+  // получил задание с наградой → занизил снова» для одного и того же
+  // человека, и не даёт заваливать одного сотрудника заданиями, пока
+  // остальные ничего не получают).
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
+  const { data: recentAssignments } = await a.from('task_assignments').select('user_id').gte('created_at', weekAgo).in('user_id', pool.map(e => e.user_id))
+  const recentCountByUser = {}
+  ;(recentAssignments || []).forEach(r => { recentCountByUser[r.user_id] = (recentCountByUser[r.user_id] || 0) + 1 })
+  const overloadedUsers = new Set(Object.entries(recentCountByUser).filter(([, c]) => c >= 3).map(([uid]) => uid))
+
   const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true)
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
 
@@ -46,12 +59,23 @@ export default async function handler(req, res) {
     // Последнее внесённое значение каждого сотрудника по этому
     // показателю (не только сегодняшнее — иначе для еженедельных
     // показателей почти у всех будет "нет данных" в произвольный день).
+    // Среднее по последним ТРЁМ внесённым значениям каждого
+    // сотрудника, не одно последнее (по итогам аудита от 6 сентября
+    // 2026: одно последнее значение — реальная уязвимость, один
+    // неудачный день, случайный или намеренный, помечал сотрудника
+    // как отстающего и создавал рекомендацию с наградой за
+    // «исправление» того, что могло быть разовым провалом).
     const { data: entries } = await a.from('kpi_entries')
       .select('user_id, value, entry_date')
       .eq('metric_id', metric.id).in('user_id', pool.map(e => e.user_id))
       .order('entry_date', { ascending: false })
+    const recentByUser = {}
+    ;(entries || []).forEach(e => { (recentByUser[e.user_id] = recentByUser[e.user_id] || []).push(e.value) })
     const latestByUser = {}
-    ;(entries || []).forEach(e => { if (!(e.user_id in latestByUser)) latestByUser[e.user_id] = e.value })
+    Object.entries(recentByUser).forEach(([uid, vals]) => {
+      const last3 = vals.slice(0, 3)
+      latestByUser[uid] = last3.reduce((s, v) => s + Number(v), 0) / last3.length
+    })
 
     const ranked = pool.map(e => {
       const val = latestByUser[e.user_id]
@@ -61,7 +85,7 @@ export default async function handler(req, res) {
     const avgRank = ranked.reduce((s, r) => s + r.rank, 0) / ranked.length
     if (avgRank < 1.8) continue // команда в целом слабо тянет показатель — это не "пятеро отстают", это общая проблема, другой случай
 
-    const laggards = ranked.filter(r => r.rank <= avgRank - 1.5)
+    const laggards = ranked.filter(r => r.rank <= avgRank - 1.5 && !overloadedUsers.has(r.emp.user_id))
     const laggardShare = laggards.length / ranked.length
     if (laggards.length < 2 || laggardShare > 0.4) continue // либо некого отдельно выделить, либо отстаёт слишком много — не точечный случай
 
