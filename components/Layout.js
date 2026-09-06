@@ -187,43 +187,45 @@ export default function Layout({ children, autoHideHeader = false }) {
   }
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
-      {autoHideHeader && (
-        <>
-          {/* Зона-датчик наведения — невидимая, стабильного размера
-              (не зависит от состояния раскрытия), поэтому движение
-              курсора от стрелки вверх к раскрывшейся шапке не
-              прерывает наведение рывком. Ниже шапки по z-index, чтобы
-              клики по самой шапке, когда она раскрыта, доставались ей,
-              а не этому датчику. */}
-          <div onMouseEnter={() => setHeaderRevealed(true)} onMouseLeave={() => setHeaderRevealed(false)}
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 74, zIndex: 49 }} />
-          {/* Стрелка-подсказка — всегда видна, мягкое дыхание, лёгкий
-              разворот и угасание при раскрытой шапке (по фидбеку от
-              2 сентября 2026: «легко обозначить премиум стрелкой с
-              анимацией»). */}
-          <div style={{ position: 'fixed', top: headerRevealed ? 58 : 10, left: '50%', transform: 'translateX(-50%)', zIndex: 51, pointerEvents: 'none', transition: 'top 0.45s cubic-bezier(0.22,1,0.36,1)' }}>
-            <div style={{
-              width: 30, height: 18, borderRadius: '0 0 14px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.16)', borderTop: 'none',
-              opacity: headerRevealed ? 0.35 : 1, animation: headerRevealed ? 'none' : 'headerHintBreathe 2.6s ease-in-out infinite',
-            }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: headerRevealed ? 'rotate(180deg)' : 'none', transition: 'transform 0.45s ease' }}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </div>
-          </div>
-          <style jsx global>{`@keyframes headerHintBreathe { 0%, 100% { opacity: 0.55; transform: translateY(0); } 50% { opacity: 1; transform: translateY(2px); } }`}</style>
-        </>
-      )}
-      <header className="flex justify-between items-center px-6 py-3 relative" style={{
+      <header
+        onMouseEnter={autoHideHeader ? () => setHeaderRevealed(true) : undefined}
+        onMouseLeave={autoHideHeader ? () => setHeaderRevealed(false) : undefined}
+        className="flex justify-between items-center px-6 py-3 relative" style={{
         background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)',
         ...(autoHideHeader ? {
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-          transform: headerRevealed ? 'translateY(0)' : 'translateY(-100%)',
+          // Скрыта не полностью — снизу нарочно остаётся видимый край
+          // высотой с сам крючок-подсказку (см. ниже), чтобы наведение
+          // и подсказка были частью ОДНОГО элемента, а не отдельного
+          // невидимого слоя поверх/под шапкой (раньше именно разведение
+          // по трём слоям с разным z-index вызывало дребезг при
+          // движении курсора между ними — фидбек от 2 сентября 2026).
+          transform: headerRevealed ? 'translateY(0)' : 'translateY(calc(-100% + 14px))',
           transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1)',
-          boxShadow: headerRevealed ? '0 8px 30px rgba(15,23,42,0.12)' : 'none',
+          boxShadow: headerRevealed ? '0 10px 34px rgba(15,23,42,0.14)' : 'none',
         } : { zIndex: 10 }),
       }}>
+        {autoHideHeader && (
+          <div style={{ position: 'absolute', bottom: -13, left: '50%', transform: 'translateX(-50%)', width: 54, height: 13, overflow: 'hidden', pointerEvents: 'none' }}>
+            {/* Премиальный крючок-подсказка — золотая капсула со
+                встроенным блеском, часть нижнего края самой шапки, не
+                отдельная стрелка сбоку от всего механизма. */}
+            <div style={{
+              width: 54, height: 26, borderRadius: '0 0 20px 20px', position: 'relative', overflow: 'hidden',
+              background: 'linear-gradient(160deg, #a4770f, #8a6208 55%, #6b4a06)',
+              boxShadow: '0 4px 12px rgba(138,98,8,0.35)',
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 3,
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transform: headerRevealed ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s ease', opacity: 0.95 }}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+              {!headerRevealed && (
+                <span className="header-hint-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: 'linear-gradient(100deg, transparent, rgba(255,255,255,0.4), transparent)', left: '-70%' }} />
+              )}
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-3 flex-wrap">
           <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
@@ -258,6 +260,10 @@ export default function Layout({ children, autoHideHeader = false }) {
           <button onClick={handleLogout} style={navPill}>Выйти</button>
         </div>
       </header>
+      <style jsx global>{`
+        @keyframes headerHintShine { 0% { left: -70%; } 100% { left: 140%; } }
+        .header-hint-shine { animation: headerHintShine 3.2s ease-in-out infinite; }
+      `}</style>
       <main className="flex-grow relative z-10">{children}</main>
       <footer className="text-center py-4 text-xs relative z-10" style={{ color: 'var(--text-muted)' }}>
         © {new Date().getFullYear()} Кармический банк
