@@ -1,0 +1,594 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Токены дизайна — светлая тема (27.08.2026, по вашей просьбе).
+   Вся платформа, КРОМЕ инсталляции на главной странице (у неё
+   свой полностью непрозрачный тёмный фон прямо в pages/index.js,
+   эти переменные её не касаются вообще).
+   Собраны в одном месте намеренно — чтобы можно было откатить
+   решение одной правкой файла, если светлая версия не понравится,
+   а не искать правки по полусотне файлов.
+   ============================================================ */
+:root {
+  --bg-page: #f3f4f8;
+  --bg-card: #ffffff;
+  --bg-card-soft: rgba(255,255,255,0.75);
+  --bg-hover: rgba(15,23,42,0.035);
+  --border-subtle: rgba(15,23,42,0.09);
+  --border-gold: rgba(176,128,16,0.4);
+  --text-primary: #161b28;
+  --text-secondary: #5b6478;
+  --text-muted: #5f6b80;
+  --accent-gold: #8a6208;
+  --accent-gold-bright: #FFD700;
+  --accent-cyan: #0e7490;
+  --accent-purple: #7c3aed;
+  --accent-green: #137a39;
+  --accent-red: #dc2626;
+  --accent-pink: #db2777;
+  --shadow-card: 0 4px 18px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.05);
+  --shadow-card-hover: 0 10px 28px rgba(15,23,42,0.1);
+}
+
+* {
+  cursor: default !important;
+  user-select: none;
+}
+a, button, .clickable, .action-btn, .wide-btn {
+  cursor: pointer !important;
+}
+*:focus { outline: none !important; }
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000 !important;
+  color: #eaf0fb;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  position: relative;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(176,128,16,0.25);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(176,128,16,0.4);
+  background-clip: padding-box;
+}
+html { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.3) transparent; }
+
+/* ============================================================
+   Область светлой темы. Оборачивает КОНКРЕТНУЮ переделанную
+   страницу (className="theme-light" на корневом div) — внутри неё
+   те же самые классы (.premium-card, .input-field, .btn-gold и
+   т.д.) получают светлый вид, а все остальные, ещё не переделанные
+   страницы продолжают использовать те же классы без изменений,
+   потому что вне .theme-light эти правила не действуют вообще.
+   ============================================================ */
+.theme-light {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+.theme-light .premium-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+}
+.theme-light .input-field {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  backdrop-filter: none;
+}
+.theme-light .input-field:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(184,134,11,0.12);
+}
+.theme-light .input-field::placeholder { color: var(--text-muted); }
+.theme-light .btn-gold, .theme-light .btn-glass {
+  background: linear-gradient(135deg, rgba(184,134,11,0.14), rgba(124,58,237,0.1), rgba(14,116,144,0.1));
+  border: 1px solid var(--border-gold);
+  color: var(--text-primary);
+  text-shadow: none;
+  animation: none;
+}
+.theme-light .btn-gold:hover, .theme-light .btn-glass:hover {
+  background: linear-gradient(135deg, rgba(184,134,11,0.22), rgba(124,58,237,0.16), rgba(14,116,144,0.16));
+  border-color: rgba(176,128,16,0.65);
+  box-shadow: var(--shadow-card-hover);
+}
+.theme-light .btn-outline, .theme-light .btn-glass-outline {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.theme-light .btn-outline:hover, .theme-light .btn-glass-outline:hover {
+  border-color: var(--accent-gold);
+  background: rgba(184,134,11,0.06);
+  box-shadow: none;
+}
+.theme-light .filter-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.theme-light .filter-pill.active {
+  background: linear-gradient(135deg, rgba(184,134,11,0.14), rgba(124,58,237,0.12));
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+.theme-light .modal-overlay { background: rgba(15,23,42,0.5); }
+.theme-light .modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card-hover);
+  color: var(--text-primary);
+}
+.theme-light .file-upload-btn {
+  background: var(--bg-card);
+  border: 1px dashed var(--border-gold);
+  color: var(--text-secondary);
+}
+.theme-light .file-upload-btn:hover {
+  background: rgba(184,134,11,0.06);
+  border-color: var(--accent-gold);
+  box-shadow: none;
+}
+.theme-light .action-btn {
+  background: linear-gradient(135deg, rgba(14,116,144,0.08), rgba(124,58,237,0.08));
+  border: 1px solid var(--border-gold);
+  color: var(--text-primary);
+  animation: none;
+  backdrop-filter: none;
+}
+.theme-light .action-btn:hover {
+  border-color: var(--accent-purple);
+  box-shadow: none;
+}
+.theme-light .dash-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  animation: none;
+}
+.theme-light .dash-card:hover {
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+.theme-light .dash-card h3 {
+  background: linear-gradient(135deg, #8a6208, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.theme-light .pastel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: none;
+}
+.theme-light .pastel-card h3 {
+  background: linear-gradient(135deg, #8a6208, #0e7490);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* BackArrow используется на каждой странице через общий компонент —
+   переопределяю через !important, потому что сам компонент красит
+   инлайн-стилем (единственный практичный способ подстроить общий
+   компонент под конкретную страницу, не трогая все ~90 мест вызова). */
+.theme-light .back-arrow-circle {
+  background: var(--bg-card) !important;
+  border-color: var(--border-gold) !important;
+}
+.theme-light .back-arrow-title {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+/* Заголовок «Кармический банк» в шапке — анимация появления + золото-
+   циан-фиолетовый градиент вместо оранжево-фиолетового. */
+.brand-title {
+  background: linear-gradient(120deg, #FFD700, #a0e9ff 50%, #c084fc);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-decoration: none;
+  display: inline-block;
+  animation: brandIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) both,
+             brandShift 4s ease-in-out infinite 1.1s;
+}
+@keyframes brandIn {
+  0% { opacity: 0; transform: translateY(-14px) scale(0.85); filter: blur(8px); }
+  60% { opacity: 1; transform: translateY(2px) scale(1.04); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes brandShift {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,215,0,0.25); }
+  50% { box-shadow: 0 0 18px rgba(255,215,0,0.55); }
+}
+
+.stars-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes realTwinkle {
+  0% { opacity: 0.2; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Мерцание рамки — золото/циан/фиолет вместо оранжевого */
+@keyframes borderShine {
+  0% { border-color: rgba(255,215,0,0.35); box-shadow: 0 0 0 0 rgba(255,215,0,0.15); }
+  50% { border-color: rgba(192,132,252,0.7); box-shadow: 0 0 0 2px rgba(160,233,255,0.2); }
+  100% { border-color: rgba(255,215,0,0.35); box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+}
+
+.balance-card {
+  background: #0A0A0A;
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 28px;
+  padding: 24px 32px;
+  box-shadow: 0 0 30px rgba(255,215,0,0.15);
+  animation: borderShine 4s infinite;
+  width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Чёрная дыра — только на главной странице, не трогаем (дизайн главной
+   меняется исключительно по отдельному согласованию). */
+.black-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: #000;
+  box-shadow:
+    0 0 20px rgba(249,115,22,0.3),
+    0 0 40px rgba(249,115,22,0.15);
+  animation: blackHolePulse 3s infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+.black-hole::before,
+.black-hole::after {
+  display: none;
+}
+@keyframes blackHolePulse {
+  0% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.25); }
+  100% { box-shadow: 0 0 20px rgba(249,115,22,0.3), 0 0 40px rgba(249,115,22,0.15); }
+}
+
+/* ============================================================
+   Стеклянные кнопки — единый стандарт по всему проекту.
+   Эталон — кнопка «Купить» в магазине (pages/shop.js): мягкий
+   трёхцветный градиент (циан/розовый/золото) + blur + тонкая белая
+   рамка + лёгкое дыхание свечения. Классы ниже переиспользуют этот
+   же язык вместо решерасплошной оранжевой заливки.
+   ============================================================ */
+.action-btn {
+  flex: 1 1 0;
+  font-size: 14px;
+  background: linear-gradient(135deg, rgba(160,233,255,0.12), rgba(192,132,252,0.12));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,215,0,0.35);
+  border-radius: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  color: rgba(255,255,255,0.88);
+  transition: all 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  animation: borderShine 4s infinite;
+}
+.action-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.35);
+  transform: translateY(-2px);
+}
+.wide-btn {
+  flex-basis: 100%;
+  margin-top: 4px;
+  background: linear-gradient(135deg, rgba(160,233,255,0.12), rgba(192,132,252,0.12));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,215,0,0.35);
+  border-radius: 50px;
+  padding: 12px 0;
+  cursor: pointer;
+  color: rgba(255,255,255,0.88);
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.25s;
+  animation: borderShine 4s infinite;
+}
+.wide-btn:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.35);
+  transform: translateY(-2px);
+}
+.dash-card {
+  background: radial-gradient(circle at 20% 30%, #1a2a45 0%, #0a1628 70%);
+  border: 1px solid rgba(255,215,0,0.35);
+  border-radius: 20px;
+  padding: 32px;
+  animation: borderShine 4s infinite;
+  transition: all 0.3s;
+}
+.dash-card:hover {
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(192,132,252,0.35);
+  transform: translateY(-2px);
+}
+.dash-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #FFD700, #c084fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Основная стеклянная кнопка (замена .btn-gold — имя оставлено, чтобы не
+   переписывать разметку по всем страницам, но заливка и весь материал
+   теперь как у «Купить» в магазине). */
+.btn-gold, .btn-glass {
+  background: linear-gradient(135deg, rgba(160,233,255,0.22), rgba(255,179,198,0.22), rgba(255,226,159,0.22));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.32);
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 14px;
+  font-size: 14px;
+  text-shadow: 0 0 10px rgba(255,255,255,0.4);
+  transition: all 0.3s;
+  animation: glassGlow 3s ease-in-out infinite;
+}
+.btn-gold:hover, .btn-glass:hover {
+  background: linear-gradient(135deg, rgba(160,233,255,0.38), rgba(255,179,198,0.38), rgba(255,226,159,0.38));
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 0 20px rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+.btn-gold:disabled, .btn-glass:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+@keyframes glassGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,215,0,0.08); }
+  50% { box-shadow: 0 0 16px rgba(255,215,0,0.22); }
+}
+
+/* Вторичная («призрачная») стеклянная кнопка — замена .btn-outline. */
+.btn-outline, .btn-glass-outline {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,215,0,0.35);
+  color: #eaf0fb;
+  padding: 8px 20px;
+  border-radius: 14px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.25s;
+}
+.btn-outline:hover, .btn-glass-outline:hover {
+  border-color: #FFD700;
+  background: rgba(255,215,0,0.08);
+  box-shadow: 0 0 16px rgba(255,215,0,0.22);
+}
+
+/* Опасное действие (удалить/отклонить и т.п.) — тот же стеклянный язык,
+   красный акцент вместо отдельно придуманных инлайн-стилей по страницам. */
+.btn-glass-danger {
+  background: rgba(248,113,113,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(248,113,113,0.4);
+  color: #f87171;
+  padding: 8px 20px;
+  border-radius: 14px;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.btn-glass-danger:hover {
+  background: rgba(248,113,113,0.16);
+  border-color: #f87171;
+  box-shadow: 0 0 16px rgba(248,113,113,0.28);
+}
+
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.9) 50%, transparent 65%);
+  box-shadow: 0 0 10px rgba(255,215,0,0.35);
+  animation: spin 1s linear infinite, blackHolePulse 2s infinite;
+  position: relative;
+}
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,215,0,0.5);
+  animation: diskRotate 2s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.sticker-text {
+  user-select: text !important;
+  cursor: text !important;
+}
+.premium-card {
+  background: #152238;
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+.input-field {
+  background: rgba(15,31,53,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 14px;
+  color: #eaf0fb;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-field:focus {
+  border-color: #FFD700;
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: linear-gradient(145deg, rgba(26,47,74,0.97) 0%, rgba(15,31,53,0.98) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 28px;
+  padding: 36px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(255,215,0,0.25), 0 20px 60px rgba(0,0,0,0.5);
+}
+.filter-pill {
+  border: 1px solid rgba(255,215,0,0.3);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(8px);
+  color: #9aa9c1;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 110px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.filter-pill.active {
+  background: linear-gradient(135deg, rgba(255,215,0,0.28), rgba(192,132,252,0.28));
+  border-color: rgba(255,255,255,0.4);
+  color: white;
+}
+.global-goals-scroll::-webkit-scrollbar { height: 4px; }
+.global-goals-scroll::-webkit-scrollbar-thumb { background: rgba(176,128,16,0.35); border-radius: 4px; }
+.global-goals-scroll { scrollbar-width: thin; scrollbar-color: rgba(176,128,16,0.35) transparent; }
+.pastel-card {
+  background: linear-gradient(145deg, rgba(199, 181, 175, 0.12) 0%, rgba(168, 179, 190, 0.06) 100%);
+  border: 1px solid rgba(199, 181, 175, 0.35);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+}
+.pastel-card h3 {
+  background: linear-gradient(135deg, #c7b5af, #a8b3be);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #eaf0fb;
+}
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px dashed rgba(255,215,0,0.4);
+  border-radius: 14px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #eaf0fb;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.file-upload-btn:hover {
+  background: rgba(255,215,0,0.08);
+  border-color: #FFD700;
+  box-shadow: 0 0 14px rgba(255,215,0,0.2);
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield !important;
+}
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%239aa9c1'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 36px !important;
+}
