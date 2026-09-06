@@ -17,6 +17,30 @@ const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'
 // Насыщенная версия BAND_COLORS — общий модуль подобран под тёмный фон,
 // используется в непеределанной админке, менять нельзя.
 const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: 'Средний', top: 'Топ', ultra: 'Ultra' }
+
+// Корона с камнями для ультра-уровня — разовое появление при загрузке
+// страницы (по фидбеку от 6 сентября 2026: зацикленная пульсация
+// «выглядит как баг», убрана полностью; вместо неё — спокойная,
+// один раз проигрывающаяся, не бесконечная анимация).
+function UltraCrown({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 75" className="ultra-crown-once">
+      <defs>
+        <linearGradient id="crownGold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff3c4" /><stop offset="45%" stopColor="#e8b93f" /><stop offset="100%" stopColor="#a5720a" />
+        </linearGradient>
+        <linearGradient id="crownGem" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e0c3fc" /><stop offset="55%" stopColor="#a855f7" /><stop offset="100%" stopColor="#6b21d4" />
+        </linearGradient>
+      </defs>
+      <path d="M0 55 L0 30 L20 45 L35 5 L50 45 L65 5 L80 45 L100 30 L100 55 Z" fill="url(#crownGold)" stroke="#8a6208" strokeWidth="2" />
+      <rect x="-2" y="53" width="104" height="10" rx="2" fill="url(#crownGold)" stroke="#8a6208" strokeWidth="2" />
+      <circle cx="35" cy="8" r="6" fill="url(#crownGem)" /><circle cx="50" cy="10" r="7.5" fill="url(#crownGem)" /><circle cx="65" cy="8" r="6" fill="url(#crownGem)" />
+      <circle cx="20" cy="30" r="4" fill="#7c3aed" /><circle cx="80" cy="30" r="4" fill="#7c3aed" />
+    </svg>
+  )
+}
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
 const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
@@ -108,7 +132,8 @@ function ActionMenu({ insight, onPick }) {
 
 function ActionModal({ draft, onClose, onSaved }) {
   const { showSuccess, showError } = useFeedback()
-  const [form, setForm] = useState({ title: draft.insight.metricName ? `Подтянуть «${draft.insight.metricName}»` : '', reason: draft.insight.text || '', deadline: '', rewardKarma: 20, testId: '', trainingNote: '' })
+  const isBulk = !!draft.bulkUserIds
+  const [form, setForm] = useState({ title: draft.insight?.metricName ? `Подтянуть «${draft.insight.metricName}»` : '', reason: draft.insight?.text || '', deadline: '', rewardKarma: 20, testId: '', trainingNote: '' })
   const [tests, setTests] = useState([])
   const [saving, setSaving] = useState(false)
 
@@ -129,10 +154,10 @@ function ActionModal({ draft, onClose, onSaved }) {
     const { data: { session } } = await supabase.auth.getSession()
     const r = await fetch('/api/company-admin/development/assign', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ actionType: draft.type, userId: draft.insight.userId, title: form.title, reason: form.reason, deadline: form.deadline || null, rewardKarma: form.rewardKarma, testId: form.testId || null, trainingNote: form.trainingNote })
+      body: JSON.stringify({ actionType: draft.type, userId: isBulk ? undefined : draft.insight.userId, userIds: isBulk ? draft.bulkUserIds : undefined, title: form.title, reason: form.reason, deadline: form.deadline || null, rewardKarma: form.rewardKarma, testId: form.testId || null, trainingNote: form.trainingNote })
     })
     setSaving(false)
-    if (r.ok) { showSuccess('Назначено — зафиксировано в плане развития сотрудника'); onSaved() } else showError((await r.json()).error || 'Не удалось назначить')
+    if (r.ok) { const d = await r.json(); showSuccess(isBulk ? `Назначено ${d.count} сотрудникам` : 'Назначено — зафиксировано в плане развития сотрудника'); onSaved() } else showError((await r.json()).error || 'Не удалось назначить')
   }
 
   const typeLabel = { task: 'Мотивирующее задание', training: 'Тренинг', test: 'Срез знаний' }[draft.type]
@@ -140,8 +165,8 @@ function ActionModal({ draft, onClose, onSaved }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={onClose}>
       <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 26, maxWidth: 460, width: '100%', boxShadow: 'var(--shadow-card-hover)' }} onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{typeLabel} — {draft.insight.userName}</h3>
-        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Зафиксируется в плане развития сотрудника с отслеживаемым дедлайном.</p>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{typeLabel} — {isBulk ? `${draft.bulkUserIds.length} сотрудников` : draft.insight.userName}</h3>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>{isBulk ? 'Назначится сразу всем выбранным, каждому отдельной записью в плане развития.' : 'Зафиксируется в плане развития сотрудника с отслеживаемым дедлайном.'}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название</label>
@@ -178,6 +203,55 @@ function ActionModal({ draft, onClose, onSaved }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MiddlePerformersSection({ people, onAssign }) {
+  const [expanded, setExpanded] = useState(false)
+  const [selected, setSelected] = useState(new Set())
+  const toggle = (id) => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleAll = () => setSelected(s => s.size === people.length ? new Set() : new Set(people.map(p => p.userId)))
+
+  return (
+    <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+      <button onClick={() => setExpanded(v => !v)} className={expanded ? '' : 'middle-blink'} style={{
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+        padding: '11px 16px', borderRadius: 12, background: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))',
+        border: '1px solid rgba(14,116,144,0.25)', cursor: 'pointer', textAlign: 'left',
+      }}>
+        <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>
+          <b style={{ color: '#0e7490' }}>{people.length}</b> без явных сигналов — не забыть проверить
+        </span>
+        <svg width="11" height="11" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }}><path d="M1 3l4 4 4-4" stroke="#0e7490" strokeWidth="1.6" strokeLinecap="round" /></svg>
+      </button>
+
+      {expanded && (
+        <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: 'var(--bg-page)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <button onClick={toggleAll} style={{ fontSize: 11, color: '#0e7490', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+              {selected.size === people.length ? 'Снять выбор' : 'Выбрать всех'}
+            </button>
+            {selected.size > 0 && <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Выбрано: {selected.size}</span>}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: selected.size > 0 ? 12 : 0, maxHeight: 220, overflowY: 'auto' }}>
+            {people.map(p => (
+              <label key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', background: selected.has(p.userId) ? 'rgba(14,116,144,0.07)' : 'transparent' }}>
+                <input type="checkbox" checked={selected.has(p.userId)} onChange={() => toggle(p.userId)} />
+                <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>{p.name}</span>
+              </label>
+            ))}
+          </div>
+          {selected.size > 0 && (
+            <ActionMenu insight={{ userId: [...selected], userName: `${selected.size} сотрудников`, text: 'Стабильно ровная работа без явных сигналов — например, бонус за стабильность.' }}
+              onPick={(type) => onAssign(type, [...selected], `${selected.size} сотрудников`)} />
+          )}
+        </div>
+      )}
+      <style jsx global>{`
+        @keyframes middleBlinkOnce { 0%, 100% { box-shadow: 0 0 0 rgba(14,116,144,0); } 50% { box-shadow: 0 0 0 4px rgba(14,116,144,0.12); } }
+        .middle-blink { animation: middleBlinkOnce 2.2s ease-in-out 3; }
+      `}</style>
     </div>
   )
 }
@@ -282,16 +356,7 @@ function InsightsPanel({ from, to, empName }) {
             </div>
           )}
           {middlePerformers.length > 0 && filter === 'all' && (
-            <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>
-                Без явных сигналов, стоит проверять периодически, чтобы не забыть ({middlePerformers.length})
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {middlePerformers.map((name, i) => (
-                  <span key={i} style={{ fontSize: 11.5, color: 'var(--text-secondary)', padding: '3px 11px', borderRadius: 20, background: 'var(--bg-page)' }}>{name}</span>
-                ))}
-              </div>
-            </div>
+            <MiddlePerformersSection people={middlePerformers} onAssign={(type, userIds, label) => setActionDraft({ type, bulkUserIds: userIds, bulkLabel: label })} />
           )}
         </>
           )}
@@ -318,6 +383,7 @@ function AnalyticsAdmin() {
   const [compareTo, setCompareTo] = useState(shift(today, -7))
   const [chartId, setChartId] = useState(null)
   const [sortAsc, setSortAsc] = useState(false)
+  const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [fillOpen, setFillOpen] = useState(false)
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
@@ -371,7 +437,7 @@ function AnalyticsAdmin() {
     const avgPerEntry = totalSum != null && cl.length ? Math.round((totalSum / cl.length) * 10) / 10 : null
     const showBoth = m.kpi_type !== 'ratio' && m.kpi_type !== 'plan'
     const suspicious = (m.kpi_type === 'ratio' || m.kpi_type === 'plan') && cv != null && cv > 200
-    return { m, cv, delta, below, goal: scaled(m).thr_top, totalSum, avgPerEntry, showBoth, suspicious }
+    return { m, cv, pv, delta, below, goal: scaled(m).thr_top, totalSum, avgPerEntry, showBoth, suspicious }
   })
 
   const rows = employees.map(emp => {
@@ -443,24 +509,37 @@ function AnalyticsAdmin() {
         </div>
 
         {compareMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20, padding: '12px 16px', borderRadius: 12, background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.2)' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период А: <b style={{ color: 'var(--text-primary)' }}>{from} — {to}</b></span>
-            <span style={{ color: '#7c3aed', fontSize: 13 }}>vs</span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Период Б:</span>
-            <DateRangePicker from={compareFrom} to={compareTo} onChange={r => { if (r.from) setCompareFrom(r.from); if (r.to) setCompareTo(r.to) }} />
+          <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 12, background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.2)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              <button onClick={() => { const t = today; setFrom(shift(t, -6)); setTo(t); setCompareFrom(shift(t, -13)); setCompareTo(shift(t, -7)) }} style={tiny(false)}>Эта неделя vs прошлая</button>
+              <button onClick={() => { const n = new Date(); setFrom(new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10)); setTo(today); setCompareFrom(new Date(n.getFullYear(), n.getMonth() - 1, 1).toISOString().slice(0, 10)); setCompareTo(new Date(n.getFullYear(), n.getMonth(), 0).toISOString().slice(0, 10)) }} style={tiny(false)}>Этот месяц vs прошлый</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>Период А (сверху в шапке)</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', padding: '9px 14px', background: 'var(--bg-card)', borderRadius: 50, border: '1px solid var(--border-gold)' }}>{from} — {to}</div>
+              </div>
+              <span style={{ color: '#7c3aed', fontSize: 15, fontWeight: 700, marginTop: 14 }}>vs</span>
+              <div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>Период Б</div>
+                <DateRangePicker from={compareFrom} to={compareTo} onChange={r => { if (r.from) setCompareFrom(r.from); if (r.to) setCompareTo(r.to) }} />
+              </div>
+            </div>
           </div>
         )}
         {/* Карточки показателей */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14, marginBottom: 24 }}>
-          {metricSummary.map(({ m, cv, delta, below, goal, totalSum, avgPerEntry, showBoth, suspicious }) => {
+          {metricSummary.map(({ m, cv, pv, delta, below, goal, totalSum, avgPerEntry, showBoth, suspicious }) => {
             const b = bandOf(m, cv)
             const isUltra = b === 'ultra' && !suspicious
             return (
-              <div key={m.id} className={isUltra ? 'ultra-card' : ''} style={{ background: 'var(--bg-card)', boxShadow: isUltra ? '0 0 0 1.5px rgba(124,58,237,0.5), 0 6px 24px rgba(124,58,237,0.22)' : 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', overflow: 'hidden' }}>
-                {isUltra && <div className="ultra-shimmer" />}
+              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: isUltra ? '0 0 0 1.5px rgba(124,58,237,0.35), var(--shadow-card)' : 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span title={m.name} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {isUltra && <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.2, padding: '2px 7px', borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', flexShrink: 0 }}>Ultra</span>}
+                    {isUltra && <UltraCrown size={20} />}
+                    {b && !suspicious && (
+                      <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.2, padding: '2px 7px', borderRadius: 20, flexShrink: 0, background: isUltra ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : BAND_TEXT[b] + '1a', color: isUltra ? '#fff' : BAND_TEXT[b] }}>{TIER_LABEL[b]}</span>
+                    )}
                     {m.name}
                   </span>
                   {suspicious ? (
@@ -481,12 +560,16 @@ function AnalyticsAdmin() {
                   </div>
                 )}
                 {!suspicious && delta != null && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 9, background: delta >= 0 ? 'rgba(19,122,57,0.08)' : 'rgba(220,38,38,0.08)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={delta >= 0 ? '#137a39' : '#dc2626'} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d={delta >= 0 ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                    </svg>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '+' : ''}{delta}%</span>
-                    <span style={{ fontSize: 10.5, color: 'var(--text-secondary)' }}>{compareMode ? `к периоду ${compareFrom} — ${compareTo}` : `к предыдущим ${days} дн.`}</span>
+                  <div style={{ padding: '9px 10px', borderRadius: 9, background: delta > 0 ? 'rgba(19,122,57,0.08)' : delta < 0 ? 'rgba(220,38,38,0.08)' : 'var(--bg-page)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                      {delta > 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>}
+                      {delta < 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>}
+                      {delta === 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: delta > 0 ? '#137a39' : delta < 0 ? '#dc2626' : 'var(--text-muted)' }}>{delta > 0 ? '+' : ''}{delta}%</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                      {compareMode ? 'Период Б' : `предыдущие ${days} дн.`}: <b style={{ color: 'var(--text-primary)' }}>{pv}{m.unit}</b> → {compareMode ? 'период А' : 'сейчас'}: <b style={{ color: 'var(--text-primary)' }}>{cv}{m.unit}</b>
+                    </div>
                   </div>
                 )}
                 {!suspicious && delta == null && cv != null && (
@@ -502,10 +585,8 @@ function AnalyticsAdmin() {
           {metricSummary.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Показателей пока нет</div>}
         </div>
         <style jsx global>{`
-          @keyframes ultraGlow { 0%, 100% { box-shadow: 0 0 0 1.5px rgba(124,58,237,0.5), 0 6px 24px rgba(124,58,237,0.22); } 50% { box-shadow: 0 0 0 1.5px rgba(124,58,237,0.75), 0 8px 30px rgba(124,58,237,0.35); } }
-          .ultra-card { animation: ultraGlow 2.4s ease-in-out infinite; }
-          @keyframes ultraShimmerMove { 0% { transform: translateX(-120%) rotate(20deg); } 100% { transform: translateX(220%) rotate(20deg); } }
-          .ultra-shimmer { position: absolute; top: -50%; left: 0; width: 40%; height: 200%; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.14), transparent); animation: ultraShimmerMove 3.5s ease-in-out infinite; pointer-events: none; }
+          @keyframes crownRevealOnce { 0% { opacity: 0; transform: scale(0.3) rotate(-15deg); } 55% { opacity: 1; transform: scale(1.15) rotate(4deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+          .ultra-crown-once { animation: crownRevealOnce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
         `}</style>
 
         {/* Топ периода + Требуют внимания */}
@@ -563,8 +644,11 @@ function AnalyticsAdmin() {
         {/* Таблица сотрудник × показатели */}
         <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудник × показатели</h3>
-            <button onClick={() => setSortAsc(a => !a)} style={tiny(false)}>{sortAsc ? 'Слабые первые' : 'Сильные первые'}</button>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудник × показатели {onlyFlagged && `(с сигналами: ${rows.filter(r => r.belowCount > 0 || r.cells.some(c => c.band === 'ultra')).length})`}</h3>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setOnlyFlagged(v => !v)} style={tiny(onlyFlagged)}>Только с сигналами</button>
+              <button onClick={() => setSortAsc(a => !a)} style={tiny(false)}>{sortAsc ? 'Слабые первые' : 'Сильные первые'}</button>
+            </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 900 }}>
@@ -573,30 +657,36 @@ function AnalyticsAdmin() {
                 {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
-              {rows.map((r, ri) => (
+              {(onlyFlagged ? rows.filter(r => r.belowCount > 0 || r.cells.some(c => c.band === 'ultra')) : rows).map((r, ri) => (
                 <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '11px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', background: ri % 2 ? 'var(--bg-page)' : 'transparent', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.background = ri % 2 ? 'var(--bg-page)' : 'transparent'}>
                   <a href={`/company-admin/development-plan?userId=${r.emp.user_id}&name=${encodeURIComponent(empName(r.emp.user_id))}`} style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
                     onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>{empName(r.emp.user_id)}</a>
                   {r.cells.map(c => {
                     const prevVal = agg(c.m, prev.filter(e => e.user_id === r.emp.user_id && e.metric_id === c.m.id))
-                    const trendUp = prevVal != null && c.v != null ? (c.m.kpi_type === 'inverse' ? c.v < prevVal : c.v > prevVal) : null
+                    const trend = prevVal == null || c.v == null ? null : (c.m.kpi_type === 'inverse' ? (c.v < prevVal ? 'up' : c.v > prevVal ? 'down' : 'flat') : (c.v > prevVal ? 'up' : c.v < prevVal ? 'down' : 'flat'))
                     const isUltraCell = c.band === 'ultra'
                     const isAntiCell = c.band === 'none'
                     return (
-                      <div key={c.m.id} className={isUltraCell ? 'ultra-card' : ''} style={{
-                        textAlign: 'center', padding: '6px 4px', borderRadius: 8, position: 'relative', overflow: 'hidden',
+                      <div key={c.m.id} style={{
+                        textAlign: 'center', padding: '6px 4px', borderRadius: 8, position: 'relative',
                         background: isAntiCell ? 'rgba(220,38,38,0.09)' : c.band ? BAND_TEXT[c.band] + '1c' : 'transparent',
                         borderLeft: isAntiCell ? '3px solid #dc2626' : 'none',
-                        border: !isAntiCell && trendUp != null ? `1px solid ${trendUp ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}` : !isAntiCell ? '1px solid transparent' : undefined,
+                        border: !isAntiCell && trend ? `1px solid ${trend === 'up' ? 'rgba(19,122,57,0.3)' : trend === 'down' ? 'rgba(220,38,38,0.3)' : 'var(--border-subtle)'}` : !isAntiCell ? '1px solid transparent' : undefined,
                       }}>
-                        {isUltraCell && <div className="ultra-shimmer" />}
-                        <span style={{ fontSize: 12.5, fontWeight: isAntiCell ? 800 : 700, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
-                        {trendUp != null && (
-                          <svg width="9" height="9" viewBox="0 0 24 24" style={{ marginLeft: 4, verticalAlign: 1 }} fill="none" stroke={trendUp ? '#137a39' : '#dc2626'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <path d={trendUp ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                          </svg>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                          {isUltraCell && <UltraCrown size={13} />}
+                          <span style={{ fontSize: 12.5, fontWeight: isAntiCell ? 800 : 700, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
+                          {trend === 'up' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                          )}
+                          {trend === 'down' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                          )}
+                          {trend === 'flat' && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>
+                          )}
+                        </div>
                       </div>
                     )
                   })}
