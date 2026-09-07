@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/router'
 import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
@@ -18,6 +19,31 @@ const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'
 // Насыщенная версия BAND_COLORS — общий модуль подобран под тёмный фон,
 // используется в непеределанной админке, менять нельзя.
 const BAND_TEXT = { none: '#dc2626', min: '#d97706', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+// Стеклянный шарик вместо прямоугольной ячейки — эксперимент по
+// прямому запросу от 6 сентября 2026. Цвет кольца по уровню: красный
+// голограммой — ниже нормы, жёлтый — средний, зелёный — топ/ультра.
+// Лёгкое покачивание — «шарики как бы парят».
+function MetricOrb({ value, unit, band, floatDelay = 0 }) {
+  const ringColor = band === 'none' ? '#dc2626' : band === 'min' ? '#d97706' : band === 'mid' ? '#d97706' : band === 'top' ? '#137a39' : band === 'ultra' ? '#7c3aed' : 'var(--text-muted)'
+  const gid = `orb${Math.round(Math.random() * 1e6)}`
+  return (
+    <div style={{ width: 46, height: 46, position: 'relative', margin: '0 auto', animation: band ? `orbFloat 3.6s ease-in-out ${floatDelay}s infinite` : 'none' }}>
+      <svg width="46" height="46" viewBox="0 0 46 46">
+        <defs>
+          <radialGradient id={gid} cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" /><stop offset="35%" stopColor="#ffffff" stopOpacity="0.55" /><stop offset="100%" stopColor={ringColor} stopOpacity="0.3" />
+          </radialGradient>
+        </defs>
+        {band && <circle cx="23" cy="23" r="21.5" fill="none" stroke={ringColor} strokeWidth="4" opacity="0.35" style={{ filter: 'blur(2px)' }} />}
+        <circle cx="23" cy="23" r="19" fill={band ? `url(#${gid})` : 'var(--bg-page)'} stroke={band ? ringColor : 'var(--border-subtle)'} strokeWidth="1.3" strokeOpacity="0.6" />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: band ? ringColor : 'var(--text-muted)', textAlign: 'center', lineHeight: 1.05 }}>
+        {value != null ? `${value}${unit || ''}` : '—'}
+      </div>
+    </div>
+  )
+}
+
 const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: 'Средний', top: 'Топ', ultra: 'Ultra' }
 
 // Корона с камнями для ультра-уровня — разовое появление при загрузке
@@ -26,19 +52,15 @@ const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: '�
 // один раз проигрывающаяся, не бесконечная анимация).
 function UltraCrown({ size = 22 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 75" className="ultra-crown-once">
+    <svg width={size} height={size * 0.78} viewBox="0 0 100 78" className="ultra-crown-once">
       <defs>
         <linearGradient id="crownGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fff3c4" /><stop offset="45%" stopColor="#e8b93f" /><stop offset="100%" stopColor="#a5720a" />
-        </linearGradient>
-        <linearGradient id="crownGem" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#e0c3fc" /><stop offset="55%" stopColor="#a855f7" /><stop offset="100%" stopColor="#6b21d4" />
+          <stop offset="0%" stopColor="#ffe9a8" /><stop offset="100%" stopColor="#c9973d" />
         </linearGradient>
       </defs>
-      <path d="M0 55 L0 30 L20 45 L35 5 L50 45 L65 5 L80 45 L100 30 L100 55 Z" fill="url(#crownGold)" stroke="#8a6208" strokeWidth="2" />
-      <rect x="-2" y="53" width="104" height="10" rx="2" fill="url(#crownGold)" stroke="#8a6208" strokeWidth="2" />
-      <circle cx="35" cy="8" r="6" fill="url(#crownGem)" /><circle cx="50" cy="10" r="7.5" fill="url(#crownGem)" /><circle cx="65" cy="8" r="6" fill="url(#crownGem)" />
-      <circle cx="20" cy="30" r="4" fill="#7c3aed" /><circle cx="80" cy="30" r="4" fill="#7c3aed" />
+      <path d="M20 48 L20 32 L32 42 L42 15 L50 25 L58 15 L68 42 L80 32 L80 48 Z" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" />
+      <rect x="18" y="47" width="64" height="8" rx="4" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" />
+      <circle cx="50" cy="24" r="4" fill="#7c3aed" />
     </svg>
   )
 }
@@ -98,37 +120,49 @@ function ForecastBanner({ forecast, onCreateTask }) {
 
 function ActionMenu({ insight, onPick }) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
   useEffect(() => {
     if (!open) return
-    const onDoc = (e) => { if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false) }
+    const onDoc = (e) => { if (btnRef.current && !btnRef.current.contains(e.target) && menuRef.current && !menuRef.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', onDoc)
     return () => document.removeEventListener('mousedown', onDoc)
   }, [open])
   const options = [
-    { key: 'task', label: 'Мотивирующее задание', color: '#8a6208' },
-    { key: 'training', label: 'Назначить тренинг', color: '#0e7490' },
-    { key: 'test', label: 'Создать срез знаний', color: '#7c3aed' },
+    { key: 'task', label: 'Мотивирующее задание', color: '#e8b93f' },
+    { key: 'training', label: 'Назначить тренинг', color: '#67d4e8' },
+    { key: 'test', label: 'Создать срез знаний', color: '#c589f5' },
   ]
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      const menuWidth = 230
+      const left = Math.min(Math.max(12, r.left), window.innerWidth - menuWidth - 12)
+      setPos({ top: r.bottom + 6, left })
+    }
+    setOpen(v => !v)
+  }
   return (
-    <div ref={rootRef} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(v => !v)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(184,134,11,0.08))', border: '1px solid rgba(124,58,237,0.3)', color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+    <>
+      <button ref={btnRef} onClick={toggle} className="btn-glass" style={{ padding: '7px 16px', fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6 }}>
         Назначить действие
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}><path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
       </button>
-      {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 500, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', overflow: 'hidden', minWidth: 220 }}>
+      {open && typeof document !== 'undefined' && createPortal(
+        <div ref={menuRef} style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 2000, minWidth: 230, background: 'rgba(28,24,20,0.92)', backdropFilter: 'blur(14px)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 16px 40px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
           {options.map(o => (
             <button key={o.key} onClick={() => { setOpen(false); onPick(o.key, insight) }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: 'var(--text-primary)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: o.color, flexShrink: 0 }} />
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: '#fff' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: o.color, flexShrink: 0, boxShadow: `0 0 6px ${o.color}` }} />
               {o.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
 
@@ -513,21 +547,29 @@ function AnalyticsAdmin() {
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {!compareMode && <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />}
-            <button onClick={() => setCompareMode(v => !v)} style={compareMode
-              ? { fontSize: 12.5, fontWeight: 600, padding: '8px 16px', borderRadius: 50, border: '1px solid #7c3aed', background: '#7c3aed', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }
-              : { ...tiny(false), display: 'flex', alignItems: 'center', gap: 5 }}>
+            <button onClick={() => setCompareMode(v => !v)} className={compareMode ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '9px 18px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v18M16 3v18M4 8h4M16 8h4M4 16h4M16 16h4" /></svg>
               {compareMode ? 'Вернуться к обычному виду' : 'Сравнить периоды'}
             </button>
-            {!compareMode && <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>}
+            {!compareMode && <button onClick={() => setFillOpen(true)} className="btn-glass-outline" style={{ padding: '9px 18px', fontSize: 12.5 }}>Заполнить показатели</button>}
           </div>
         </div>
 
-        {compareMode && (
+        {compareMode && (() => {
+          const t = today
+          const weekPreset = { from: shift(t, -6), to: t, cFrom: shift(t, -13), cTo: shift(t, -7) }
+          const n = new Date()
+          const monthPreset = { from: new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10), to: t, cFrom: new Date(n.getFullYear(), n.getMonth() - 1, 1).toISOString().slice(0, 10), cTo: new Date(n.getFullYear(), n.getMonth(), 0).toISOString().slice(0, 10) }
+          const isActive = p => from === p.from && to === p.to && compareFrom === p.cFrom && compareTo === p.cTo
+          const presetBtn = (p, label) => (
+            <button onClick={() => { setFrom(p.from); setTo(p.to); setCompareFrom(p.cFrom); setCompareTo(p.cTo) }}
+              className={isActive(p) ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '7px 16px', fontSize: 12 }}>{label}</button>
+          )
+          return (
           <div style={{ marginBottom: 24, padding: 20, borderRadius: 16, background: 'linear-gradient(135deg, rgba(124,58,237,0.05), rgba(124,58,237,0.01))', border: '1px solid rgba(124,58,237,0.25)' }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              <button onClick={() => { const t = today; setFrom(shift(t, -6)); setTo(t); setCompareFrom(shift(t, -13)); setCompareTo(shift(t, -7)) }} style={tiny(false)}>Эта неделя vs прошлая</button>
-              <button onClick={() => { const n = new Date(); setFrom(new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10)); setTo(today); setCompareFrom(new Date(n.getFullYear(), n.getMonth() - 1, 1).toISOString().slice(0, 10)); setCompareTo(new Date(n.getFullYear(), n.getMonth(), 0).toISOString().slice(0, 10)) }} style={tiny(false)}>Этот месяц vs прошлый</button>
+              {presetBtn(weekPreset, 'Эта неделя vs прошлая')}
+              {presetBtn(monthPreset, 'Этот месяц vs прошлый')}
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
               <div>
@@ -541,7 +583,8 @@ function AnalyticsAdmin() {
               </div>
             </div>
           </div>
-        )}
+          )
+        })()}
 
         {compareMode ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
@@ -638,6 +681,7 @@ function AnalyticsAdmin() {
         <style jsx global>{`
           @keyframes crownRevealOnce { 0% { opacity: 0; transform: scale(0.3) rotate(-15deg); } 55% { opacity: 1; transform: scale(1.15) rotate(4deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
           .ultra-crown-once { animation: crownRevealOnce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+          @keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
           .analytics-table-scroll::-webkit-scrollbar { height: 7px; }
           .analytics-table-scroll::-webkit-scrollbar-thumb { background: rgba(184,134,11,0.35); border-radius: 4px; }
           .analytics-table-scroll::-webkit-scrollbar-track { background: var(--bg-page); }
@@ -645,7 +689,7 @@ function AnalyticsAdmin() {
         `}</style>
 
         {/* Топ периода + Требуют внимания */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24, alignItems: 'start' }}>
           <div style={{ background: 'var(--bg-card)', backgroundImage: 'linear-gradient(135deg, rgba(19,122,57,0.07), rgba(19,122,57,0.01) 60%)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(19,122,57,0.3)' }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#137a39', marginBottom: 6 }}>Топ периода</h3>
             <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Средняя оценка = среднее уровней по показателям (0–4), где 0 — ниже порога, 1 — мин, 2 — средний, 3 — топ, 4 — ультра.</p>
@@ -678,7 +722,7 @@ function AnalyticsAdmin() {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={() => notifyEmployee(r.emp.user_id, empName(r.emp.user_id), r.belowMetrics)} style={{ fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 8, background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.25)', color: '#dc2626', cursor: 'pointer' }}>
+                  <button onClick={() => notifyEmployee(r.emp.user_id, empName(r.emp.user_id), r.belowMetrics)} className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5 }}>
                     Уведомить о показателе
                   </button>
                   <ActionMenu insight={{ userId: r.emp.user_id, userName: empName(r.emp.user_id), metricName: r.belowMetrics[0], text: `${empName(r.emp.user_id)} — ниже порога: ${r.belowMetrics.join(', ')}` }} onPick={(type, insight) => {
@@ -727,28 +771,21 @@ function AnalyticsAdmin() {
                     const isUltraCell = c.band === 'ultra'
                     const isAntiCell = c.band === 'none'
                     return (
-                      <div key={c.m.id} style={{
-                        textAlign: 'center', padding: '7px 4px', borderRadius: 8, position: 'relative',
-                        background: isAntiCell ? 'rgba(220,38,38,0.14)' : c.band ? BAND_TEXT[c.band] + '2e' : 'transparent',
-                        borderLeft: isAntiCell ? '3px solid #dc2626' : 'none',
-                        border: !isAntiCell && trend ? `1px solid ${trend === 'up' ? 'rgba(19,122,57,0.3)' : trend === 'down' ? 'rgba(220,38,38,0.3)' : 'var(--border-subtle)'}` : !isAntiCell ? '1px solid transparent' : undefined,
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                          {isUltraCell && <UltraCrown size={13} />}
-                          <span style={{ fontSize: 12.5, fontWeight: isAntiCell ? 800 : 700, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
+                      <div key={c.m.id} style={{ textAlign: 'center' }}>
+                        <MetricOrb value={c.v} unit={c.m.unit} band={c.band} floatDelay={(ri + Number(c.m.id)) % 5 * 0.4} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 3 }}>
+                          {isUltraCell && <UltraCrown size={11} />}
                           {trend === 'up' && (
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
                           )}
                           {trend === 'down' && (
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
                           )}
                           {trend === 'flat' && (
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.4" strokeLinecap="round"><path d="M5 12h14" /></svg>
                           )}
+                          {c.band && <span style={{ fontSize: 7.5, fontWeight: 700, color: BAND_TEXT[c.band], opacity: 0.85 }}>{TIER_LABEL[c.band]}</span>}
                         </div>
-                        {c.band && (
-                          <div style={{ fontSize: 8, fontWeight: 700, marginTop: 1, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)', opacity: 0.85 }}>{TIER_LABEL[c.band]}</div>
-                        )}
                       </div>
                     )
                   })}
