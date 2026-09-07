@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { useRouter } from 'next/router'
 import DateRangePicker from '../../components/DateRangePicker'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
@@ -16,7 +18,52 @@ const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentT
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 // Насыщенная версия BAND_COLORS — общий модуль подобран под тёмный фон,
 // используется в непеределанной админке, менять нельзя.
-const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+const BAND_TEXT = { none: '#dc2626', min: '#d97706', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+// Стеклянный шарик вместо прямоугольной ячейки — эксперимент по
+// прямому запросу от 6 сентября 2026. Цвет кольца по уровню: красный
+// голограммой — ниже нормы, жёлтый — средний, зелёный — топ/ультра.
+// Лёгкое покачивание — «шарики как бы парят».
+function MetricOrb({ value, unit, band, floatDelay = 0 }) {
+  const ringColor = band === 'none' ? '#dc2626' : band === 'min' ? '#d97706' : band === 'mid' ? '#d97706' : band === 'top' ? '#137a39' : band === 'ultra' ? '#7c3aed' : 'var(--text-muted)'
+  const gid = `orb${Math.round(Math.random() * 1e6)}`
+  return (
+    <div style={{ width: 46, height: 46, position: 'relative', margin: '0 auto', animation: band ? `orbFloat 3.6s ease-in-out ${floatDelay}s infinite` : 'none' }}>
+      <svg width="46" height="46" viewBox="0 0 46 46">
+        <defs>
+          <radialGradient id={gid} cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" /><stop offset="35%" stopColor="#ffffff" stopOpacity="0.55" /><stop offset="100%" stopColor={ringColor} stopOpacity="0.3" />
+          </radialGradient>
+        </defs>
+        {band && <circle cx="23" cy="23" r="21.5" fill="none" stroke={ringColor} strokeWidth="4" opacity="0.35" style={{ filter: 'blur(2px)' }} />}
+        <circle cx="23" cy="23" r="19" fill={band ? `url(#${gid})` : 'var(--bg-page)'} stroke={band ? ringColor : 'var(--border-subtle)'} strokeWidth="1.3" strokeOpacity="0.6" />
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: band ? ringColor : 'var(--text-muted)', textAlign: 'center', lineHeight: 1.05 }}>
+        {value != null ? `${value}${unit || ''}` : '—'}
+      </div>
+    </div>
+  )
+}
+
+const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: 'Средний', top: 'Топ', ultra: 'Ultra' }
+
+// Корона с камнями для ультра-уровня — разовое появление при загрузке
+// страницы (по фидбеку от 6 сентября 2026: зацикленная пульсация
+// «выглядит как баг», убрана полностью; вместо неё — спокойная,
+// один раз проигрывающаяся, не бесконечная анимация).
+function UltraCrown({ size = 22 }) {
+  return (
+    <svg width={size} height={size * 0.78} viewBox="0 0 100 78" className="ultra-crown-once">
+      <defs>
+        <linearGradient id="crownGold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffe9a8" /><stop offset="100%" stopColor="#c9973d" />
+        </linearGradient>
+      </defs>
+      <path d="M20 48 L20 32 L32 42 L42 15 L50 25 L58 15 L68 42 L80 32 L80 48 Z" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" />
+      <rect x="18" y="47" width="64" height="8" rx="4" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" />
+      <circle cx="50" cy="24" r="4" fill="#7c3aed" />
+    </svg>
+  )
+}
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
 const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
@@ -52,9 +99,10 @@ function ForecastBanner({ forecast, onCreateTask }) {
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {forecast.items.map(f => (
             <div key={f.metricId} style={{ padding: 12, borderRadius: 10, background: 'var(--bg-card)', border: `1px solid ${f.onTrack ? 'rgba(19,122,57,0.2)' : 'rgba(220,38,38,0.2)'}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{f.metricName}</span>
-                <span style={{ color: f.onTrack ? '#137a39' : '#dc2626', fontWeight: 700 }}>{f.projected}{f.unit} к концу месяца (цель {f.onTrack ? '≥' : '≥'} {f.goal}{f.unit})</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, fontSize: 12.5 }}>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{f.metricName}</span>
+                <span style={{ color: f.onTrack ? '#137a39' : '#dc2626', fontWeight: 700 }}>{f.projected}{f.unit} к концу месяца</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 11.5 }}>(цель ≥ {f.goal}{f.unit})</span>
               </div>
               {f.lowConfidence && <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>Прогноз предварительный — мало данных с начала месяца</div>}
               {!f.onTrack && f.cause?.length > 0 && (
@@ -72,36 +120,56 @@ function ForecastBanner({ forecast, onCreateTask }) {
 
 function ActionMenu({ insight, onPick }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => { if (btnRef.current && !btnRef.current.contains(e.target) && menuRef.current && !menuRef.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
   const options = [
-    { key: 'task', label: 'Мотивирующее задание', color: '#8a6208', icon: <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /> },
-    { key: 'training', label: 'Назначить тренинг', color: '#0e7490', icon: <path d="M22 10v6M2 10l10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5" /> },
-    { key: 'test', label: 'Создать срез знаний', color: '#7c3aed', icon: <path d="M9 11l3 3L22 4M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6" /> },
+    { key: 'task', label: 'Мотивирующее задание', color: '#e8b93f' },
+    { key: 'training', label: 'Назначить тренинг', color: '#67d4e8' },
+    { key: 'test', label: 'Создать срез знаний', color: '#c589f5' },
   ]
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      const menuWidth = 230
+      const left = Math.min(Math.max(12, r.left), window.innerWidth - menuWidth - 12)
+      setPos({ top: r.bottom + 6, left })
+    }
+    setOpen(v => !v)
+  }
   return (
-    <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(v => !v)} style={{ fontSize: 11.5, fontWeight: 600, padding: '6px 14px', borderRadius: 8, background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(184,134,11,0.08))', border: '1px solid rgba(124,58,237,0.3)', color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+    <>
+      <button ref={btnRef} onClick={toggle} className="btn-glass" style={{ padding: '7px 16px', fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6 }}>
         Назначить действие
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}><path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
       </button>
-      {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 30, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', overflow: 'hidden', minWidth: 220 }}>
+      {open && typeof document !== 'undefined' && createPortal(
+        <div ref={menuRef} style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 2000, minWidth: 230, background: 'rgba(28,24,20,0.92)', backdropFilter: 'blur(14px)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 16px 40px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
           {options.map(o => (
             <button key={o.key} onClick={() => { setOpen(false); onPick(o.key, insight) }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: 'var(--text-primary)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={o.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{o.icon}</svg>
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: '#fff' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: o.color, flexShrink: 0, boxShadow: `0 0 6px ${o.color}` }} />
               {o.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }
 
 function ActionModal({ draft, onClose, onSaved }) {
   const { showSuccess, showError } = useFeedback()
-  const [form, setForm] = useState({ title: draft.insight.metricName ? `Подтянуть «${draft.insight.metricName}»` : '', reason: draft.insight.text || '', deadline: '', rewardKarma: 20, testId: '', trainingNote: '' })
+  const isBulk = !!draft.bulkUserIds
+  const [form, setForm] = useState({ title: draft.insight?.metricName ? `Подтянуть «${draft.insight.metricName}»` : '', reason: draft.insight?.text || '', deadline: '', rewardKarma: 20, testId: '', trainingNote: '' })
   const [tests, setTests] = useState([])
   const [saving, setSaving] = useState(false)
 
@@ -122,10 +190,10 @@ function ActionModal({ draft, onClose, onSaved }) {
     const { data: { session } } = await supabase.auth.getSession()
     const r = await fetch('/api/company-admin/development/assign', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ actionType: draft.type, userId: draft.insight.userId, title: form.title, reason: form.reason, deadline: form.deadline || null, rewardKarma: form.rewardKarma, testId: form.testId || null, trainingNote: form.trainingNote })
+      body: JSON.stringify({ actionType: draft.type, userId: isBulk ? undefined : draft.insight.userId, userIds: isBulk ? draft.bulkUserIds : undefined, title: form.title, reason: form.reason, deadline: form.deadline || null, rewardKarma: form.rewardKarma, testId: form.testId || null, trainingNote: form.trainingNote })
     })
     setSaving(false)
-    if (r.ok) { showSuccess('Назначено — зафиксировано в плане развития сотрудника'); onSaved() } else showError((await r.json()).error || 'Не удалось назначить')
+    if (r.ok) { const d = await r.json(); showSuccess(isBulk ? `Назначено ${d.count} сотрудникам` : 'Назначено — зафиксировано в плане развития сотрудника'); onSaved() } else showError((await r.json()).error || 'Не удалось назначить')
   }
 
   const typeLabel = { task: 'Мотивирующее задание', training: 'Тренинг', test: 'Срез знаний' }[draft.type]
@@ -133,8 +201,8 @@ function ActionModal({ draft, onClose, onSaved }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={onClose}>
       <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 26, maxWidth: 460, width: '100%', boxShadow: 'var(--shadow-card-hover)' }} onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{typeLabel} — {draft.insight.userName}</h3>
-        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Зафиксируется в плане развития сотрудника с отслеживаемым дедлайном.</p>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{typeLabel} — {isBulk ? `${draft.bulkUserIds.length} сотрудников` : draft.insight.userName}</h3>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>{isBulk ? 'Назначится сразу всем выбранным, каждому отдельной записью в плане развития.' : 'Зафиксируется в плане развития сотрудника с отслеживаемым дедлайном.'}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Название</label>
@@ -175,11 +243,61 @@ function ActionModal({ draft, onClose, onSaved }) {
   )
 }
 
+function MiddlePerformersSection({ people, onAssign }) {
+  const [expanded, setExpanded] = useState(false)
+  const [selected, setSelected] = useState(new Set())
+  const toggle = (id) => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleAll = () => setSelected(s => s.size === people.length ? new Set() : new Set(people.map(p => p.userId)))
+
+  return (
+    <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+      <button onClick={() => setExpanded(v => !v)} className={expanded ? '' : 'middle-blink'} style={{
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+        padding: '11px 16px', borderRadius: 12, background: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))',
+        border: '1px solid rgba(14,116,144,0.25)', cursor: 'pointer', textAlign: 'left',
+      }}>
+        <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>
+          <b style={{ color: '#0e7490' }}>{people.length}</b> без явных сигналов — не забыть проверить
+        </span>
+        <svg width="11" height="11" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }}><path d="M1 3l4 4 4-4" stroke="#0e7490" strokeWidth="1.6" strokeLinecap="round" /></svg>
+      </button>
+
+      {expanded && (
+        <div style={{ marginTop: 10, padding: 14, borderRadius: 12, background: 'var(--bg-page)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <button onClick={toggleAll} style={{ fontSize: 11, color: '#0e7490', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+              {selected.size === people.length ? 'Снять выбор' : 'Выбрать всех'}
+            </button>
+            {selected.size > 0 && <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Выбрано: {selected.size}</span>}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: selected.size > 0 ? 12 : 0, maxHeight: 220, overflowY: 'auto' }}>
+            {people.map(p => (
+              <label key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', background: selected.has(p.userId) ? 'rgba(14,116,144,0.07)' : 'transparent' }}>
+                <input type="checkbox" checked={selected.has(p.userId)} onChange={() => toggle(p.userId)} />
+                <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>{p.name}</span>
+              </label>
+            ))}
+          </div>
+          {selected.size > 0 && (
+            <ActionMenu insight={{ userId: [...selected], userName: `${selected.size} сотрудников`, text: 'Стабильно ровная работа без явных сигналов — например, бонус за стабильность.' }}
+              onPick={(type) => onAssign(type, [...selected], `${selected.size} сотрудников`)} />
+          )}
+        </div>
+      )}
+      <style jsx global>{`
+        @keyframes middleBlinkOnce { 0%, 100% { box-shadow: 0 0 0 rgba(14,116,144,0); } 50% { box-shadow: 0 0 0 4px rgba(14,116,144,0.12); } }
+        .middle-blink { animation: middleBlinkOnce 2.2s ease-in-out 3; }
+      `}</style>
+    </div>
+  )
+}
+
 const INSIGHT_STYLE = {
   risk: { color: '#dc2626', bg: 'linear-gradient(135deg, rgba(220,38,38,0.06), rgba(220,38,38,0.02))', border: 'rgba(220,38,38,0.3)', label: 'Требует внимания' },
   anomaly: { color: '#7c3aed', bg: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(124,58,237,0.02))', border: 'rgba(124,58,237,0.28)', label: 'Аномалия' },
   training: { color: '#0e7490', bg: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))', border: 'rgba(14,116,144,0.28)', label: 'Обучение' },
   win: { color: '#137a39', bg: 'linear-gradient(135deg, rgba(19,122,57,0.06), rgba(19,122,57,0.02))', border: 'rgba(19,122,57,0.28)', label: 'Победа' },
+  consistent: { color: '#8a6208', bg: 'linear-gradient(135deg, rgba(184,134,11,0.07), rgba(184,134,11,0.02))', border: 'rgba(184,134,11,0.3)', label: 'На признание' },
 }
 
 function InsightCard({ insight, onCreateTask, compact }) {
@@ -210,9 +328,12 @@ function InsightCard({ insight, onCreateTask, compact }) {
 }
 
 function InsightsPanel({ from, to, empName }) {
+  const router = useRouter()
+  const { showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState([])
   const [forecast, setForecast] = useState(null)
+  const [middlePerformers, setMiddlePerformers] = useState([])
   const [filter, setFilter] = useState('all')
   const [showAllWins, setShowAllWins] = useState(false)
   const [actionDraft, setActionDraft] = useState(null)
@@ -221,15 +342,25 @@ function InsightsPanel({ from, to, empName }) {
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
-    if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null) }
+    if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null); setMiddlePerformers(d.middlePerformers || []) }
+    else { const t = await r.text(); showError(`ИИ-аналитик не загрузился (${r.status}): ${t.slice(0, 200)}`) }
     setLoading(false)
   }
   useEffect(() => { load() }, [from, to])
 
-  const openAction = (type, insight) => setActionDraft({ type, insight })
+  const openAction = (type, insight) => {
+    // Тренинг и тест — на настоящие, уже существующие страницы создания
+    // (по фидбеку от 6 сентября 2026: «у нас есть форма создания
+    // тренинга, именно туда нужно перекидывать», не изобретать
+    // упрощённую замену). Только задание остаётся модалкой — там
+    // действительно переиспользуется настоящая инфраструктура заданий.
+    if (type === 'training') { router.push(`/company-admin/learn?new=1${insight.metricId ? `&metric=${insight.metricId}` : ''}`); return }
+    if (type === 'test') { router.push('/company-admin/tests?new=1'); return }
+    setActionDraft({ type, insight })
+  }
 
   const priority = insights.filter(i => i.type === 'risk' || i.type === 'anomaly' || i.type === 'training')
-  const wins = insights.filter(i => i.type === 'win')
+  const wins = insights.filter(i => i.type === 'win' || i.type === 'consistent')
   const shownPriority = filter === 'all' ? priority : priority.filter(i => i.type === filter)
   const shownWins = filter === 'all' || filter === 'win' ? (showAllWins ? wins : wins.slice(0, 3)) : []
   const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, training: insights.filter(i => i.type === 'training').length, win: wins.length }
@@ -272,6 +403,9 @@ function InsightsPanel({ from, to, empName }) {
               )}
             </div>
           )}
+          {middlePerformers.length > 0 && filter === 'all' && (
+            <MiddlePerformersSection people={middlePerformers} onAssign={(type, userIds, label) => setActionDraft({ type, bulkUserIds: userIds, bulkLabel: label })} />
+          )}
         </>
           )}
         </>
@@ -283,7 +417,8 @@ function InsightsPanel({ from, to, empName }) {
 }
 
 function AnalyticsAdmin() {
-  const { showError } = useFeedback()
+  const router = useRouter()
+  const { showSuccess, showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState([])
   const [scope, setScope] = useState('company')
@@ -292,28 +427,43 @@ function AnalyticsAdmin() {
   const [prev, setPrev] = useState([])
   const [from, setFrom] = useState(shift(today, -6))
   const [to, setTo] = useState(today)
+  const [compareMode, setCompareMode] = useState(false)
+  const [compareFrom, setCompareFrom] = useState(shift(today, -13))
+  const [compareTo, setCompareTo] = useState(shift(today, -7))
   const [chartId, setChartId] = useState(null)
   const [sortAsc, setSortAsc] = useState(false)
+  const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [fillOpen, setFillOpen] = useState(false)
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
+  const [antiActionDraft, setAntiActionDraft] = useState(null)
+  const notifyEmployee = async (userId, name, belowMetrics) => {
+    const h = await auth()
+    const msg = `Руководитель просит подтянуть показател${belowMetrics.length > 1 ? 'и' : 'ь'}: ${belowMetrics.join(', ')}`
+    const r = await fetch('/api/company-admin/notify-employee', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, message: msg }) })
+    if (r.ok) showSuccess(`Уведомление отправлено — ${name}`)
+    else showError('Не удалось отправить уведомление')
+  }
 
   const load = async () => {
     setLoading(true)
     try {
       const h = await auth()
       const days = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1)
+      const pFrom = compareMode ? compareFrom : shift(from, -days)
+      const pTo = compareMode ? compareTo : shift(from, -1)
       const [r1, r2] = await Promise.all([
         fetch(`/api/kpi/analytics?from=${from}&to=${to}`, { headers: h }),
-        fetch(`/api/kpi/analytics?from=${shift(from, -days)}&to=${shift(from, -1)}`, { headers: h })
+        fetch(`/api/kpi/analytics?from=${pFrom}&to=${pTo}`, { headers: h })
       ])
       if (r1.ok) { const d = await r1.json(); setMetrics(d.metrics || []); setEmployees(d.employees || []); setCur(d.entries || []); setChartId(c => c || d.metrics?.[0]?.id || null); setScope(d.scope || 'company') }
-      else showError('Не удалось загрузить аналитику')
-      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) } else { setPrev([]); showError('Не удалось загрузить предыдущий период для сравнения') }
-    } catch (e) { showError('Сетевая ошибка') }
+      else { const t = await r1.text(); showError(`Не удалось загрузить аналитику (${r1.status}): ${t.slice(0, 200)}`) }
+      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) }
+      else { setPrev([]); const t = await r2.text(); showError(`Не удалось загрузить предыдущий период (${r2.status}, ${pFrom}—${pTo}): ${t.slice(0, 200)}`) }
+    } catch (e) { showError('Сетевая ошибка: ' + e.message) }
     setLoading(false)
   }
-  useEffect(() => { if (from && to) load() }, [from, to])
+  useEffect(() => { if (from && to) load() }, [from, to, compareMode, compareFrom, compareTo])
 
   const days = Math.max(1, Math.round((new Date(to) - new Date(from)) / 86400000) + 1)
   const empName = id => { const e = employees.find(x => x.user_id === id); return e ? ([e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email) : '—' }
@@ -327,14 +477,17 @@ function AnalyticsAdmin() {
     const cv = agg(m, cl), pv = agg(m, pl)
     const below = employees.filter(emp => bandOf(m, agg(m, cl.filter(e => e.user_id === emp.user_id))) === 'none').length
     const delta = cv != null && pv ? Math.round(((cv - pv) / pv) * 100) : null
-    // Для накопительных — среднее на запись отдельно от суммы (пункт 3
-    // фидбека от 6 сентября 2026: «звонки нужно 2 цифры, общее
-    // количество и среднее»). Для процентных типов — подозрение на
-    // неверный тип, если сумма (а не честная доля) выдаёт нереальное
-    // значение — явно на карточке, не только в переписке.
-    const perEntryAvg = isSum(m) && cl.length ? Math.round((cl.reduce((s, e) => s + Number(e.value), 0) / cl.length) * 10) / 10 : null
+    // Оба числа всегда, не только для накопительных типов (по фидбеку
+    // от 6 сентября 2026: «менеджер может ударно поработать один день
+    // и завалить другой, среднее это скроет» — среднее должно быть
+    // главным числом для оценки, но сумма за период тоже нужна для
+    // контекста). Для процентных типов сумма не показывается — сложить
+    // проценты за разные дни физически бессмысленно.
+    const totalSum = cl.length ? Math.round(cl.reduce((s, e) => s + Number(e.value), 0) * 10) / 10 : null
+    const avgPerEntry = totalSum != null && cl.length ? Math.round((totalSum / cl.length) * 10) / 10 : null
+    const showBoth = m.kpi_type !== 'ratio' && m.kpi_type !== 'plan'
     const suspicious = (m.kpi_type === 'ratio' || m.kpi_type === 'plan') && cv != null && cv > 200
-    return { m, cv, delta, below, goal: scaled(m).thr_top, perEntryAvg, suspicious }
+    return { m, cv, pv, delta, below, goal: scaled(m).thr_top, totalSum, avgPerEntry, showBoth, suspicious }
   })
 
   const rows = employees.map(emp => {
@@ -396,19 +549,96 @@ function AnalyticsAdmin() {
             {scope === 'team' ? 'Команда' : 'Вся компания'}
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />
-            <button onClick={() => setFillOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Заполнить показатели</button>
+            {!compareMode && <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />}
+            <button onClick={() => setCompareMode(v => !v)} className={compareMode ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '9px 18px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v18M16 3v18M4 8h4M16 8h4M4 16h4M16 16h4" /></svg>
+              {compareMode ? 'Вернуться к обычному виду' : 'Сравнить периоды'}
+            </button>
+            {!compareMode && <button onClick={() => setFillOpen(true)} className="btn-glass-outline" style={{ padding: '9px 18px', fontSize: 12.5 }}>Заполнить показатели</button>}
           </div>
         </div>
 
+        {compareMode && (() => {
+          const t = today
+          const weekPreset = { from: shift(t, -6), to: t, cFrom: shift(t, -13), cTo: shift(t, -7) }
+          const n = new Date()
+          const monthPreset = { from: new Date(n.getFullYear(), n.getMonth(), 1).toISOString().slice(0, 10), to: t, cFrom: new Date(n.getFullYear(), n.getMonth() - 1, 1).toISOString().slice(0, 10), cTo: new Date(n.getFullYear(), n.getMonth(), 0).toISOString().slice(0, 10) }
+          const isActive = p => from === p.from && to === p.to && compareFrom === p.cFrom && compareTo === p.cTo
+          const presetBtn = (p, label) => (
+            <button onClick={() => { setFrom(p.from); setTo(p.to); setCompareFrom(p.cFrom); setCompareTo(p.cTo) }}
+              className={isActive(p) ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '7px 16px', fontSize: 12 }}>{label}</button>
+          )
+          return (
+          <div style={{ marginBottom: 24, padding: 20, borderRadius: 16, background: 'linear-gradient(135deg, rgba(124,58,237,0.05), rgba(124,58,237,0.01))', border: '1px solid rgba(124,58,237,0.25)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {presetBtn(weekPreset, 'Эта неделя vs прошлая')}
+              {presetBtn(monthPreset, 'Этот месяц vs прошлый')}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700, marginBottom: 6 }}>Период А</div>
+                <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />
+              </div>
+              <span style={{ color: '#7c3aed', fontSize: 18, fontWeight: 700, paddingBottom: 8 }}>vs</span>
+              <div>
+                <div style={{ fontSize: 11, color: '#8a6208', fontWeight: 700, marginBottom: 6 }}>Период Б</div>
+                <DateRangePicker from={compareFrom} to={compareTo} onChange={r => { if (r.from) setCompareFrom(r.from); if (r.to) setCompareTo(r.to) }} />
+              </div>
+            </div>
+          </div>
+          )
+        })()}
+
+        {compareMode ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+            {metricSummary.map(({ m, cv, pv, delta, suspicious }) => {
+              if (suspicious) return null
+              const better = delta == null ? null : m.kpi_type === 'inverse' ? delta < 0 : delta > 0
+              return (
+                <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: `1px solid ${better == null ? 'var(--border-subtle)' : better ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>{m.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: '#7c3aed', fontWeight: 700, marginBottom: 4 }}>Период А</div>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{cv != null ? `${cv}${m.unit}` : '—'}</div>
+                    </div>
+                    <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M0 8h24M18 2l6 6-6 6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: '#8a6208', fontWeight: 700, marginBottom: 4 }}>Период Б</div>
+                      <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{pv != null ? `${pv}${m.unit}` : '—'}</div>
+                    </div>
+                    {better != null && (
+                      <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: better ? '#137a39' : '#dc2626' }}>{better ? 'Стало лучше' : 'Стало хуже'}</div>
+                        <div style={{ fontSize: 13, color: better ? '#137a39' : '#dc2626' }}>{delta > 0 ? '+' : ''}{delta}%</div>
+                      </div>
+                    )}
+                    {better == null && <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-muted)' }}>Недостаточно данных для сравнения</div>}
+                  </div>
+                </div>
+              )
+            })}
+            {metricSummary.length === 0 && <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Показателей пока нет</div>}
+          </div>
+        ) : (
+        <>
         {/* Карточки показателей */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14, marginBottom: 24 }}>
-          {metricSummary.map(({ m, cv, delta, below, goal, perEntryAvg, suspicious }) => {
+          {metricSummary.map(({ m, cv, pv, delta, below, goal, totalSum, avgPerEntry, showBoth, suspicious }) => {
             const b = bandOf(m, cv)
+            const isUltra = b === 'ultra' && !suspicious
             return (
-              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: isUltra ? '0 0 0 1.5px rgba(124,58,237,0.35), var(--shadow-card)' : 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}>
+                {isUltra && (
+                  <div style={{ position: 'absolute', top: -16, right: 10 }}><UltraCrown size={40} /></div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <span title={m.name} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                    {b && !suspicious && (
+                      <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 0.2, padding: '2px 7px', borderRadius: 20, flexShrink: 0, background: isUltra ? 'linear-gradient(135deg, #7c3aed, #a855f7)' : BAND_TEXT[b] + '1a', color: isUltra ? '#fff' : BAND_TEXT[b] }}>{TIER_LABEL[b]}</span>
+                    )}
+                    <span style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</span>
+                  </span>
                   {suspicious ? (
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', whiteSpace: 'nowrap' }}>Тип настроен неверно</span>
                   ) : (
@@ -420,16 +650,23 @@ function AnalyticsAdmin() {
                     Сумма за период вместо честной доли ({cv}{m.unit} — так не бывает). Откройте «Управление целями» → этот показатель → смените тип на «Доля/конверсия».
                   </div>
                 )}
-                {perEntryAvg != null && (
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>в среднем {perEntryAvg}{m.unit} в день на сотрудника</div>
+                {!suspicious && showBoth && avgPerEntry != null && (
+                  <div style={{ display: 'flex', gap: 14, padding: '8px 10px', borderRadius: 9, background: 'var(--bg-page)', fontSize: 11 }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{avgPerEntry}{m.unit} <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>в среднем/день</span></span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{totalSum}{m.unit} <span style={{ color: 'var(--text-muted)' }}>всего за период</span></span>
+                  </div>
                 )}
                 {!suspicious && delta != null && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 9, background: delta >= 0 ? 'rgba(19,122,57,0.08)' : 'rgba(220,38,38,0.08)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={delta >= 0 ? '#137a39' : '#dc2626'} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d={delta >= 0 ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                    </svg>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: delta >= 0 ? '#137a39' : '#dc2626' }}>{delta >= 0 ? '+' : ''}{delta}%</span>
-                    <span style={{ fontSize: 10.5, color: 'var(--text-secondary)' }}>к предыдущим {days} дн.</span>
+                  <div style={{ padding: '9px 10px', borderRadius: 9, background: delta > 0 ? 'rgba(19,122,57,0.08)' : delta < 0 ? 'rgba(220,38,38,0.08)' : 'var(--bg-page)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                      {delta > 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>}
+                      {delta < 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>}
+                      {delta === 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: delta > 0 ? '#137a39' : delta < 0 ? '#dc2626' : 'var(--text-muted)' }}>{delta > 0 ? '+' : ''}{delta}%</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                      {compareMode ? 'Период Б' : `предыдущие ${days} дн.`}: <b style={{ color: 'var(--text-primary)' }}>{pv}{m.unit}</b> → {compareMode ? 'период А' : 'сейчас'}: <b style={{ color: 'var(--text-primary)' }}>{cv}{m.unit}</b>
+                    </div>
                   </div>
                 )}
                 {!suspicious && delta == null && cv != null && (
@@ -444,9 +681,18 @@ function AnalyticsAdmin() {
           })}
           {metricSummary.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Показателей пока нет</div>}
         </div>
+        <style jsx global>{`
+          @keyframes crownRevealOnce { 0% { opacity: 0; transform: scale(0.3) rotate(-15deg); } 55% { opacity: 1; transform: scale(1.15) rotate(4deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+          .ultra-crown-once { animation: crownRevealOnce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+          @keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+          .analytics-table-scroll::-webkit-scrollbar { height: 7px; }
+          .analytics-table-scroll::-webkit-scrollbar-thumb { background: rgba(184,134,11,0.35); border-radius: 4px; }
+          .analytics-table-scroll::-webkit-scrollbar-track { background: var(--bg-page); }
+          .analytics-table-scroll { scrollbar-width: thin; scrollbar-color: rgba(184,134,11,0.35) var(--bg-page); }
+        `}</style>
 
         {/* Топ периода + Требуют внимания */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24, alignItems: 'start' }}>
           <div style={{ background: 'var(--bg-card)', backgroundImage: 'linear-gradient(135deg, rgba(19,122,57,0.07), rgba(19,122,57,0.01) 60%)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(19,122,57,0.3)' }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#137a39', marginBottom: 6 }}>Топ периода</h3>
             <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Средняя оценка = среднее уровней по показателям (0–4), где 0 — ниже порога, 1 — мин, 2 — средний, 3 — топ, 4 — ультра.</p>
@@ -463,7 +709,7 @@ function AnalyticsAdmin() {
           </div>
           <div style={{ background: 'var(--bg-card)', backgroundImage: 'linear-gradient(135deg, rgba(220,38,38,0.07), rgba(220,38,38,0.01) 60%)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: '1px solid rgba(220,38,38,0.3)' }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>Требуют внимания</h3>
-            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Какие именно показатели ниже порога за период — не только у кого, но и что конкретно чинить.</p>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>Какие именно показатели ниже порога за период — не только у кого, но и что конкретно исправить.</p>
             {anti.map(r => (
               <div key={r.emp.user_id} style={{ padding: '12px 14px', borderRadius: 10, background: 'var(--bg-page)', marginBottom: 8, borderLeft: '3px solid #dc2626', transition: 'transform .2s' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateX(3px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}>
@@ -472,12 +718,22 @@ function AnalyticsAdmin() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', background: 'rgba(220,38,38,0.08)', padding: '2px 9px', borderRadius: 20 }}>{r.belowCount} показ. ниже порога</span>
                 </div>
                 {r.belowMetrics.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
                     {r.belowMetrics.map((name, mi) => (
                       <span key={mi} style={{ fontSize: 11, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', padding: '2px 9px', borderRadius: 20 }}>{name}</span>
                     ))}
                   </div>
                 )}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button onClick={() => notifyEmployee(r.emp.user_id, empName(r.emp.user_id), r.belowMetrics)} className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5 }}>
+                    Уведомить о показателе
+                  </button>
+                  <ActionMenu insight={{ userId: r.emp.user_id, userName: empName(r.emp.user_id), metricName: r.belowMetrics[0], text: `${empName(r.emp.user_id)} — ниже порога: ${r.belowMetrics.join(', ')}` }} onPick={(type, insight) => {
+                    if (type === 'training') { router.push(`/company-admin/learn?new=1`); return }
+                    if (type === 'test') { router.push('/company-admin/tests?new=1'); return }
+                    setAntiActionDraft({ type, insight })
+                  }} />
+                </div>
               </div>
             ))}
             {anti.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Все показатели в норме</p>}
@@ -493,32 +749,46 @@ function AnalyticsAdmin() {
 
         {/* Таблица сотрудник × показатели */}
         <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудник × показатели</h3>
-            <button onClick={() => setSortAsc(a => !a)} style={tiny(false)}>{sortAsc ? 'Слабые первые' : 'Сильные первые'}</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Сотрудник × показатели {onlyFlagged && `(с сигналами: ${rows.filter(r => r.belowCount > 0 || r.cells.some(c => c.band === 'ultra')).length})`}</h3>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setOnlyFlagged(v => !v)} style={tiny(onlyFlagged)}>Только с сигналами</button>
+              <button onClick={() => setSortAsc(a => !a)} style={tiny(false)}>{sortAsc ? 'Слабые первые' : 'Сильные первые'}</button>
+            </div>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="analytics-table-scroll" style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 900 }}>
               <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 <div>Сотрудник</div>
-                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div title={m.name} style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
+                {metrics.map(m => <div key={m.id} style={{ textAlign: 'center', minWidth: 0 }}><div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 11, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.25 }}>{m.name}</div><div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>цель ≥ {scaled(m).thr_top}{m.unit}</div></div>)}
                 <div style={{ textAlign: 'center' }}>Итог</div>
               </div>
-              {rows.map((r, ri) => (
+              {(onlyFlagged ? rows.filter(r => r.belowCount > 0 || r.cells.some(c => c.band === 'ultra')) : rows).map((r, ri) => (
                 <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '11px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', background: ri % 2 ? 'var(--bg-page)' : 'transparent', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.background = ri % 2 ? 'var(--bg-page)' : 'transparent'}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(r.emp.user_id)}</div>
+                  <a href={`/company-admin/development-plan?userId=${r.emp.user_id}&name=${encodeURIComponent(empName(r.emp.user_id))}`} style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>{empName(r.emp.user_id)}</a>
                   {r.cells.map(c => {
                     const prevVal = agg(c.m, prev.filter(e => e.user_id === r.emp.user_id && e.metric_id === c.m.id))
-                    const trendUp = prevVal != null && c.v != null ? (c.m.kpi_type === 'inverse' ? c.v < prevVal : c.v > prevVal) : null
+                    const trend = prevVal == null || c.v == null ? null : (c.m.kpi_type === 'inverse' ? (c.v < prevVal ? 'up' : c.v > prevVal ? 'down' : 'flat') : (c.v > prevVal ? 'up' : c.v < prevVal ? 'down' : 'flat'))
+                    const isUltraCell = c.band === 'ultra'
+                    const isAntiCell = c.band === 'none'
                     return (
-                      <div key={c.m.id} style={{ textAlign: 'center', padding: '6px 4px', borderRadius: 8, background: c.band ? BAND_TEXT[c.band] + '1c' : 'transparent', border: trendUp != null ? `1px solid ${trendUp ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}` : '1px solid transparent' }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: c.band ? BAND_TEXT[c.band] : 'var(--text-muted)' }}>{c.v != null ? `${c.v}${c.m.unit}` : '—'}</span>
-                        {trendUp != null && (
-                          <svg width="9" height="9" viewBox="0 0 24 24" style={{ marginLeft: 4, verticalAlign: 1 }} fill="none" stroke={trendUp ? '#137a39' : '#dc2626'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <path d={trendUp ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                          </svg>
-                        )}
+                      <div key={c.m.id} style={{ textAlign: 'center' }}>
+                        <MetricOrb value={c.v} unit={c.m.unit} band={c.band} floatDelay={(ri + Number(c.m.id)) % 5 * 0.4} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 3 }}>
+                          {isUltraCell && <UltraCrown size={11} />}
+                          {trend === 'up' && (
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                          )}
+                          {trend === 'down' && (
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                          )}
+                          {trend === 'flat' && (
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.4" strokeLinecap="round"><path d="M5 12h14" /></svg>
+                          )}
+                          {c.band && <span style={{ fontSize: 7.5, fontWeight: 700, color: BAND_TEXT[c.band], opacity: 0.85 }}>{TIER_LABEL[c.band]}</span>}
+                        </div>
                       </div>
                     )
                   })}
@@ -529,8 +799,11 @@ function AnalyticsAdmin() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
       <FillReportModal open={fillOpen} onClose={() => { setFillOpen(false); load() }} />
+      {antiActionDraft && <ActionModal draft={antiActionDraft} onClose={() => setAntiActionDraft(null)} onSaved={() => setAntiActionDraft(null)} />}
     </div>
   )
 }

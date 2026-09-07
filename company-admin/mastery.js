@@ -460,6 +460,9 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
                 {form.kpi_type === 'cumulative' && /конверси|\bcr\b|conversion/i.test(form.name) && (
                   <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Похоже на долю/конверсию по названию, но выбран тип «Накопительное» — он суммирует за период, а не считает долю. Конверсия физически не может быть больше 100%. Скорее всего, нужен тип «Доля/конверсия» ниже.</p>
                 )}
+                {form.kpi_type !== 'inverse' && /\bSLA\b|время|скорост/i.test(form.name) && (
+                  <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>Похоже на время/скорость/SLA по названию — для таких показателей обычно меньше значит лучше. Если это так, выберите тип «Инверсия (меньше — лучше)» ниже, иначе сравнение периодов и уровни будут читаться наоборот.</p>
+                )}
               </div>
               <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Единица</label><select className="input-field" style={{ width: '100%' }} value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option value="%">%</option><option value="шт">шт</option><option value="руб">руб</option><option value="мин">мин</option></select></div>
               <div><label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Тип</label><button onClick={() => setStep('type')} style={{ ...ghostBtn, padding: '8px 12px', fontSize: 11, width: '100%' }}>Сменить</button></div>
