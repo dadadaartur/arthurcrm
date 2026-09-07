@@ -329,6 +329,7 @@ function InsightCard({ insight, onCreateTask, compact }) {
 
 function InsightsPanel({ from, to, empName }) {
   const router = useRouter()
+  const { showError } = useFeedback()
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState([])
   const [forecast, setForecast] = useState(null)
@@ -342,6 +343,7 @@ function InsightsPanel({ from, to, empName }) {
     const { data: { session } } = await supabase.auth.getSession()
     const r = await fetch(`/api/company-admin/insights?from=${from}&to=${to}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
     if (r.ok) { const d = await r.json(); setInsights(d.insights || []); setForecast(d.forecast || null); setMiddlePerformers(d.middlePerformers || []) }
+    else { const t = await r.text(); showError(`ИИ-аналитик не загрузился (${r.status}): ${t.slice(0, 200)}`) }
     setLoading(false)
   }
   useEffect(() => { load() }, [from, to])
@@ -455,9 +457,10 @@ function AnalyticsAdmin() {
         fetch(`/api/kpi/analytics?from=${pFrom}&to=${pTo}`, { headers: h })
       ])
       if (r1.ok) { const d = await r1.json(); setMetrics(d.metrics || []); setEmployees(d.employees || []); setCur(d.entries || []); setChartId(c => c || d.metrics?.[0]?.id || null); setScope(d.scope || 'company') }
-      else showError('Не удалось загрузить аналитику')
-      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) } else { setPrev([]); showError('Не удалось загрузить предыдущий период для сравнения') }
-    } catch (e) { showError('Сетевая ошибка') }
+      else { const t = await r1.text(); showError(`Не удалось загрузить аналитику (${r1.status}): ${t.slice(0, 200)}`) }
+      if (r2.ok) { const d = await r2.json(); setPrev(d.entries || []) }
+      else { setPrev([]); const t = await r2.text(); showError(`Не удалось загрузить предыдущий период (${r2.status}, ${pFrom}—${pTo}): ${t.slice(0, 200)}`) }
+    } catch (e) { showError('Сетевая ошибка: ' + e.message) }
     setLoading(false)
   }
   useEffect(() => { if (from && to) load() }, [from, to, compareMode, compareFrom, compareTo])
