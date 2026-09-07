@@ -3,6 +3,7 @@ import { requireAuth, hasPermission } from '../../../lib/auth'
 import { getManagerScope } from '../../../lib/departments'
 
 export default async function handler(req, res) {
+  try {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
   if (!hasPermission(ctx.profile, 'can_review_tasks') && !ctx.profile?.is_company_admin) return res.status(403).json({ error: 'Недостаточно прав' })
@@ -33,4 +34,8 @@ export default async function handler(req, res) {
   const { data: entries } = await q
 
   res.status(200).json({ metrics: metrics || [], employees: employees || [], entries: entries || [], scope: scope === null ? 'company' : 'team' })
+  } catch (e) {
+    console.error('kpi/analytics.js crash:', e)
+    res.status(500).json({ error: e.message, stack: e.stack?.split('\n').slice(0, 5).join(' | ') })
+  }
 }

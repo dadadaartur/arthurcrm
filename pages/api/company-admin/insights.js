@@ -41,6 +41,7 @@ function splitPeriods(fromISO, toISO, n = 3) {
 }
 
 export default async function handler(req, res) {
+  try {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
   const companyId = ctx.profile?.company_id
@@ -51,11 +52,16 @@ export default async function handler(req, res) {
   const to = req.query.to || new Date().toISOString().slice(0, 10)
   const periods = splitPeriods(from, to, 3)
 
-  const { data: allDepartments } = await a.from('departments').select('id, parent_department_id, manager_user_id').eq('company_id', companyId)
+  // Независимые запросы — параллельно, не по очереди. Семь
+  // последовательных обращений к базе могли складываться в таймаут
+  // функции на бесплатном тарифе Vercel (тот же лимит, что уже
+  // обсуждали для cron) — особенно после того как засеяли тестовые
+  // данные на 37 дней, объём вырос заметно.
+  const [{ data: allDepartments }, { data: allEmps }] = await Promise.all([
+    a.from('departments').select('id, parent_department_id, manager_user_id').eq('company_id', companyId),
+    a.from('profiles').select('user_id, first_name, last_name, display_name, email, department_id').eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null),
+  ])
   const scope = getManagerScope(ctx.profile, allDepartments || [])
-  let empQuery = a.from('profiles').select('user_id, first_name, last_name, display_name, email, department_id')
-    .eq('company_id', companyId).eq('is_company_admin', false).is('deleted_at', null)
-  const { data: allEmps } = await empQuery
   let pool = allEmps || []
   if (scope !== null) {
     const scopeDeptIds = new Set(scope.flatMap(d => getSubtreeIds(allDepartments || [], d)))
@@ -66,17 +72,6 @@ export default async function handler(req, res) {
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
   const empById = Object.fromEntries(pool.map(e => [e.user_id, e]))
 
-  const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true)
-  const { data: entries } = await a.from('kpi_entries').select('metric_id, user_id, value, entry_date')
-    .gte('entry_date', from).lte('entry_date', to).in('user_id', [...poolIds])
-
-  // Прогноз выполнения целей на текущий календарный месяц — считается
-  // ВСЕГДА по календарному месяцу, независимо от выбранного на
-  // странице диапазона дат (иначе «прогноз на месяц» значил бы разное
-  // в зависимости от случайно выбранных from/to). По каждой цели —
-  // куда идём при текущем темпе, и если промах — кто именно тянет
-  // вниз (переиспользует ту же логику сравнения с командой, что и
-  // аномалии, не отдельный алгоритм).
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
@@ -86,9 +81,23 @@ export default async function handler(req, res) {
   const monthStartISO = monthStart.toISOString().slice(0, 10)
   const todayISO = today.toISOString().slice(0, 10)
 
-  const { data: monthEntries } = daysSoFar >= 3
-    ? await a.from('kpi_entries').select('metric_id, user_id, value, entry_date').gte('entry_date', monthStartISO).lte('entry_date', todayISO).in('user_id', [...poolIds])
-    : { data: [] }
+  const [{ data: metrics }, { data: entries }, monthEntriesResult, { data: activeTests }] = await Promise.all([
+    a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true),
+    a.from('kpi_entries').select('metric_id, user_id, value, entry_date').eq('company_id', companyId).gte('entry_date', from).lte('entry_date', to).in('user_id', [...poolIds]),
+    daysSoFar >= 3
+      ? a.from('kpi_entries').select('metric_id, user_id, value, entry_date').eq('company_id', companyId).gte('entry_date', monthStartISO).lte('entry_date', todayISO).in('user_id', [...poolIds])
+      : Promise.resolve({ data: [] }),
+    a.from('tests').select('id, title').eq('company_id', companyId).eq('is_active', true),
+  ])
+  const monthEntries = monthEntriesResult.data
+
+  // Прогноз выполнения целей на текущий календарный месяц — считается
+  // ВСЕГДА по календарному месяцу, независимо от выбранного на
+  // странице диапазона дат (иначе «прогноз на месяц» значил бы разное
+  // в зависимости от случайно выбранных from/to). По каждой цели —
+  // куда идём при текущем темпе, и если промах — кто именно тянет
+  // вниз (переиспользует ту же логику сравнения с командой, что и
+  // аномалии, не отдельный алгоритм).
 
   const forecast = []
   if (daysSoFar >= 3) {
@@ -233,8 +242,8 @@ export default async function handler(req, res) {
   // Тренинги и тесты — используем уже существующую систему (tests,
   // test_attempts), не строим параллельную (пункт 4 фидбека от
   // 6 сентября 2026: «должен уметь контролировать кто сколько
-  // тренингов прошёл, сколько тестов сдал, на какой балл»).
-  const { data: activeTests } = await a.from('tests').select('id, title').eq('company_id', companyId).eq('is_active', true)
+  // тренингов прошёл, сколько тестов сдал, на какой балл»). Сам список
+  // тестов уже получен выше вместе с остальными параллельными запросами.
   if (activeTests?.length) {
     const { data: attempts } = await a.from('test_attempts').select('test_id, user_id, score, is_passed').in('test_id', activeTests.map(t => t.id)).in('user_id', [...poolIds])
     for (const t of activeTests) {
@@ -255,4 +264,8 @@ export default async function handler(req, res) {
   insights.sort((x, y) => order[x.type] - order[y.type] || (y.changePct || 0) - (x.changePct || 0))
 
   res.status(200).json({ insights, periods, middlePerformers, forecast: { ready: forecastReady, daysLeft: daysTotal - daysSoFar, items: forecast, atRiskCount, totalCount: forecast.length } })
+  } catch (e) {
+    console.error('insights.js crash:', e)
+    res.status(500).json({ error: e.message, stack: e.stack?.split('\n').slice(0, 5).join(' | ') })
+  }
 }
