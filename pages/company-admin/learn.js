@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
@@ -22,6 +23,10 @@ function LearnAdmin() {
   const [video, setVideo] = useState(null)
   const [preview, setPreview] = useState(null)
   const [edit, setEdit] = useState(null)
+  const router = useRouter()
+  useEffect(() => {
+    if (router.query.new) setEdit({ type: 'video', assign_type: 'all', recommend_below: 'all', metric_id: router.query.metric ? Number(router.query.metric) : null })
+  }, [router.query.new, router.query.metric])
   const [progressOpen, setProgressOpen] = useState(null)
 
   const load = async () => {

@@ -54,6 +54,7 @@ function TestsAdmin() {
         const { data: tr } = await supabase.from('kpi_trainings').select('*').eq('id', router.query.training).maybeSingle()
         if (tr) { setTraining(tr); setForm(f => ({ ...f, training_id: tr.id, title: f.title || tr.title })) }
       }
+      if (router.query.new) setView('builder')
     }
     init()
   }, [])
