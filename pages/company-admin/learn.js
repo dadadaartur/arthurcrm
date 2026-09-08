@@ -8,7 +8,7 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '7px 14px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 11, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 function LearnAdmin() {
@@ -92,8 +92,8 @@ function LearnAdmin() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Обучение: тренинги и тесты" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button onClick={() => setTab('active')} style={{ ...ghostBtn, color: tab === 'active' ? '#8a6208' : 'var(--text-primary)', borderColor: tab === 'active' ? 'var(--border-gold)' : 'var(--border-gold)' }}>Активные</button>
-            <button onClick={() => setTab('archive')} style={{ ...ghostBtn, color: tab === 'archive' ? '#8a6208' : 'var(--text-primary)', borderColor: tab === 'archive' ? 'var(--border-gold)' : 'var(--border-gold)' }}>Архив</button>
+            <button onClick={() => setTab('active')} style={{ ...ghostBtn, color: tab === 'active' ? '#d97706' : 'var(--text-primary)', borderColor: tab === 'active' ? 'var(--border-gold)' : 'var(--border-gold)' }}>Активные</button>
+            <button onClick={() => setTab('archive')} style={{ ...ghostBtn, color: tab === 'archive' ? '#d97706' : 'var(--text-primary)', borderColor: tab === 'archive' ? 'var(--border-gold)' : 'var(--border-gold)' }}>Архив</button>
             <button onClick={() => setEdit({ type: 'video', assign_type: 'all', recommend_below: 'all' })} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }}>Новый тренинг</button>
           </div>
         } />
@@ -120,8 +120,8 @@ function LearnAdmin() {
                   {watchStats(t).map(s => (
                     <div key={s.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                       <span style={{ color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{empName(s.uid)}</span>
-                      <div style={{ width: 90, height: 5, borderRadius: 3, background: 'var(--bg-page)' }}><div style={{ height: '100%', width: s.pct + '%', borderRadius: 3, background: s.pct >= 90 ? '#137a39' : '#8a6208' }} /></div>
-                      <span style={{ color: s.pct >= 90 ? '#137a39' : '#8a6208', width: 34, textAlign: 'right' }}>{s.pct}%</span>
+                      <div style={{ width: 90, height: 5, borderRadius: 3, background: 'var(--bg-page)' }}><div style={{ height: '100%', width: s.pct + '%', borderRadius: 3, background: s.pct >= 90 ? '#137a39' : '#d97706' }} /></div>
+                      <span style={{ color: s.pct >= 90 ? '#137a39' : '#d97706', width: 34, textAlign: 'right' }}>{s.pct}%</span>
                     </div>
                   ))}
                 </div>

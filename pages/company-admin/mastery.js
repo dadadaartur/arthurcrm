@@ -14,13 +14,13 @@ import PeriodHint, { PERIOD_LABELS } from '../../components/PeriodHint'
 
 const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9а-яё]+/gi, ' ').replace(/^ +|_+$/g, '')
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '9px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 // Насыщенная версия BAND_COLORS (общий модуль lib/kpi.js подобран под
 // тёмный фон и используется на других, ещё не переделанных страницах —
 // его нельзя менять глобально). Только для подписей порогов на этой
 // уже светлой странице.
-const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#d97706', top: '#137a39', ultra: '#7c3aed' }
 const TYPE_META = [
   { key: 'average', label: 'Среднее за период', hint: 'За один день — просто факт за этот день. За период (неделя/месяц) — среднее по дням, не сумма. Премия считается по среднему за месяц.', ex: 'Звонки в среднем за день, CSI, средний чек' },
   { key: 'cumulative', label: 'Накопительное', hint: 'Всегда сумма — и за один день, и за весь период. Выберите «Среднее за период» выше, если нужна не сумма, а среднее число в день.', ex: 'Итоговые продажи за месяц, число закрытых сделок' },
@@ -229,7 +229,7 @@ function MasteryAdmin() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление целями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(184,134,11,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(217,119,6,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
             <Link href="/company-admin/mastery-report" style={{ ...ghostBtn, textDecoration: 'none', borderColor: 'rgba(14,116,144,0.35)', color: '#0e7490' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Отчёт по выполнению</Link>
             <button onClick={() => setCreateOpen(true)} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: 'var(--accent-gold)' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Создать цель</button>
           </div>
@@ -248,7 +248,7 @@ function MasteryAdmin() {
                       {m.reward_image_url ? (
                         <img src={m.reward_image_url} alt="" style={{ width: 16, height: 16, borderRadius: 4, objectFit: 'cover' }} />
                       ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="1" /><path d="M12 8v13M3 12h18M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="13" rx="1" /><path d="M12 8v13M3 12h18M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5" /></svg>
                       )}
                     </span>
                   )}
@@ -259,7 +259,7 @@ function MasteryAdmin() {
                 <div onClick={() => setDetailsMetric(m)} title="Показать полностью" style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 16, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, cursor: 'pointer' }}>{m.name}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                   <span style={{ fontSize: 10, color: '#7c3aed', whiteSpace: 'nowrap' }}>{TYPE_LABELS[m.kpi_type || 'cumulative']}</span>
-                  <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(184,134,11,0.08)', color: m.department_id ? '#0e7490' : '#8a6208', border: `1px solid ${m.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
+                  <span style={{ fontSize: 9, padding: '1px 8px', borderRadius: 20, whiteSpace: 'nowrap', background: m.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(217,119,6,0.08)', color: m.department_id ? '#0e7490' : '#d97706', border: `1px solid ${m.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
                     {m.department_id ? (departments.find(d => d.id === m.department_id)?.name || 'Отдел') : 'Вся компания'}
                   </span>
                 </div>
@@ -345,7 +345,7 @@ function MasteryAdmin() {
   )
 }
 
-const Seg = ({ active, onClick, children, color = '#8a6208' }) => (
+const Seg = ({ active, onClick, children, color = '#d97706' }) => (
   <button onClick={onClick} style={{ padding: '8px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.25s ease' }}>{children}</button>
 )
 
@@ -429,15 +429,15 @@ function GoalFormModal({ open, initial, pool, setPool, companyKarma, departments
               {TYPE_META.map(t => (
                 <button key={t.key} onClick={() => { setForm(f => ({ ...f, kpi_type: t.key })); setStep('form') }}
                   style={{ display: 'flex', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 16, cursor: 'pointer', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.background = 'rgba(184,134,11,0.05)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.background = 'rgba(217,119,6,0.05)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184,134,11,0.1)', color: '#8a6208' }}>
+                  <span style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(217,119,6,0.1)', color: '#d97706' }}>
                     <TypeIcon type={t.key} />
                   </span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: 'block', color: 'var(--text-primary)', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.label}</span>
                     <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.5 }}>{t.hint}</span>
-                    <span style={{ display: 'inline-block', marginTop: 6, color: '#8a6208', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>{t.ex}</span>
+                    <span style={{ display: 'inline-block', marginTop: 6, color: '#d97706', fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}>{t.ex}</span>
                   </span>
                 </button>
               ))}
@@ -650,7 +650,7 @@ function MaterialsModal({ metric, onClose }) {
           </>)}
           {uploading && (
             <div style={{ gridColumn: '1 / -1', height: 6, borderRadius: 3, background: 'var(--bg-page)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, #8a6208, #137a39)', borderRadius: 3, animation: 'upMove 1.1s ease-in-out infinite' }} />
+              <div style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, #d97706, #137a39)', borderRadius: 3, animation: 'upMove 1.1s ease-in-out infinite' }} />
               <style jsx>{`@keyframes upMove { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }`}</style>
             </div>
           )}

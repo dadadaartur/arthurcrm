@@ -160,7 +160,7 @@ export default function TaskDetail() {
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'fixed', top: '-10%', left: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,134,11,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '-10%', left: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(217,119,6,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '-14%', right: '-10%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.08), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
 
       <div className="max-w-3xl mx-auto px-4 py-8" style={{ maxWidth: 820, position: 'relative' }}>
@@ -172,7 +172,7 @@ export default function TaskDetail() {
 
       <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 320, position: 'relative', overflow: 'hidden', border: tierBorder, animation: tier === 'priority' ? 'taskDetailGlow 2.4s ease-in-out infinite' : 'none' }}>
         {tier === 'premium' && (
-          <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '5px 14px 5px 16px', borderRadius: '0 0 0 14px', background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff', zIndex: 2 }}>ПРЕМИУМ</span>
+          <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '5px 14px 5px 16px', borderRadius: '0 0 0 14px', background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', zIndex: 2 }}>ПРЕМИУМ</span>
         )}
 
         {(t.image_url || t.video_url) && (
@@ -196,7 +196,7 @@ export default function TaskDetail() {
           {t.is_auto_goal ? (
             <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(19,122,57,0.1)', color: '#137a39', border: '1px solid rgba(19,122,57,0.3)' }}>Засчитывается автоматически по цели</span>
           ) : t.partner_name ? (
-            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(184,134,11,0.1)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)' }}>Партнёрское · {t.partner_name}</span>
+            <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(217,119,6,0.1)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)' }}>Партнёрское · {t.partner_name}</span>
           ) : (
             <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, background: 'rgba(14,116,144,0.08)', color: 'var(--accent-cyan)', border: '1px solid rgba(14,116,144,0.3)' }}>Проверяет руководитель</span>
           )}
@@ -397,7 +397,7 @@ export default function TaskDetail() {
 
               <button onClick={() => fileRef.current?.click()}
                 className="mt-2 w-full py-2 rounded-xl text-sm transition-all"
-                style={{ border: '1px dashed var(--border-gold)', background: 'rgba(184,134,11,0.06)', color: 'var(--text-secondary)' }}>
+                style={{ border: '1px dashed var(--border-gold)', background: 'rgba(217,119,6,0.06)', color: 'var(--text-secondary)' }}>
                 + Добавить {PROOF_LABELS[t.proof_type || 'any']}
               </button>
 

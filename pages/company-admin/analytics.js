@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/router'
 import DateRangePicker from '../../components/DateRangePicker'
@@ -12,19 +13,19 @@ import { bandFor, bandRankOf, BAND_LABELS, BAND_COLORS } from '../../lib/kpi'
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const shift = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return toISO(d) }
 const today = toISO(new Date())
-const tiny = a => ({ padding: '5px 13px', borderRadius: 16, fontSize: 11, cursor: 'pointer', fontWeight: a ? 600 : 400, background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)', border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: a ? '#8a6208' : 'var(--text-secondary)', transition: 'all 0.2s', whiteSpace: 'nowrap' })
+const tiny = a => ({ padding: '5px 13px', borderRadius: 16, fontSize: 11, cursor: 'pointer', fontWeight: a ? 600 : 400, background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)', border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: a ? '#d97706' : 'var(--text-secondary)', transition: 'all 0.2s', whiteSpace: 'nowrap' })
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 10, padding: '7px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s', whiteSpace: 'nowrap' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 // Насыщенная версия BAND_COLORS — общий модуль подобран под тёмный фон,
 // используется в непеределанной админке, менять нельзя.
-const BAND_TEXT = { none: '#dc2626', min: '#d97706', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+const BAND_TEXT = { none: '#dc2626', min: '#ea580c', mid: '#ca8a04', top: '#137a39', ultra: '#7c3aed' }
 // Стеклянный шарик вместо прямоугольной ячейки — эксперимент по
 // прямому запросу от 6 сентября 2026. Цвет кольца по уровню: красный
 // голограммой — ниже нормы, жёлтый — средний, зелёный — топ/ультра.
 // Лёгкое покачивание — «шарики как бы парят».
 function MetricOrb({ value, unit, band, floatDelay = 0 }) {
-  const ringColor = band === 'none' ? '#dc2626' : band === 'min' ? '#d97706' : band === 'mid' ? '#d97706' : band === 'top' ? '#137a39' : band === 'ultra' ? '#7c3aed' : 'var(--text-muted)'
+  const ringColor = band === 'none' ? '#dc2626' : band === 'min' ? '#ea580c' : band === 'mid' ? '#ca8a04' : band === 'top' ? '#137a39' : band === 'ultra' ? '#7c3aed' : 'var(--text-muted)'
   const gid = `orb${Math.round(Math.random() * 1e6)}`
   return (
     <div style={{ width: 58, height: 58, position: 'relative', margin: '0 auto', animation: band ? `orbFloat 3.6s ease-in-out ${floatDelay}s infinite` : 'none' }}>
@@ -50,10 +51,10 @@ const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: '�
 // «выглядит как баг», убрана полностью; вместо неё — спокойная,
 // один раз проигрывающаяся, не бесконечная анимация).
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
-const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
+const PALETTE = ['#d97706', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
 
-function ForecastBanner({ forecast, onCreateTask }) {
+function ForecastBanner({ forecast, onCreateTask, middleCount }) {
   const [expanded, setExpanded] = useState(false)
   if (!forecast || !forecast.ready) {
     return (
@@ -69,14 +70,20 @@ function ForecastBanner({ forecast, onCreateTask }) {
       background: allGood ? 'linear-gradient(135deg, rgba(19,122,57,0.08), rgba(19,122,57,0.02))' : 'linear-gradient(135deg, rgba(220,38,38,0.08), rgba(220,38,38,0.02))',
       border: `1px solid ${allGood ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}`,
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Прогноз на месяц при текущем темпе</div>
           <div style={{ fontSize: 17, fontWeight: 700, color: allGood ? '#137a39' : '#dc2626' }}>
             {allGood ? `Все ${forecast.totalCount} цели — на пути к выполнению` : `${forecast.totalCount - forecast.atRiskCount} из ${forecast.totalCount} целей на пути, ${forecast.atRiskCount} — под угрозой`}
           </div>
         </div>
-        <button onClick={() => setExpanded(v => !v)} style={{ fontSize: 12, fontWeight: 600, color: allGood ? '#137a39' : '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>
+        {middleCount > 0 && (
+          <button onClick={() => document.getElementById('middle-performers-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5 }}>
+            {middleCount} без сигналов →
+          </button>
+        )}
+        <button onClick={() => setExpanded(v => !v)} style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: allGood ? '#137a39' : '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>
           {expanded ? 'Свернуть' : 'Разбор по целям →'}
         </button>
       </div>
@@ -235,7 +242,7 @@ function MiddlePerformersSection({ people, onAssign }) {
   const toggleAll = () => setSelected(s => s.size === people.length ? new Set() : new Set(people.map(p => p.userId)))
 
   return (
-    <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+    <div id="middle-performers-anchor" style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
       <button onClick={() => setExpanded(v => !v)} className={expanded ? '' : 'middle-blink'} style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '11px 18px', borderRadius: 50, background: 'linear-gradient(135deg, rgba(14,116,144,0.08), rgba(14,116,144,0.02))',
@@ -282,7 +289,7 @@ const INSIGHT_STYLE = {
   anomaly: { color: '#7c3aed', bg: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(124,58,237,0.02))', border: 'rgba(124,58,237,0.28)', label: 'Аномалия' },
   training: { color: '#0e7490', bg: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))', border: 'rgba(14,116,144,0.28)', label: 'Обучение' },
   win: { color: '#137a39', bg: 'linear-gradient(135deg, rgba(19,122,57,0.06), rgba(19,122,57,0.02))', border: 'rgba(19,122,57,0.28)', label: 'Победа' },
-  consistent: { color: '#8a6208', bg: 'linear-gradient(135deg, rgba(184,134,11,0.07), rgba(184,134,11,0.02))', border: 'rgba(184,134,11,0.3)', label: 'На признание' },
+  consistent: { color: '#d97706', bg: 'linear-gradient(135deg, rgba(217,119,6,0.07), rgba(217,119,6,0.02))', border: 'rgba(217,119,6,0.3)', label: 'На признание' },
 }
 
 function InsightCard({ insight, onCreateTask, compact }) {
@@ -351,7 +358,7 @@ function InsightsPanel({ from, to, empName }) {
   const counts = { risk: insights.filter(i => i.type === 'risk').length, anomaly: insights.filter(i => i.type === 'anomaly').length, training: insights.filter(i => i.type === 'training').length, win: wins.length }
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.04), rgba(184,134,11,0.04) 50%, rgba(19,122,57,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
+    <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.04), rgba(217,119,6,0.04) 50%, rgba(19,122,57,0.03))', borderRadius: 18, padding: 20, border: '1px solid var(--border-subtle)', marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', flexWrap: 'wrap' }}>
           <button onClick={() => setFilter('all')} style={tiny(filter === 'all')}>Все · {insights.length}</button>
@@ -365,7 +372,7 @@ function InsightsPanel({ from, to, empName }) {
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Анализируем показатели команды…</p>
       ) : (
         <>
-          <ForecastBanner forecast={forecast} />
+          <ForecastBanner forecast={forecast} middleCount={middlePerformers.length} />
           {insights.length === 0 ? (
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>За этот период явных находок нет — команда идёт ровно.</p>
       ) : (
@@ -419,6 +426,10 @@ function AnalyticsAdmin() {
   const [sortAsc, setSortAsc] = useState(false)
   const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [fillOpen, setFillOpen] = useState(false)
+
+  useEffect(() => {
+    if (router.query.from && router.query.to) { setFrom(String(router.query.from)); setTo(String(router.query.to)) }
+  }, [router.query.from, router.query.to])
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
   const [antiActionDraft, setAntiActionDraft] = useState(null)
@@ -523,9 +534,11 @@ function AnalyticsAdmin() {
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
-      <div style={{ position: 'fixed', top: 90, right: 20, zIndex: 40, padding: '9px 16px', borderRadius: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-gold)', boxShadow: 'var(--shadow-card)', fontSize: 11.5, color: 'var(--text-secondary)' }}>
+      <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 40, padding: '6px 13px', borderRadius: 50, background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(8px)', border: '1px solid var(--border-subtle)', fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.65, transition: 'opacity .2s, background .2s' }}
+        onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.background = 'rgba(255,255,255,0.95)' }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = 0.65; e.currentTarget.style.background = 'rgba(255,255,255,0.6)' }}>
         {compareMode ? (
-          <><span style={{ color: '#7c3aed', fontWeight: 700 }}>А</span> {from}—{to} <span style={{ color: 'var(--text-muted)' }}>vs</span> <span style={{ color: '#8a6208', fontWeight: 700 }}>Б</span> {compareFrom}—{compareTo}</>
+          <><span style={{ color: '#7c3aed', fontWeight: 700 }}>А</span> {from}—{to} <span style={{ color: 'var(--text-muted)' }}>vs</span> <span style={{ color: '#d97706', fontWeight: 700 }}>Б</span> {compareFrom}—{compareTo}</>
         ) : (
           <>Смотрим: <b style={{ color: 'var(--text-primary)' }}>{from === to ? from : `${from} — ${to}`}</b></>
         )}
@@ -534,10 +547,10 @@ function AnalyticsAdmin() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border-subtle)' }}>
           <a href="/company-admin" style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none', transition: 'all .2s' }}
             onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 10px rgba(138,98,8,0.3)' }} onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none' }}>
-            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#8a6208" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#d97706" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </a>
           <h1 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Аналитика команды</h1>
-          <span style={{ fontSize: 10.5, padding: '3px 11px', borderRadius: 20, background: scope === 'team' ? 'rgba(124,58,237,0.08)' : 'rgba(184,134,11,0.08)', color: scope === 'team' ? '#7c3aed' : '#8a6208', border: `1px solid ${scope === 'team' ? 'rgba(124,58,237,0.3)' : 'var(--border-gold)'}`, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 10.5, padding: '3px 11px', borderRadius: 20, background: scope === 'team' ? 'rgba(124,58,237,0.08)' : 'rgba(217,119,6,0.08)', color: scope === 'team' ? '#7c3aed' : '#d97706', border: `1px solid ${scope === 'team' ? 'rgba(124,58,237,0.3)' : 'var(--border-gold)'}`, whiteSpace: 'nowrap' }}>
             {scope === 'team' ? 'Команда' : 'Вся компания'}
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -572,7 +585,7 @@ function AnalyticsAdmin() {
               </div>
               <span style={{ color: '#7c3aed', fontSize: 18, fontWeight: 700, paddingBottom: 8 }}>vs</span>
               <div>
-                <div style={{ fontSize: 11, color: '#8a6208', fontWeight: 700, marginBottom: 6 }}>Период Б</div>
+                <div style={{ fontSize: 11, color: '#d97706', fontWeight: 700, marginBottom: 6 }}>Период Б</div>
                 <DateRangePicker from={compareFrom} to={compareTo} onChange={r => { if (r.from) setCompareFrom(r.from); if (r.to) setCompareTo(r.to) }} />
               </div>
             </div>
@@ -596,7 +609,7 @@ function AnalyticsAdmin() {
                     </div>
                     <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M0 8h24M18 2l6 6-6 6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 10, color: '#8a6208', fontWeight: 700, marginBottom: 4 }}>Период Б</div>
+                      <div style={{ fontSize: 10, color: '#d97706', fontWeight: 700, marginBottom: 4 }}>Период Б</div>
                       <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{pv != null ? `${pv}${m.unit}` : '—'}</div>
                     </div>
                     {verdict != null && (
@@ -679,9 +692,9 @@ function AnalyticsAdmin() {
           .ultra-crown-once { animation: crownRevealOnce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
           @keyframes orbFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
           .analytics-table-scroll::-webkit-scrollbar { height: 7px; }
-          .analytics-table-scroll::-webkit-scrollbar-thumb { background: rgba(184,134,11,0.35); border-radius: 4px; }
+          .analytics-table-scroll::-webkit-scrollbar-thumb { background: rgba(217,119,6,0.35); border-radius: 4px; }
           .analytics-table-scroll::-webkit-scrollbar-track { background: var(--bg-page); }
-          .analytics-table-scroll { scrollbar-width: thin; scrollbar-color: rgba(184,134,11,0.35) var(--bg-page); }
+          .analytics-table-scroll { scrollbar-width: thin; scrollbar-color: rgba(217,119,6,0.35) var(--bg-page); }
         `}</style>
 
         {/* Топ периода + Требуют внимания */}
@@ -759,8 +772,8 @@ function AnalyticsAdmin() {
               {(onlyFlagged ? rows.filter(r => r.belowCount > 0 || r.cells.some(c => c.band === 'ultra')) : rows).map((r, ri) => (
                 <div key={r.emp.user_id} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: '11px 20px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', background: ri % 2 ? 'var(--bg-page)' : 'transparent', transition: 'background .15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.background = ri % 2 ? 'var(--bg-page)' : 'transparent'}>
-                  <a href={`/company-admin/development-plan?userId=${r.emp.user_id}&name=${encodeURIComponent(empName(r.emp.user_id))}`} style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>{empName(r.emp.user_id)}</a>
+                  <Link href={`/company-admin/development-plan?userId=${r.emp.user_id}&name=${encodeURIComponent(empName(r.emp.user_id))}&backFrom=${from}&backTo=${to}`} style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}>{empName(r.emp.user_id)}</Link>
                   {r.cells.map(c => {
                     const prevVal = agg(c.m, prev.filter(e => e.user_id === r.emp.user_id && e.metric_id === c.m.id))
                     const trend = prevVal == null || c.v == null ? null : (c.m.kpi_type === 'inverse' ? (c.v < prevVal ? 'up' : c.v > prevVal ? 'down' : 'flat') : (c.v > prevVal ? 'up' : c.v < prevVal ? 'down' : 'flat'))

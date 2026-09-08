@@ -38,7 +38,7 @@ function TasksAnalytics() {
         } />
 
         {data?.hint && (
-          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             {data.hint === 'assigned_to_admins_or_outside_scope' && (
               <>Все назначения за этот период ушли аккаунтам с правами администратора компании — они намеренно не входят в аналитику сотрудников (иначе тестовые действия администратора искажали бы реальную картину команды). Если вы тестировали, назначая задание себе — попробуйте на тестовом сотруднике без прав администратора.</>
             )}
@@ -93,7 +93,7 @@ function TasksAnalytics() {
               <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>По сотрудникам</h3>
               <div style={{ display: 'flex', gap: 6 }}>
                 {[['completed', 'Выполнено'], ['rate', '% выполнения'], ['karma', 'Кармики']].map(([k, l]) => (
-                  <button key={k} onClick={() => setSortBy(k)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: `1px solid ${sortBy === k ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: sortBy === k ? 'rgba(184,134,11,0.08)' : 'transparent', color: sortBy === k ? '#8a6208' : 'var(--text-secondary)', cursor: 'pointer' }}>{l}</button>
+                  <button key={k} onClick={() => setSortBy(k)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: `1px solid ${sortBy === k ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: sortBy === k ? 'rgba(217,119,6,0.08)' : 'transparent', color: sortBy === k ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>{l}</button>
                 ))}
               </div>
             </div>
@@ -142,7 +142,7 @@ function TasksAnalytics() {
               {(data?.slowest || []).map(t => (
                 <div key={t.task_id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border-subtle)', fontSize: 12 }}>
                   <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                  <span style={{ color: '#8a6208', fontWeight: 700, flexShrink: 0 }}>{fmtHours(t.avgHours)}</span>
+                  <span style={{ color: '#d97706', fontWeight: 700, flexShrink: 0 }}>{fmtHours(t.avgHours)}</span>
                 </div>
               ))}
               {(!data?.slowest || data.slowest.length === 0) && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Недостаточно данных</p>}

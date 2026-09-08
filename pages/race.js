@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 
 const PLACE_STYLE = {
-  1: { color: '#8a6208', bg: 'linear-gradient(135deg, #fff3d6, #ffe29a)', label: '1 место' },
+  1: { color: '#d97706', bg: 'linear-gradient(135deg, #fff3d6, #ffe29a)', label: '1 место' },
   2: { color: '#5f6b80', bg: 'linear-gradient(135deg, #f1f3f6, #dfe3e8)', label: '2 место' },
   3: { color: '#a15c2e', bg: 'linear-gradient(135deg, #fbe4d3, #f0c9a8)', label: '3 место' },
 }
@@ -54,14 +54,14 @@ export default function Race() {
         </p>
 
         {data?.myAdvice && (
-          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(184,134,11,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(217,119,6,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', display: 'block', marginBottom: 6 }}>Совет ИИ-аналитика</span>
             {data.myAdvice}
           </div>
         )}
 
         {data?.myPrivilege && (
-          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
               Вы заняли <b>{data.myPrivilege.rank}</b> место в прошлом цикле — доступно шуточных заданий: <b>{data.myPrivilege.jokeTasksLimit - data.myPrivilege.jokeTasksUsed}</b> из {data.myPrivilege.jokeTasksLimit}
             </span>

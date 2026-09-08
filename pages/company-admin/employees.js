@@ -19,7 +19,7 @@ const PERMISSION_FIELDS = [
 const emptyPermissions = { can_create_tasks: false, can_review_tasks: false, can_manage_employees: false, can_delete_employees: false }
 const GRID = '28px 2.2fr 1.4fr 1fr 1.2fr 0.9fr 110px'
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 20px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 
 function EmployeesPage() {
@@ -176,13 +176,13 @@ function EmployeesPage() {
 
         {/* Таблица с жёсткой сеткой — шапка и строки совпадают */}
         {selectedIds.size > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', marginBottom: 12, borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', marginBottom: 12, borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}>
             <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>Выбрано: {selectedIds.size}</span>
             <select className="input-field" style={{ fontSize: 12, width: 220 }} value={bulkRoleId} onChange={e => setBulkRoleId(e.target.value)}>
               <option value="">Назначить роль…</option>
               {companyRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
-            <button onClick={applyBulkRole} disabled={!bulkRoleId || bulkApplying} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: '#8a6208', opacity: !bulkRoleId ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{bulkApplying ? 'Применяем…' : 'Применить ко всем выбранным'}</button>
+            <button onClick={applyBulkRole} disabled={!bulkRoleId || bulkApplying} style={{ ...ghostBtn, borderColor: 'var(--border-gold)', color: '#d97706', opacity: !bulkRoleId ? 0.5 : 1 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{bulkApplying ? 'Применяем…' : 'Применить ко всем выбранным'}</button>
             <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>Снять выбор</button>
           </div>
         )}
@@ -257,7 +257,7 @@ function EmployeesPage() {
           </div>
           <div>{PERMISSION_FIELDS.map(f => (
             <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', marginBottom: 6 }}>
-              <input type="checkbox" checked={!!newEmployee[f.key]} onChange={e => setNewEmployee({ ...newEmployee, [f.key]: e.target.checked })} style={{ accentColor: '#8a6208' }} />{f.label}
+              <input type="checkbox" checked={!!newEmployee[f.key]} onChange={e => setNewEmployee({ ...newEmployee, [f.key]: e.target.checked })} style={{ accentColor: '#d97706' }} />{f.label}
             </label>
           ))}</div>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -280,7 +280,7 @@ function EmployeesPage() {
           </div>
           <div>{PERMISSION_FIELDS.map(f => (
             <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', marginBottom: 6 }}>
-              <input type="checkbox" checked={!!editForm[f.key]} onChange={e => setEditForm({ ...editForm, [f.key]: e.target.checked })} style={{ accentColor: '#8a6208' }} />{f.label}
+              <input type="checkbox" checked={!!editForm[f.key]} onChange={e => setEditForm({ ...editForm, [f.key]: e.target.checked })} style={{ accentColor: '#d97706' }} />{f.label}
             </label>
           ))}</div>
           <div style={{ display: 'flex', gap: 10 }}>

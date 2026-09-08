@@ -152,7 +152,7 @@ export default function Transfer() {
     <div className="theme-light max-w-lg mx-auto px-4 py-10">
       <BackArrow href="/" title="Перевод кармиков" />
       <div className="premium-card" style={{ padding: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '14px 18px', borderRadius: 16, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, padding: '14px 18px', borderRadius: 16, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ваш баланс</span>
           <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-gold)' }}>{balance} кармиков</span>
         </div>
@@ -211,7 +211,7 @@ export default function Transfer() {
                           {c.avatar_url ? (
                             <img src={c.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                           ) : (
-                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(184,134,11,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-gold)' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(217,119,6,0.12)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--accent-gold)' }}>
                               {colleagueName(c).charAt(0).toUpperCase()}
                             </div>
                           )}

@@ -6,12 +6,12 @@ import { supabase } from '../../lib/supabaseClient'
 import { withAuth } from '../../components/withAuth'
 
 const TYPE_META = {
-  task: { color: '#8a6208', label: 'Задание' },
+  task: { color: '#d97706', label: 'Задание' },
   training: { color: '#0e7490', label: 'Тренинг' },
   test: { color: '#7c3aed', label: 'Тест' },
 }
 const STATUS_META = {
-  pending: { color: '#8a6208', label: 'В процессе' },
+  pending: { color: '#d97706', label: 'В процессе' },
   completed: { color: '#137a39', label: 'Выполнено' },
   overdue: { color: '#dc2626', label: 'Просрочено' },
   cancelled: { color: 'var(--text-muted)', label: 'Отменено' },
@@ -68,25 +68,25 @@ function DevelopmentPlan() {
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <BackArrow href="/company-admin/analytics" title={`План развития — ${name || ''}`} />
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        <BackArrow href={`/company-admin/analytics${router.query.backFrom ? `?from=${router.query.backFrom}&to=${router.query.backTo}` : ''}`} title={`План развития — ${name || ''}`} />
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24, maxWidth: 640 }}>
           Все действия, назначенные этому сотруднику — задания, тренинги, тесты — на одной странице, с причиной и дедлайном.
         </p>
 
         {actions.length === 0 ? (
           <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 50, textAlign: 'center', color: 'var(--text-muted)' }}>Пока ничего не назначено</div>
         ) : (
-          <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, alignItems: 'start' }}>
             {overdue.length > 0 && (
-              <div style={{ marginBottom: 22 }}>
+              <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 10 }}>Просрочено ({overdue.length})</div>
                 {overdue.map(a => <Row key={a.id} a={a} />)}
               </div>
             )}
             {pending.length > 0 && (
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#8a6208', marginBottom: 10 }}>В процессе ({pending.length})</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#d97706', marginBottom: 10 }}>В процессе ({pending.length})</div>
                 {pending.map(a => <Row key={a.id} a={a} />)}
               </div>
             )}
@@ -96,7 +96,7 @@ function DevelopmentPlan() {
                 {done.map(a => <Row key={a.id} a={a} />)}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

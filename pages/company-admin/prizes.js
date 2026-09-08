@@ -47,8 +47,8 @@ function PrizesPage() {
         </p>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          <button onClick={() => setFilter('pending')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === 'pending' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === 'pending' ? 'rgba(184,134,11,0.08)' : 'var(--bg-card)', color: filter === 'pending' ? '#8a6208' : 'var(--text-secondary)', cursor: 'pointer' }}>Не выдано</button>
-          <button onClick={() => setFilter('all')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === 'all' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === 'all' ? 'rgba(184,134,11,0.08)' : 'var(--bg-card)', color: filter === 'all' ? '#8a6208' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+          <button onClick={() => setFilter('pending')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === 'pending' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === 'pending' ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: filter === 'pending' ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>Не выдано</button>
+          <button onClick={() => setFilter('all')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === 'all' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === 'all' ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: filter === 'all' ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
         </div>
 
         <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
@@ -60,7 +60,7 @@ function PrizesPage() {
                 {a.description && <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>{a.description}</div>}
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{SOURCE_LABEL[a.source] || a.source} · {new Date(a.awarded_at).toLocaleDateString('ru')}</div>
               </div>
-              <button onClick={() => toggleFulfilled(a)} style={{ flexShrink: 0, fontSize: 12, padding: '7px 16px', borderRadius: 10, border: `1px solid ${a.fulfilled ? 'rgba(19,122,57,0.3)' : 'var(--border-gold)'}`, background: a.fulfilled ? 'rgba(19,122,57,0.08)' : 'rgba(184,134,11,0.08)', color: a.fulfilled ? '#137a39' : '#8a6208', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <button onClick={() => toggleFulfilled(a)} style={{ flexShrink: 0, fontSize: 12, padding: '7px 16px', borderRadius: 10, border: `1px solid ${a.fulfilled ? 'rgba(19,122,57,0.3)' : 'var(--border-gold)'}`, background: a.fulfilled ? 'rgba(19,122,57,0.08)' : 'rgba(217,119,6,0.08)', color: a.fulfilled ? '#137a39' : '#d97706', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 {a.fulfilled ? 'Выдано' : 'Отметить выданным'}
               </button>
             </div>

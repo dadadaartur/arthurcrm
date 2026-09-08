@@ -6,9 +6,9 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
-const Seg = ({ active, onClick, children, color = '#8a6208' }) => (
+const Seg = ({ active, onClick, children, color = '#d97706' }) => (
   <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>{children}</button>
 )
 
@@ -47,7 +47,7 @@ function EmployeePicker({ employees, value, onChange, empName, placeholder = 'Н
             <button type="button" key={e.user_id} onMouseDown={() => { onChange(e.user_id); setSearch('') }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
               onMouseEnter={ev => { ev.currentTarget.style.background = 'var(--bg-hover)' }} onMouseLeave={ev => { ev.currentTarget.style.background = 'none' }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(184,134,11,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#8a6208', overflow: 'hidden' }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(217,119,6,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#d97706', overflow: 'hidden' }}>
                 {e.avatar_url ? <img src={e.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : empName(e).charAt(0).toUpperCase()}
               </div>
               <span style={{ fontSize: 12, color: 'var(--text-primary)', flex: 1 }}>{empName(e)}</span>
@@ -68,7 +68,7 @@ function RoleBadge({ roleName }) {
   if (!roleName) return null
   const isAdmin = roleName === 'Администратор'
   return (
-    <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: isAdmin ? 'rgba(184,134,11,0.12)' : 'rgba(14,116,144,0.1)', color: isAdmin ? '#8a6208' : '#0e7490', border: `1px solid ${isAdmin ? 'var(--border-gold)' : 'rgba(14,116,144,0.3)'}` }}>
+    <span style={{ fontSize: 9.5, fontWeight: 600, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: isAdmin ? 'rgba(217,119,6,0.12)' : 'rgba(14,116,144,0.1)', color: isAdmin ? '#d97706' : '#0e7490', border: `1px solid ${isAdmin ? 'var(--border-gold)' : 'rgba(14,116,144,0.3)'}` }}>
       {roleName}
     </span>
   )
@@ -95,7 +95,7 @@ function ParentDeptPicker({ pickerList, value, onChange, onCreateNew }) {
           const newId = await onCreateNew(newName.trim())
           setSaving(false)
           if (newId) { onChange(newId); setCreating(false); setNewName('') }
-        }} style={{ ...ghostBtn, padding: '8px 14px', borderColor: 'var(--border-gold)', color: '#8a6208' }}>{saving ? '…' : 'Создать'}</button>
+        }} style={{ ...ghostBtn, padding: '8px 14px', borderColor: 'var(--border-gold)', color: '#d97706' }}>{saving ? '…' : 'Создать'}</button>
         <button type="button" onClick={() => { setCreating(false); setNewName('') }} style={{ ...ghostBtn, padding: '8px 12px' }}>Отмена</button>
       </div>
     )
@@ -262,7 +262,7 @@ function DepartmentAdmin() {
       <div key={node.id}>
         <div
           onClick={() => setSelectedDept(node)}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginLeft: depth * 28, borderRadius: 14, cursor: 'pointer', background: selectedDept?.id === node.id ? 'rgba(184,134,11,0.06)' : 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: `1px solid ${selectedDept?.id === node.id ? 'var(--border-gold)' : 'var(--border-subtle)'}`, marginBottom: 8, transition: 'all 0.2s' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginLeft: depth * 28, borderRadius: 14, cursor: 'pointer', background: selectedDept?.id === node.id ? 'rgba(217,119,6,0.06)' : 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: `1px solid ${selectedDept?.id === node.id ? 'var(--border-gold)' : 'var(--border-subtle)'}`, marginBottom: 8, transition: 'all 0.2s' }}
         >
           {node.children.length > 0 ? (
             <button onClick={e => { e.stopPropagation(); toggle(node.id) }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 2, display: 'flex', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>

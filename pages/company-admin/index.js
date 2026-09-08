@@ -12,7 +12,7 @@ import { withAuth } from '../../components/withAuth'
 // исходные пастельные оставлены в CARDS для декоративных градиентов
 // (левая полоска карточки, свечение фона), где контраст неприменим.
 const TEXT_COLOR = {
-  '#FFD700': '#8a6208', '#c084fc': '#7c3aed', '#a0e9ff': '#0e7490',
+  '#FFD700': '#d97706', '#c084fc': '#7c3aed', '#a0e9ff': '#0e7490',
   '#4ade80': '#137a39', '#fda4af': '#be123c', '#ffb3c6': '#db2777', '#86efac': '#15803d',
 }
 
@@ -27,7 +27,7 @@ const CARDS = [
   { key: 'rewards', title: 'Товары', sub: 'Витрина магазина наград', href: '/company-admin/rewards', color: '#4ade80', accent: '#FFD700' },
   { key: 'purchases', title: 'Покупки сотрудников', sub: 'Согласование и выдача', href: '/company-admin/purchases', color: '#fda4af', accent: '#c084fc', badge: 'pendingPurchases' },
   { key: 'global', title: 'Глобальные цели', sub: 'Стратегические цели компании', href: '/company-admin/global-goals', color: '#FFD700', accent: '#ffb3c6', primary: true },
-  { key: 'wheel', title: 'Лента подарков', sub: 'Призы за рост уровня мастерства', href: '/company-admin/wheel', color: '#7c3aed', accent: '#8a6208' },
+  { key: 'wheel', title: 'Лента подарков', sub: 'Призы за рост уровня мастерства', href: '/company-admin/wheel', color: '#7c3aed', accent: '#d97706' },
   { key: 'results', title: 'Результаты команды', sub: 'Аналитика и динамика', href: '/company-admin/results', color: '#a0e9ff', accent: '#4ade80' },
   { key: 'learn', title: 'Обучение', sub: 'Тренинги и тесты, превью', href: '/company-admin/learn', color: '#c084fc', accent: '#4ade80' },
   { key: 'levels', title: 'Уровни прогресса', sub: 'Архитектура роста', href: '/company-admin/progress', color: '#c084fc', accent: '#ffb3c6' },

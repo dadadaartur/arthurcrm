@@ -158,7 +158,7 @@ export default function Shop() {
           {featuredRewards.length > 0 && (
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" /></svg>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Акции и топ товары</span>
               </div>
               <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 10, scrollSnapType: 'x mandatory' }}>
@@ -273,7 +273,7 @@ export default function Shop() {
                           transition: 'all 0.3s',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#8a6208';
+                          e.currentTarget.style.borderColor = '#d97706';
                           e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
                         }}
                         onMouseLeave={(e) => {
@@ -341,7 +341,7 @@ export default function Shop() {
               <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <span style={{
                   display: 'inline-block',
-                  background: 'rgba(184,134,11,0.1)',
+                  background: 'rgba(217,119,6,0.1)',
                   color: 'var(--accent-gold)',
                   padding: '4px 12px',
                   borderRadius: 20,
@@ -394,7 +394,7 @@ export default function Shop() {
                       transition: 'all 0.3s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#8a6208';
+                      e.currentTarget.style.borderColor = '#d97706';
                       e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
                     }}
                     onMouseLeave={(e) => {

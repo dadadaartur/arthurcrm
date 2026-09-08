@@ -78,7 +78,7 @@ export default function MyPurchases() {
       image_url: w.prize_avatar_url,
       prizeDescription: w.prize_description || null,
       isWheelPrize: true,
-      wheelColor: w.prize_color || '#8a6208'
+      wheelColor: w.prize_color || '#d97706'
     }))
 
     const merged = [...enrichedPurchases, ...enrichedWheel].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -197,7 +197,7 @@ export default function MyPurchases() {
 
                   {p.certificate_data && (
                     <div style={{
-                      background: 'rgba(184,134,11,0.06)',
+                      background: 'rgba(217,119,6,0.06)',
                       border: '1px solid var(--border-gold)', borderRadius: 12, padding: 12, marginTop: 'auto'
                     }}>
                       <h4 style={{ fontSize: 14, color: 'var(--accent-gold)', marginBottom: 4 }}>Сертификат</h4>

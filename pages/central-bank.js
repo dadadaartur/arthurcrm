@@ -168,7 +168,7 @@ export default function CentralBank() {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-semibold" style={{
-                        color: r.days_left < 0 ? '#dc2626' : r.days_left <= 7 ? '#dc2626' : r.days_left <= 14 ? '#8a6208' : '#137a39'
+                        color: r.days_left < 0 ? '#dc2626' : r.days_left <= 7 ? '#dc2626' : r.days_left <= 14 ? '#d97706' : '#137a39'
                       }}>
                         {r.days_left < 0 ? 'просрочено' : `через ${r.days_left} дн.`}
                       </div>
@@ -256,7 +256,7 @@ export default function CentralBank() {
                           style={{
                             background: 'linear-gradient(135deg, rgba(138,98,8,0.14), rgba(212,175,55,0.08))',
                             border: '1px solid var(--border-gold)',
-                            color: '#8a6208',
+                            color: '#d97706',
                             borderRadius: 8,
                             cursor: 'pointer',
                             opacity: (!tariff || emittingId === c.id) ? 0.5 : 1
@@ -290,7 +290,7 @@ export default function CentralBank() {
                       {new Date(e.created_at).toLocaleString('ru')} · компания ID {e.company_id}
                     </div>
                   </div>
-                  <span className="font-semibold" style={{ color: e.amount > 0 ? '#137a39' : '#8a6208' }}>
+                  <span className="font-semibold" style={{ color: e.amount > 0 ? '#137a39' : '#d97706' }}>
                     {e.amount > 0 ? `+${e.amount}` : e.amount}
                   </span>
                 </div>

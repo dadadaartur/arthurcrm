@@ -25,7 +25,7 @@ export default function MyTasksAnalytics() {
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'fixed', top: '-10%', right: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,134,11,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '-10%', right: '-8%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(217,119,6,0.10), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '-14%', left: '-10%', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.08), transparent 70%)', filter: 'blur(10px)', pointerEvents: 'none' }} />
       <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative' }}>
         <BackArrow href="/tasks" title="Моя аналитика по заданиям" />
@@ -56,7 +56,7 @@ export default function MyTasksAnalytics() {
         )}
 
         {/* Прогноз — центральный, самый мотивирующий блок */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(184,134,11,0.07), rgba(124,58,237,0.05))', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 26, marginBottom: 20 }}>
+        <div style={{ background: 'linear-gradient(135deg, rgba(217,119,6,0.07), rgba(124,58,237,0.05))', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 26, marginBottom: 20 }}>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Прогноз на неделю</div>
           {data.forecast.thisWeekPotential > 0 ? (
             <>

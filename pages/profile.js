@@ -271,7 +271,7 @@ export default function Profile() {
           <div style={sectionTitleStyle}>Кратко о вас</div>
           {stats && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}>
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Баланс</span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-gold)' }}>{stats.balance} к.</span>
               </div>

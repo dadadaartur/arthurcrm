@@ -15,20 +15,20 @@ const ghostBtn = {
   border: '1px solid var(--border-gold)', borderRadius: 12,
   padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pillTab = a => ({
   padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(184,134,11,0.12)' : 'var(--bg-card)',
+  background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)',
   border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#8a6208' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  color: a ? '#d97706' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 const AUTO_LABELS = {
   all_min: 'Выполнить ВСЕ цели за день не ниже «мин»',
   all_mid: 'Выполнить ВСЕ цели за день не ниже «средн»',
   any_one: 'Выполнить хотя бы одну цель за день',
 }
-const Seg = ({ active, onClick, children, color = '#8a6208' }) => (
+const Seg = ({ active, onClick, children, color = '#d97706' }) => (
   <button type="button" onClick={onClick} style={{ padding: '6px 14px', borderRadius: 12, fontSize: 11, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>{children}</button>
 )
 
@@ -286,7 +286,7 @@ function TasksPage() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление заданиями" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <Link href="/company-admin/tasks-analytics" style={{ fontSize: 12, color: '#8a6208', textDecoration: 'none', fontWeight: 600 }}>Аналитика →</Link>
+            <Link href="/company-admin/tasks-analytics" style={{ fontSize: 12, color: '#d97706', textDecoration: 'none', fontWeight: 600 }}>Аналитика →</Link>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Активных: <b style={{ color: 'var(--accent-gold)' }}>{tasks.length}</b></div>
           </div>
         } />
@@ -548,14 +548,14 @@ function TasksPage() {
                   )}
 
                   {form.target_role !== 'specific' && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 10, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)', fontSize: 12 }}>
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 10, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', fontSize: 12 }}>
                       {audienceLoading ? (
                         <span style={{ color: 'var(--text-secondary)' }}>Считаем…</span>
                       ) : audiencePreview ? (
                         audiencePreview.count === 0 ? (
                           <span style={{ color: '#dc2626' }}>Под условие пока никто не попадает</span>
                         ) : (
-                          <span style={{ color: '#8a6208' }}>
+                          <span style={{ color: '#d97706' }}>
                             Получат задание: <b>{audiencePreview.count}</b> {audiencePreview.count === 1 ? 'сотрудник' : 'сотрудников'}
                             {audiencePreview.count <= 8 && audiencePreview.employees?.length > 0 && ` — ${audiencePreview.employees.map(e => e.name).join(', ')}`}
                           </span>
@@ -593,7 +593,7 @@ function TasksPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Seg active={form.visual_tier === 'normal'} onClick={() => setForm({ ...form, visual_tier: 'normal' })} color="#5b6478">Обычное</Seg>
                     <Seg active={form.visual_tier === 'priority'} onClick={() => setForm({ ...form, visual_tier: 'priority' })} color="#7c3aed">Приоритетное — мягкое мерцание</Seg>
-                    <Seg active={form.visual_tier === 'premium'} onClick={() => setForm({ ...form, visual_tier: 'premium' })} color="#8a6208">Премиум — золотой бейдж</Seg>
+                    <Seg active={form.visual_tier === 'premium'} onClick={() => setForm({ ...form, visual_tier: 'premium' })} color="#d97706">Премиум — золотой бейдж</Seg>
                   </div>
                 </div>
 
@@ -613,11 +613,11 @@ function TasksPage() {
 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} style={{ accentColor: '#8a6208' }} />
+                    <input type="checkbox" checked={form.requires_review} onChange={e => setForm({ ...form, requires_review: e.target.checked })} style={{ accentColor: '#d97706' }} />
                     Требуется проверка
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({ ...form, requires_proof: e.target.checked })} style={{ accentColor: '#8a6208' }} />
+                    <input type="checkbox" checked={form.requires_proof} onChange={e => setForm({ ...form, requires_proof: e.target.checked })} style={{ accentColor: '#d97706' }} />
                     Медиа-подтверждение
                   </label>
                   {form.requires_proof && (
@@ -748,7 +748,7 @@ function TasksPage() {
                   <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15 }}>{t.title}</div>
                   <span style={{ color: 'var(--accent-gold)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>+{t.reward_karma}</span>
                 </div>
-                <span style={{ display: 'inline-block', fontSize: 9, padding: '1px 8px', borderRadius: 20, marginTop: 6, background: t.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(184,134,11,0.08)', color: t.department_id ? '#0e7490' : '#8a6208', border: `1px solid ${t.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
+                <span style={{ display: 'inline-block', fontSize: 9, padding: '1px 8px', borderRadius: 20, marginTop: 6, background: t.department_id ? 'rgba(14,116,144,0.08)' : 'rgba(217,119,6,0.08)', color: t.department_id ? '#0e7490' : '#d97706', border: `1px solid ${t.department_id ? 'rgba(14,116,144,0.3)' : 'var(--border-gold)'}` }}>
                   {t.department_id ? (departments.find(d => d.id === t.department_id)?.name || 'Отдел') : 'Вся компания'}
                 </span>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
@@ -846,7 +846,7 @@ function TasksPage() {
               <button onClick={() => handleReview('reject')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.35)', color: '#dc2626', cursor: 'pointer' }}>
                 {reviewLoading ? '...' : 'Отклонить'}
               </button>
-              <button onClick={() => handleReview('approve')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'linear-gradient(135deg, rgba(138,98,8,0.15), rgba(19,122,57,0.12))', border: '1px solid var(--border-gold)', color: '#8a6208', cursor: 'pointer' }}>
+              <button onClick={() => handleReview('approve')} disabled={reviewLoading} style={{ padding: '10px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: 'linear-gradient(135deg, rgba(138,98,8,0.15), rgba(19,122,57,0.12))', border: '1px solid var(--border-gold)', color: '#d97706', cursor: 'pointer' }}>
                 {reviewLoading ? '...' : 'Одобрить'}
               </button>
             </div>

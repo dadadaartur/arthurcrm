@@ -9,7 +9,7 @@ import { withAuth } from '../../components/withAuth'
 // Насыщенная версия цветов диапазонов — общий lib/kpi.js подобран под
 // тёмный фон и используется на ещё не переделанных страницах, менять
 // нельзя (та же логика, что уже применена в goals.js/results.js).
-const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#7c3aed' }
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#d97706', top: '#137a39', ultra: '#7c3aed' }
 const BAND_ORDER = ['ultra', 'top', 'mid', 'min', 'none']
 
 const today = new Date().toISOString().slice(0, 10)

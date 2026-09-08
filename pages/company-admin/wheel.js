@@ -7,9 +7,9 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
-const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
+const PALETTE = ['#d97706', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const newId = () => 'p_' + Math.random().toString(36).slice(2, 8)
 
 function WheelAdmin() {
@@ -137,11 +137,11 @@ function WheelAdmin() {
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, paddingLeft: 38 }}>
                     <label style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, cursor: 'pointer', border: '1px dashed var(--border-gold)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} title="Загрузить аватар приза">
                       {uploadingFor === p.id ? (
-                        <span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#8a6208', animation: 'wheelSpin 0.7s linear infinite' }} />
+                        <span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#d97706', animation: 'wheelSpin 0.7s linear infinite' }} />
                       ) : p.avatar_url ? (
                         <img src={p.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => e.target.files[0] && uploadAvatar(p.id, e.target.files[0])} />
                     </label>

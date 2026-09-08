@@ -25,7 +25,7 @@ function PremiumActionButton({ onClick, urgent, children }) {
       className="w-full text-sm py-3"
       style={{
         position: 'relative', overflow: 'hidden', borderRadius: 12, fontWeight: 700, color: '#fff',
-        background: urgent ? 'linear-gradient(135deg, #dc2626, #991b1b)' : 'linear-gradient(135deg, #a4770f, #8a6208 45%, #6b4a06)',
+        background: urgent ? 'linear-gradient(135deg, #dc2626, #991b1b)' : 'linear-gradient(135deg, #a4770f, #d97706 45%, #6b4a06)',
         border: 'none', cursor: 'pointer',
         boxShadow: hover ? '0 6px 18px rgba(138,98,8,0.4), inset 0 1px 0 rgba(255,255,255,0.25)' : '0 3px 10px rgba(138,98,8,0.28), inset 0 1px 0 rgba(255,255,255,0.18)',
         transform: hover ? 'translateY(-1px)' : 'translateY(0)',
@@ -54,9 +54,9 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
   const isExpensive = (t?.reward_karma || 0) >= 100
 
   const stop = fn => e => { e.preventDefault(); e.stopPropagation(); fn() }
-  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(184,134,11,0.12), var(--shadow-card-hover)' }
+  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(217,119,6,0.12), var(--shadow-card-hover)' }
     : tier === 'priority' ? { border: '1px solid rgba(124,58,237,0.4)', animation: 'taskPriorityGlow 2.4s ease-in-out infinite' }
-    : isPartner ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 24px -6px rgba(184,134,11,0.35), var(--shadow-card)' }
+    : isPartner ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 24px -6px rgba(217,119,6,0.35), var(--shadow-card)' }
     : { border: `1px solid ${accentColor}` }
 
   const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
@@ -77,7 +77,7 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
       {/* Бейджи поверх визуальной зоны */}
       <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 2 }}>
         <span>
-          {tier === 'premium' && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 11px', borderRadius: 20, background: 'linear-gradient(135deg, #8a6208, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>}
+          {tier === 'premium' && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 11px', borderRadius: 20, background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>}
         </span>
         {hasPrize && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 700, padding: '4px 10px 4px 8px', borderRadius: 20, background: 'rgba(219,39,119,0.95)', color: '#fff' }}>
@@ -283,7 +283,7 @@ export default function TasksPage() {
   const manualTasks = filteredTasks.filter(a => !a.tasks?.partner_name && !a.tasks?.is_auto_goal)
 
   const SECTIONS = [
-    { key: 'partner', label: 'От партнёров', dot: 'var(--accent-gold)', accent: 'rgba(184,134,11,0.35)', items: partnerTasks },
+    { key: 'partner', label: 'От партнёров', dot: 'var(--accent-gold)', accent: 'rgba(217,119,6,0.35)', items: partnerTasks },
     { key: 'goal', label: 'По вашим целям', dot: '#137a39', accent: 'rgba(19,122,57,0.3)', items: autoGoalTasks },
     { key: 'manual', label: 'От руководителя', dot: 'var(--accent-cyan)', accent: 'rgba(14,116,144,0.3)', items: manualTasks },
   ]
@@ -321,8 +321,8 @@ export default function TasksPage() {
               </button>
             ))}
           </div>
-          <Link href="/tasks-analytics" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#8a6208', textDecoration: 'none', whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: 20, background: 'rgba(184,134,11,0.08)', border: '1px solid var(--border-gold)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8a6208" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-3-3-4 4" /></svg>
+          <Link href="/tasks-analytics" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#d97706', textDecoration: 'none', whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: 20, background: 'rgba(217,119,6,0.08)', border: '1px solid var(--border-gold)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-3-3-4 4" /></svg>
             Моя аналитика
           </Link>
         </div>

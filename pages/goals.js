@@ -17,7 +17,7 @@ import PeriodHint, { PERIOD_LABELS } from '../components/PeriodHint'
 // контраст на тёмном. Здесь, для уже светлой страницы — своя, более
 // насыщенная версия тех же самых 5 цветов, чтобы читалось как текст на
 // белом фоне.
-const BAND_COLORS_LIGHT = { none: '#dc2626', min: '#b45309', mid: '#8a6208', top: '#137a39', ultra: '#9333ea' }
+const BAND_COLORS_LIGHT = { none: '#dc2626', min: '#b45309', mid: '#d97706', top: '#137a39', ultra: '#9333ea' }
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
 const todayISO = toISO(new Date())
@@ -27,7 +27,7 @@ const ghostBtn = {
   background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12,
   padding: '8px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   <button onClick={onClick} style={{
@@ -158,7 +158,7 @@ export default function GoalsPage() {
                     <div key={g.id} title={`${g.title}: ${g.current_value || 0}/${g.target_value}${g.unit || ''} (${pct}%)`} style={{ flex: '0 0 118px', padding: '6px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                       <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{g.title}</div>
                       <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#137a39' : '#8a6208' }} />
+                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#137a39' : '#d97706' }} />
                       </div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>{pct}%</div>
                     </div>
@@ -226,7 +226,7 @@ export default function GoalsPage() {
                 </div>
 
                 {(m.reward_image_url || m.reward_description) && (
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(184,134,11,0.05)', border: '1px solid var(--border-gold)' }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(217,119,6,0.05)', border: '1px solid var(--border-gold)' }}>
                     {m.reward_image_url && <img src={m.reward_image_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 9, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Приз за максимум</div>
@@ -250,7 +250,7 @@ export default function GoalsPage() {
             <div style={{ position: 'sticky', top: 20, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 18, border: `1px solid ${cur.color}33` }}>
               <div style={{ textAlign: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Энергия</div>
-                <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
+                <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15, background: 'linear-gradient(135deg, #d97706, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -283,7 +283,7 @@ export default function GoalsPage() {
                     const r = await fetch('/api/company-admin/wheel-config', { headers: { Authorization: `Bearer ${session.access_token}` } })
                     if (r.ok) setWheelConfig(await r.json())
                   }
-                }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 14, padding: '10px 14px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(184,134,11,0.12))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
+                }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 14, padding: '10px 14px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(217,119,6,0.12))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
                   Лента подарков · {wheelSpins}
                 </button>
@@ -380,7 +380,7 @@ export default function GoalsPage() {
             </div>
 
             {(detailsMetric.reward_image_url || detailsMetric.reward_description) && (
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(184,134,11,0.06)', border: '1px solid var(--border-gold)' }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}>
                 {detailsMetric.reward_image_url && <img src={detailsMetric.reward_image_url} alt="" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />}
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Приз за достижение максимума</div>
@@ -398,7 +398,7 @@ export default function GoalsPage() {
                   <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-page)', border: recommended ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{t.title}</span>
-                      {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
+                      {recommended && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(217,119,6,0.12)', color: 'var(--accent-gold)', border: '1px solid var(--border-gold)', whiteSpace: 'nowrap' }}>Рекомендуем</span>}
                     </div>
                     {t.type === 'video' && (t.url || t.video_path) && (
                       <button onClick={() => { setDetailsMetric(null); setVideoTraining(t) }} style={{ ...ghostBtn, marginTop: 10 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Смотреть в плеере</button>
@@ -419,13 +419,13 @@ export default function GoalsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => !testResult && setActiveTest(null)}>
           <div onClick={e => e.stopPropagation()} style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 26, position: 'relative' }}>
             <button onClick={() => setActiveTest(null)} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 18px', background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{activeTest.training.title}</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 18px', background: 'linear-gradient(135deg, #d97706, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{activeTest.training.title}</h3>
             {(activeTest.training.test_questions || []).map((q, qi) => (
               <div key={qi} style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 8 }}>{qi + 1}. {q.q}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {(q.options || []).map((opt, oi) => (
-                    <label key={oi} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', padding: '8px 12px', borderRadius: 10, border: `1px solid ${activeTest.answers[qi] === oi ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: activeTest.answers[qi] === oi ? 'rgba(184,134,11,0.08)' : 'transparent' }}>
+                    <label key={oi} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer', padding: '8px 12px', borderRadius: 10, border: `1px solid ${activeTest.answers[qi] === oi ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: activeTest.answers[qi] === oi ? 'rgba(217,119,6,0.08)' : 'transparent' }}>
                       <input type="radio" name={`q${qi}`} checked={activeTest.answers[qi] === oi} onChange={() => setActiveTest(a => { const ans = [...a.answers]; ans[qi] = oi; return { ...a, answers: ans } })} />
                       {opt}
                     </label>
