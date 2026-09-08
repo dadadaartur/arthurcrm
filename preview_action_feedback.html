@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Предпросмотр: общее уведомление о действии — Кармический банк</title>
+<style>
+  body { margin: 0; font-family: -apple-system, 'Inter', sans-serif; background: #f3f4f8; min-height: 100vh; }
+  .demo-page { padding: 40px; color: #161b28; }
+  .demo-page h1 { font-size: 20px; margin-bottom: 8px; }
+  .demo-page p { color: #5b6478; font-size: 14px; max-width: 460px; }
+  #buttons { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+  #buttons button { padding: 10px 20px; border-radius: 12px; border: none; font-size: 14px; cursor: pointer; }
+  #btn-success { background: #137a39; color: #fff; }
+  #btn-error { background: #dc2626; color: #fff; }
+
+  .overlay { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; pointer-events: none; transition: background 0.3s; }
+  .overlay.on { background: rgba(15,23,42,0.24); backdrop-filter: blur(2px); }
+  .card { width: 240px; background: #fff; border-radius: 20px; padding: 28px 26px 24px; border: 1px solid rgba(15,23,42,0.09); box-shadow: 0 14px 40px rgba(15,23,42,0.16); display: flex; flex-direction: column; align-items: center; gap: 14px; pointer-events: auto; cursor: pointer; opacity: 0; transform: scale(.92); transition: opacity 0.3s cubic-bezier(0.16,1,0.3,1), transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .card.on { opacity: 1; transform: scale(1); }
+  .ringwrap { position: relative; width: 76px; height: 76px; }
+  .ring { transition: none; }
+  .ring.on { transition: stroke-dashoffset 0.5s cubic-bezier(0.65,0,0.35,1) 0.05s; }
+  .icon { position: absolute; inset: 0; display: grid; place-items: center; }
+  .icon svg { grid-area: 1 / 1; opacity: 0; transform: scale(.5); transition: opacity 0.25s ease-out 0.4s, transform 0.3s cubic-bezier(0.34,1.4,0.64,1) 0.4s; }
+  .icon svg.on { opacity: 1; transform: scale(1); }
+  .msg { text-align: center; font-size: 14px; font-weight: 500; line-height: 1.4; color: #161b28; opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease-out 0.5s, transform 0.3s ease-out 0.5s; }
+  .msg.on { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="demo-page">
+  <h1>Пример страницы</h1>
+  <p>Уведомление появляется по центру, фон под ним не заблокирован — можно продолжать кликать по этой странице, пока карточка на виду. Нажмите кнопку внизу, чтобы вызвать уведомление, или кликните по самой карточке, чтобы закрыть её раньше срока.</p>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="card" id="card" onclick="hide()">
+    <div class="ringwrap">
+      <svg width="76" height="76" viewBox="0 0 76 76">
+        <defs>
+          <linearGradient id="ring-grad-success" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8a6208"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient>
+          <linearGradient id="ring-grad-error" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#64748b"/></linearGradient>
+        </defs>
+        <circle class="ring" id="ring" cx="38" cy="38" r="34" fill="none" stroke="url(#ring-grad-success)" stroke-width="2" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" transform="rotate(-90 38 38)"/>
+      </svg>
+      <div class="icon">
+        <svg id="icon-check" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#137a39" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg id="icon-error" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#dc2626" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <div class="msg" id="msg">Сотрудник добавлен</div>
+  </div>
+</div>
+
+<div id="buttons">
+  <button id="btn-success" onclick="show('success')">Показать успех</button>
+  <button id="btn-error" onclick="show('error')">Показать ошибку</button>
+</div>
+
+<script>
+let hideTimer;
+function show(type) {
+  clearTimeout(hideTimer);
+  const overlay = document.getElementById('overlay'), card = document.getElementById('card');
+  const ring = document.getElementById('ring'), msg = document.getElementById('msg');
+  const check = document.getElementById('icon-check'), err = document.getElementById('icon-error');
+
+  overlay.classList.remove('on'); card.classList.remove('on'); ring.classList.remove('on');
+  check.classList.remove('on'); err.classList.remove('on');
+  ring.setAttribute('stroke-dashoffset', '213.6');
+  ring.setAttribute('stroke', type === 'success' ? 'url(#ring-grad-success)' : 'url(#ring-grad-error)');
+  msg.textContent = type === 'success' ? 'Сотрудник добавлен' : 'Не удалось сохранить: email уже используется другим сотрудником';
+
+  void card.offsetHeight;
+
+  overlay.classList.add('on'); card.classList.add('on');
+  requestAnimationFrame(() => {
+    ring.classList.add('on');
+    ring.setAttribute('stroke-dashoffset', '0');
+  });
+  if (type === 'success') check.classList.add('on'); else err.classList.add('on');
+
+  hideTimer = setTimeout(hide, type === 'error' ? 4200 : 2200);
+}
+function hide() {
+  clearTimeout(hideTimer);
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('card').classList.remove('on');
+}
+</script>
+</body>
+</html>

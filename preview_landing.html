@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Превью: лендинг Кармического банка</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340;9..144,440;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #211C14; --ink-soft: #6B6355; --paper: #FBF7EE; --panel: #FFFFFF;
+    --gold: #E8A317; --magenta: #D6336C; --purple: #7C3AED; --teal: #0E8F82; --brand-gradient: linear-gradient(100deg, #D6336C 0%, #E8A317 35%, #7C3AED 70%, #0E8F82 100%);
+    --font-display: 'Fraunces', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); }
+  ::selection { background: var(--gold); color: var(--paper); }
+  .btn-primary { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: var(--paper); font-family: var(--font-body); font-size: 15px; font-weight: 600; padding: 15px 30px; border-radius: 3px; border: none; cursor: pointer; text-decoration: none; }
+  .btn-ghost { display: inline-flex; align-items: center; font-size: 14.5px; font-weight: 500; color: var(--ink); background: none; border: 1px solid rgba(33,28,20,0.22); border-radius: 3px; padding: 11px 22px; cursor: pointer; text-decoration: none; }
+  nav { position: sticky; top: 0; z-index: 40; display: flex; justify-content: space-between; align-items: center; padding: 22px 48px; background: rgba(251,247,238,0.88); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(33,28,20,0.08); }
+  .wordmark { font-family: var(--font-display); font-size: 21px; font-weight: 600; }
+  section { padding: 104px 48px; }
+  .hero { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1.35fr 1fr; gap: 64px; align-items: center; padding-top: 0; padding-bottom: 96px; }
+  h1 { font-family: var(--font-display); font-weight: 440; font-size: clamp(34px, 4.4vw, 56px); line-height: 1.12; letter-spacing: -0.01em; max-width: 640px; margin: 0; }
+  .lede { font-size: 17px; line-height: 1.65; color: var(--ink-soft); max-width: 490px; margin-top: 26px; }
+  .card { background: var(--panel); border-radius: 4px; padding: 30px; box-shadow: 0 30px 60px -20px rgba(33,28,20,0.25); border: 1px solid rgba(33,28,20,0.08); }
+  .row { display: flex; justify-content: space-between; padding: 13px 0; border-top: 1px solid rgba(33,28,20,0.06); font-size: 14.5px; }
+  .row:first-of-type { border-top: 1px solid rgba(33,28,20,0.1); }
+  .dark { background: var(--ink); color: var(--paper); text-align: left; }
+  .dark p.big { font-family: var(--font-display); font-weight: 400; font-size: clamp(22px, 2.6vw, 32px); line-height: 1.35; max-width: 760px; margin: 0 0 28px; }
+  .ledger-row { display: flex; justify-content: space-between; align-items: baseline; padding: 18px 0; border-top: 1px solid rgba(33,28,20,0.08); }
+  .ledger-row:first-child { border-top: 1px solid rgba(33,28,20,0.14); }
+  h2 { font-family: var(--font-display); font-weight: 440; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; max-width: 1120px; margin: 0 auto; }
+  .step { display: grid; grid-template-columns: 120px 1fr; gap: 32px; padding: 36px 0; border-top: 1px solid rgba(33,28,20,0.1); max-width: 1080px; margin: 0 auto; }
+  .step-n { font-family: var(--font-display); font-size: 44px; color: rgba(184,134,59,0.4); }
+  footer { padding: 40px 48px; display: flex; justify-content: space-between; border-top: 1px solid rgba(33,28,20,0.08); font-size: 13px; color: var(--ink-soft); }
+  @media (max-width: 860px) { .hero, .two-col, .step { grid-template-columns: 1fr !important; } }
+  .chart-line { stroke-dasharray: 1; stroke-dashoffset: 1; pathLength: 1; animation: drawLine 1.3s cubic-bezier(0.22,1,0.36,1) 0.6s forwards; }
+  @keyframes drawLine { to { stroke-dashoffset: 0; } }
+  .bar-after { animation: growBar 0.8s cubic-bezier(0.22,1,0.36,1) 0.9s forwards; }
+  .bar-before { animation: growBarB 0.8s cubic-bezier(0.22,1,0.36,1) 0.7s forwards; }
+  @keyframes growBar { from { height: 0; } to { height: 13px; } }
+  @keyframes growBarB { from { height: 0; } to { height: 150px; } }
+</style>
+</head>
+<body>
+
+<nav><span class="wordmark">Кармический банк</span><a href="#" class="btn-ghost">Войти</a></nav>
+
+<section class="hero">
+  <div>
+    <h1 style="font-size:clamp(38px,5.2vw,66px); line-height:1.08; letter-spacing:-0.015em; max-width:700px;">Вовлечённая команда — это не только атмосфера.<br>Это измеримый рост показателей.</h1>
+    <p class="lede" style="font-size:18px; max-width:520px;">«Кармический банк» превращает выполнение задач в кармики, уровни и награды — и даёт руководителю данные, чтобы управлять мотивацией так же точно, как любым другим бизнес-процессом.</p>
+    <div style="display:flex; gap:16px; margin-top:38px; flex-wrap:wrap; align-items:center;">
+      <a href="#" class="btn-primary">Создать компанию бесплатно</a>
+      <a href="#mechanism" class="btn-ghost">Как это устроено</a>
+    </div>
+    <p style="font-size:13px; color:var(--ink-soft); margin-top:18px;">Без карты. Первое задание — за 10 минут после регистрации.</p>
+  </div>
+  <div style="height:6px; border-radius:3px; background:var(--brand-gradient); margin-bottom:14px;"></div>
+  <div class="card">
+    <div style="font-size:11px; color:var(--ink-soft); margin-bottom:14px;">Доля выполнения задач по команде</div>
+    <svg viewBox="0 0 460 180" style="width:100%; height:auto;">
+      <defs>
+        <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#D6336C"/><stop offset="35%" stop-color="#E8A317"/><stop offset="70%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#0E8F82"/></linearGradient>
+        <linearGradient id="ag1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7C3AED" stop-opacity="0.16"/><stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0.0,75.6 Q0.0,75.6 40.0,70.2 Q80.0,64.8 120.0,59.4 Q160.0,54.0 200.0,49.2 Q240.0,44.4 280.0,40.8 Q320.0,37.2 360.0,34.2 T400.0,31.2 L400,150 L0,150 Z" fill="url(#ag1)"/>
+      <path class="chart-line" d="M0.0,75.6 Q0.0,75.6 40.0,70.2 Q80.0,64.8 120.0,59.4 Q160.0,54.0 200.0,49.2 Q240.0,44.4 280.0,40.8 Q320.0,37.2 360.0,34.2 T400.0,31.2" fill="none" stroke="url(#lg1)" stroke-width="3" stroke-linecap="round" pathLength="1"/>
+      <circle cx="400" cy="31.2" r="5" fill="#0E8F82"/>
+      <text x="412" y="36" font-family="Georgia, serif" font-size="17" fill="#0E8F82" font-weight="600">89%</text>
+      <text x="0" y="172" font-family="Inter, sans-serif" font-size="11" fill="#6B6355">Месяц 1</text>
+      <text x="366" y="172" font-family="Inter, sans-serif" font-size="11" fill="#6B6355">Месяц 6</text>
+    </svg>
+  </div>
+</section>
+
+<section class="dark">
+  <div style="max-width:900px; margin:0 auto;">
+    <p style="font-size:14px; color:rgba(251,247,238,0.5); margin-bottom:20px;">Знакомая картина</p>
+    <p class="big">Годовая премия не мотивирует в марте.</p>
+    <p class="big">Аттестация раз в полгода обсуждает результат, который сотрудник уже забыл.</p>
+    <p class="big">«Сотрудник месяца» на доске почёта — про него никто не вспомнит уже во вторник.</p>
+    <p style="font-size:16px; color:rgba(251,247,238,0.62); margin-top:40px; max-width:560px; line-height:1.6;">Всё это — правильные по замыслу инструменты, у которых один общий изъян: обратная связь приходит слишком редко и слишком абстрактно, чтобы влиять на решения, которые сотрудник принимает сегодня.</p>
+  </div>
+</section>
+
+
+<section style="padding:96px 48px; max-width:980px; margin:0 auto;">
+  <h2 style="font-size:clamp(28px,3.2vw,40px); margin-bottom:56px; max-width:640px;">Разница — не в формулировках, а в том, что реально происходит каждый день</h2>
+  <div style="display:flex; flex-direction:column; gap:1px; background:rgba(33,28,20,0.1); border-radius:6px; overflow:hidden;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--paper);">
+      <div></div>
+      <div style="padding:14px 22px; font-size:12px; color:var(--ink-soft); text-align:center;">Классический подход</div>
+      <div style="padding:14px 22px; font-size:12px; color:var(--purple); font-weight:600; text-align:center; border-left:2px solid var(--purple);">Кармический банк</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--paper);">
+      <div style="padding:20px 22px; font-size:13.5px; color:var(--ink-soft);">Частота обратной связи</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink-soft); background:rgba(33,28,20,0.03);">Раз в год, на аттестации</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink); font-weight:500; background:rgba(124,58,237,0.045); border-left:2px solid var(--purple);">Каждый день, за каждое действие</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--paper);">
+      <div style="padding:20px 22px; font-size:13.5px; color:var(--ink-soft);">Что видит сотрудник</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink-soft); background:rgba(33,28,20,0.03);">Абстрактный итог в конце периода</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink); font-weight:500; background:rgba(124,58,237,0.045); border-left:2px solid var(--purple);">Конкретный счёт, который растёт прямо сейчас</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--paper);">
+      <div style="padding:20px 22px; font-size:13.5px; color:var(--ink-soft);">Что видит руководитель</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink-soft); background:rgba(33,28,20,0.03);">Общее ощущение по команде</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink); font-weight:500; background:rgba(124,58,237,0.045); border-left:2px solid var(--purple);">Аналитику по каждому сотруднику и заданию</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--paper);">
+      <div style="padding:20px 22px; font-size:13.5px; color:var(--ink-soft);">Кому назначается программа</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink-soft); background:rgba(33,28,20,0.03);">Одна и та же — для всех, всегда</div>
+      <div style="padding:20px 22px; font-size:14.5px; color:var(--ink); font-weight:500; background:rgba(124,58,237,0.045); border-left:2px solid var(--purple);">Гибкий таргетинг, система сама подсказывает</div>
+    </div>
+  </div>
+</section>
+
+<section id="mechanism">
+  <h2 style="font-size:clamp(28px,3.2vw,40px); max-width:640px; margin: 0 auto 72px;">От выполненной задачи до видимого результата — три шага, не три квартала</h2>
+  <div class="step"><div class="step-n">1</div><div><h3 style="font-size:19px; margin-bottom:10px;">Задача получает адресата и цену</h3><p style="font-size:15px; line-height:1.65; color:var(--ink-soft); max-width:620px;">Руководитель назначает задание — вручную, по расписанию или по подсказке системы, которая сама находит, кто отстаёт по показателю.</p></div></div>
+  <div class="step"><div class="step-n">2</div><div><h3 style="font-size:19px; margin-bottom:10px;">Выполнение зачисляется сразу</h3><p style="font-size:15px; line-height:1.65; color:var(--ink-soft); max-width:620px;">Кармики и энергия начисляются в момент подтверждения — без ожидания отчётного периода.</p></div></div>
+  <div class="step"><div class="step-n">3</div><div><h3 style="font-size:19px; margin-bottom:10px;">Рост измерим — для человека и для компании</h3><p style="font-size:15px; line-height:1.65; color:var(--ink-soft); max-width:620px;">Кармики открывают уровни и награды. Руководитель видит аналитику: кто выполняет, кто отстаёт, какие задания вообще не работают.</p></div></div>
+</section>
+
+<section style="background:var(--panel); border-top:1px solid rgba(33,28,20,0.08); border-bottom:1px solid rgba(33,28,20,0.08);">
+  <div class="two-col">
+    <div>
+      <h2 style="font-size:clamp(26px,3vw,34px); line-height:1.22; margin-bottom:20px;">Руководитель видит не общее ощущение, а конкретную строку в отчёте</h2>
+      <p style="font-size:15.5px; line-height:1.7; color:var(--ink-soft);">Доля выполнения по каждому сотруднику, среднее время сдачи, и какие задания стабильно проваливаются — чтобы чинить систему по фактам.</p>
+    </div>
+    <div style="max-width:560px;">
+      <div class="ledger-row"><div><div style="font-size:15px; font-weight:500;">Доля выполнения заданий</div><div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">по команде за период</div></div><div style="font-family:var(--font-display); font-size:26px; color:var(--teal);">87%</div></div>
+      <div class="ledger-row"><div><div style="font-size:15px; font-weight:500;">Отстающих по SLA</div><div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">система сама предложила задание</div></div><div style="font-family:var(--font-display); font-size:26px; color:var(--magenta);">5 / 30</div></div>
+      <div class="ledger-row"><div><div style="font-size:15px; font-weight:500;">Кармиков выдано за месяц</div><div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">40% — автозачёт целей</div></div><div style="font-family:var(--font-display); font-size:26px; color:var(--gold);">12 480</div></div>
+
+      <div style="margin-top:36px; padding-top:30px; border-top:1px solid rgba(33,28,20,0.14);">
+        <p style="font-size:13px; color:var(--ink-soft); margin-bottom:18px;">Среднее время от назначения задания до сдачи</p>
+        <div style="display:flex; align-items:flex-end; gap:28px; height:170px;">
+          <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
+            <div style="font-family:var(--font-display); font-size:20px; color:var(--ink-soft); margin-bottom:8px; font-weight:600;">48 ч</div>
+            <div class="bar-before" style="width:100%; max-width:88px; height:0; background:rgba(33,28,20,0.18); border-radius:3px 3px 0 0;"></div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">Без системы</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
+            <div style="font-family:var(--font-display); font-size:20px; color:var(--ink); margin-bottom:8px; font-weight:600;">4 ч</div>
+            <div class="bar-after" style="width:100%; max-width:88px; height:0; background:var(--brand-gradient); border-radius:3px 3px 0 0;"></div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">С системой</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:96px 48px; max-width:760px; margin:0 auto;">
+  <h2 style="font-size:clamp(26px,3vw,34px); margin-bottom:44px;">Вопросы, которые обычно задают перед внедрением</h2>
+  <details style="border-top:1px solid rgba(33,28,20,0.12); padding:22px 0;"><summary style="font-size:16px; font-weight:500; cursor:pointer;">Сколько времени занимает внедрение?</summary><p style="font-size:14.5px; line-height:1.65; color:var(--ink-soft); margin-top:14px; max-width:620px;">Компания и первый показатель настраиваются за 10–15 минут. Дальше — постепенно, начиная с одного отдела.</p></details>
+  <details style="border-top:1px solid rgba(33,28,20,0.12); padding:22px 0;"><summary style="font-size:16px; font-weight:500; cursor:pointer;">Это подходит для нашей отрасли?</summary><p style="font-size:14.5px; line-height:1.65; color:var(--ink-soft); margin-top:14px; max-width:620px;">Платформа работает с любыми измеримыми показателями — звонки, заявки, SLA, продажи, нормативы.</p></details>
+  <details style="border-top:1px solid rgba(33,28,20,0.12); padding:22px 0;"><summary style="font-size:16px; font-weight:500; cursor:pointer;">А если сотрудники не будут пользоваться?</summary><p style="font-size:14.5px; line-height:1.65; color:var(--ink-soft); margin-top:14px; max-width:620px;">Гибкий таргетинг и рекомендации системы — задания уходят тем, кому нужнее, с понятной наградой.</p></details>
+  <details style="border-top:1px solid rgba(33,28,20,0.12); padding:22px 0;"><summary style="font-size:16px; font-weight:500; cursor:pointer;">Можно настроить награды под свою компанию?</summary><p style="font-size:14.5px; line-height:1.65; color:var(--ink-soft); margin-top:14px; max-width:620px;">Да, полностью — магазин наград наполняет сама компания, ничего не зашито заранее.</p></details>
+</section>
+
+<section class="dark" style="text-align:center; position:relative; overflow:hidden;">
+  <div style="position:absolute; top:0; left:0; right:0; height:4px; background:var(--brand-gradient);"></div>
+  <h2 style="font-size:clamp(32px,4.2vw,52px); max-width:680px; margin:0 auto 24px; line-height:1.18;">Первый результат вы увидите не через квартал — через первую рабочую неделю</h2>
+  <p style="font-size:17px; color:rgba(251,247,238,0.62); max-width:480px; margin:0 auto 44px;">Без внедрения на месяцы и без обязательств. Заведите компанию и назначьте первое задание уже сегодня.</p>
+  <a href="#" class="btn-primary" style="background:var(--gold); color:var(--ink); font-size:16px; padding:17px 36px;">Создать компанию бесплатно</a>
+  <div style="display:flex; gap:32px; justify-content:center; flex-wrap:wrap; margin-top:36px; font-size:13px; color:rgba(251,247,238,0.45);">
+    <span>Без карты при регистрации</span><span>Отмена в любой момент</span><span>Данные остаются у вас</span>
+  </div>
+</section>
+
+<footer><span style="font-family:var(--font-display); font-size:16px; color:var(--ink);">Кармический банк</span><span>© 2026 — система мотивации команды</span></footer>
+
+<button onclick="replay()" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:10px; background:#211C14; color:#FBF7EE; border:none; font-size:13px; cursor:pointer; z-index:99;">Проиграть анимации ещё раз</button>
+<script>
+function replay() {
+  document.querySelectorAll('.chart-line, .bar-before, .bar-after').forEach(el => { el.style.animation = 'none'; });
+  void document.body.offsetHeight;
+  document.querySelectorAll('.chart-line, .bar-before, .bar-after').forEach(el => { el.style.animation = ''; });
+}
+</script>
+
+</body>
+</html>
