@@ -48,7 +48,7 @@ export default function LevelPathModal({ open, onClose, energy = 0, canEdit = fa
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(8px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ width: 680, maxHeight: '88vh', overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 26 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <h3 style={{ fontSize: 19, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #8a6208, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Путь прогресса в компании</h3>
+          <h3 style={{ fontSize: 19, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #d97706, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Путь прогресса в компании</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
           </button>

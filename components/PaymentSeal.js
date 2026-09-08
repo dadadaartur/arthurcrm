@@ -21,7 +21,7 @@ export default function PaymentSeal({ mode, amount, sign = '+', label = 'Пер�
     return () => clearTimeout(t)
   }, [isError, onDone])
 
-  const ringColorA = isError ? '#94a3b8' : '#8a6208'
+  const ringColorA = isError ? '#94a3b8' : '#d97706'
   const ringColorB = isError ? '#64748b' : '#7c3aed'
 
   return (

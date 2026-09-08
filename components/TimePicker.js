@@ -60,7 +60,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
       onClick={onClick}
       className="rounded-lg text-xs py-1.5 transition-all duration-150"
       style={{
-        background: active ? 'linear-gradient(135deg, #8a6208, #7c3aed)' : 'var(--bg-page, #f3f4f8)',
+        background: active ? 'linear-gradient(135deg, #d97706, #7c3aed)' : 'var(--bg-page, #f3f4f8)',
         color: active ? '#fff' : 'var(--text-primary, #161b28)',
         border: '1px solid var(--border-gold, rgba(176,128,16,.35))',
         fontWeight: active ? 700 : 400,
@@ -83,7 +83,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
         <span style={{ opacity: value ? 1 : 0.55, fontSize: 14 }}>{value || placeholder}</span>
         {/* Тонкие золотые часы */}
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-          <circle cx="8" cy="8" r="6.5" stroke="#8a6208" strokeWidth="1.2" />
+          <circle cx="8" cy="8" r="6.5" stroke="#d97706" strokeWidth="1.2" />
           <path d="M8 4.5V8l2.3 1.6" stroke="#0e7490" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       </button>
@@ -108,7 +108,7 @@ export default function TimePicker({ value, onChange, placeholder = 'Время'
           </div>
           <div className="flex justify-between items-center">
             <button type="button" onClick={clear} className="text-[11px] transition-colors" style={{ color: 'var(--text-muted, #94a0b8)' }}>Очистить</button>
-            <button type="button" onClick={now} className="text-[11px] transition-colors" style={{ color: '#8a6208' }}>Сейчас</button>
+            <button type="button" onClick={now} className="text-[11px] transition-colors" style={{ color: '#d97706' }}>Сейчас</button>
             <button
               type="button"
               onClick={apply}

@@ -75,13 +75,13 @@ function NotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #8a6208, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #d97706, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
         )}
       </button>
       {open && createPortal(
         <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: '#ffffff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 16, boxShadow: '0 16px 40px rgba(15,23,42,0.16)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6208', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#d97706', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
             {items.length > 0 && (
               <button onClick={markAll} style={{ fontSize: 11, color: '#5f6b80', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
             )}
@@ -91,7 +91,7 @@ function NotificationBell() {
           ) : (
             items.map(n => (
               <div key={n.id} onClick={() => clickItem(n)}
-                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(184,134,11,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #8a6208' }}>
+                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(217,119,6,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #d97706' }}>
                 <p style={{ fontSize: 13, color: '#161b28', margin: 0 }}>{n.message}</p>
                 <p style={{ fontSize: 11, color: '#5f6b80', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
               </div>
@@ -206,7 +206,7 @@ export default function Layout({ children, autoHideHeader = false }) {
             boxShadow: headerRevealed ? '0 10px 34px rgba(15,23,42,0.14)' : 'none',
           }}>
             <div className="flex items-center gap-3 flex-wrap">
-              <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+              <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
                 Кармический банк
               </Link>
               <nav className="flex gap-2 flex-wrap">
@@ -230,7 +230,7 @@ export default function Layout({ children, autoHideHeader = false }) {
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)' }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(217,119,6,0.12)', color: 'var(--accent-gold)' }}>
                     {getInitials()}
                   </div>
                 )}
@@ -261,7 +261,7 @@ export default function Layout({ children, autoHideHeader = false }) {
       ) : (
         <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
           <div className="flex items-center gap-3 flex-wrap">
-          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #8a6208, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
           </Link>
           <nav className="flex gap-2 flex-wrap">
@@ -285,7 +285,7 @@ export default function Layout({ children, autoHideHeader = false }) {
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(184,134,11,0.12)', color: 'var(--accent-gold)' }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(217,119,6,0.12)', color: 'var(--accent-gold)' }}>
                 {getInitials()}
               </div>
             )}

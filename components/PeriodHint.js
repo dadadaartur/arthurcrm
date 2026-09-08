@@ -12,7 +12,7 @@ export default function PeriodHint({ period, resetHour }) {
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }}>
       <button type="button" onClick={() => setOpen(o => !o)} onBlur={() => setTimeout(() => setOpen(false), 150)}
-        style={{ width: 17, height: 17, borderRadius: '50%', border: '1px solid var(--border-gold, rgba(176,128,16,.45))', background: 'rgba(184,134,11,0.12)', color: '#8a6208', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>
+        style={{ width: 17, height: 17, borderRadius: '50%', border: '1px solid var(--border-gold, rgba(176,128,16,.45))', background: 'rgba(217,119,6,0.12)', color: '#d97706', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}>
         ?
       </button>
       {open && (

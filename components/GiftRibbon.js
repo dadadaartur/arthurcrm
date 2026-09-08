@@ -39,10 +39,10 @@ export default function GiftRibbon({ prizes, onSpin, spinning, result }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
       <div style={{ position: 'relative', width: 280, height: VIEWPORT_H, borderRadius: 20, overflow: 'hidden', background: 'var(--bg-page)', border: '1px solid var(--border-gold)', boxShadow: 'inset 0 0 24px rgba(15,23,42,0.06)' }}>
         {/* Окно выбора — фиксированная полоса по центру */}
-        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: ITEM_H, transform: 'translateY(-50%)', borderTop: '2px solid #8a6208', borderBottom: '2px solid #8a6208', background: 'rgba(138,98,8,0.06)', zIndex: 3, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: ITEM_H, transform: 'translateY(-50%)', borderTop: '2px solid #d97706', borderBottom: '2px solid #d97706', background: 'rgba(138,98,8,0.06)', zIndex: 3, pointerEvents: 'none' }} />
         {/* Указатели слева/справа на окно выбора */}
-        <div style={{ position: 'absolute', top: '50%', left: 4, transform: 'translateY(-50%)', zIndex: 4, width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderLeft: '10px solid #8a6208' }} />
-        <div style={{ position: 'absolute', top: '50%', right: 4, transform: 'translateY(-50%)', zIndex: 4, width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: '10px solid #8a6208' }} />
+        <div style={{ position: 'absolute', top: '50%', left: 4, transform: 'translateY(-50%)', zIndex: 4, width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderLeft: '10px solid #d97706' }} />
+        <div style={{ position: 'absolute', top: '50%', right: 4, transform: 'translateY(-50%)', zIndex: 4, width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: '10px solid #d97706' }} />
 
         {/* Сама лента */}
         <div style={{

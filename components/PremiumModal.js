@@ -9,7 +9,7 @@ export default function PremiumModal({ isOpen, onClose, title, children, showClo
             fontSize: 20,
             fontWeight: 600,
             marginBottom: 16,
-            background: 'linear-gradient(135deg, #8a6208, #db2777)',
+            background: 'linear-gradient(135deg, #d97706, #db2777)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

@@ -22,7 +22,7 @@ const shift = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.g
 const today = toISO(new Date())
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s', whiteSpace: 'nowrap' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#8a6208'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 12px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 export default function FillReportModal({ open, onClose, onSaved }) {
@@ -168,8 +168,8 @@ export default function FillReportModal({ open, onClose, onSaved }) {
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Способ</div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => setTab('table')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'table' ? 600 : 400, background: tab === 'table' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'table' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'table' ? '#8a6208' : 'var(--text-secondary)' }}>Таблица</button>
-              <button onClick={() => setTab('import')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'import' ? 600 : 400, background: tab === 'import' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'import' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'import' ? '#8a6208' : 'var(--text-secondary)' }}>Импорт</button>
+              <button onClick={() => setTab('table')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'table' ? 600 : 400, background: tab === 'table' ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'table' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'table' ? '#d97706' : 'var(--text-secondary)' }}>Таблица</button>
+              <button onClick={() => setTab('import')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: tab === 'import' ? 600 : 400, background: tab === 'import' ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${tab === 'import' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: tab === 'import' ? '#d97706' : 'var(--text-secondary)' }}>Импорт</button>
             </div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
@@ -184,7 +184,7 @@ export default function FillReportModal({ open, onClose, onSaved }) {
           <>
             <div style={{ display: 'flex', gap: 14, marginBottom: 10, fontSize: 11, color: 'var(--text-secondary)' }}>
               <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', marginRight: 5, verticalAlign: -1 }} />вводите сами — число за этот день</span>
-              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'rgba(184,134,11,0.15)', border: '1px solid var(--border-gold)', marginRight: 5, verticalAlign: -1 }} />считает сама система — это формула из соседних колонок, вводить не нужно</span>
+              <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 3, background: 'rgba(217,119,6,0.15)', border: '1px solid var(--border-gold)', marginRight: 5, verticalAlign: -1 }} />считает сама система — это формула из соседних колонок, вводить не нужно</span>
               <span style={{ marginLeft: 'auto' }}>Заполнено строк: {filledCount} из {employees.length}</span>
             </div>
             <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 14 }}>
@@ -199,9 +199,9 @@ export default function FillReportModal({ open, onClose, onSaved }) {
                       </th>
                     ))}
                     {formulaMetrics.map(m => (
-                      <th key={m.id} style={{ padding: '10px 8px', minWidth: 110, background: 'rgba(184,134,11,0.06)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: '#8a6208', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</div>
-                        <div style={{ fontSize: 9, color: '#8a6208', fontWeight: 400 }}>считает система</div>
+                      <th key={m.id} style={{ padding: '10px 8px', minWidth: 110, background: 'rgba(217,119,6,0.06)' }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: '#d97706', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</div>
+                        <div style={{ fontSize: 9, color: '#d97706', fontWeight: 400 }}>считает система</div>
                       </th>
                     ))}
                   </tr>
@@ -225,7 +225,7 @@ export default function FillReportModal({ open, onClose, onSaved }) {
                               style={{ width: '100%', textAlign: 'center', padding: '7px 20px 7px 4px', borderColor: st === 'saved' ? 'rgba(19,122,57,0.4)' : undefined }}
                             />
                             {st === 'saving' && (
-                              <span style={{ position: 'absolute', right: 10, top: '50%', marginTop: -6, width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#8a6208', animation: 'frmSpin 0.7s linear infinite' }} />
+                              <span style={{ position: 'absolute', right: 10, top: '50%', marginTop: -6, width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#d97706', animation: 'frmSpin 0.7s linear infinite' }} />
                             )}
                             {st === 'saved' && (
                               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: 8, top: '50%', marginTop: -6, animation: 'frmPop .3s ease-out' }}>
@@ -236,7 +236,7 @@ export default function FillReportModal({ open, onClose, onSaved }) {
                         )
                       })}
                       {formulaMetrics.map(m => { const v = computeValue(m, emp.user_id); return (
-                        <td key={m.id} style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 600, color: v != null ? '#8a6208' : 'var(--text-muted)' }}>{v != null ? v + (m.unit || '') : '—'}</td>
+                        <td key={m.id} style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 600, color: v != null ? '#d97706' : 'var(--text-muted)' }}>{v != null ? v + (m.unit || '') : '—'}</td>
                       )})}
                     </tr>
                   ))}
@@ -255,8 +255,8 @@ export default function FillReportModal({ open, onClose, onSaved }) {
             </p>
             <button onClick={copyTemplate} style={{ ...ghostBtn, padding: '8px 16px', fontSize: 12, marginBottom: 16 }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>Скопировать шаблон таблицы</button>
             <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-              <button onClick={() => setImportTab('paste')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'paste' ? 600 : 400, background: importTab === 'paste' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'paste' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'paste' ? '#8a6208' : 'var(--text-secondary)' }}>Вставить данные</button>
-              <button onClick={() => setImportTab('google')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'google' ? 600 : 400, background: importTab === 'google' ? 'rgba(184,134,11,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'google' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'google' ? '#8a6208' : 'var(--text-secondary)' }}>Ссылка на Google Таблицу</button>
+              <button onClick={() => setImportTab('paste')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'paste' ? 600 : 400, background: importTab === 'paste' ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'paste' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'paste' ? '#d97706' : 'var(--text-secondary)' }}>Вставить данные</button>
+              <button onClick={() => setImportTab('google')} style={{ padding: '7px 15px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: importTab === 'google' ? 600 : 400, background: importTab === 'google' ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${importTab === 'google' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: importTab === 'google' ? '#d97706' : 'var(--text-secondary)' }}>Ссылка на Google Таблицу</button>
             </div>
             {importTab === 'paste' ? (
               <>
