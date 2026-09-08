@@ -27,17 +27,16 @@ function MetricOrb({ value, unit, band, floatDelay = 0 }) {
   const ringColor = band === 'none' ? '#dc2626' : band === 'min' ? '#d97706' : band === 'mid' ? '#d97706' : band === 'top' ? '#137a39' : band === 'ultra' ? '#7c3aed' : 'var(--text-muted)'
   const gid = `orb${Math.round(Math.random() * 1e6)}`
   return (
-    <div style={{ width: 46, height: 46, position: 'relative', margin: '0 auto', animation: band ? `orbFloat 3.6s ease-in-out ${floatDelay}s infinite` : 'none' }}>
-      <svg width="46" height="46" viewBox="0 0 46 46">
+    <div style={{ width: 58, height: 58, position: 'relative', margin: '0 auto', animation: band ? `orbFloat 3.6s ease-in-out ${floatDelay}s infinite` : 'none' }}>
+      <svg width="58" height="58" viewBox="0 0 58 58">
         <defs>
           <radialGradient id={gid} cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" /><stop offset="35%" stopColor="#ffffff" stopOpacity="0.55" /><stop offset="100%" stopColor={ringColor} stopOpacity="0.3" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" /><stop offset="45%" stopColor="#ffffff" stopOpacity="0.35" /><stop offset="100%" stopColor={ringColor} stopOpacity="0.22" />
           </radialGradient>
         </defs>
-        {band && <circle cx="23" cy="23" r="21.5" fill="none" stroke={ringColor} strokeWidth="4" opacity="0.35" style={{ filter: 'blur(2px)' }} />}
-        <circle cx="23" cy="23" r="19" fill={band ? `url(#${gid})` : 'var(--bg-page)'} stroke={band ? ringColor : 'var(--border-subtle)'} strokeWidth="1.3" strokeOpacity="0.6" />
+        <circle cx="29" cy="29" r="25" fill={band ? `url(#${gid})` : 'var(--bg-page)'} stroke={band ? ringColor : 'var(--border-subtle)'} strokeWidth="2.4" />
       </svg>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: band ? ringColor : 'var(--text-muted)', textAlign: 'center', lineHeight: 1.05 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12.5, fontWeight: 800, color: band ? ringColor : 'var(--text-muted)', textAlign: 'center', lineHeight: 1.05 }}>
         {value != null ? `${value}${unit || ''}` : '—'}
       </div>
     </div>
@@ -50,20 +49,6 @@ const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: '�
 // страницы (по фидбеку от 6 сентября 2026: зацикленная пульсация
 // «выглядит как баг», убрана полностью; вместо неё — спокойная,
 // один раз проигрывающаяся, не бесконечная анимация).
-function UltraCrown({ size = 22 }) {
-  return (
-    <svg width={size} height={size * 0.78} viewBox="0 0 100 78" className="ultra-crown-once">
-      <defs>
-        <linearGradient id="crownGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ffe9a8" /><stop offset="100%" stopColor="#c9973d" />
-        </linearGradient>
-      </defs>
-      <path d="M20 48 L20 32 L32 42 L42 15 L50 25 L58 15 L68 42 L80 32 L80 48 Z" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" strokeLinejoin="round" strokeLinecap="round" />
-      <rect x="18" y="47" width="64" height="8" rx="4" fill="none" stroke="url(#crownGold)" strokeWidth="4.2" />
-      <circle cx="50" cy="24" r="4" fill="#7c3aed" />
-    </svg>
-  )
-}
 const overallBand = v => v < 0 ? 'none' : v >= 3.5 ? 'ultra' : v >= 2.5 ? 'top' : v >= 1.5 ? 'mid' : v >= 0.5 ? 'min' : 'none'
 const PALETTE = ['#8a6208', '#0e7490', '#7c3aed', '#137a39', '#be123c', '#dc2626', '#475569', '#15803d', '#2563eb', '#b45309']
 const fmtDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}` }
@@ -150,11 +135,11 @@ function ActionMenu({ insight, onPick }) {
         <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}><path d="M1 3l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
       </button>
       {open && typeof document !== 'undefined' && createPortal(
-        <div ref={menuRef} style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 2000, minWidth: 230, background: 'rgba(28,24,20,0.92)', backdropFilter: 'blur(14px)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 16px 40px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
+        <div ref={menuRef} style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 2000, minWidth: 230, background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(14px)', borderRadius: 14, border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', overflow: 'hidden' }}>
           {options.map(o => (
             <button key={o.key} onClick={() => { setOpen(false); onPick(o.key, insight) }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: '#fff' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 12.5, color: 'var(--text-primary)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: o.color, flexShrink: 0, boxShadow: `0 0 6px ${o.color}` }} />
               {o.label}
             </button>
@@ -252,8 +237,8 @@ function MiddlePerformersSection({ people, onAssign }) {
   return (
     <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
       <button onClick={() => setExpanded(v => !v)} className={expanded ? '' : 'middle-blink'} style={{
-        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-        padding: '11px 16px', borderRadius: 12, background: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))',
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '11px 18px', borderRadius: 50, background: 'linear-gradient(135deg, rgba(14,116,144,0.08), rgba(14,116,144,0.02))',
         border: '1px solid rgba(14,116,144,0.25)', cursor: 'pointer', textAlign: 'left',
       }}>
         <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>
@@ -425,7 +410,7 @@ function AnalyticsAdmin() {
   const [employees, setEmployees] = useState([])
   const [cur, setCur] = useState([])
   const [prev, setPrev] = useState([])
-  const [from, setFrom] = useState(shift(today, -6))
+  const [from, setFrom] = useState(today)
   const [to, setTo] = useState(today)
   const [compareMode, setCompareMode] = useState(false)
   const [compareFrom, setCompareFrom] = useState(shift(today, -13))
@@ -538,6 +523,13 @@ function AnalyticsAdmin() {
 
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
+      <div style={{ position: 'fixed', top: 90, right: 20, zIndex: 40, padding: '9px 16px', borderRadius: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', border: '1px solid var(--border-gold)', boxShadow: 'var(--shadow-card)', fontSize: 11.5, color: 'var(--text-secondary)' }}>
+        {compareMode ? (
+          <><span style={{ color: '#7c3aed', fontWeight: 700 }}>А</span> {from}—{to} <span style={{ color: 'var(--text-muted)' }}>vs</span> <span style={{ color: '#8a6208', fontWeight: 700 }}>Б</span> {compareFrom}—{compareTo}</>
+        ) : (
+          <>Смотрим: <b style={{ color: 'var(--text-primary)' }}>{from === to ? from : `${from} — ${to}`}</b></>
+        )}
+      </div>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border-subtle)' }}>
           <a href="/company-admin" style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none', transition: 'all .2s' }}
@@ -550,8 +542,7 @@ function AnalyticsAdmin() {
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {!compareMode && <DateRangePicker from={from} to={to} onChange={r => { setFrom(r.from); setTo(r.to) }} />}
-            <button onClick={() => setCompareMode(v => !v)} className={compareMode ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '9px 18px', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v18M16 3v18M4 8h4M16 8h4M4 16h4M16 16h4" /></svg>
+            <button onClick={() => setCompareMode(v => !v)} className={compareMode ? 'btn-glass' : 'btn-glass-outline'} style={{ padding: '9px 18px', fontSize: 12.5 }}>
               {compareMode ? 'Вернуться к обычному виду' : 'Сравнить периоды'}
             </button>
             {!compareMode && <button onClick={() => setFillOpen(true)} className="btn-glass-outline" style={{ padding: '9px 18px', fontSize: 12.5 }}>Заполнить показатели</button>}
@@ -593,9 +584,10 @@ function AnalyticsAdmin() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
             {metricSummary.map(({ m, cv, pv, delta, suspicious }) => {
               if (suspicious) return null
-              const better = delta == null ? null : m.kpi_type === 'inverse' ? delta < 0 : delta > 0
+              const verdict = delta == null ? null : delta === 0 ? 'same' : (m.kpi_type === 'inverse' ? delta < 0 : delta > 0) ? 'better' : 'worse'
+              const verdictColor = verdict === 'better' ? '#137a39' : verdict === 'worse' ? '#dc2626' : 'var(--text-secondary)'
               return (
-                <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: `1px solid ${better == null ? 'var(--border-subtle)' : better ? 'rgba(19,122,57,0.3)' : 'rgba(220,38,38,0.3)'}` }}>
+                <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 20, border: `1px solid ${verdict == null ? 'var(--border-subtle)' : verdict === 'better' ? 'rgba(19,122,57,0.3)' : verdict === 'worse' ? 'rgba(220,38,38,0.3)' : 'var(--border-subtle)'}` }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>{m.name}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
                     <div style={{ textAlign: 'center' }}>
@@ -607,13 +599,13 @@ function AnalyticsAdmin() {
                       <div style={{ fontSize: 10, color: '#8a6208', fontWeight: 700, marginBottom: 4 }}>Период Б</div>
                       <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{pv != null ? `${pv}${m.unit}` : '—'}</div>
                     </div>
-                    {better != null && (
+                    {verdict != null && (
                       <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: better ? '#137a39' : '#dc2626' }}>{better ? 'Стало лучше' : 'Стало хуже'}</div>
-                        <div style={{ fontSize: 13, color: better ? '#137a39' : '#dc2626' }}>{delta > 0 ? '+' : ''}{delta}%</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: verdictColor }}>{verdict === 'better' ? 'Стало лучше' : verdict === 'worse' ? 'Стало хуже' : 'Без изменений'}</div>
+                        {verdict !== 'same' && <div style={{ fontSize: 13, color: verdictColor }}>{delta > 0 ? '+' : ''}{delta}%</div>}
                       </div>
                     )}
-                    {better == null && <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-muted)' }}>Недостаточно данных для сравнения</div>}
+                    {verdict == null && <div style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--text-muted)' }}>Недостаточно данных для сравнения</div>}
                   </div>
                 </div>
               )
@@ -629,9 +621,6 @@ function AnalyticsAdmin() {
             const isUltra = b === 'ultra' && !suspicious
             return (
               <div key={m.id} style={{ background: 'var(--bg-card)', boxShadow: isUltra ? '0 0 0 1.5px rgba(124,58,237,0.35), var(--shadow-card)' : 'var(--shadow-card)', borderRadius: 16, padding: 18, border: `1px solid ${suspicious ? 'rgba(220,38,38,0.4)' : b ? BAND_TEXT[b] + '33' : 'var(--border-subtle)'}`, display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}>
-                {isUltra && (
-                  <div style={{ position: 'absolute', top: -16, right: 10 }}><UltraCrown size={40} /></div>
-                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                     {b && !suspicious && (
@@ -656,19 +645,23 @@ function AnalyticsAdmin() {
                     <span style={{ color: 'var(--text-secondary)' }}>{totalSum}{m.unit} <span style={{ color: 'var(--text-muted)' }}>всего за период</span></span>
                   </div>
                 )}
-                {!suspicious && delta != null && (
-                  <div style={{ padding: '9px 10px', borderRadius: 9, background: delta > 0 ? 'rgba(19,122,57,0.08)' : delta < 0 ? 'rgba(220,38,38,0.08)' : 'var(--bg-page)' }}>
+                {!suspicious && delta != null && (() => {
+                  const verdict = delta === 0 ? 'same' : (m.kpi_type === 'inverse' ? delta < 0 : delta > 0) ? 'better' : 'worse'
+                  const vColor = verdict === 'better' ? '#137a39' : verdict === 'worse' ? '#dc2626' : 'var(--text-muted)'
+                  return (
+                  <div style={{ padding: '9px 10px', borderRadius: 9, background: verdict === 'better' ? 'rgba(19,122,57,0.08)' : verdict === 'worse' ? 'rgba(220,38,38,0.08)' : 'var(--bg-page)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
-                      {delta > 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>}
-                      {delta < 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>}
-                      {delta === 0 && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>}
-                      <span style={{ fontSize: 13, fontWeight: 700, color: delta > 0 ? '#137a39' : delta < 0 ? '#dc2626' : 'var(--text-muted)' }}>{delta > 0 ? '+' : ''}{delta}%</span>
+                      {verdict === 'better' && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={vColor} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d={delta > 0 ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'} /></svg>}
+                      {verdict === 'worse' && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={vColor} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d={delta > 0 ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'} /></svg>}
+                      {verdict === 'same' && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={vColor} strokeWidth="3.2" strokeLinecap="round"><path d="M5 12h14" /></svg>}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: vColor }}>{verdict === 'same' ? 'Без изменений' : `${delta > 0 ? '+' : ''}${delta}%`}</span>
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                       {compareMode ? 'Период Б' : `предыдущие ${days} дн.`}: <b style={{ color: 'var(--text-primary)' }}>{pv}{m.unit}</b> → {compareMode ? 'период А' : 'сейчас'}: <b style={{ color: 'var(--text-primary)' }}>{cv}{m.unit}</b>
                     </div>
                   </div>
-                )}
+                  )
+                })()}
                 {!suspicious && delta == null && cv != null && (
                   <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Нет данных за предыдущий период для сравнения</div>
                 )}
@@ -777,7 +770,6 @@ function AnalyticsAdmin() {
                       <div key={c.m.id} style={{ textAlign: 'center' }}>
                         <MetricOrb value={c.v} unit={c.m.unit} band={c.band} floatDelay={(ri + Number(c.m.id)) % 5 * 0.4} />
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 3 }}>
-                          {isUltraCell && <UltraCrown size={11} />}
                           {trend === 'up' && (
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#137a39" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
                           )}
