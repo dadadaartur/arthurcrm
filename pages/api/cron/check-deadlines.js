@@ -57,10 +57,90 @@ export default async function handler(req, res) {
       if (!top3.length) continue
       await a.from('race_winners').insert(top3.map(([userId, karma], i) => ({ company_id: company.id, cycle_month: cycleMonth, rank: i + 1, user_id: userId, karma_earned: karma })))
       await a.from('notifications').insert(top3.map(([userId], i) => ({
-        user_id: userId, link: '/race',
+        user_id: userId, link: '/championship',
         message: i === 0 ? `Вы — победитель месячной гонки! 1 место, заработано ${earned[userId]} кармиков. Доступна привилегия — создать до 2 шуточных заданий коллегам.`
           : `Вы в топ-3 месячной гонки — ${i + 1} место! Доступна привилегия — создать до 2 шуточных заданий коллегам.`,
       })))
+    }
+  }
+
+  // 0в) Промежуточные призы лиги — на последний день контрольного
+  // месяца (по умолчанию конец каждого квартала) награждаем топ-3 по
+  // сумме кармиков С НАЧАЛА ГОДА, не только за месяц (в отличие от
+  // гонки — тут копится весь сезон, контрольная точка просто фиксирует
+  // промежуточный результат, счёт продолжает идти дальше). Идемпотентно
+  // через уникальный индекс (season_id, checkpoint_month, rank).
+  {
+    const isLastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() === now.getDate()
+    const thisMonth = now.getMonth() + 1
+    if (isLastDayOfMonth) {
+      const { data: companies } = await a.from('companies').select('id').eq('status', 'active')
+      for (const company of companies || []) {
+        const { data: season } = await a.from('league_seasons').select('*').eq('company_id', company.id).eq('year', now.getFullYear()).maybeSingle()
+        if (!season) continue
+        if (!(season.checkpoint_months || [3, 6, 9, 12]).includes(thisMonth)) continue
+        const { data: already } = await a.from('league_checkpoint_awards').select('id').eq('season_id', season.id).eq('checkpoint_month', thisMonth).limit(1)
+        if (already?.length) continue
+        const { data: emps } = await a.from('profiles').select('user_id').eq('company_id', company.id).eq('is_company_admin', false).is('deleted_at', null)
+        const empIds = (emps || []).map(e => e.user_id)
+        if (!empIds.length) continue
+        const yearStart = new Date(now.getFullYear(), 0, 1).toISOString()
+        const { data: txns } = await a.from('karma_transactions').select('user_id, amount').in('user_id', empIds).gte('created_at', yearStart).gt('amount', 0)
+        const earned = {}
+        ;(txns || []).forEach(t => { earned[t.user_id] = (earned[t.user_id] || 0) + Number(t.amount) })
+        const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
+        if (!top3.length) continue
+        await a.from('league_checkpoint_awards').insert(top3.map(([userId, karma], i) => ({ season_id: season.id, checkpoint_month: thisMonth, rank: i + 1, user_id: userId, karma_at_checkpoint: karma })))
+        await a.from('notifications').insert(top3.map(([userId], i) => ({
+          user_id: userId, link: '/championship',
+          message: `Промежуточный итог лиги — вы на ${i + 1} месте по итогам ${thisMonth === 3 ? 'I' : thisMonth === 6 ? 'II' : thisMonth === 9 ? 'III' : 'IV'} квартала! Сезон продолжается, счёт не обнуляется.`,
+        })))
+      }
+    }
+  }
+
+  // 0г) Переход раундов кубка — если окно текущего раунда истекло,
+  // определяем победителя каждого матча по тому, кто заработал больше
+  // кармиков за это окно, создаём следующий раунд или завершаем турнир,
+  // если это был финал.
+  {
+    const { data: activeTournaments } = await a.from('cup_tournaments').select('*').eq('status', 'active')
+    for (const t of activeTournaments || []) {
+      if (!t.round_started_at) continue
+      const roundEnd = new Date(new Date(t.round_started_at).getTime() + t.round_duration_days * 86400000)
+      if (now < roundEnd) continue
+
+      const { data: matches } = await a.from('cup_matches').select('*').eq('tournament_id', t.id).eq('round', t.current_round).eq('status', 'active')
+      if (!matches?.length) continue
+
+      const participantIds = matches.flatMap(m => [m.participant_a, m.participant_b]).filter(Boolean)
+      const { data: txns } = await a.from('karma_transactions').select('user_id, amount').in('user_id', participantIds).gte('created_at', t.round_started_at).lt('created_at', roundEnd.toISOString()).gt('amount', 0)
+      const earned = {}
+      ;(txns || []).forEach(tx => { earned[tx.user_id] = (earned[tx.user_id] || 0) + Number(tx.amount) })
+
+      const winners = []
+      for (const m of matches) {
+        const scoreA = earned[m.participant_a] || 0, scoreB = earned[m.participant_b] || 0
+        const winnerId = scoreA >= scoreB ? m.participant_a : m.participant_b
+        await a.from('cup_matches').update({ score_a: scoreA, score_b: scoreB, winner_id: winnerId, status: 'completed' }).eq('id', m.id)
+        winners.push(winnerId)
+        await a.from('notifications').insert({ user_id: winnerId, message: `Победа в раунде турнира «${t.title}»! Счёт ${scoreA} — ${scoreB}. Идёте дальше.`, link: '/championship' })
+        const loserId = winnerId === m.participant_a ? m.participant_b : m.participant_a
+        if (loserId) await a.from('notifications').insert({ user_id: loserId, message: `Турнир «${t.title}» — раунд проигран, счёт ${scoreA} — ${scoreB}. Спасибо за участие!`, link: '/championship' })
+      }
+
+      if (winners.length === 1) {
+        await a.from('cup_tournaments').update({ status: 'completed' }).eq('id', t.id)
+        await a.from('notifications').insert({ user_id: winners[0], message: `Вы выиграли турнир «${t.title}»! Поздравляем чемпиона.`, link: '/championship' })
+      } else {
+        const nextRound = t.current_round + 1
+        const nextMatches = []
+        for (let i = 0; i < winners.length / 2; i++) {
+          nextMatches.push({ tournament_id: t.id, round: nextRound, match_index: i, participant_a: winners[i * 2], participant_b: winners[i * 2 + 1] || null, status: winners[i * 2 + 1] ? 'active' : 'completed', winner_id: winners[i * 2 + 1] ? null : winners[i * 2] })
+        }
+        await a.from('cup_matches').insert(nextMatches)
+        await a.from('cup_tournaments').update({ current_round: nextRound, round_started_at: now.toISOString() }).eq('id', t.id)
+      }
     }
   }
 
