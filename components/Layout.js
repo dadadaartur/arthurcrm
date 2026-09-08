@@ -69,7 +69,7 @@ function NotificationBell() {
   return (
     <>
       <button ref={btnRef} onClick={toggle} title="Уведомления"
-        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(184,134,11,0.12)' : 'rgba(184,134,11,0.06)', border: '1px solid rgba(184,134,11,0.3)', color: '#8a6208', transition: 'all 0.3s ease' }}>
+        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(15,23,42,0.06)' : 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.15)', color: 'var(--text-primary)', transition: 'all 0.3s ease' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
