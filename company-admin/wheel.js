@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import LoadingScreen from '../../components/LoadingScreen'
 import BackArrow from '../../components/BackArrow'
-import GiftRibbon from '../../components/GiftRibbon'
+import CannonPrizeGame from '../../components/CannonPrizeGame'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
@@ -47,9 +47,12 @@ function WheelAdmin() {
     } catch (e) { showError(e.message) }
   }
 
-  const addPrize = () => setConfig(c => ({ ...c, prizes: [...c.prizes, { id: newId(), label: 'Новый приз', color: PALETTE[c.prizes.length % PALETTE.length], weight: 1, type: 'karma', amount: 50, text: '', avatar_url: '', description: '' }] }))
+  const addPrize = () => setConfig(c => ({ ...c, prizes: [...c.prizes, { id: newId(), label: 'Новый приз', color: PALETTE[c.prizes.length % PALETTE.length], weight: 1, rewards: [{ type: 'karma', amount: 50, label: '' }], avatar_url: '', description: '' }] }))
   const updatePrize = (id, patch) => setConfig(c => ({ ...c, prizes: c.prizes.map(p => p.id === id ? { ...p, ...patch } : p) }))
   const removePrize = id => setConfig(c => ({ ...c, prizes: c.prizes.filter(p => p.id !== id) }))
+  const addReward = (prizeId) => setConfig(c => ({ ...c, prizes: c.prizes.map(p => p.id === prizeId ? { ...p, rewards: [...(p.rewards || []), { type: 'karma', amount: 10, label: '' }] } : p) }))
+  const updateReward = (prizeId, idx, patch) => setConfig(c => ({ ...c, prizes: c.prizes.map(p => p.id === prizeId ? { ...p, rewards: p.rewards.map((r, i) => i === idx ? { ...r, ...patch } : r) } : p) }))
+  const removeReward = (prizeId, idx) => setConfig(c => ({ ...c, prizes: c.prizes.map(p => p.id === prizeId ? { ...p, rewards: p.rewards.filter((_, i) => i !== idx) } : p) }))
 
   // Превью — тот же принцип взвешенного случайного выбора, что на
   // сервере (pages/api/wheel/spin.js), но локально: это демонстрация
@@ -101,12 +104,12 @@ function WheelAdmin() {
             </div>
 
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Призы</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginBottom: 16 }}>
               {config.prizes.map(p => (
-                <div key={p.id} style={{ borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', padding: '10px 12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '30px 1.3fr 0.6fr 0.9fr 1fr 30px', gap: 8, alignItems: 'center', position: 'relative' }}>
+                <div key={p.id} style={{ borderRadius: 14, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', padding: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative' }}>
                     <button type="button" onClick={() => setColorPickerFor(f => f === p.id ? null : p.id)} title="Выбрать цвет"
-                      style={{ width: 20, height: 20, borderRadius: '50%', background: p.color, margin: '0 auto', display: 'block', border: '2px solid rgba(15,23,42,0.15)', cursor: 'pointer', padding: 0 }} />
+                      style={{ width: 20, height: 20, borderRadius: '50%', background: p.color, flexShrink: 0, display: 'block', border: '2px solid rgba(15,23,42,0.15)', cursor: 'pointer', padding: 0 }} />
                     {colorPickerFor === p.id && (
                       <div style={{ position: 'absolute', top: 26, left: 0, zIndex: 10, display: 'flex', flexWrap: 'wrap', gap: 5, width: 150, padding: 8, borderRadius: 10, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)' }}>
                         {PALETTE.map(c => (
@@ -119,22 +122,38 @@ function WheelAdmin() {
                         </label>
                       </div>
                     )}
-                    <input className="input-field" style={{ fontSize: 12 }} placeholder="Название приза" value={p.label} onChange={e => updatePrize(p.id, { label: e.target.value })} />
-                    <input type="number" step="0.1" className="input-field" style={{ fontSize: 12 }} placeholder="Вес" title="Вес — относительная вероятность выпадения" value={p.weight} onChange={e => updatePrize(p.id, { weight: e.target.value })} />
-                    <select className="input-field" style={{ fontSize: 12 }} value={p.type} onChange={e => updatePrize(p.id, { type: e.target.value })}>
-                      <option value="karma">Кармики</option>
-                      <option value="custom">Свой приз (текст)</option>
-                    </select>
-                    {p.type === 'karma' ? (
-                      <input type="number" className="input-field" style={{ fontSize: 12 }} placeholder="Сколько кармиков" value={p.amount} onChange={e => updatePrize(p.id, { amount: e.target.value })} />
-                    ) : (
-                      <input className="input-field" style={{ fontSize: 12 }} placeholder="Например: доп. выходной" value={p.text} onChange={e => updatePrize(p.id, { text: e.target.value })} />
-                    )}
-                    <button onClick={() => removePrize(p.id)} style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, color: '#dc2626', cursor: 'pointer', padding: 6 }}>
+                    <input className="input-field" style={{ fontSize: 12.5, flex: 1, fontWeight: 600 }} placeholder="Название приза" value={p.label} onChange={e => updatePrize(p.id, { label: e.target.value })} />
+                    <button onClick={() => removePrize(p.id)} style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, color: '#dc2626', cursor: 'pointer', padding: 6, flexShrink: 0 }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                     </button>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8, paddingLeft: 38 }}>
+
+                  <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Вес (относительная вероятность выпадения)</label>
+                  <input type="number" step="0.1" className="input-field" style={{ fontSize: 12, width: 90, marginBottom: 12 }} value={p.weight} onChange={e => updatePrize(p.id, { weight: e.target.value })} />
+
+                  <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Что получает сотрудник — можно несколько сразу</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                    {(p.rewards || []).map((rw, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <select className="input-field" style={{ fontSize: 11, width: 100, flexShrink: 0 }} value={rw.type} onChange={e => updateReward(p.id, i, { type: e.target.value })}>
+                          <option value="karma">Кармики</option>
+                          <option value="promo">Промокод</option>
+                          <option value="custom">Свой приз</option>
+                        </select>
+                        {rw.type === 'karma' ? (
+                          <input type="number" className="input-field" style={{ fontSize: 11, flex: 1 }} placeholder="Сколько" value={rw.amount || ''} onChange={e => updateReward(p.id, i, { amount: e.target.value })} />
+                        ) : (
+                          <input className="input-field" style={{ fontSize: 11, flex: 1 }} placeholder={rw.type === 'promo' ? 'Код промокода' : 'Например: доп. выходной'} value={rw.text || ''} onChange={e => updateReward(p.id, i, { text: e.target.value })} />
+                        )}
+                        <button onClick={() => removeReward(p.id, i)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => addReward(p.id)} style={{ fontSize: 10.5, color: 'var(--accent-gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 10 }}>+ Ещё награда в этот приз</button>
+
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <label style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, cursor: 'pointer', border: '1px dashed var(--border-gold)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} title="Загрузить аватар приза">
                       {uploadingFor === p.id ? (
                         <span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#ea580c', animation: 'wheelSpin 0.7s linear infinite' }} />
@@ -145,7 +164,7 @@ function WheelAdmin() {
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => e.target.files[0] && uploadAvatar(p.id, e.target.files[0])} />
                     </label>
-                    <input className="input-field" style={{ fontSize: 11, flex: 1 }} placeholder="Описание приза (необязательно, покажется в истории покупок)" value={p.description || ''} onChange={e => updatePrize(p.id, { description: e.target.value })} />
+                    <input className="input-field" style={{ fontSize: 11, flex: 1 }} placeholder="Описание (в историю покупок)" value={p.description || ''} onChange={e => updatePrize(p.id, { description: e.target.value })} />
                   </div>
                 </div>
               ))}
@@ -160,7 +179,7 @@ function WheelAdmin() {
           <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 20, padding: 26, border: '1px solid var(--border-gold)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>Предпросмотр</div>
             {config.prizes.length > 0 ? (
-              <GiftRibbon prizes={config.prizes} onSpin={previewSpin} spinning={previewSpinning} result={previewResult} />
+              <CannonPrizeGame prizes={config.prizes} onSpin={previewSpin} spinning={previewSpinning} result={previewResult} />
             ) : (
               <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Добавьте призы, чтобы увидеть ленту</p>
             )}

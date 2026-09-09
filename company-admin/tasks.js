@@ -48,7 +48,7 @@ function TasksPage() {
   const [restoreId, setRestoreId] = useState(null)
   const [restoreDate, setRestoreDate] = useState('')
   const [form, setForm] = useState({
-    title: '', description: '', reward_karma: 10,
+    title: '', description: '', reward_karma: 10, reward_wheel_spins: 0,
     task_type: 'one_time', recurrence_type: 'once', target_role: 'all',
     requires_review: true, requires_proof: false, proof_type: 'any',
     deadline_date: '', deadline_time: '', is_auto_goal: false, auto_goal_condition: 'all_min', auto_energy: 1,
@@ -342,6 +342,10 @@ function TasksPage() {
                   <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Попытки ленты призов (необязательно)</label>
+                  <input type="number" className="input-field" style={{ width: '100%' }} min="0" value={form.reward_wheel_spins} onChange={e => setForm({ ...form, reward_wheel_spins: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Дедлайн</label>
                   <DatePicker value={form.deadline_date} onChange={v => setForm({ ...form, deadline_date: v })} placeholder="Без дедлайна" />
                 </div>
@@ -426,6 +430,10 @@ function TasksPage() {
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Награда (кармики)</label>
                   <input type="number" className="input-field" style={{ width: '100%' }} min="1" value={form.reward_karma} onChange={e => setForm({ ...form, reward_karma: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Попытки ленты призов (необязательно)</label>
+                  <input type="number" className="input-field" style={{ width: '100%' }} min="0" value={form.reward_wheel_spins} onChange={e => setForm({ ...form, reward_wheel_spins: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Описание</label>
