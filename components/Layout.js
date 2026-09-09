@@ -68,20 +68,30 @@ function NotificationBell() {
   }
   return (
     <>
-      <button ref={btnRef} onClick={toggle} title="Уведомления"
-        style={{ position: 'relative', cursor: 'pointer', width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(15,23,42,0.06)' : 'rgba(15,23,42,0.03)', border: '1px solid rgba(15,23,42,0.15)', color: 'var(--text-primary)', transition: 'all 0.3s ease' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <button ref={btnRef} onClick={toggle}
+        style={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(234,88,12,0.14), rgba(124,58,237,0.12), rgba(14,116,144,0.12))', border: `1px solid ${open ? 'var(--border-gold)' : 'rgba(15,23,42,0.12)'}`, transition: 'all 0.3s ease', boxShadow: open ? '0 0 0 3px rgba(234,88,12,0.12)' : 'none' }}>
+        <span className="bell-shimmer" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#bellGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative' }}>
+          <defs>
+            <linearGradient id="bellGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ea580c" /><stop offset="55%" stopColor="#dc2626" /><stop offset="100%" stopColor="#7c3aed" />
+            </linearGradient>
+          </defs>
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #d97706, #7c3aed)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #dc2626, #ea580c)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
         )}
       </button>
+      <style jsx global>{`
+        @keyframes bellShimmerMove { 0% { transform: translateX(-120%) rotate(15deg); } 100% { transform: translateX(220%) rotate(15deg); } }
+        .bell-shimmer { position: absolute; top: -40%; left: 0; width: 35%; height: 180%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); animation: bellShimmerMove 4s ease-in-out infinite; pointer-events: none; }
+      `}</style>
       {open && createPortal(
         <div ref={boxRef} style={{ position: 'fixed', top: pos.top, right: pos.right, width: 330, maxHeight: 420, overflowY: 'auto', zIndex: 99999, padding: 14, background: '#ffffff', border: '1px solid rgba(15,23,42,0.09)', borderRadius: 16, boxShadow: '0 16px 40px rgba(15,23,42,0.16)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#d97706', letterSpacing: 1 }}>УВЕДОМЛЕНИЯ</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)' }}>Уведомления</span>
             {items.length > 0 && (
               <button onClick={markAll} style={{ fontSize: 11, color: '#5f6b80', background: 'none', border: 'none', cursor: 'pointer' }}>Прочитать все</button>
             )}
@@ -91,7 +101,7 @@ function NotificationBell() {
           ) : (
             items.map(n => (
               <div key={n.id} onClick={() => clickItem(n)}
-                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(217,119,6,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #d97706' }}>
+                style={{ padding: 10, borderRadius: 10, cursor: 'pointer', marginBottom: 6, background: n.is_read ? '#f8f9fb' : 'rgba(234,88,12,0.07)', borderLeft: n.is_read ? '2px solid transparent' : '2px solid #ea580c' }}>
                 <p style={{ fontSize: 13, color: '#161b28', margin: 0 }}>{n.message}</p>
                 <p style={{ fontSize: 11, color: '#5f6b80', margin: '4px 0 0' }}>{new Date(n.created_at).toLocaleString('ru')}</p>
               </div>
@@ -206,7 +216,7 @@ export default function Layout({ children, autoHideHeader = false }) {
             boxShadow: headerRevealed ? '0 10px 34px rgba(15,23,42,0.14)' : 'none',
           }}>
             <div className="flex items-center gap-3 flex-wrap">
-              <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+              <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #ea580c, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
                 Кармический банк
               </Link>
               <nav className="flex gap-2 flex-wrap">
@@ -230,7 +240,7 @@ export default function Layout({ children, autoHideHeader = false }) {
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(217,119,6,0.12)', color: 'var(--accent-gold)' }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(234,88,12,0.12)', color: 'var(--accent-gold)' }}>
                     {getInitials()}
                   </div>
                 )}
@@ -245,13 +255,15 @@ export default function Layout({ children, autoHideHeader = false }) {
               Тонкий геометричный контур, золотой градиент, мягкое
               свечение, лёгкое дыхание — не мультяшная иконка. Гаснет,
               когда шапка раскрыта, ей нечего подсказывать в этот момент. */}
-          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', opacity: headerRevealed ? 0 : 1, transition: 'opacity 0.3s ease' }}>
-            <svg width="15" height="24" viewBox="0 0 64 90" style={{ animation: 'boltBreathe 2.8s ease-in-out infinite', filter: 'drop-shadow(0 0 5px rgba(255,215,120,0.55))' }}>
+          <div style={{ position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', opacity: headerRevealed ? 0 : 1, transition: 'opacity 0.3s ease' }}>
+            <div className="bolt-halo" />
+            <svg width="20" height="30" viewBox="0 0 64 90" style={{ animation: 'boltBreathe 2.8s ease-in-out infinite', filter: 'drop-shadow(0 0 7px rgba(220,90,20,0.6))', position: 'relative' }}>
               <defs>
                 <linearGradient id="layoutBoltGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#fff9e6" />
-                  <stop offset="45%" stopColor="#ffd76a" />
-                  <stop offset="100%" stopColor="#b8860b" />
+                  <stop offset="0%" stopColor="#fff3d6" />
+                  <stop offset="40%" stopColor="#f0a020" />
+                  <stop offset="75%" stopColor="#dc2626" />
+                  <stop offset="100%" stopColor="#7c3aed" />
                 </linearGradient>
               </defs>
               <path d="M40 0 L14 42 L34 42 L26 78 L64 30 L42 30 L52 0 Z" fill="url(#layoutBoltGrad)" />
@@ -261,7 +273,7 @@ export default function Layout({ children, autoHideHeader = false }) {
       ) : (
         <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
           <div className="flex items-center gap-3 flex-wrap">
-          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
+          <Link href="/" className="text-base font-bold" style={{ background: 'linear-gradient(135deg, #ea580c, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Кармический банк
           </Link>
           <nav className="flex gap-2 flex-wrap">
@@ -285,7 +297,7 @@ export default function Layout({ children, autoHideHeader = false }) {
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
             ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(217,119,6,0.12)', color: 'var(--accent-gold)' }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'rgba(234,88,12,0.12)', color: 'var(--accent-gold)' }}>
                 {getInitials()}
               </div>
             )}
@@ -297,6 +309,8 @@ export default function Layout({ children, autoHideHeader = false }) {
       )}
       <style jsx global>{`
         @keyframes boltBreathe { 0%, 100% { opacity: 0.75; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.04); } }
+        .bolt-halo { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle, rgba(240,160,32,0.35), transparent 70%); animation: boltHaloPulse 2.8s ease-in-out infinite; }
+        @keyframes boltHaloPulse { 0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.9); } 50% { opacity: 0.9; transform: translateX(-50%) scale(1.15); } }
       `}</style>
       <main className="flex-grow relative z-10">{children}</main>
       <footer className="text-center py-4 text-xs relative z-10" style={{ color: 'var(--text-muted)' }}>

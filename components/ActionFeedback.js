@@ -37,7 +37,7 @@ export default function ActionFeedback({ state, onClose }) {
   if (!state?.open) return null
   const isSuccess = state.type === 'success'
   const accent = isSuccess ? '#137a39' : '#dc2626'
-  const ringA = isSuccess ? '#d97706' : '#94a3b8'
+  const ringA = isSuccess ? '#ea580c' : '#94a3b8'
   const ringB = isSuccess ? '#7c3aed' : '#64748b'
 
   return (

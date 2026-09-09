@@ -105,15 +105,15 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
         onClick={openPanel}
         className="date-range-trigger flex items-center gap-2 transition-all"
         style={{
-          background: 'var(--bg-card)', border: `1px solid ${open ? '#d97706' : 'var(--border-gold)'}`,
+          background: 'var(--bg-card)', border: `1px solid ${open ? '#ea580c' : 'var(--border-gold)'}`,
           borderRadius: 50, padding: '8px 16px', fontSize: 13, color: 'var(--text-primary)',
           boxShadow: open ? '0 0 0 3px rgba(138,98,8,0.1)' : 'var(--shadow-card)', whiteSpace: 'nowrap',
         }}
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-          <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#d97706" strokeWidth="1.2" />
-          <path d="M1.5 6h13" stroke="#d97706" strokeWidth="1.2" />
-          <path d="M5 1v3M11 1v3" stroke="#d97706" strokeWidth="1.2" strokeLinecap="round" />
+          <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#ea580c" strokeWidth="1.2" />
+          <path d="M1.5 6h13" stroke="#ea580c" strokeWidth="1.2" />
+          <path d="M5 1v3M11 1v3" stroke="#ea580c" strokeWidth="1.2" strokeLinecap="round" />
           <circle cx="5.5" cy="9.5" r="1" fill="#0e7490" />
           <circle cx="8.5" cy="9.5" r="1" fill="#7c3aed" />
         </svg>
@@ -143,12 +143,12 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
                   onClick={() => { onChange(p.fn()); if (!withTime) setOpen(false) }}
                   className="text-left text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    color: isActive ? '#d97706' : 'var(--text-secondary)',
-                    background: isActive ? 'rgba(217,119,6,0.08)' : 'transparent',
+                    color: isActive ? '#ea580c' : 'var(--text-secondary)',
+                    background: isActive ? 'rgba(234,88,12,0.08)' : 'transparent',
                     border: `1px solid ${isActive ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
                     fontWeight: isActive ? 600 : 400, whiteSpace: 'nowrap',
                   }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.color = '#d97706' } }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.color = '#ea580c' } }}
                   onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
                 >
                   {p.label}
@@ -160,13 +160,13 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="flex items-center justify-between mb-3">
               <button onClick={prevMonth} className="p-1.5 rounded-full transition-all" style={{ background: 'none', border: 'none' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover, rgba(15,23,42,0.04))'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#d97706" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#ea580c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
-              <div className="text-sm font-semibold" style={{ background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
+              <div className="text-sm font-semibold" style={{ background: 'linear-gradient(135deg, #ea580c, #0e7490, #7c3aed)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
                 {MONTHS[view.m]} {view.y}
               </div>
               <button onClick={nextMonth} className="p-1.5 rounded-full transition-all" style={{ background: 'none', border: 'none' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover, rgba(15,23,42,0.04))'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="#d97706" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="#ea580c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </button>
             </div>
 
@@ -185,7 +185,7 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
                     onClick={() => pick(d.iso)}
                     className="w-9 h-9 rounded-full text-xs flex items-center justify-center transition-all duration-150"
                     style={{
-                      background: isSelected ? 'linear-gradient(135deg, #d97706, #7c3aed)' : inRange ? 'rgba(124,58,237,0.1)' : undefined,
+                      background: isSelected ? 'linear-gradient(135deg, #ea580c, #7c3aed)' : inRange ? 'rgba(124,58,237,0.1)' : undefined,
                       color: isSelected ? '#fff' : d.inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
                       border: isToday && !isSelected ? '1px solid var(--border-gold)' : '1px solid transparent',
                       fontWeight: isSelected ? 700 : 400,
@@ -200,7 +200,7 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
             </div>
 
             <div className="flex justify-between items-center mt-3 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-              <span>С: <span style={{ color: '#d97706', fontWeight: 600 }}>{from ? fmtShort(from, true) : '—'}</span></span>
+              <span>С: <span style={{ color: '#ea580c', fontWeight: 600 }}>{from ? fmtShort(from, true) : '—'}</span></span>
               <span>По: <span style={{ color: '#7c3aed', fontWeight: 600 }}>{to ? fmtShort(to, true) : '—'}</span></span>
             </div>
 
@@ -214,7 +214,7 @@ export default function DateRangePicker({ from, to, onChange, withTime = false, 
                   <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>Время по</label>
                   <input type="time" value={toTime} onChange={e => onTimeChange?.(fromTime, e.target.value)} style={{ width: '100%', padding: '6px 8px', fontSize: 12, borderRadius: 8, background: 'var(--bg-page, #f3f4f8)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }} />
                 </div>
-                <button onClick={() => setOpen(false)} style={{ alignSelf: 'flex-end', fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid var(--border-gold)', background: 'rgba(217,119,6,0.08)', color: '#d97706', cursor: 'pointer' }}>Готово</button>
+                <button onClick={() => setOpen(false)} style={{ alignSelf: 'flex-end', fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 8, border: '1px solid var(--border-gold)', background: 'rgba(234,88,12,0.08)', color: '#ea580c', cursor: 'pointer' }}>Готово</button>
               </div>
             )}
           </div>

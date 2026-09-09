@@ -135,9 +135,9 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
           {value ? fmtHuman(value) : placeholder}
         </span>
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-          <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#d97706" strokeWidth="1.2" />
-          <path d="M1.5 6h13" stroke="#d97706" strokeWidth="1.2" />
-          <path d="M5 1v3M11 1v3" stroke="#d97706" strokeWidth="1.2" strokeLinecap="round" />
+          <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#ea580c" strokeWidth="1.2" />
+          <path d="M1.5 6h13" stroke="#ea580c" strokeWidth="1.2" />
+          <path d="M5 1v3M11 1v3" stroke="#ea580c" strokeWidth="1.2" strokeLinecap="round" />
           <circle cx="5.5" cy="9.5" r="1" fill="#0e7490" />
           <circle cx="8.5" cy="9.5" r="1" fill="#7c3aed" />
         </svg>
@@ -162,7 +162,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={prev} className="p-1.5 rounded-full transition-all" style={{ background: 'none', border: 'none' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover, rgba(15,23,42,0.04))'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M9 2L4 7l5 5" stroke="#d97706" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 2L4 7l5 5" stroke="#ea580c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
             <button
@@ -170,7 +170,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
               onClick={() => setView(view === 'days' ? 'years' : 'days')}
               className="text-sm font-semibold transition-opacity"
               style={{
-                background: 'linear-gradient(135deg, #d97706, #0e7490, #7c3aed)',
+                background: 'linear-gradient(135deg, #ea580c, #0e7490, #7c3aed)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}
             >
@@ -178,7 +178,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
             </button>
             <button type="button" onClick={next} className="p-1.5 rounded-full transition-all" style={{ background: 'none', border: 'none' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover, rgba(15,23,42,0.04))'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <path d="M5 2l5 5-5 5" stroke="#d97706" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 2l5 5-5 5" stroke="#ea580c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -203,7 +203,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                       onClick={() => pickDay(d.iso)}
                       className="w-9 h-9 mx-auto rounded-full text-xs flex items-center justify-center transition-all duration-150"
                       style={{
-                        background: isSelected ? 'linear-gradient(135deg, #d97706, #7c3aed)' : undefined,
+                        background: isSelected ? 'linear-gradient(135deg, #ea580c, #7c3aed)' : undefined,
                         color: isSelected ? '#fff' : d.inMonth ? 'var(--text-primary, #161b28)' : 'var(--text-muted, #94a0b8)',
                         opacity: !isSelected && !d.inMonth ? 0.5 : 1,
                         border: isToday && !isSelected ? '1px solid var(--border-gold, rgba(176,128,16,.5))' : '1px solid transparent',
@@ -221,7 +221,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
               {withTime && (
                 showTimeRow ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle, rgba(15,23,42,0.09))' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
                     <span style={{ fontSize: 12, color: 'var(--text-secondary, #5b6478)' }}>Время:</span>
                     <input
                       type="time"
@@ -244,10 +244,10 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                       display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, paddingTop: 14,
                       borderTop: '1px solid var(--border-subtle, rgba(15,23,42,0.09))', width: '100%',
                       background: 'none', border: 'none', borderTopWidth: 1, borderTopStyle: 'solid',
-                      cursor: 'pointer', fontSize: 12, color: '#d97706', fontWeight: 500,
+                      cursor: 'pointer', fontSize: 12, color: '#ea580c', fontWeight: 500,
                     }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></svg>
                     Добавить точное время
                   </button>
                 )
@@ -264,7 +264,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                     onClick={() => pickYear(y)}
                     className="py-2.5 rounded-xl text-xs transition-all duration-150"
                     style={{
-                      background: isSelected ? 'linear-gradient(135deg, #d97706, #7c3aed)' : 'var(--bg-page, #f3f4f8)',
+                      background: isSelected ? 'linear-gradient(135deg, #ea580c, #7c3aed)' : 'var(--bg-page, #f3f4f8)',
                       color: isSelected ? '#fff' : 'var(--text-primary, #161b28)',
                       border: '1px solid var(--border-gold, rgba(176,128,16,.35))',
                       fontWeight: isSelected ? 700 : 400,
@@ -293,7 +293,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
                 type="button"
                 onClick={() => pickDay(todayISO)}
                 className="text-[11px] transition-colors"
-                style={{ color: '#d97706' }}
+                style={{ color: '#ea580c' }}
               >
                 Сегодня
               </button>

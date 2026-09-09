@@ -6,7 +6,7 @@ import ProgressBar3D from './ProgressBar3D'
 import { useFeedback } from '../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10) }
 const todayISO = () => new Date().toISOString().slice(0, 10)
@@ -17,7 +17,7 @@ const RatingStars = ({ value, onChange, size = 16 }) => (
     {[1, 2, 3, 4, 5].map(n => (
       <button key={n} type="button" onClick={() => onChange?.(n)} disabled={!onChange}
         style={{ background: 'none', border: 'none', padding: 0, cursor: onChange ? 'pointer' : 'default' }}>
-        <svg width={size} height={size} viewBox="0 0 24 24" fill={n <= value ? '#d97706' : 'none'} stroke="#d97706" strokeWidth="1.5">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill={n <= value ? '#ea580c' : 'none'} stroke="#ea580c" strokeWidth="1.5">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       </button>
@@ -104,7 +104,7 @@ export default function AdaptationPlanView({ kind, title, emptyText }) {
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</div>
                   <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{plan.title || 'Индивидуальный план'}</div>
                 </div>
-                <span style={{ fontSize: 11, padding: '3px 14px', borderRadius: 20, fontWeight: 700, background: plan.status === 'completed' ? 'rgba(19,122,57,0.1)' : 'rgba(217,119,6,0.1)', color: plan.status === 'completed' ? '#137a39' : '#d97706', border: `1px solid ${plan.status === 'completed' ? 'rgba(19,122,57,0.35)' : 'var(--border-gold)'}` }}>{plan.status === 'completed' ? 'Завершён' : 'В процессе'}</span>
+                <span style={{ fontSize: 11, padding: '3px 14px', borderRadius: 20, fontWeight: 700, background: plan.status === 'completed' ? 'rgba(19,122,57,0.1)' : 'rgba(234,88,12,0.1)', color: plan.status === 'completed' ? '#137a39' : '#ea580c', border: `1px solid ${plan.status === 'completed' ? 'rgba(19,122,57,0.35)' : 'var(--border-gold)'}` }}>{plan.status === 'completed' ? 'Завершён' : 'В процессе'}</span>
               </div>
               <ProgressBar3D value={done} marks={[{ key: 't', value: events.length }]} height={12} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
@@ -125,7 +125,7 @@ export default function AdaptationPlanView({ kind, title, emptyText }) {
                   <div key={d} style={{ background: 'var(--bg-card)', boxShadow: isToday ? '0 0 0 1px rgba(14,116,144,0.15), var(--shadow-card)' : 'var(--shadow-card)', borderRadius: 16, border: `1px solid ${isToday ? 'rgba(14,116,144,0.4)' : allDone ? 'rgba(19,122,57,0.3)' : isOverdue ? 'rgba(220,38,38,0.3)' : 'var(--border-subtle)'}`, overflow: 'hidden' }}>
                     <div onClick={() => setOpenDay(isOpen ? null : d)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', cursor: 'pointer' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, background: allDone ? 'rgba(19,122,57,0.1)' : isToday ? 'rgba(14,116,144,0.1)' : 'rgba(217,119,6,0.08)', color: allDone ? '#137a39' : isToday ? '#0e7490' : '#d97706', border: `1px solid ${allDone ? 'rgba(19,122,57,0.35)' : isToday ? 'rgba(14,116,144,0.4)' : 'var(--border-gold)'}` }}>{d}</span>
+                        <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, background: allDone ? 'rgba(19,122,57,0.1)' : isToday ? 'rgba(14,116,144,0.1)' : 'rgba(234,88,12,0.08)', color: allDone ? '#137a39' : isToday ? '#0e7490' : '#ea580c', border: `1px solid ${allDone ? 'rgba(19,122,57,0.35)' : isToday ? 'rgba(14,116,144,0.4)' : 'var(--border-gold)'}` }}>{d}</span>
                         <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>День {d}</span>
                         {isToday && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(14,116,144,0.1)', color: '#0e7490', border: '1px solid rgba(14,116,144,0.35)' }}>Сегодня</span>}
                         {isOverdue && <span style={{ fontSize: 10, padding: '2px 10px', borderRadius: 20, background: 'rgba(220,38,38,0.08)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)' }}>Просрочено</span>}
@@ -159,7 +159,7 @@ export default function AdaptationPlanView({ kind, title, emptyText }) {
                               </div>
                             )}
                             {ev.manager_confirmed_at && (
-                              <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'rgba(217,119,6,0.05)', border: '1px solid var(--border-gold)' }}>
+                              <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'rgba(234,88,12,0.05)', border: '1px solid var(--border-gold)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: 11, color: 'var(--accent-gold)', fontWeight: 600 }}>Обратная связь руководителя</span>
                                   {ev.rating != null && <RatingStars value={ev.rating} size={13} />}

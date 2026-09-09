@@ -22,7 +22,7 @@ export default function KpiBlock() {
   levels.forEach(l => { if (energy >= l.energy_threshold) cur = l })
   next = levels.find(l => l.energy_threshold > energy) || null
   return (
-    <div style={{ position: 'absolute', left: '2.5%', top: 250, zIndex: 20, width: 360, padding: '0 40px', boxSizing: 'border-box', animation: 'driftGoals 60s ease-in-out infinite alternate' }}>
+    <div style={{ position: 'absolute', left: '2.5%', top: 340, zIndex: 20, width: 360, padding: '0 40px', boxSizing: 'border-box', animation: 'driftGoals 60s ease-in-out infinite alternate' }}>
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
         <div style={{ fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', textShadow: '0 0 6px rgba(255,215,0,0.4)', marginBottom: 2 }}>Кармическая энергия</div>
         <div style={{ fontSize: 26, fontWeight: 700, background: 'linear-gradient(135deg, #FFD700, #ffb3c6, #a0e9ff)', backgroundSize: '200% 200%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.7))' }}>{energy}</div>
