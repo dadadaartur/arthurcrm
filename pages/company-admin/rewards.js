@@ -21,7 +21,7 @@ const ghostBtn = {
   transition: 'all .25s', letterSpacing: 0.3
 }
 const hoverOn = e => {
-  e.currentTarget.style.borderColor = '#d97706'
+  e.currentTarget.style.borderColor = '#ea580c'
   e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'
   e.currentTarget.style.transform = 'translateY(-1px)'
 }
@@ -32,9 +32,9 @@ const hoverOff = e => {
 }
 const pillTab = a => ({
   padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)',
+  background: a ? 'rgba(234,88,12,0.12)' : 'var(--bg-card)',
   border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#d97706' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  color: a ? '#ea580c' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 
 export default function RewardsAdmin() {
@@ -190,7 +190,7 @@ export default function RewardsAdmin() {
                   <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.requires_approval}
                       onChange={e => setForm({ ...form, requires_approval: e.target.checked })}
-                      style={{ accentColor: '#d97706' }} />
+                      style={{ accentColor: '#ea580c' }} />
                     Требуется согласование
                   </label>
                 </div>
@@ -210,7 +210,7 @@ export default function RewardsAdmin() {
                       Если задано — товар останется под замком, пока сотрудник не выполнит партнёрское задание с точно таким же ключом (заводит суперадмин площадки в разделе партнёрских заданий). Оставьте пустым для обычного товара без ограничений.
                     </p>
                     {form.requires_unlock && (
-                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', fontSize: 11, color: '#d97706', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(234,88,12,0.06)', border: '1px solid var(--border-gold)', fontSize: 11, color: '#ea580c', display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{form.requires_unlock}</span>
                         <span>← это же значение должно быть у соответствующего партнёрского задания</span>
                       </div>
@@ -221,8 +221,8 @@ export default function RewardsAdmin() {
                     <input className="input-field" style={{ width: '100%' }} placeholder="напр. Скидка 20%" value={form.promo_label} onChange={e => setForm({ ...form, promo_label: e.target.value })} />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
-                    <label onClick={() => setForm({ ...form, is_featured: !form.is_featured })} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: form.is_featured ? '#d97706' : 'var(--text-primary)', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 12, background: form.is_featured ? 'rgba(217,119,6,0.1)' : 'var(--bg-page)', border: `1px solid ${form.is_featured ? 'var(--border-gold)' : 'var(--border-subtle)'}`, transition: 'all 0.2s' }}>
-                      <input type="checkbox" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} style={{ accentColor: '#d97706' }} />
+                    <label onClick={() => setForm({ ...form, is_featured: !form.is_featured })} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: form.is_featured ? '#ea580c' : 'var(--text-primary)', cursor: 'pointer', width: '100%', padding: '10px 14px', borderRadius: 12, background: form.is_featured ? 'rgba(234,88,12,0.1)' : 'var(--bg-page)', border: `1px solid ${form.is_featured ? 'var(--border-gold)' : 'var(--border-subtle)'}`, transition: 'all 0.2s' }}>
+                      <input type="checkbox" checked={form.is_featured} onChange={e => setForm({ ...form, is_featured: e.target.checked })} style={{ accentColor: '#ea580c' }} />
                       Показывать в ленте
                     </label>
                   </div>
@@ -241,7 +241,7 @@ export default function RewardsAdmin() {
                       background: 'var(--bg-page)', cursor: 'pointer', fontSize: 13, color: 'var(--text-secondary)',
                       transition: 'all .2s'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.color = '#d97706' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.color = '#ea580c' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.color = 'var(--text-secondary)' }}>
                       {form.image_file ? form.image_file.name : form.preview_url ? 'Заменить изображение' : 'Выбрать файл'}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
@@ -270,14 +270,14 @@ export default function RewardsAdmin() {
 
         {tab === 'history' && (
           <>
-          <div style={{ marginBottom: 20, padding: 18, borderRadius: 16, background: 'rgba(217,119,6,0.04)', border: '1px solid var(--border-gold)' }}>
+          <div style={{ marginBottom: 20, padding: 18, borderRadius: 16, background: 'rgba(234,88,12,0.04)', border: '1px solid var(--border-gold)' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent-gold)', marginBottom: 10 }}>Сейчас в ленте наверху магазина ({rewards.filter(r => r.is_featured || r.promo_label).length})</div>
             {rewards.filter(r => r.is_featured || r.promo_label).length === 0 ? (
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>Пока пусто. Откройте товар на редактирование и в блоке «Лента наверху магазина» включите «Показывать в ленте» или заполните промо-метку.</p>
             ) : (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {rewards.filter(r => r.is_featured || r.promo_label).map(r => (
-                  <button key={r.id} onClick={() => handleEdit(r)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(217,119,6,0.08)', border: '1px solid var(--border-gold)', color: '#d97706', fontSize: 12, cursor: 'pointer' }}>
+                  <button key={r.id} onClick={() => handleEdit(r)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, background: 'rgba(234,88,12,0.08)', border: '1px solid var(--border-gold)', color: '#ea580c', fontSize: 12, cursor: 'pointer' }}>
                     {r.name}{r.promo_label ? ` · ${r.promo_label}` : ''}
                   </button>
                 ))}
@@ -306,9 +306,9 @@ export default function RewardsAdmin() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <span style={{
                     fontSize: 10, padding: '3px 10px', borderRadius: 20, fontWeight: 700, letterSpacing: 1,
-                    background: `${TYPE_COLORS[reward.type] || '#d97706'}18`,
-                    color: TYPE_COLORS[reward.type] || '#d97706',
-                    border: `1px solid ${TYPE_COLORS[reward.type] || '#d97706'}44`
+                    background: `${TYPE_COLORS[reward.type] || '#ea580c'}18`,
+                    color: TYPE_COLORS[reward.type] || '#ea580c',
+                    border: `1px solid ${TYPE_COLORS[reward.type] || '#ea580c'}44`
                   }}>
                     {TYPE_LABELS[reward.type] || reward.type}
                   </span>

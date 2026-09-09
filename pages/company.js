@@ -14,7 +14,7 @@ import { isCompanyAdmin } from '../lib/permissions'
 import { useFeedback } from '../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '9px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 export default function CompanyPage() {
@@ -122,7 +122,7 @@ export default function CompanyPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <div style={{ width: 72, height: 72, borderRadius: 18, background: company?.logo_url ? undefined : 'linear-gradient(135deg, rgba(217,119,6,0.14), rgba(124,58,237,0.1))', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 72, height: 72, borderRadius: 18, background: company?.logo_url ? undefined : 'linear-gradient(135deg, rgba(234,88,12,0.14), rgba(124,58,237,0.1))', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {company?.logo_url ? <img src={company.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent-gold)' }}>{company?.name?.charAt(0)}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -161,7 +161,7 @@ export default function CompanyPage() {
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setShowNewsForm(false)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
-                <button onClick={postNews} disabled={posting} style={{ ...ghostBtn, flex: 1, borderColor: 'var(--border-gold)', color: '#d97706' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{posting ? 'Публикуем…' : 'Опубликовать'}</button>
+                <button onClick={postNews} disabled={posting} style={{ ...ghostBtn, flex: 1, borderColor: 'var(--border-gold)', color: '#ea580c' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>{posting ? 'Публикуем…' : 'Опубликовать'}</button>
               </div>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function CompanyPage() {
                     {isAdmin && <button onClick={() => deleteNews(n.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg></button>}
                   </div>
                   {n.content && <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: '8px 0 0', lineHeight: 1.6 }}>{n.content}</p>}
-                  {n.link_url && <a href={n.link_url} style={{ display: 'inline-block', marginTop: 12, fontSize: 13, color: '#d97706', fontWeight: 600, textDecoration: 'none' }}>{n.link_label || 'Подробнее'} →</a>}
+                  {n.link_url && <a href={n.link_url} style={{ display: 'inline-block', marginTop: 12, fontSize: 13, color: '#ea580c', fontWeight: 600, textDecoration: 'none' }}>{n.link_label || 'Подробнее'} →</a>}
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12 }}>{new Date(n.created_at).toLocaleDateString('ru')}</div>
                 </div>
               </div>

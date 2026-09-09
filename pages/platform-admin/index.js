@@ -232,14 +232,14 @@ export default function PlatformAdmin() {
       <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
         <button
           onClick={() => setTab('companies')}
-          style={tab === 'companies' ? { color: '#d97706', borderBottom: '2px solid #d97706' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
+          style={tab === 'companies' ? { color: '#ea580c', borderBottom: '2px solid #ea580c' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
         >
           Компании
         </button>
         {me?.isSuperAdmin && (
           <button
             onClick={() => setTab('moderators')}
-            style={tab === 'moderators' ? { color: '#d97706', borderBottom: '2px solid #d97706' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
+            style={tab === 'moderators' ? { color: '#ea580c', borderBottom: '2px solid #ea580c' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Модераторы
           </button>
@@ -247,7 +247,7 @@ export default function PlatformAdmin() {
         {(me?.isSuperAdmin || me?.permissions?.includes('manage_partner_tasks')) && (
           <button
             onClick={() => setTab('partner-tasks')}
-            style={tab === 'partner-tasks' ? { color: '#d97706', borderBottom: '2px solid #d97706' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
+            style={tab === 'partner-tasks' ? { color: '#ea580c', borderBottom: '2px solid #ea580c' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Задания от партнёров
           </button>
@@ -255,7 +255,7 @@ export default function PlatformAdmin() {
         {(me?.isSuperAdmin || me?.permissions?.includes('manage_partner_tasks')) && (
           <button
             onClick={() => setTab('prizes')}
-            style={tab === 'prizes' ? { color: '#d97706', borderBottom: '2px solid #d97706' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
+            style={tab === 'prizes' ? { color: '#ea580c', borderBottom: '2px solid #ea580c' } : { color: 'var(--text-secondary)' }} className="pb-2 text-sm"
           >
             Призы к выдаче
           </button>
@@ -342,13 +342,13 @@ export default function PlatformAdmin() {
                       <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 14, padding: 14, borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ flex: 1, textAlign: 'center' }}>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>1. ВЫ ЗДЕСЬ</div>
-                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#d97706' }}>{ptForm.unlockKey || 'mts-merch'}</div>
+                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#ea580c' }}>{ptForm.unlockKey || 'mts-merch'}</div>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 4 }}>вписываете ключ в задание</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: 'var(--text-muted)' }}>=</div>
                         <div style={{ flex: 1, textAlign: 'center' }}>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>2. АДМИН КОМПАНИИ</div>
-                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#d97706' }}>{ptForm.unlockKey || 'mts-merch'}</div>
+                          <div style={{ padding: '8px 6px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-gold)', fontSize: 11, fontFamily: 'monospace', color: '#ea580c' }}>{ptForm.unlockKey || 'mts-merch'}</div>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 4 }}>тот же ключ у товара в магазине</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: 'var(--text-muted)' }}>→</div>
@@ -522,8 +522,8 @@ export default function PlatformAdmin() {
             Призы от партнёрских заданий, требующие ручной выдачи (не кармики, буст или доступ к товарам — те зачисляются автоматически). По всем компаниям платформы сразу.
           </p>
           <div className="flex gap-2 mb-4">
-            <button onClick={() => setPrizeFilter('pending')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'pending' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'pending' ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: prizeFilter === 'pending' ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>Не выдано</button>
-            <button onClick={() => setPrizeFilter('all')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'all' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'all' ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: prizeFilter === 'all' ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
+            <button onClick={() => setPrizeFilter('pending')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'pending' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'pending' ? 'rgba(234,88,12,0.08)' : 'var(--bg-card)', color: prizeFilter === 'pending' ? '#ea580c' : 'var(--text-secondary)', cursor: 'pointer' }}>Не выдано</button>
+            <button onClick={() => setPrizeFilter('all')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${prizeFilter === 'all' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: prizeFilter === 'all' ? 'rgba(234,88,12,0.08)' : 'var(--bg-card)', color: prizeFilter === 'all' ? '#ea580c' : 'var(--text-secondary)', cursor: 'pointer' }}>Все</button>
           </div>
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
             {(prizeFilter === 'pending' ? prizeAwards.filter(a => !a.fulfilled) : prizeAwards).length === 0 && (
@@ -535,7 +535,7 @@ export default function PlatformAdmin() {
                   <div className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{a.userName} — «{a.label}»</div>
                   <div className="text-xs" style={{ color: 'var(--text-muted)', marginTop: 3 }}>{a.companyName} · {new Date(a.awarded_at).toLocaleDateString('ru')}</div>
                 </div>
-                <button onClick={() => togglePrizeFulfilled(a)} style={{ flexShrink: 0, fontSize: 12, padding: '6px 14px', borderRadius: 10, border: `1px solid ${a.fulfilled ? 'rgba(19,122,57,0.3)' : 'var(--border-gold)'}`, background: a.fulfilled ? 'rgba(19,122,57,0.08)' : 'rgba(217,119,6,0.08)', color: a.fulfilled ? '#137a39' : '#d97706', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button onClick={() => togglePrizeFulfilled(a)} style={{ flexShrink: 0, fontSize: 12, padding: '6px 14px', borderRadius: 10, border: `1px solid ${a.fulfilled ? 'rgba(19,122,57,0.3)' : 'var(--border-gold)'}`, background: a.fulfilled ? 'rgba(19,122,57,0.08)' : 'rgba(234,88,12,0.08)', color: a.fulfilled ? '#137a39' : '#ea580c', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {a.fulfilled ? 'Выдано' : 'Отметить выданным'}
                 </button>
               </div>

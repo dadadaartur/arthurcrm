@@ -6,12 +6,12 @@ import { supabase } from '../../lib/supabaseClient'
 import { withAuth } from '../../components/withAuth'
 
 const TYPE_META = {
-  task: { color: '#d97706', label: 'Задание' },
+  task: { color: '#ea580c', label: 'Задание' },
   training: { color: '#0e7490', label: 'Тренинг' },
   test: { color: '#7c3aed', label: 'Тест' },
 }
 const STATUS_META = {
-  pending: { color: '#d97706', label: 'В процессе' },
+  pending: { color: '#ea580c', label: 'В процессе' },
   completed: { color: '#137a39', label: 'Выполнено' },
   overdue: { color: '#dc2626', label: 'Просрочено' },
   cancelled: { color: 'var(--text-muted)', label: 'Отменено' },
@@ -86,7 +86,7 @@ function DevelopmentPlan() {
             )}
             {pending.length > 0 && (
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#d97706', marginBottom: 10 }}>В процессе ({pending.length})</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#ea580c', marginBottom: 10 }}>В процессе ({pending.length})</div>
                 {pending.map(a => <Row key={a.id} a={a} />)}
               </div>
             )}

@@ -114,7 +114,7 @@ export default function History() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
         {paginated.map(op => {
           const txMeta = op.type === 'transaction' ? TX_TYPE[op.type] : null
-          const color = op.type === 'transfer' ? '#0e7490' : op.type === 'purchase' ? '#dc2626' : (txMeta?.color || '#d97706')
+          const color = op.type === 'transfer' ? '#0e7490' : op.type === 'purchase' ? '#dc2626' : (txMeta?.color || '#ea580c')
           const isPositive = (op.type === 'transaction' && op.amount >= 0) || (op.type === 'transfer' && op.to_user_id === user.id)
           return (
             <div key={op.id + op.type} className="premium-card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>

@@ -35,7 +35,7 @@ function PeerTasksModeration() {
     <div className="theme-light" style={{ minHeight: '100vh', padding: '40px 32px' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Шуточные задания на модерации" extra={
-          pendingCount > 0 && <div style={{ marginLeft: 'auto', fontSize: 12, color: '#d97706' }}>Ждут решения: <b>{pendingCount}</b></div>
+          pendingCount > 0 && <div style={{ marginLeft: 'auto', fontSize: 12, color: '#ea580c' }}>Ждут решения: <b>{pendingCount}</b></div>
         } />
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, maxWidth: 600 }}>
           Заявки от победителей месячной гонки — привилегия создать небольшое весёлое задание коллегам. Публикация создаёт обычное задание в общем списке только после вашего подтверждения.
@@ -43,7 +43,7 @@ function PeerTasksModeration() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
           {['pending', 'approved', 'rejected', 'all'].map(f => (
-            <button key={f} onClick={() => setFilter(f)} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === f ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: filter === f ? '#d97706' : 'var(--text-secondary)', cursor: 'pointer' }}>
+            <button key={f} onClick={() => setFilter(f)} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: filter === f ? 'rgba(234,88,12,0.08)' : 'var(--bg-card)', color: filter === f ? '#ea580c' : 'var(--text-secondary)', cursor: 'pointer' }}>
               {{ pending: 'Ждут решения', approved: 'Одобрены', rejected: 'Отклонены', all: 'Все' }[f]}
             </button>
           ))}

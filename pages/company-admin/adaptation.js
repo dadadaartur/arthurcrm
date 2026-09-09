@@ -7,9 +7,9 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
-const Seg = ({ active, onClick, children, color = '#d97706' }) => (
+const Seg = ({ active, onClick, children, color = '#ea580c' }) => (
   <button type="button" onClick={onClick} style={{ padding: '7px 16px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400, background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)', border: `1px solid ${active ? color + '88' : 'var(--border-subtle)'}`, color: active ? color : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>{children}</button>
 )
 const TYPE_LABELS = { control: 'Контроль', test: 'Тестирование', meeting: 'Встреча', feedback: 'Обратная связь', training: 'Обучение', rework: 'Доработка' }
@@ -17,7 +17,7 @@ const RatingStars = ({ value, onChange, size = 18 }) => (
   <div style={{ display: 'flex', gap: 3 }}>
     {[1, 2, 3, 4, 5].map(n => (
       <button key={n} type="button" onClick={() => onChange(n)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-        <svg width={size} height={size} viewBox="0 0 24 24" fill={n <= value ? '#d97706' : 'none'} stroke="#d97706" strokeWidth="1.5">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill={n <= value ? '#ea580c' : 'none'} stroke="#ea580c" strokeWidth="1.5">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       </button>
@@ -165,7 +165,7 @@ function AdaptationAdmin() {
                         <button type="button" key={e.user_id} onClick={() => { setForm({ ...form, employee_id: e.user_id }); setEmpDropdownOpen(false); setEmpSearch('') }}
                           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
                           onMouseEnter={ev => { ev.currentTarget.style.background = 'var(--bg-hover)' }} onMouseLeave={ev => { ev.currentTarget.style.background = 'none' }}>
-                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(217,119,6,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#d97706', overflow: 'hidden' }}>
+                          <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(234,88,12,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#ea580c', overflow: 'hidden' }}>
                             {e.avatar_url ? <img src={e.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : empName(e.user_id).charAt(0).toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
@@ -208,10 +208,10 @@ function AdaptationAdmin() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ flex: 1, height: 6, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden' }}>
-                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct === 100 ? 'linear-gradient(90deg,#137a39,#0e7490)' : 'linear-gradient(90deg,#d97706,#7c3aed)', transition: 'width 0.4s' }} />
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct === 100 ? 'linear-gradient(90deg,#137a39,#0e7490)' : 'linear-gradient(90deg,#ea580c,#7c3aed)', transition: 'width 0.4s' }} />
                   </div>
                   <span style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{p.progress.done}/{p.progress.total} · {pct}%</span>
-                  {p.progress.avgRating && <span style={{ fontSize: 11, color: '#d97706', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="#d97706" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg> {p.progress.avgRating}</span>}
+                  {p.progress.avgRating && <span style={{ fontSize: 11, color: '#ea580c', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="#ea580c" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg> {p.progress.avgRating}</span>}
                 </div>
               </div>
               <span style={{ fontSize: 11, padding: '3px 12px', borderRadius: 20, fontWeight: 700, background: p.status === 'active' ? 'rgba(19,122,57,0.1)' : 'var(--bg-page)', color: p.status === 'active' ? '#137a39' : 'var(--text-secondary)', border: `1px solid ${p.status === 'active' ? 'rgba(19,122,57,0.35)' : 'var(--border-subtle)'}` }}>{statusLabel}</span>
@@ -302,7 +302,7 @@ function AdaptationAdmin() {
           <div onClick={e => e.stopPropagation()} style={{ width: 'min(520px, 94vw)', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)', borderRadius: 20, padding: 26 }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px', color: 'var(--text-primary)' }}>Отчёт по {empName(reportModal.plan.employee_id)}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-              <div style={{ padding: 16, borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)' }}><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Обязательные события</div><div style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent-gold)' }}>{reportModal.pct}%</div></div>
+              <div style={{ padding: 16, borderRadius: 14, background: 'rgba(234,88,12,0.06)', border: '1px solid var(--border-gold)' }}><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Обязательные события</div><div style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent-gold)' }}>{reportModal.pct}%</div></div>
               <div style={{ padding: 16, borderRadius: 14, background: 'rgba(19,122,57,0.05)', border: '1px solid rgba(19,122,57,0.2)' }}><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Выполнено</div><div style={{ fontSize: 26, fontWeight: 700, color: '#137a39' }}>{reportModal.done}/{reportModal.total}</div></div>
               <div style={{ padding: 16, borderRadius: 14, background: 'rgba(14,116,144,0.05)', border: '1px solid rgba(14,116,144,0.2)' }}><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Средняя оценка</div><div style={{ fontSize: 26, fontWeight: 700, color: '#0e7490' }}>{reportModal.avgRating || '—'}</div></div>
               <div style={{ padding: 16, borderRadius: 14, background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.2)' }}><div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Динамика оценок</div><div style={{ fontSize: 26, fontWeight: 700, color: reportModal.dynamics >= 0 ? '#137a39' : '#dc2626' }}>{reportModal.dynamics > 0 ? '+' : ''}{reportModal.dynamics}</div></div>

@@ -6,7 +6,7 @@ import BackArrow from '../../components/BackArrow'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 20px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
 
 export default function TestTake() {
@@ -89,7 +89,7 @@ export default function TestTake() {
               <span>{q.points} балл.</span>
             </div>
             <div style={{ height: 4, borderRadius: 2, background: 'var(--bg-page)', marginBottom: 20 }}>
-              <div style={{ height: '100%', width: `${((idx + 1) / questions.length) * 100}%`, background: 'linear-gradient(90deg, #7c3aed, #d97706)', borderRadius: 2 }} />
+              <div style={{ height: '100%', width: `${((idx + 1) / questions.length) * 100}%`, background: 'linear-gradient(90deg, #7c3aed, #ea580c)', borderRadius: 2 }} />
             </div>
             <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 20, color: 'var(--text-primary)' }}>{q.text}</h3>
             {(q.type === 'single' || q.type === 'multi') && (
@@ -100,8 +100,8 @@ export default function TestTake() {
                     <label key={o.id} onClick={() => {
                       if (q.type === 'single') setAns({ option_ids: [o.id] })
                       else setAns({ option_ids: sel ? ans.option_ids.filter(x => x !== o.id) : [...ans.option_ids, o.id] })
-                    }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer', border: `1px solid ${sel ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: sel ? 'rgba(217,119,6,0.06)' : 'var(--bg-page)', transition: 'all 0.2s' }}>
-                      <span style={{ width: 16, height: 16, borderRadius: q.type === 'single' ? '50%' : 4, border: `2px solid ${sel ? '#d97706' : 'var(--text-muted)'}`, background: sel ? '#d97706' : 'transparent', flexShrink: 0 }} />
+                    }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer', border: `1px solid ${sel ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: sel ? 'rgba(234,88,12,0.06)' : 'var(--bg-page)', transition: 'all 0.2s' }}>
+                      <span style={{ width: 16, height: 16, borderRadius: q.type === 'single' ? '50%' : 4, border: `2px solid ${sel ? '#ea580c' : 'var(--text-muted)'}`, background: sel ? '#ea580c' : 'transparent', flexShrink: 0 }} />
                       <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{o.text}</span>
                     </label>
                   )

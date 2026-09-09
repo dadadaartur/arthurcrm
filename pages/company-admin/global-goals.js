@@ -8,7 +8,7 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const CATEGORIES = [
-  { key: 'financial', label: 'Финансовые', color: '#d97706' },
+  { key: 'financial', label: 'Финансовые', color: '#ea580c' },
   { key: 'operational', label: 'Операционные', color: '#0e7490' },
   { key: 'quality', label: 'Качество', color: '#137a39' },
   { key: 'development', label: 'Развитие команды', color: '#7c3aed' },
@@ -32,13 +32,13 @@ const ghostBtn = {
   border: '1px solid var(--border-gold)', borderRadius: 12,
   padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s'
 }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
 const pill = a => ({
   padding: '7px 16px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)',
+  background: a ? 'rgba(234,88,12,0.12)' : 'var(--bg-card)',
   border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#d97706' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  color: a ? '#ea580c' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 
 function GlobalGoals() {
@@ -218,7 +218,7 @@ function GlobalGoals() {
                   <input type="number" step="0.1" placeholder="Новое значение" className="input-field" style={{ flex: 1 }}
                     value={editingProgress[g.id] ?? ''} onChange={e => setEditingProgress(p => ({ ...p, [g.id]: e.target.value }))} />
                   <button onClick={() => saveProgress(g)} disabled={savingProgress[g.id]} style={{ ...ghostBtn, display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', fontSize: 12, whiteSpace: 'nowrap', opacity: savingProgress[g.id] ? 0.75 : 1, cursor: savingProgress[g.id] ? 'default' : 'pointer' }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-                    {savingProgress[g.id] && <span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#d97706', animation: 'ggSpin 0.7s linear infinite', flexShrink: 0 }} />}
+                    {savingProgress[g.id] && <span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(138,98,8,0.25)', borderTopColor: '#ea580c', animation: 'ggSpin 0.7s linear infinite', flexShrink: 0 }} />}
                     {savingProgress[g.id] ? 'Сохраняем...' : 'Обновить'}
                   </button>
                 </div>

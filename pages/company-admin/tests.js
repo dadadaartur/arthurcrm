@@ -9,9 +9,9 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '9px 18px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 12, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'; e.currentTarget.style.transform = 'translateY(-1px)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }
-const Seg = ({ active, onClick, children, color = '#d97706' }) => (
+const Seg = ({ active, onClick, children, color = '#ea580c' }) => (
   <button onClick={onClick} style={{
     padding: '8px 18px', borderRadius: 12, fontSize: 12, cursor: 'pointer', fontWeight: active ? 600 : 400,
     background: active ? `linear-gradient(135deg, ${color}22, ${color}0d)` : 'var(--bg-card)',
@@ -99,7 +99,7 @@ function TestsAdmin() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin/mastery" title="Тесты и срезы знаний" extra={
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(217,119,6,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-gold)', background: 'rgba(234,88,12,0.06)' }}>Баланс: <b style={{ color: 'var(--accent-gold)' }}>{companyKarma}</b> карм.</span>
             <Seg active={view === 'list'} onClick={() => setView('list')}>Список</Seg>
             <Seg active={view === 'builder'} onClick={() => { setView('builder'); setEditId(null); setQuestions([emptyQ()]); setForm(defaultForm) }}>Конструктор</Seg>
           </div>

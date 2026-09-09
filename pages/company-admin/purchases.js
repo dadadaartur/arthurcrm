@@ -9,7 +9,7 @@ import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
 const STATUS_LABELS = {
-  new:      { label: 'Новая',     color: '#d97706' },
+  new:      { label: 'Новая',     color: '#ea580c' },
   pending:  { label: 'Ожидает',   color: '#b45309' },
   approved: { label: 'Одобрена',  color: '#137a39' },
   rejected: { label: 'Отклонена', color: '#dc2626' }
@@ -17,9 +17,9 @@ const STATUS_LABELS = {
 
 const pillTab = a => ({
   padding: '8px 18px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)',
+  background: a ? 'rgba(234,88,12,0.12)' : 'var(--bg-card)',
   border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#d97706' : 'var(--text-secondary)', fontWeight: a ? 700 : 400,
+  color: a ? '#ea580c' : 'var(--text-secondary)', fontWeight: a ? 700 : 400,
   transition: 'all 0.2s', whiteSpace: 'nowrap', display: 'inline-flex',
   alignItems: 'center', gap: 6
 })
@@ -31,7 +31,7 @@ const ghostBtn = {
   transition: 'all .25s', letterSpacing: 0.3
 }
 const hoverOn = e => {
-  e.currentTarget.style.borderColor = '#d97706'
+  e.currentTarget.style.borderColor = '#ea580c'
   e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)'
   e.currentTarget.style.transform = 'translateY(-1px)'
 }
@@ -319,12 +319,12 @@ function PurchasesAdmin() {
                 <div style={{ display: 'flex', gap: 16 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
                     <input type="radio" name="date" checked={dateOption === 'any'}
-                      onChange={() => setDateOption('any')} style={{ accentColor: '#d97706' }} />
+                      onChange={() => setDateOption('any')} style={{ accentColor: '#ea580c' }} />
                     Любой день
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
                     <input type="radio" name="date" checked={dateOption === 'specific'}
-                      onChange={() => setDateOption('specific')} style={{ accentColor: '#d97706' }} />
+                      onChange={() => setDateOption('specific')} style={{ accentColor: '#ea580c' }} />
                     Конкретная дата
                   </label>
                 </div>
@@ -357,7 +357,7 @@ function PurchasesAdmin() {
                   style={{
                     padding: '10px 18px', borderRadius: 12, fontSize: 13, fontWeight: 600,
                     background: 'linear-gradient(135deg, rgba(138,98,8,0.15), rgba(19,122,57,0.12))',
-                    border: '1px solid var(--border-gold)', color: '#d97706', cursor: 'pointer',
+                    border: '1px solid var(--border-gold)', color: '#ea580c', cursor: 'pointer',
                     transition: 'all 0.25s'
                   }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}

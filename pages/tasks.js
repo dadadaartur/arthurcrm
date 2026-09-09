@@ -25,7 +25,7 @@ function PremiumActionButton({ onClick, urgent, children }) {
       className="w-full text-sm py-3"
       style={{
         position: 'relative', overflow: 'hidden', borderRadius: 12, fontWeight: 700, color: '#fff',
-        background: urgent ? 'linear-gradient(135deg, #dc2626, #991b1b)' : 'linear-gradient(135deg, #a4770f, #d97706 45%, #6b4a06)',
+        background: urgent ? 'linear-gradient(135deg, #dc2626, #991b1b)' : 'linear-gradient(135deg, #a4770f, #ea580c 45%, #6b4a06)',
         border: 'none', cursor: 'pointer',
         boxShadow: hover ? '0 6px 18px rgba(138,98,8,0.4), inset 0 1px 0 rgba(255,255,255,0.25)' : '0 3px 10px rgba(138,98,8,0.28), inset 0 1px 0 rgba(255,255,255,0.18)',
         transform: hover ? 'translateY(-1px)' : 'translateY(0)',
@@ -54,9 +54,9 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
   const isExpensive = (t?.reward_karma || 0) >= 100
 
   const stop = fn => e => { e.preventDefault(); e.stopPropagation(); fn() }
-  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(217,119,6,0.12), var(--shadow-card-hover)' }
+  const tierStyle = tier === 'premium' ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 0 1px rgba(234,88,12,0.12), var(--shadow-card-hover)' }
     : tier === 'priority' ? { border: '1px solid rgba(124,58,237,0.4)', animation: 'taskPriorityGlow 2.4s ease-in-out infinite' }
-    : isPartner ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 24px -6px rgba(217,119,6,0.35), var(--shadow-card)' }
+    : isPartner ? { border: '1.5px solid var(--border-gold)', boxShadow: '0 0 24px -6px rgba(234,88,12,0.35), var(--shadow-card)' }
     : { border: `1px solid ${accentColor}` }
 
   const hoursLeft = assignment.deadline_at ? (new Date(assignment.deadline_at) - new Date()) / 3600000 : null
@@ -77,7 +77,7 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
       {/* Бейджи поверх визуальной зоны */}
       <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 2 }}>
         <span>
-          {tier === 'premium' && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 11px', borderRadius: 20, background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>}
+          {tier === 'premium' && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '4px 11px', borderRadius: 20, background: 'linear-gradient(135deg, #ea580c, #b45309)', color: '#fff' }}>ПРЕМИУМ</span>}
         </span>
         {hasPrize && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 700, padding: '4px 10px 4px 8px', borderRadius: 20, background: 'rgba(219,39,119,0.95)', color: '#fff' }}>
@@ -171,6 +171,53 @@ function TaskCard({ assignment, variant = 'grid', onStart, onSubmit, accentColor
         @keyframes taskCardUrgent { 0%, 100% { box-shadow: 0 0 0 rgba(220,38,38,0); } 50% { box-shadow: 0 0 12px rgba(220,38,38,0.4); } }
       `}</style>
     </Link>
+  )
+}
+
+function MotivationCard() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/my-motivation', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setData(await r.json())
+      setLoading(false)
+    }
+    load()
+  }, [])
+  if (loading || !data) return null
+  const { nextReward, nextLevel, closestMetric, suggestedTask } = data
+  if (!nextReward && !nextLevel && !closestMetric) return null
+
+  const Bridge = ({ color, label, current, target, unit, hint }) => {
+    const pct = target > 0 ? Math.min(100, Math.max(3, Math.round((current / target) * 100))) : 0
+    return (
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 5 }}>{label}</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>{hint}</div>
+        <div style={{ height: 7, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: color, transition: 'width 1s cubic-bezier(0.22,1,0.36,1)' }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ borderRadius: 18, padding: 20, marginBottom: 22, background: 'linear-gradient(135deg, rgba(217,119,6,0.06), rgba(124,58,237,0.05), rgba(14,116,144,0.05))', border: '1px solid var(--border-gold)' }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Твой путь к следующей цели</div>
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: suggestedTask ? 16 : 0 }}>
+        {nextReward && <Bridge color="linear-gradient(90deg,#d97706,#f59e0b)" label="До приза в магазине" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
+        {nextLevel && <Bridge color="linear-gradient(90deg,#7c3aed,#a855f7)" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
+        {closestMetric && <Bridge color="linear-gradient(90deg,#0e7490,#22d3ee)" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target} hint={`«${closestMetric.name}» — ещё немного, и уровень станет «${closestMetric.nextBandLabel}»`} />}
+      </div>
+      {suggestedTask && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, background: 'var(--bg-card)', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>Выполни «<b>{suggestedTask.title}</b>» — получишь +{suggestedTask.rewardKarma} кармиков, разрыв до приза заметно сократится.</span>
+          <a href={`/task/${suggestedTask.taskId}`} className="btn-glass" style={{ padding: '6px 16px', fontSize: 11.5, marginLeft: 'auto', textDecoration: 'none' }}>К заданию</a>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -283,7 +330,7 @@ export default function TasksPage() {
   const manualTasks = filteredTasks.filter(a => !a.tasks?.partner_name && !a.tasks?.is_auto_goal)
 
   const SECTIONS = [
-    { key: 'partner', label: 'От партнёров', dot: 'var(--accent-gold)', accent: 'rgba(217,119,6,0.35)', items: partnerTasks },
+    { key: 'partner', label: 'От партнёров', dot: 'var(--accent-gold)', accent: 'rgba(234,88,12,0.35)', items: partnerTasks },
     { key: 'goal', label: 'По вашим целям', dot: '#137a39', accent: 'rgba(19,122,57,0.3)', items: autoGoalTasks },
     { key: 'manual', label: 'От руководителя', dot: 'var(--accent-cyan)', accent: 'rgba(14,116,144,0.3)', items: manualTasks },
   ]
@@ -321,12 +368,13 @@ export default function TasksPage() {
               </button>
             ))}
           </div>
-          <Link href="/tasks-analytics" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#d97706', textDecoration: 'none', whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: 20, background: 'rgba(217,119,6,0.08)', border: '1px solid var(--border-gold)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-3-3-4 4" /></svg>
+          <Link href="/tasks-analytics" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#ea580c', textDecoration: 'none', whiteSpace: 'nowrap', padding: '8px 16px', borderRadius: 20, background: 'rgba(234,88,12,0.08)', border: '1px solid var(--border-gold)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2"><path d="M3 3v18h18" /><path d="M18 9l-5 5-3-3-4 4" /></svg>
             Моя аналитика
           </Link>
         </div>
       } />
+      <MotivationCard />
 
       {activeTab !== 'history' && SECTIONS.some(s => s.items.length > 0) && (
         <div style={{ display: 'flex', gap: 8, margin: '20px 0', flexWrap: 'wrap' }}>

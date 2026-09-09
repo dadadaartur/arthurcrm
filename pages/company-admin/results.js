@@ -11,12 +11,12 @@ import { BAND_COLORS, BAND_LABELS } from '../../lib/kpi'
 // админке, менять его нельзя.
 
 const toISO = d => { const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}` }
-const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#d97706', top: '#137a39', ultra: '#7c3aed' }
+const BAND_TEXT = { none: '#dc2626', min: '#b45309', mid: '#ea580c', top: '#137a39', ultra: '#7c3aed' }
 const pill = a => ({
   padding: '7px 16px', borderRadius: 20, fontSize: 12, cursor: 'pointer',
-  background: a ? 'rgba(217,119,6,0.12)' : 'var(--bg-card)',
+  background: a ? 'rgba(234,88,12,0.12)' : 'var(--bg-card)',
   border: `1px solid ${a ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-  color: a ? '#d97706' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
+  color: a ? '#ea580c' : 'var(--text-secondary)', fontWeight: a ? 700 : 400, transition: 'all 0.2s'
 })
 
 function ResultsAdmin() {
@@ -50,7 +50,7 @@ function ResultsAdmin() {
   const sortKey = row => sortBy === 'energy' ? row.energy : sortBy === 'karma' ? row.balance : sortBy === 'tests' ? row.tests_passed : (metricValue(row) ?? -1)
   const sorted = [...rows].sort((a, b) => sortKey(b) - sortKey(a))
   const podium = sorted.slice(0, 3)
-  const medal = ['#d97706', '#64748b', '#92400e']
+  const medal = ['#ea580c', '#64748b', '#92400e']
 
   if (loading) return <LoadingScreen />
 

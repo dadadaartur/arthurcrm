@@ -9,11 +9,11 @@ import { withAuth } from '../../components/withAuth'
 const TOPUP_RATE = { rub: 1000, karma: 100 }
 const card = { background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 16, padding: 22, border: '1px solid var(--border-subtle)', position: 'relative' }
 // Пилюля в стиле бейджа типа товара «Сертификат»
-const pillBtn = { padding: '4px 12px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: 'rgba(217,119,6,0.1)', border: '1px solid var(--border-gold)', color: '#d97706', cursor: 'pointer', transition: 'all .2s' }
+const pillBtn = { padding: '4px 12px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: 'rgba(234,88,12,0.1)', border: '1px solid var(--border-gold)', color: '#ea580c', cursor: 'pointer', transition: 'all .2s' }
 const ghostBtn = { background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 12, padding: '10px 22px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, transition: 'all .25s' }
-const hoverOn = e => { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
+const hoverOn = e => { e.currentTarget.style.borderColor = '#ea580c'; e.currentTarget.style.boxShadow = '0 0 14px rgba(138,98,8,0.18)' }
 const hoverOff = e => { e.currentTarget.style.borderColor = 'var(--border-gold)'; e.currentTarget.style.boxShadow = 'none' }
-const hoverPill = (e, on) => { e.currentTarget.style.background = on ? 'rgba(217,119,6,0.18)' : 'rgba(217,119,6,0.1)'; e.currentTarget.style.borderColor = on ? '#d97706' : 'var(--border-gold)' }
+const hoverPill = (e, on) => { e.currentTarget.style.background = on ? 'rgba(234,88,12,0.18)' : 'rgba(234,88,12,0.1)'; e.currentTarget.style.borderColor = on ? '#ea580c' : 'var(--border-gold)' }
 const Chevron = ({ color }) => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', top: 20, right: 20, opacity: 0.5 }}>
     <path d="M5 2l5 5-5 5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
@@ -144,7 +144,7 @@ function CompanyResources() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/company-admin" title="Управление ресурсами" extra={
           <button onClick={() => setShowHistoryModal(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#d97706'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+            onMouseEnter={e => e.currentTarget.style.color = '#ea580c'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" /><path d="M8 4.5V8l2.3 1.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
             История платежей
           </button>
@@ -204,7 +204,7 @@ function CompanyResources() {
               const isActive = tariff?.id === t.id
               const price = t.code === 'ultra' ? 10000 : t.price_per_employee_rub
               return (
-                <div key={t.id} style={{ background: isActive ? 'rgba(217,119,6,0.06)' : 'var(--bg-page)', borderRadius: 14, padding: 18, border: `1px solid ${isActive ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
+                <div key={t.id} style={{ background: isActive ? 'rgba(234,88,12,0.06)' : 'var(--bg-page)', borderRadius: 14, padding: 18, border: `1px solid ${isActive ? 'var(--border-gold)' : 'var(--border-subtle)'}` }}>
                   <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{t.name}</div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{t.karma_per_employee} карм./сотр. в мес</div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-gold)', marginBottom: 12 }}>{(price || 0).toLocaleString('ru')} ₽</div>
@@ -224,7 +224,7 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowTopupModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #d97706, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Пополнить фонд</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #ea580c, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Пополнить фонд</h3>
               <button onClick={() => setShowTopupModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
@@ -236,10 +236,10 @@ function CompanyResources() {
             <input type="number" min="1" value={topupKarma} onChange={e => setTopupKarma(parseInt(e.target.value) || 0)} className="input-field" style={{ width: '100%', marginBottom: 12 }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
               {[recommended, recommended * 2, recommended * 5].map(v => (
-                <button key={v} onClick={() => setTopupKarma(v)} style={{ ...pillBtn, background: topupKarma === v ? 'rgba(138,98,8,0.18)' : pillBtn.background, borderColor: topupKarma === v ? '#d97706' : pillBtn.borderColor }}>{v}</button>
+                <button key={v} onClick={() => setTopupKarma(v)} style={{ ...pillBtn, background: topupKarma === v ? 'rgba(138,98,8,0.18)' : pillBtn.background, borderColor: topupKarma === v ? '#ea580c' : pillBtn.borderColor }}>{v}</button>
               ))}
             </div>
-            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', textAlign: 'center', marginBottom: 16 }}>
+            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(234,88,12,0.06)', border: '1px solid var(--border-gold)', textAlign: 'center', marginBottom: 16 }}>
               <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>К оплате: </span>
               <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-gold)' }}>{topupRub.toLocaleString('ru')} ₽</span>
             </div>
@@ -255,7 +255,7 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowEmployeesModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #7c3aed, #d97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Кармики сотрудников</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #7c3aed, #ea580c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Кармики сотрудников</h3>
               <button onClick={() => setShowEmployeesModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
@@ -285,7 +285,7 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowTariffModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #0e7490, #d97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Тариф «{tariff.name}»</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #0e7490, #ea580c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Тариф «{tariff.name}»</h3>
               <button onClick={() => setShowTariffModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
@@ -303,7 +303,7 @@ function CompanyResources() {
         <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #d97706, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Движение средств компании</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 600, margin: 0, background: 'linear-gradient(135deg, #ea580c, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Движение средств компании</h3>
               <button onClick={() => setShowHistoryModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
@@ -316,7 +316,7 @@ function CompanyResources() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {p.payment_type === 'topup' ? (
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 8l4 4 4-4" stroke="#d97706" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 14h10" stroke="#d97706" strokeWidth="1.4" strokeLinecap="round" /></svg>
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 8l4 4 4-4" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 14h10" stroke="#ea580c" strokeWidth="1.4" strokeLinecap="round" /></svg>
                         ) : (
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3.5" width="12" height="9" rx="2" stroke="#0e7490" strokeWidth="1.3" /><path d="M2 6.5h12" stroke="#0e7490" strokeWidth="1.3" /></svg>
                         )}
@@ -328,7 +328,7 @@ function CompanyResources() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ color: '#137a39', fontWeight: 700, fontSize: 15 }}>{Number(p.amount_rub).toLocaleString('ru')} ₽</div>
-                      <div style={{ fontSize: 11, marginTop: 2, color: p.status === 'succeeded' ? '#137a39' : p.status === 'canceled' ? '#dc2626' : '#d97706' }}>{p.status === 'succeeded' ? 'Оплачено' : p.status === 'canceled' ? 'Отменён' : 'Ожидает'}</div>
+                      <div style={{ fontSize: 11, marginTop: 2, color: p.status === 'succeeded' ? '#137a39' : p.status === 'canceled' ? '#dc2626' : '#ea580c' }}>{p.status === 'succeeded' ? 'Оплачено' : p.status === 'canceled' ? 'Отменён' : 'Ожидает'}</div>
                     </div>
                   </div>
                 ))

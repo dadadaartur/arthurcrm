@@ -67,7 +67,7 @@ export default function CreateJokeTask() {
           {colleagues.map(c => {
             const checked = form.targetUserIds.includes(c.user_id)
             return (
-              <label key={c.user_id} onClick={() => toggle(c.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer', background: checked ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${checked ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: checked ? '#d97706' : 'var(--text-primary)' }}>
+              <label key={c.user_id} onClick={() => toggle(c.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer', background: checked ? 'rgba(234,88,12,0.1)' : 'var(--bg-card)', border: `1px solid ${checked ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: checked ? '#ea580c' : 'var(--text-primary)' }}>
                 {empName(c)}
               </label>
             )

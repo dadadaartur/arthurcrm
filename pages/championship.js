@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useProfile } from '../context/ProfileContext'
 
 const PLACE_STYLE = {
-  1: { color: '#d97706', bg: 'linear-gradient(135deg, #fff3d6, #ffe29a)' },
+  1: { color: '#ea580c', bg: 'linear-gradient(135deg, #fff3d6, #ffe29a)' },
   2: { color: '#5f6b80', bg: 'linear-gradient(135deg, #f1f3f6, #dfe3e8)' },
   3: { color: '#a15c2e', bg: 'linear-gradient(135deg, #fbe4d3, #f0c9a8)' },
 }
@@ -18,7 +18,7 @@ function Seg({ active, onClick, children }) {
     <button onClick={onClick} style={{
       fontSize: 12.5, fontWeight: 600, padding: '8px 18px', borderRadius: 50, cursor: 'pointer',
       border: `1px solid ${active ? 'var(--border-gold)' : 'var(--border-subtle)'}`,
-      background: active ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: active ? '#d97706' : 'var(--text-secondary)',
+      background: active ? 'rgba(234,88,12,0.08)' : 'var(--bg-card)', color: active ? '#ea580c' : 'var(--text-secondary)',
     }}>{children}</button>
   )
 }
@@ -49,13 +49,13 @@ function RaceTab() {
         Позиции — по кармикам, заработанным в этом календарном месяце. 1 числа гонка обнуляется, топ-3 получают приз и право создать до 2 шуточных заданий коллегам. До конца цикла: <b style={{ color: 'var(--accent-gold)' }}>{data?.daysLeft ?? '—'} дн.</b>
       </p>
       {data?.myAdvice && (
-        <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(217,119,6,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+        <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(234,88,12,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', display: 'block', marginBottom: 6 }}>Совет ИИ-аналитика</span>
           {data.myAdvice}
         </div>
       )}
       {data?.myPrivilege && (
-        <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(217,119,6,0.06)', border: '1px solid var(--border-gold)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(234,88,12,0.06)', border: '1px solid var(--border-gold)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
             Вы заняли <b>{data.myPrivilege.rank}</b> место в прошлом цикле — доступно шуточных заданий: <b>{data.myPrivilege.jokeTasksLimit - data.myPrivilege.jokeTasksUsed}</b> из {data.myPrivilege.jokeTasksLimit}
           </span>
@@ -116,7 +116,7 @@ function LeagueTab() {
         {data?.daysToCheckpoint != null && <> До ближайшего подведения итогов: <b style={{ color: 'var(--accent-gold)' }}>{data.daysToCheckpoint} дн.</b></>}
       </p>
       {data?.checkpointAwards?.length > 0 && (
-        <div style={{ marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(217,119,6,0.05)', border: '1px solid var(--border-gold)' }}>
+        <div style={{ marginBottom: 20, padding: 16, borderRadius: 14, background: 'rgba(234,88,12,0.05)', border: '1px solid var(--border-gold)' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent-gold)', marginBottom: 10 }}>История промежуточных призов</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {data.checkpointAwards.map(a => (
@@ -214,7 +214,7 @@ function CupTab() {
                     const name = [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
                     const checked = form.selected.has(e.user_id)
                     return (
-                      <label key={e.user_id} onClick={() => toggleEmp(e.user_id)} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 20, cursor: 'pointer', background: checked ? 'rgba(217,119,6,0.1)' : 'var(--bg-card)', border: `1px solid ${checked ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: checked ? 'var(--accent-gold)' : 'var(--text-primary)' }}>{name}</label>
+                      <label key={e.user_id} onClick={() => toggleEmp(e.user_id)} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 20, cursor: 'pointer', background: checked ? 'rgba(234,88,12,0.1)' : 'var(--bg-card)', border: `1px solid ${checked ? 'var(--border-gold)' : 'var(--border-subtle)'}`, color: checked ? 'var(--accent-gold)' : 'var(--text-primary)' }}>{name}</label>
                     )
                   })}
                 </div>
@@ -272,30 +272,76 @@ function CupTab() {
 }
 
 function OverallTab() {
-  const [leaders, setLeaders] = useState([])
+  const { user } = useProfile()
+  const [dimension, setDimension] = useState('karma')
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     const load = async () => {
+      setLoading(true)
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) { setLoading(false); return }
-      const res = await fetch('/api/leaderboard', { headers: { Authorization: `Bearer ${session.access_token}` } })
-      if (res.ok) setLeaders(await res.json())
+      const res = await fetch(`/api/company-rankings?dimension=${dimension}`, { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (res.ok) setData(await res.json())
       setLoading(false)
     }
     load()
-  }, [])
-  if (loading) return <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>Загружаем рейтинг…</p>
+  }, [dimension])
+  const DIM_LABEL = { karma: 'Кармики', energy: 'Энергия', goals: 'Цели' }
+  const DIM_HINT = { karma: 'Заработано с начала текущего месяца.', energy: 'Текущий накопленный уровень энергии — не за период, это постоянное значение.', goals: 'Средний уровень по всем активным показателям за месяц (0 — ниже нормы, 4 — ультра).' }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>Общий баланс кармиков за всё время — без обнуления по циклам.</p>
-      {leaders.map((l, i) => (
-        <div key={l.user_id || i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 14px', borderRadius: 12, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
-          <div style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 700, color: PLACE_STYLE[i + 1]?.color || 'var(--text-muted)' }}>{i + 1}</div>
-          <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{l.name || l.display_name}</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-gold)' }}>{l.balance ?? l.karma ?? 0}</span>
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        {['karma', 'energy', 'goals'].map(d => (
+          <button key={d} onClick={() => setDimension(d)} style={{ fontSize: 12, fontWeight: 600, padding: '7px 16px', borderRadius: 50, cursor: 'pointer', border: `1px solid ${dimension === d ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: dimension === d ? 'rgba(217,119,6,0.08)' : 'var(--bg-card)', color: dimension === d ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>{DIM_LABEL[d]}</button>
+        ))}
+      </div>
+      <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 16 }}>{DIM_HINT[dimension]}</p>
+      {loading ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>Загружаем…</p> : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {(data?.standings || []).map(s => {
+            const isMe = s.userId === user?.id
+            return (
+              <div key={s.userId} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 14px', borderRadius: 12, background: isMe ? 'rgba(124,58,237,0.06)' : 'var(--bg-card)', boxShadow: isMe ? 'none' : 'var(--shadow-card)', border: isMe ? '1px solid rgba(124,58,237,0.3)' : 'none' }}>
+                <div style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 700, color: PLACE_STYLE[s.place]?.color || 'var(--text-muted)' }}>{s.place}</div>
+                <span style={{ flex: 1, fontSize: 13, color: isMe ? '#7c3aed' : 'var(--text-primary)', fontWeight: isMe ? 700 : 400 }}>{s.name}{isMe && ' (вы)'}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-gold)' }}>{s.score}{data.unit}</span>
+              </div>
+            )
+          })}
+          {(!data?.standings || data.standings.length === 0) && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Пока нет данных</p>}
         </div>
-      ))}
-      {leaders.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Пока нет данных</p>}
+      )}
+    </div>
+  )
+}
+
+function RulesSidebar({ tab }) {
+  const { profile } = useProfile()
+  const isAdmin = profile?.is_company_admin
+  const RULES = {
+    race: { title: 'Правила гонки месяца', points: ['Считаются кармики, заработанные именно в этом календарном месяце', '1 числа гонка обнуляется, счёт начинается заново', 'Топ-3 получают приз и право создать до 2 шуточных заданий коллегам', 'Заявка на шуточное задание требует подтверждения админа'] },
+    overall: { title: 'Об общем рейтинге', points: ['Общий баланс кармиков за всё время — без обнуления', 'Не участвует в призах гонки/лиги/кубка — это просто витрина'] },
+    league: { title: 'Правила лиги', points: ['Годовой сезон, счёт копится весь год без обнуления', 'Контрольные точки — по умолчанию конец каждого квартала', 'На контрольной точке — приз топ-3, счёт продолжает идти дальше', 'Финальный итог года — самая крупная награда'] },
+  }
+  const r = RULES[tab]
+  if (!r) return null
+  return (
+    <div style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 20, position: 'sticky', top: 20 }}>
+      <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px' }}>{r.title}</h4>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {r.points.map((p, i) => (
+          <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, paddingLeft: 14, position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 0, top: 6, width: 4, height: 4, borderRadius: '50%', background: 'var(--accent-gold)' }} />
+            {p}
+          </li>
+        ))}
+      </ul>
+      {isAdmin && (
+        <a href="/company-admin/championship-settings" style={{ display: 'block', marginTop: 16, fontSize: 12, fontWeight: 600, color: 'var(--accent-gold)', textDecoration: 'none' }}>
+          Настроить правила →
+        </a>
+      )}
     </div>
   )
 }
@@ -304,7 +350,7 @@ export default function Championship() {
   const [tab, setTab] = useState('race')
   return (
     <div className="theme-light" style={{ minHeight: '100vh', padding: '40px 32px' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <BackArrow href="/" title="Чемпионат менеджеров" />
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
           <Seg active={tab === 'race'} onClick={() => setTab('race')}>Гонка месяца</Seg>
@@ -312,10 +358,15 @@ export default function Championship() {
           <Seg active={tab === 'league'} onClick={() => setTab('league')}>Лига</Seg>
           <Seg active={tab === 'cup'} onClick={() => setTab('cup')}>Кубок</Seg>
         </div>
-        {tab === 'race' && <RaceTab />}
-        {tab === 'overall' && <OverallTab />}
-        {tab === 'league' && <LeagueTab />}
-        {tab === 'cup' && <CupTab />}
+        <div style={{ display: 'grid', gridTemplateColumns: tab === 'cup' ? '1fr' : 'minmax(0,1fr) 320px', gap: 28, alignItems: 'start' }}>
+          <div>
+            {tab === 'race' && <RaceTab />}
+            {tab === 'overall' && <OverallTab />}
+            {tab === 'league' && <LeagueTab />}
+            {tab === 'cup' && <CupTab />}
+          </div>
+          {tab !== 'cup' && <RulesSidebar tab={tab} />}
+        </div>
       </div>
     </div>
   )
