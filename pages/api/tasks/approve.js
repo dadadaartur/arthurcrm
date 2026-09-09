@@ -45,6 +45,12 @@ export default async function handler(req, res) {
     if (k > 0) {
       await creditKarma(a, { userId: asg.user_id, amount: k, type: 'task_reward', description: `Задание «${asg.tasks?.title}» одобрено` })
     }
+    const spinsReward = Number(asg.tasks?.reward_wheel_spins) || 0
+    if (spinsReward > 0) {
+      const { data: prof } = await a.from('profiles').select('wheel_spins_available').eq('user_id', asg.user_id).maybeSingle()
+      await a.from('profiles').update({ wheel_spins_available: (prof?.wheel_spins_available || 0) + spinsReward }).eq('user_id', asg.user_id)
+      await a.from('notifications').insert({ user_id: asg.user_id, message: `За задание «${asg.tasks?.title}» начислено попыток ленты призов: ${spinsReward}` })
+    }
     // Энергия за выполнение — фиксированные +1 (по вашей просьбе от
     // 27 августа 2026, не редактируется админом), раньше подтверждённое
     // задание вообще не давало энергии, только кармики.

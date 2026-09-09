@@ -32,27 +32,34 @@ export default async function handler(req, res) {
 
   await a.from('profiles').update({ wheel_spins_available: profile.wheel_spins_available - 1 }).eq('user_id', ctx.user.id)
 
-  if (prize.type === 'karma' && prize.amount > 0) {
-    await creditKarma(a, { userId: ctx.user.id, amount: prize.amount, type: 'wheel_prize', description: `Приз колеса фортуны: ${prize.label}` })
+  // Несколько наград в одном призе (пункт 2 фидбека от 6 сентября
+  // 2026: «кармики + промокод в ВБ») — если задан массив rewards,
+  // начисляем каждую по очереди. Старые призы без rewards (только
+  // type/amount/text) продолжают работать как раньше — ветка ниже.
+  const rewardsList = Array.isArray(prize.rewards) && prize.rewards.length ? prize.rewards : [{ type: prize.type, amount: prize.amount, text: prize.text, label: prize.label }]
+
+  for (const rw of rewardsList) {
+    if (rw.type === 'karma' && rw.amount > 0) {
+      await creditKarma(a, { userId: ctx.user.id, amount: Number(rw.amount), type: 'wheel_prize', description: `Приз колеса фортуны: ${prize.label}${rw.label ? ' — ' + rw.label : ''}` })
+    } else if (rw.type !== 'karma') {
+      // Структурированный учёт для того, что нужно выдать вручную —
+      // кармики уже авто-зачислены выше, им отдельный учёт не нужен
+      // (по проверке от 2 сентября 2026: раньше «настоящий» приз лежал
+      // только в тексте уведомления, ни один админ не мог посмотреть,
+      // кому и что нужно выдать).
+      await a.from('prize_awards').insert({
+        company_id: companyId, user_id: ctx.user.id, source: 'wheel',
+        label: rw.label || prize.label, description: rw.text || prize.description || null,
+      })
+    }
   }
 
   await a.from('wheel_spin_history').insert({
     user_id: ctx.user.id, company_id: companyId,
-    prize_label: prize.label, prize_type: prize.type, prize_value: prize.type === 'karma' ? String(prize.amount) : prize.text,
+    prize_label: prize.label, prize_type: prize.type,
+    prize_value: rewardsList.map(rw => rw.type === 'karma' ? `${rw.amount} карм.` : (rw.text || rw.label)).join(' + '),
     prize_color: prize.color || null, prize_avatar_url: prize.avatar_url || null, prize_description: prize.description || null
   })
-
-  // Структурированный учёт для того, что нужно выдать вручную — кармики
-  // уже авто-зачислены строкой выше, им отдельный учёт не нужен (по
-  // проверке от 2 сентября 2026: раньше «настоящий» приз лежал только в
-  // тексте уведомления, ни один админ не мог посмотреть, кому и что
-  // нужно выдать).
-  if (prize.type !== 'karma') {
-    await a.from('prize_awards').insert({
-      company_id: companyId, user_id: ctx.user.id, source: 'wheel',
-      label: prize.label, description: prize.text || prize.description || null,
-    })
-  }
 
   await a.from('notifications').insert({
     user_id: ctx.user.id,

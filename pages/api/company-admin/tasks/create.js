@@ -48,7 +48,7 @@ export default async function handler(req, res) {
   const { data: task, error } = await a.from('tasks').insert({
     company_id: companyId, department_id: departmentId,
     title: f.title, description: f.description,
-    reward_karma: f.reward_karma, task_type: f.is_auto_goal ? 'auto_goal' : f.task_type,
+    reward_karma: f.reward_karma, reward_wheel_spins: f.reward_wheel_spins || 0, task_type: f.is_auto_goal ? 'auto_goal' : f.task_type,
     frequency: recurrenceType, target_role: f.target_role,
     requires_review: f.is_auto_goal ? false : f.requires_review,
     requires_proof: f.requires_proof, proof_type: f.requires_proof ? (f.proof_type || 'any') : 'any',
