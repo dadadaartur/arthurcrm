@@ -43,6 +43,152 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   </button>
 )
 
+function PersonalGoalsSection() {
+  const { showSuccess, showError } = useFeedback()
+  const [goals, setGoals] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [form, setForm] = useState({ goalType: 'intermediate', parentGoalId: '', title: '', description: '', targetValue: '', targetUnit: '', targetDate: '' })
+  const [editingProgress, setEditingProgress] = useState(null)
+  const [progressInput, setProgressInput] = useState('')
+
+  const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
+  const load = async () => {
+    const h = await auth()
+    const r = await fetch('/api/personal-goals', { headers: h })
+    if (r.ok) setGoals((await r.json()).goals || [])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  const create = async () => {
+    if (!form.title.trim()) { showError('Укажите название цели'); return }
+    const h = await auth()
+    const r = await fetch('/api/personal-goals', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    if (r.ok) { showSuccess('Цель добавлена'); setShowCreate(false); setForm({ goalType: 'intermediate', parentGoalId: '', title: '', description: '', targetValue: '', targetUnit: '', targetDate: '' }); load() }
+    else showError('Не удалось создать цель')
+  }
+  const saveProgress = async (id) => {
+    const h = await auth()
+    const r = await fetch('/api/personal-goals', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, currentValue: progressInput }) })
+    if (r.ok) { setEditingProgress(null); load() } else showError('Не удалось сохранить прогресс')
+  }
+  const markDone = async (id) => {
+    const h = await auth()
+    await fetch('/api/personal-goals', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'completed' }) })
+    showSuccess('Цель отмечена как достигнутая!')
+    load()
+  }
+  const remove = async (id) => {
+    if (!confirm('Удалить цель?')) return
+    const h = await auth()
+    await fetch('/api/personal-goals', { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    load()
+  }
+
+  const globals = goals.filter(g => g.goal_type === 'global' && g.status === 'active')
+  const intermediates = goals.filter(g => g.goal_type === 'intermediate' && g.status === 'active')
+  const done = goals.filter(g => g.status === 'completed')
+
+  const GoalCard = ({ g }) => (
+    <div style={{ padding: 16, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: g.goal_type === 'global' ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)' }}>{g.title}</span>
+        <button onClick={() => remove(g.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+        </button>
+      </div>
+      {g.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px' }}>{g.description}</p>}
+      {g.target_value != null ? (
+        <>
+          <div style={{ height: 8, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 4 }}>
+            <div style={{ height: '100%', width: `${g.progressPct ?? Math.min(100, Math.round((g.current_value / g.target_value) * 100))}%`, borderRadius: 4, background: 'linear-gradient(90deg, #ea580c, #7c3aed)', transition: 'width .6s' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)' }}>
+            {editingProgress === g.id ? (
+              <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input autoFocus type="number" className="input-field" style={{ width: 70, padding: '3px 8px', fontSize: 11 }} value={progressInput} onChange={e => setProgressInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveProgress(g.id)} />
+                <button onClick={() => saveProgress(g.id)} style={{ color: 'var(--accent-gold)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
+                </button>
+              </span>
+            ) : (
+              <span onClick={() => { setEditingProgress(g.id); setProgressInput(String(g.current_value)) }} style={{ cursor: 'pointer' }}>{g.current_value}{g.target_unit} из {g.target_value}{g.target_unit}</span>
+            )}
+            {g.target_date && <span>до {new Date(g.target_date).toLocaleDateString('ru')}</span>}
+          </div>
+        </>
+      ) : (
+        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{g.target_date ? `до ${new Date(g.target_date).toLocaleDateString('ru')}` : 'без числового прогресса'}</div>
+      )}
+      <button onClick={() => markDone(g.id)} style={{ marginTop: 10, fontSize: 11, fontWeight: 600, color: '#137a39', background: 'rgba(19,122,57,0.08)', border: '1px solid rgba(19,122,57,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>Достигнута</button>
+    </div>
+  )
+
+  if (loading) return null
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Мои личные цели</h2>
+        <button onClick={() => setShowCreate(true)} className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 12 }}>+ Новая цель</button>
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 640 }}>Это ваши личные ориентиры — не то, что назначает компания. Глобальная — большая, на месяцы вперёд; промежуточные — шаги к ней. Прогресс вносите сами.</p>
+
+      {globals.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-gold)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Глобальные</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {globals.map(g => <GoalCard key={g.id} g={g} />)}
+          </div>
+        </div>
+      )}
+      {intermediates.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Промежуточные</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {intermediates.map(g => <GoalCard key={g.id} g={g} />)}
+          </div>
+        </div>
+      )}
+      {globals.length === 0 && intermediates.length === 0 && (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: 16 }}>Пока нет личных целей — добавьте первую</div>
+      )}
+
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setShowCreate(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(480px, 94vw)', background: 'var(--bg-card)', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 16px', color: 'var(--text-primary)' }}>Новая личная цель</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setForm({ ...form, goalType: 'global' })} style={{ flex: 1, padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${form.goalType === 'global' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: form.goalType === 'global' ? 'rgba(217,119,6,0.08)' : 'var(--bg-page)', color: form.goalType === 'global' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Глобальная</button>
+                <button onClick={() => setForm({ ...form, goalType: 'intermediate' })} style={{ flex: 1, padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${form.goalType === 'intermediate' ? 'var(--border-gold)' : 'var(--border-subtle)'}`, background: form.goalType === 'intermediate' ? 'rgba(217,119,6,0.08)' : 'var(--bg-page)', color: form.goalType === 'intermediate' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Промежуточная</button>
+              </div>
+              {form.goalType === 'intermediate' && globals.length > 0 && (
+                <select className="input-field" value={form.parentGoalId} onChange={e => setForm({ ...form, parentGoalId: e.target.value })}>
+                  <option value="">Не привязана к глобальной</option>
+                  {globals.map(g => <option key={g.id} value={g.id}>Шаг к «{g.title}»</option>)}
+                </select>
+              )}
+              <input className="input-field" placeholder="Название цели" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus />
+              <textarea className="input-field" placeholder="Описание (необязательно)" rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="number" className="input-field" style={{ flex: 1 }} placeholder="Числовая цель (необяз.)" value={form.targetValue} onChange={e => setForm({ ...form, targetValue: e.target.value })} />
+                <input className="input-field" style={{ width: 90 }} placeholder="ед." value={form.targetUnit} onChange={e => setForm({ ...form, targetUnit: e.target.value })} />
+              </div>
+              <DatePicker value={form.targetDate} onChange={v => setForm({ ...form, targetDate: v })} placeholder="Срок (необязательно)" />
+              <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                <button onClick={() => setShowCreate(false)} className="btn-outline" style={{ flex: 1 }}>Отмена</button>
+                <button onClick={create} className="btn-glass" style={{ flex: 1 }}>Создать</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function GoalsPage() {
   const { showError } = useFeedback()
   const [loading, setLoading] = useState(true)
@@ -317,6 +463,8 @@ export default function GoalsPage() {
             </div>
           </div>
         )}
+
+        <PersonalGoalsSection />
       </div>
 
       <LevelPathModal open={pathOpen} onClose={() => setPathOpen(false)} energy={energy} />

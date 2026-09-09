@@ -45,6 +45,7 @@ function MetricOrb({ value, unit, band, floatDelay = 0 }) {
 }
 
 const TIER_LABEL = { none: 'Ниже нормы', min: 'Минимум', mid: 'Средний', top: 'Топ', ultra: 'Ultra' }
+const KPI_TYPE_LABEL = { average: 'Среднее за период', cumulative: 'Накопительное', plan: '% выполнения плана', ratio: 'Доля/конверсия', inverse: 'Инверсия (меньше — лучше)' }
 
 // Корона с камнями для ультра-уровня — разовое появление при загрузке
 // страницы (по фидбеку от 6 сентября 2026: зацикленная пульсация
@@ -88,18 +89,16 @@ function ForecastBanner({ forecast, onCreateTask, middleCount }) {
         </button>
       </div>
       {expanded && (
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
           {forecast.items.map(f => (
             <div key={f.metricId} style={{ padding: 12, borderRadius: 10, background: 'var(--bg-card)', border: `1px solid ${f.onTrack ? 'rgba(19,122,57,0.2)' : 'rgba(220,38,38,0.2)'}` }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, fontSize: 12.5 }}>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{f.metricName}</span>
-                <span style={{ color: f.onTrack ? '#137a39' : '#dc2626', fontWeight: 700 }}>{f.projected}{f.unit} к концу месяца</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: 11.5 }}>(цель ≥ {f.goal}{f.unit})</span>
-              </div>
+              <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 12.5, marginBottom: 4 }}>{f.metricName}</div>
+              <div style={{ color: f.onTrack ? '#137a39' : '#dc2626', fontWeight: 700, fontSize: 12.5 }}>{f.projected}{f.unit} к концу месяца</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>цель ≥ {f.goal}{f.unit}</div>
               {f.lowConfidence && <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>Прогноз предварительный — мало данных с начала месяца</div>}
               {!f.onTrack && f.cause?.length > 0 && (
                 <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6 }}>
-                  При текущих тенденциях команду вниз тянут: <b style={{ color: 'var(--text-primary)' }}>{f.cause.join(', ')}</b>. Чтобы изменить тренд — начните с них.
+                  Вниз тянут: <b style={{ color: 'var(--text-primary)' }}>{f.cause.join(', ')}</b>
                 </div>
               )}
             </div>
@@ -650,6 +649,7 @@ function AnalyticsAdmin() {
                     <span style={{ fontSize: 12, fontWeight: 700, color: b ? BAND_TEXT[b] : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{cv != null ? `${cv}${m.unit}` : '—'}</span>
                   )}
                 </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Тип: <b style={{ color: 'var(--text-secondary)' }}>{KPI_TYPE_LABEL[m.kpi_type] || m.kpi_type || '—'}</b></div>
                 {suspicious && (
                   <div style={{ fontSize: 10.5, color: '#dc2626', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8, padding: '6px 10px', lineHeight: 1.4 }}>
                     Сумма за период вместо честной доли ({cv}{m.unit} — так не бывает). Откройте «Управление целями» → этот показатель → смените тип на «Доля/конверсия».
