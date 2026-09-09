@@ -1,0 +1,23 @@
+{
+  "app_title": "Կարմիկական բանկ",
+  "nav_home": "Գլխավոր",
+  "nav_tasks": "Առաջադրանքներ",
+  "nav_goals": "Իմ նպատակները",
+  "nav_shop": "Խանութ",
+  "nav_company": "Իմ ընկերությունը",
+  "nav_leaderboard": "Չեմպիոնատ",
+  "nav_knowledge": "Գիտելիքների բազա",
+  "nav_transfer": "Փոխանցել",
+  "nav_history": "Գործողություններ",
+  "nav_logout": "Դուրս գալ",
+  "nav_path_to_perfection": "Դեպի կատարելություն",
+  "nav_healthcare": "Առողջապահություն",
+  "nav_crm": "CRM Ամառ",
+  "nav_admin": "Ադմին",
+  "nav_platform": "Հարթակի մոդերացիա",
+  "nav_company_admin": "Կառավարում",
+  "nav_results": "Արդյունքներ",
+  "balance": "Մնացորդ",
+  "karmik_word": "կարմիկ",
+  "welcome": "Բարի գալուստ"
+}
