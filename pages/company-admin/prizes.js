@@ -5,7 +5,7 @@ import LoadingScreen from '../../components/LoadingScreen'
 import { withAuth } from '../../components/withAuth'
 import { useFeedback } from '../../context/ActionFeedbackContext'
 
-const SOURCE_LABEL = { wheel: 'Лента подарков', partner_task: 'Партнёрское задание' }
+const SOURCE_LABEL = { wheel: 'Пушка призов', partner_task: 'Партнёрское задание' }
 
 function PrizesPage() {
   const { showSuccess, showError } = useFeedback()

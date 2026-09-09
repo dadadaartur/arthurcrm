@@ -89,7 +89,7 @@ function WheelAdmin() {
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/company-admin" title="Лента подарков" extra={
+        <BackArrow href="/company-admin" title="Пушка призов" extra={
           <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: config.enabled ? '#137a39' : 'var(--text-secondary)', cursor: 'pointer' }}>
             <input type="checkbox" checked={config.enabled} onChange={e => setConfig({ ...config, enabled: e.target.checked })} style={{ accentColor: '#137a39' }} />
             {config.enabled ? 'Включено' : 'Выключено'}
@@ -128,8 +128,13 @@ function WheelAdmin() {
                     </button>
                   </div>
 
-                  <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Вес (относительная вероятность выпадения)</label>
-                  <input type="number" step="0.1" className="input-field" style={{ fontSize: 12, width: 90, marginBottom: 12 }} value={p.weight} onChange={e => updatePrize(p.id, { weight: e.target.value })} />
+                  <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Вес — во сколько раз этот приз выпадает чаще приза с весом 1</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <input type="number" step="0.1" className="input-field" style={{ fontSize: 12, width: 90 }} value={p.weight} onChange={e => updatePrize(p.id, { weight: e.target.value })} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-gold)' }}>
+                      = {config.prizes.reduce((s, x) => s + (Number(x.weight) || 0), 0) > 0 ? Math.round((Number(p.weight) || 0) / config.prizes.reduce((s, x) => s + (Number(x.weight) || 0), 0) * 100) : 0}% шанс
+                    </span>
+                  </div>
 
                   <label style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Что получает сотрудник — можно несколько сразу</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
