@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../lib/auth'
+import { karmaFor } from '../../lib/kpi'
 
 // Личные цели сотрудника (по запросу от 6 сентября 2026) — сотрудник
 // ставит себе сам, сам же отслеживает прогресс. Промежуточные и
@@ -57,5 +58,40 @@ export default async function handler(req, res) {
   }
 
   const { data: goals } = await a.from('personal_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-  res.status(200).json({ goals: goals || [] })
+
+  // Темп к глобальной цели (по видению от 6 сентября 2026: «важно
+  // понимание, что конечная цель выполнима, для этого нужно сделать
+  // вот это и вот это» — не абстрактная цель, а честный прогноз по
+  // двум сценариям). Считаем только для целей в кармиках — для других
+  // единиц (рубли и т.д.) курса конвертации нет, честнее промолчать,
+  // чем выдумать курс.
+  const globalKarmaGoals = (goals || []).filter(g => g.goal_type === 'global' && g.status === 'active' && g.target_value > 0 && (!g.target_unit || /карм/i.test(g.target_unit)))
+  let paceById = {}
+  if (globalKarmaGoals.length) {
+    const since = new Date(Date.now() - 30 * 86400000).toISOString()
+    const { data: recentTxns } = await a.from('karma_transactions').select('amount, created_at').eq('user_id', userId).gt('amount', 0).gte('created_at', since)
+    const daysActive = Math.max(1, Math.round((Date.now() - new Date(since)) / 86400000))
+    const currentDailyRate = (recentTxns || []).reduce((s, t) => s + Number(t.amount), 0) / daysActive
+
+    const { data: metrics } = await a.from('kpi_metrics').select('*').eq('company_id', ctx.profile.company_id).eq('is_active', true)
+    let maxDailyKarma = 0
+    for (const m of metrics || []) {
+      const ultraKarma = karmaFor(m, 'ultra')
+      if (ultraKarma > maxDailyKarma) maxDailyKarma = ultraKarma
+    }
+    // Консервативная оценка максимума — сумма ультра-наград по всем
+    // показателям сразу столько же раз в день, сколько сейчас реально
+    // вносится данных, не фантазийный потолок.
+    const entriesPerDayEstimate = (recentTxns || []).length > 0 ? Math.max(1, (recentTxns.length / daysActive)) : 1
+    const maxDailyRate = maxDailyKarma > 0 ? maxDailyKarma * entriesPerDayEstimate : currentDailyRate
+
+    for (const g of globalKarmaGoals) {
+      const remaining = Math.max(0, g.target_value - g.current_value)
+      const currentDays = currentDailyRate > 0 ? Math.ceil(remaining / currentDailyRate) : null
+      const maxDays = maxDailyRate > currentDailyRate && maxDailyRate > 0 ? Math.ceil(remaining / maxDailyRate) : null
+      paceById[g.id] = { currentDays, maxDays }
+    }
+  }
+
+  res.status(200).json({ goals: (goals || []).map(g => ({ ...g, pace: paceById[g.id] || null })) })
 }
