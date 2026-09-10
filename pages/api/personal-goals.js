@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'PUT') {
     const { id, currentValue, status, title, description, targetValue, targetDate } = req.body || {}
-    const { data: goal } = await a.from('personal_goals').select('user_id').eq('id', id).maybeSingle()
+    const { data: goal } = await a.from('personal_goals').select('user_id, goal_type, title').eq('id', id).maybeSingle()
     if (!goal || goal.user_id !== userId) return res.status(403).json({ error: 'Не ваша цель' })
     const patch = {}
     if (currentValue != null) patch.current_value = Number(currentValue)
@@ -40,6 +40,11 @@ export default async function handler(req, res) {
     if (targetDate !== undefined) patch.target_date = targetDate || null
     const { error } = await a.from('personal_goals').update(patch).eq('id', id)
     if (error) return res.status(500).json({ error: error.message })
+    // Грамота — только за глобальную цель, не за промежуточную: это и
+    // есть по-настоящему значимое достижение, не рядовой шаг.
+    if (status === 'completed' && goal.goal_type === 'global') {
+      await a.from('certificates').insert({ company_id: companyId, user_id: userId, achievement_type: 'personal_goal', title: 'Достигнута личная цель', subtitle: goal.title })
+    }
     return res.status(200).json({ success: true })
   }
 

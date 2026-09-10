@@ -56,6 +56,10 @@ export default async function handler(req, res) {
       const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
       if (!top3.length) continue
       await a.from('race_winners').insert(top3.map(([userId, karma], i) => ({ company_id: company.id, cycle_month: cycleMonth, rank: i + 1, user_id: userId, karma_earned: karma })))
+      if (top3[0]) {
+        const monthLabel = new Date(cycleMonth + '-01').toLocaleDateString('ru', { month: 'long', year: 'numeric' })
+        await a.from('certificates').insert({ company_id: company.id, user_id: top3[0][0], achievement_type: 'race_winner', title: 'Победитель месячной гонки', subtitle: monthLabel })
+      }
       await a.from('notifications').insert(top3.map(([userId], i) => ({
         user_id: userId, link: '/championship',
         message: i === 0 ? `Вы — победитель месячной гонки! 1 место, заработано ${earned[userId]} кармиков. Доступна привилегия — создать до 2 шуточных заданий коллегам.`
@@ -91,6 +95,10 @@ export default async function handler(req, res) {
         const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
         if (!top3.length) continue
         await a.from('league_checkpoint_awards').insert(top3.map(([userId, karma], i) => ({ season_id: season.id, checkpoint_month: thisMonth, rank: i + 1, user_id: userId, karma_at_checkpoint: karma })))
+        if (top3[0]) {
+          const q = thisMonth === 3 ? 'I' : thisMonth === 6 ? 'II' : thisMonth === 9 ? 'III' : 'IV'
+          await a.from('certificates').insert({ company_id: company.id, user_id: top3[0][0], achievement_type: 'league_champion', title: `Чемпион ${q} квартала лиги`, subtitle: String(now.getFullYear()) })
+        }
         await a.from('notifications').insert(top3.map(([userId], i) => ({
           user_id: userId, link: '/championship',
           message: `Промежуточный итог лиги — вы на ${i + 1} месте по итогам ${thisMonth === 3 ? 'I' : thisMonth === 6 ? 'II' : thisMonth === 9 ? 'III' : 'IV'} квартала! Сезон продолжается, счёт не обнуляется.`,
@@ -132,6 +140,7 @@ export default async function handler(req, res) {
       if (winners.length === 1) {
         await a.from('cup_tournaments').update({ status: 'completed' }).eq('id', t.id)
         await a.from('notifications').insert({ user_id: winners[0], message: `Вы выиграли турнир «${t.title}»! Поздравляем чемпиона.`, link: '/championship' })
+        await a.from('certificates').insert({ company_id: t.company_id, user_id: winners[0], achievement_type: 'cup_winner', title: 'Чемпион кубка', subtitle: t.title })
       } else {
         const nextRound = t.current_round + 1
         const nextMatches = []

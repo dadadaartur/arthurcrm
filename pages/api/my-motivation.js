@@ -16,13 +16,18 @@ export default async function handler(req, res) {
   const a = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const userId = ctx.user.id
 
-  const [{ data: balRow }, { data: rewards }, { data: energyRow }, { data: levels }, { data: metrics }] = await Promise.all([
+  const [{ data: balRow }, { data: rewards }, { data: energyRow }, levelsResult, { data: metrics }] = await Promise.all([
     a.from('karma_balance').select('balance').eq('user_id', userId).maybeSingle(),
-    a.from('rewards').select('id, name, cost, image_url').eq('company_id', companyId).eq('is_active', true).order('cost'),
+    a.from('rewards').select('id, name, cost, image_url').eq('company_id', companyId).order('cost'),
     a.from('kpi_energy').select('energy').eq('user_id', userId).maybeSingle(),
     a.from('progress_levels').select('*').eq('company_id', companyId).order('energy_threshold'),
     a.from('kpi_metrics').select('*').eq('company_id', companyId).eq('is_active', true),
   ])
+  let levels = levelsResult.data
+  if (!levels?.length) {
+    const g = await a.from('progress_levels').select('*').is('company_id', null).order('energy_threshold')
+    levels = g.data
+  }
   const balance = balRow?.balance || 0
   const energy = energyRow?.energy || 0
 
