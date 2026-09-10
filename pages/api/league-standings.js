@@ -2,10 +2,12 @@ import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../lib/auth'
 
 // Позиции лиги (марафон «Чемпионат», часть 2, продолжение от
-// 6 сентября 2026) — по кармикам, заработанным с начала текущего
-// календарного года, та же логика, что у гонки месяца, просто на
-// годовом окне. Плюс история промежуточных призов по контрольным
-// точкам (по умолчанию — конец каждого квартала).
+// 6 сентября 2026; переведено на энергию 6 сентября 2026) — по
+// энергии, заработанной с начала текущего календарного года, та же
+// логика, что у гонки месяца, просто на годовом окне и по другому
+// измерению (энергия, не кармики — те же причины честности, что и в
+// гонке). Плюс история промежуточных призов по контрольным точкам
+// (по умолчанию — конец каждого квартала).
 export default async function handler(req, res) {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
@@ -28,14 +30,14 @@ export default async function handler(req, res) {
   const empIds = (employees || []).map(e => e.user_id)
   if (!empIds.length) return res.status(200).json({ standings: [], season, checkpointAwards: [] })
 
-  const { data: txns } = await a.from('karma_transactions').select('user_id, amount').in('user_id', empIds).gte('created_at', yearStart).gt('amount', 0)
+  const { data: txns } = await a.from('energy_transactions').select('user_id, amount').in('user_id', empIds).gte('created_at', yearStart)
   const earnedByUser = {}
   ;(txns || []).forEach(t => { earnedByUser[t.user_id] = (earnedByUser[t.user_id] || 0) + Number(t.amount) })
 
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
   const standings = (employees || [])
-    .map(e => ({ userId: e.user_id, name: empName(e), avatarUrl: e.avatar_url || null, karmaEarned: earnedByUser[e.user_id] || 0 }))
-    .sort((a, b) => b.karmaEarned - a.karmaEarned)
+    .map(e => ({ userId: e.user_id, name: empName(e), avatarUrl: e.avatar_url || null, energyEarned: earnedByUser[e.user_id] || 0 }))
+    .sort((a, b) => b.energyEarned - a.energyEarned)
     .map((s, i) => ({ ...s, place: i + 1 }))
 
   const { data: checkpointAwardsRaw } = await a.from('league_checkpoint_awards').select('*').eq('season_id', season.id).order('checkpoint_month').order('rank')

@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     if (bandRankOf(metric, newBand) > bandRankOf(metric, oldBand)) {
       const dE = energyFor(metric, newBand) - energyFor(metric, oldBand)
       const dK = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
-      if (dE > 0) { await creditEnergy(a, e.userId, dE) }
+      if (dE > 0) { await creditEnergy(a, e.userId, dE, 'metric') }
       if (dK > 0) { const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', e.userId).maybeSingle(); await a.from('karma_balance').upsert({ user_id: e.userId, balance: (bal?.balance || 0) + dK }, { onConflict: 'user_id' }); await a.from('karma_transactions').insert({ user_id: e.userId, amount: dK, type: 'kpi_bonus', description: `KPI «${metric.name}»: ${newBand}` }) }
     }
   }

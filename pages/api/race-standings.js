@@ -2,12 +2,13 @@ import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../lib/auth'
 import { bandFor, bandRankOf } from '../../lib/kpi'
 
-// Живые позиции месячной гонки (марафон ИИ-аналитика, часть 2,
-// 6 сентября 2026) — по кармикам, заработанным именно в текущем
-// календарном месяце (сумма положительных karma_transactions), не по
-// общему балансу. Общий баланс копится годами, и тот, кто набрал его
-// раньше, всегда бы побеждал независимо от того, как он работает
-// прямо сейчас — гонка тогда была бы бессмысленной.
+// Живые позиции месячной гонки (изначально — марафон ИИ-аналитика,
+// часть 2, 6 сентября 2026; переведено на энергию 6 сентября 2026) —
+// по энергии, заработанной именно в текущем календарном месяце (сумма
+// energy_transactions), не по кармикам. Кармики можно перевести
+// коллеге — тогда соревнование теряло смысл (перевёл другу, он тебя
+// обогнал без единого реального действия). Энергия не передаётся,
+// только зарабатывается.
 export default async function handler(req, res) {
   const ctx = await requireAuth(req, res, {})
   if (!ctx) return
@@ -23,16 +24,16 @@ export default async function handler(req, res) {
   const empIds = (employees || []).map(e => e.user_id)
   if (!empIds.length) return res.status(200).json({ standings: [], daysLeft: 0 })
 
-  const { data: txns } = await a.from('karma_transactions').select('user_id, amount')
-    .in('user_id', empIds).gte('created_at', monthStart).gt('amount', 0)
+  const { data: txns } = await a.from('energy_transactions').select('user_id, amount')
+    .in('user_id', empIds).gte('created_at', monthStart)
 
   const earnedByUser = {}
   ;(txns || []).forEach(t => { earnedByUser[t.user_id] = (earnedByUser[t.user_id] || 0) + Number(t.amount) })
 
   const empName = e => [e.first_name, e.last_name].filter(Boolean).join(' ') || e.display_name || e.email
   const standings = (employees || [])
-    .map(e => ({ userId: e.user_id, name: empName(e), avatarUrl: e.avatar_url || null, karmaEarned: earnedByUser[e.user_id] || 0 }))
-    .sort((a, b) => b.karmaEarned - a.karmaEarned)
+    .map(e => ({ userId: e.user_id, name: empName(e), avatarUrl: e.avatar_url || null, energyEarned: earnedByUser[e.user_id] || 0 }))
+    .sort((a, b) => b.energyEarned - a.energyEarned)
     .map((s, i) => ({ ...s, place: i + 1 }))
 
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -68,10 +69,10 @@ export default async function handler(req, res) {
       const gap = teamAvgRank - myRank
       if (gap > 0.5 && (!weakest || gap > weakest.gap)) weakest = { metricName: m.name, gap }
     }
-    const gapToThird = (standings[2]?.karmaEarned || 0) - (standings.find(s => s.userId === ctx.user.id)?.karmaEarned || 0)
+    const gapToThird = (standings[2]?.energyEarned || 0) - (standings.find(s => s.userId === ctx.user.id)?.energyEarned || 0)
     myAdvice = weakest
-      ? `До 3 места не хватает ${gapToThird} кармиков. У вас «${weakest.metricName}» заметно слабее, чем у команды в среднем — это, скорее всего, самый быстрый путь наверх.`
-      : `До 3 места не хватает ${gapToThird} кармиков. Ваши показатели в целом на уровне команды — дело в объёме выполненных заданий, не в отставании по конкретному показателю.`
+      ? `До 3 места не хватает ${gapToThird} энергии. У вас «${weakest.metricName}» заметно слабее, чем у команды в среднем — это, скорее всего, самый быстрый путь наверх.`
+      : `До 3 места не хватает ${gapToThird} энергии. Ваши показатели в целом на уровне команды — дело в объёме выполненных заданий, не в отставании по конкретному показателю.`
   }
 
   // Собственная привилегия шуточных заданий — только если пользователь

@@ -49,12 +49,16 @@ export default async function handler(req, res) {
       const { data: emps } = await a.from('profiles').select('user_id').eq('company_id', company.id).eq('is_company_admin', false).is('deleted_at', null)
       const empIds = (emps || []).map(e => e.user_id)
       if (!empIds.length) continue
-      const { data: txns } = await a.from('karma_transactions').select('user_id, amount')
-        .in('user_id', empIds).gte('created_at', prevMonthStart.toISOString()).lt('created_at', prevMonthEnd.toISOString()).gt('amount', 0)
+      const { data: txns } = await a.from('energy_transactions').select('user_id, amount')
+        .in('user_id', empIds).gte('created_at', prevMonthStart.toISOString()).lt('created_at', prevMonthEnd.toISOString())
       const earned = {}
       ;(txns || []).forEach(t => { earned[t.user_id] = (earned[t.user_id] || 0) + Number(t.amount) })
       const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
       if (!top3.length) continue
+      // race_winners.karma_earned хранит теперь энергию, не карму —
+      // переименование самого столбца потребовало бы отдельной миграции
+      // ради одного только имени, оставил как есть, значение по факту
+      // верное (по переходу рейтингов на энергию от 6 сентября 2026).
       await a.from('race_winners').insert(top3.map(([userId, karma], i) => ({ company_id: company.id, cycle_month: cycleMonth, rank: i + 1, user_id: userId, karma_earned: karma })))
       if (top3[0]) {
         const monthLabel = new Date(cycleMonth + '-01').toLocaleDateString('ru', { month: 'long', year: 'numeric' })
@@ -62,7 +66,7 @@ export default async function handler(req, res) {
       }
       await a.from('notifications').insert(top3.map(([userId], i) => ({
         user_id: userId, link: '/championship',
-        message: i === 0 ? `Вы — победитель месячной гонки! 1 место, заработано ${earned[userId]} кармиков. Доступна привилегия — создать до 2 шуточных заданий коллегам.`
+        message: i === 0 ? `Вы — победитель месячной гонки! 1 место, заработано ${earned[userId]} энергии. Доступна привилегия — создать до 2 шуточных заданий коллегам.`
           : `Вы в топ-3 месячной гонки — ${i + 1} место! Доступна привилегия — создать до 2 шуточных заданий коллегам.`,
       })))
     }
@@ -89,7 +93,7 @@ export default async function handler(req, res) {
         const empIds = (emps || []).map(e => e.user_id)
         if (!empIds.length) continue
         const yearStart = new Date(now.getFullYear(), 0, 1).toISOString()
-        const { data: txns } = await a.from('karma_transactions').select('user_id, amount').in('user_id', empIds).gte('created_at', yearStart).gt('amount', 0)
+        const { data: txns } = await a.from('energy_transactions').select('user_id, amount').in('user_id', empIds).gte('created_at', yearStart)
         const earned = {}
         ;(txns || []).forEach(t => { earned[t.user_id] = (earned[t.user_id] || 0) + Number(t.amount) })
         const top3 = Object.entries(earned).sort((x, y) => y[1] - x[1]).slice(0, 3).filter(([, v]) => v > 0)
@@ -122,7 +126,7 @@ export default async function handler(req, res) {
       if (!matches?.length) continue
 
       const participantIds = matches.flatMap(m => [m.participant_a, m.participant_b]).filter(Boolean)
-      const { data: txns } = await a.from('karma_transactions').select('user_id, amount').in('user_id', participantIds).gte('created_at', t.round_started_at).lt('created_at', roundEnd.toISOString()).gt('amount', 0)
+      const { data: txns } = await a.from('energy_transactions').select('user_id, amount').in('user_id', participantIds).gte('created_at', t.round_started_at).lt('created_at', roundEnd.toISOString())
       const earned = {}
       ;(txns || []).forEach(tx => { earned[tx.user_id] = (earned[tx.user_id] || 0) + Number(tx.amount) })
 

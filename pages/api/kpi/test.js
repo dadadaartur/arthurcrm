@@ -26,7 +26,11 @@ export default async function handler(req, res) {
     const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', ctx.user.id).maybeSingle()
     await a.from('karma_balance').upsert({ user_id: ctx.user.id, balance: (bal?.balance || 0) + 2 }, { onConflict: 'user_id' })
     await a.from('karma_transactions').insert({ user_id: ctx.user.id, amount: 2, type: 'test_reward', description: `Тест «${t.title}» сдан (${score}%)` })
-    await creditEnergy(a, ctx.user.id, 1)
+    // Энергия зависит от балла, не плоская единица (по анализу от
+    // 6 сентября 2026: «пройти тренинг и успешно сдать тест — высокий
+    // вес» — 100% даёт заметно больше, чем едва проходной балл, а не
+    // одно и то же значение за любой результат).
+    await creditEnergy(a, ctx.user.id, Math.max(2, Math.round(score / 15)), 'test', `Тест «${t.title}» — ${score}%`)
   }
   res.status(200).json({ score, passed })
 }

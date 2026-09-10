@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       const dEnergy = energyFor(metric, newBand) - energyFor(metric, oldBand)
       const dKarma = karmaFor(metric, newBand) - karmaFor(metric, oldBand)
       if (dEnergy > 0) {
-        await creditEnergy(a, e.userId, dEnergy)
+        await creditEnergy(a, e.userId, dEnergy, 'metric')
       }
       if (dKarma > 0) {
         const { data: bal } = await a.from('karma_balance').select('balance').eq('user_id', e.userId).maybeSingle()

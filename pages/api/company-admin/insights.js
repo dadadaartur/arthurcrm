@@ -284,6 +284,34 @@ export default async function handler(req, res) {
   const order = { risk: 0, training: 1, anomaly: 2, win: 3, consistent: 4 }
   insights.sort((x, y) => order[x.type] - order[y.type] || (y.changePct || 0) - (x.changePct || 0))
 
+  // Эффективность заданий (по видению от 6 сентября 2026: «это
+  // задание никто не выполняет — проверь, слишком сложное, неинтересное
+  // или награда не мотивирует» — вся система заданий/призов/чемпионатов
+  // должна работать на реальный результат, не существовать формально).
+  // Смотрим только повторяющиеся задания (recurrence_type != 'once') —
+  // у разового задания низкая доля выполнения естественна, пока не
+  // истёк единственный срок, сравнивать не с чем.
+  {
+    const { data: recurringTasks } = await a.from('tasks').select('id, title, reward_karma').eq('company_id', companyId).eq('is_active', true).neq('recurrence_type', 'once')
+    if (recurringTasks?.length) {
+      const taskIds = recurringTasks.map(t => t.id)
+      const { data: assignments } = await a.from('task_assignments').select('task_id, status').in('task_id', taskIds).gte('created_at', from)
+      for (const task of recurringTasks) {
+        const rows = (assignments || []).filter(a2 => a2.task_id === task.id)
+        if (rows.length < 4) continue // мало данных — не судим по паре случаев
+        const completedCount = rows.filter(a2 => a2.status === 'completed').length
+        const rate = completedCount / rows.length
+        if (rate < 0.2) {
+          insights.push({
+            type: 'ineffective_task', taskId: task.id,
+            text: `Задание «${task.title}» выполнили только ${completedCount} из ${rows.length} раз — похоже, оно слишком сложное, неинтересное, или награда (${task.reward_karma} карм.) не мотивирует.`,
+            advice: 'Стоит поговорить с теми, кому назначено — прежде чем менять задание вслепую, полезно узнать причину от самих людей.',
+          })
+        }
+      }
+    }
+  }
+
   res.status(200).json({ insights, periods, middlePerformers, forecast: { ready: forecastReady, daysLeft: daysTotal - daysSoFar, items: forecast, atRiskCount, totalCount: forecast.length } })
   } catch (e) {
     console.error('insights.js crash:', e)

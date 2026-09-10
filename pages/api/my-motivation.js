@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '../../lib/auth'
-import { bandFor, bandRankOf, BAND_LABELS } from '../../lib/kpi'
+import { bandFor, bandRankOf, karmaFor, BAND_LABELS } from '../../lib/kpi'
 
 // Личная мотивация сотрудника (по запросу от 6 сентября 2026: «нужно
 // продумать усилители — подсказки, что до такого-то приза осталось
@@ -59,7 +59,28 @@ export default async function handler(req, res) {
     const nextThr = rank === 0 ? m.thr_min : rank === 1 ? m.thr_mid : rank === 2 ? m.thr_top : m.thr_ultra
     const gapPct = m.kpi_type === 'inverse' ? (avg > 0 ? (avg - nextThr) / avg : null) : (nextThr > 0 ? (nextThr - avg) / nextThr : null)
     if (gapPct == null || gapPct <= 0) continue
-    if (closestGapPct == null || gapPct < closestGapPct) { closestGapPct = gapPct; closestMetric = { name: m.name, unit: m.unit, current: Math.round(avg * 10) / 10, target: nextThr, nextBandLabel: BAND_LABELS[rank === 0 ? 'min' : rank === 1 ? 'mid' : rank === 2 ? 'top' : 'ultra'] } }
+    if (closestGapPct == null || gapPct < closestGapPct) {
+      const nextBandKey = rank === 0 ? 'min' : rank === 1 ? 'mid' : rank === 2 ? 'top' : 'ultra'
+      closestGapPct = gapPct
+      closestMetric = {
+        name: m.name, unit: m.unit, current: Math.round(avg * 10) / 10, target: nextThr,
+        gap: Math.round(Math.abs(nextThr - avg) * 10) / 10,
+        nextBandLabel: BAND_LABELS[nextBandKey], karmaReward: karmaFor(m, nextBandKey),
+      }
+    }
+  }
+
+  // Явная связка «закрой этот разрыв → получишь ровно столько кармы →
+  // вот насколько ближе станет конкретный приз» (по примеру от
+  // 6 сентября 2026: «ещё 10 звонков и хватит на пиццу», не отдельные
+  // несвязанные цифры, а одна причинная цепочка).
+  let metricToReward = null
+  if (closestMetric && nextReward && closestMetric.karmaReward > 0) {
+    const afterKarma = balance + closestMetric.karmaReward
+    metricToReward = {
+      stillShort: Math.max(0, nextReward.cost - afterKarma),
+      willAfford: afterKarma >= nextReward.cost,
+    }
   }
 
   // Явный мостик к действию — доступное (не начатое) задание, которое
@@ -72,5 +93,5 @@ export default async function handler(req, res) {
     if (candidates[0]) suggestedTask = { assignmentId: candidates[0].id, taskId: candidates[0].task_id, title: candidates[0].tasks.title, rewardKarma: candidates[0].tasks.reward_karma }
   }
 
-  res.status(200).json({ balance, energy, nextReward, nextLevel, closestMetric, suggestedTask })
+  res.status(200).json({ balance, energy, nextReward, nextLevel, closestMetric, metricToReward, suggestedTask })
 }
