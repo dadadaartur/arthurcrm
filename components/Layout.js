@@ -68,22 +68,27 @@ function NotificationBell() {
   }
   return (
     <>
-      <button ref={btnRef} onClick={toggle}
-        style={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(234,88,12,0.14), rgba(124,58,237,0.12), rgba(14,116,144,0.12))', border: `1px solid ${open ? 'var(--border-gold)' : 'rgba(15,23,42,0.12)'}`, transition: 'all 0.3s ease', boxShadow: open ? '0 0 0 3px rgba(234,88,12,0.12)' : 'none' }}>
-        <span className="bell-shimmer" />
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#bellGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative' }}>
-          <defs>
-            <linearGradient id="bellGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#ea580c" /><stop offset="55%" stopColor="#dc2626" /><stop offset="100%" stopColor="#7c3aed" />
-            </linearGradient>
-          </defs>
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+      <div style={{ position: 'relative', display: 'inline-flex' }}>
+        <button ref={btnRef} onClick={toggle}
+          style={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(234,88,12,0.14), rgba(124,58,237,0.12), rgba(14,116,144,0.12))', border: `1px solid ${open ? 'var(--border-gold)' : 'rgba(15,23,42,0.12)'}`, transition: 'all 0.3s ease', boxShadow: open ? '0 0 0 3px rgba(234,88,12,0.12)' : 'none' }}>
+          <span className="bell-shimmer" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#bellGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative' }}>
+            <defs>
+              <linearGradient id="bellGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#ea580c" /><stop offset="55%" stopColor="#dc2626" /><stop offset="100%" stopColor="#7c3aed" />
+              </linearGradient>
+            </defs>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        </button>
+        {/* Бейдж вынесен из кнопки — overflow:hidden у неё (нужен для
+            блика) обрезал цифру, она жила за пределами круга кнопки
+            (по фидбеку от 6 сентября 2026: «цифра почти не видна»). */}
         {unread > 0 && (
-          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #dc2626, #ea580c)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread}</span>
+          <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 9999, background: 'linear-gradient(135deg, #dc2626, #ea580c)', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 2px #fff', zIndex: 2 }}>{unread}</span>
         )}
-      </button>
+      </div>
       <style jsx global>{`
         @keyframes bellShimmerMove { 0% { transform: translateX(-120%) rotate(15deg); } 100% { transform: translateX(220%) rotate(15deg); } }
         .bell-shimmer { position: absolute; top: -40%; left: 0; width: 35%; height: 180%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); animation: bellShimmerMove 4s ease-in-out infinite; pointer-events: none; }
@@ -198,6 +203,7 @@ export default function Layout({ children, autoHideHeader = false }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-page)' }}>
       {autoHideHeader ? (
+        <>
         <div
           onMouseEnter={() => setHeaderRevealed(true)}
           onMouseLeave={() => setHeaderRevealed(false)}
@@ -235,7 +241,6 @@ export default function Layout({ children, autoHideHeader = false }) {
                   <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{companyName}</span>
                 </Link>
               )}
-              <NotificationBell />
               <Link href="/profile" className="flex items-center gap-2 transition-colors" style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -270,6 +275,16 @@ export default function Layout({ children, autoHideHeader = false }) {
             </svg>
           </div>
         </div>
+        {/* Колокольчик отдельно от скрывающейся шапки — раньше жил
+            внутри неё и пропадал вместе с ней почти всё время (по
+            фидбеку от 6 сентября 2026 — на главной, где проводят
+            больше всего времени, уведомления были практически
+            недоступны). Теперь виден всегда, независимо от состояния
+            шапки. */}
+        <div style={{ position: 'fixed', top: 16, right: 20, zIndex: 60 }}>
+          <NotificationBell />
+        </div>
+        </>
       ) : (
         <header className="flex justify-between items-center px-6 py-3 relative z-10" style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)' }}>
           <div className="flex items-center gap-3 flex-wrap">

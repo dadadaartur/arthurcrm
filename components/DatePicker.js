@@ -128,13 +128,12 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
         ref={btnRef}
         type="button"
         onClick={openPanel}
-        className="input-field flex items-center justify-between text-left"
-        style={{ cursor: 'pointer', minHeight: 42 }}
+        style={{ cursor: 'pointer', minHeight: 42, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', textAlign: 'left' }}
       >
-        <span style={{ opacity: value ? 1 : 0.55, fontSize: 14 }}>
+        <span style={{ opacity: value ? 1 : 0.55, fontSize: 13.5, color: 'var(--text-primary)' }}>
           {value ? fmtHuman(value) : placeholder}
         </span>
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
           <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#ea580c" strokeWidth="1.2" />
           <path d="M1.5 6h13" stroke="#ea580c" strokeWidth="1.2" />
           <path d="M5 1v3M11 1v3" stroke="#ea580c" strokeWidth="1.2" strokeLinecap="round" />
