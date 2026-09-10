@@ -105,6 +105,14 @@ function MotivationHero() {
   )
 }
 
+function formatDaysHuman(days) {
+  if (days <= 0) return 'уже сейчас'
+  if (days < 14) return `${days} дн.`
+  if (days < 60) return `${Math.round(days / 7)} нед.`
+  const months = Math.round(days / 30)
+  return `${months} мес.`
+}
+
 function PersonalGoalsSection() {
   const { showSuccess, showError } = useFeedback()
   const [goals, setGoals] = useState([])
@@ -204,6 +212,12 @@ function PersonalGoalsSection() {
             )}
             {g.target_date && <span>до {new Date(g.target_date).toLocaleDateString('ru')}</span>}
           </div>
+          {g.pace && (g.pace.currentDays != null || g.pace.maxDays != null) && (
+            <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 9, background: 'rgba(124,58,237,0.06)', fontSize: 10.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              {g.pace.currentDays != null && <div>При текущем темпе — <b style={{ color: 'var(--text-primary)' }}>{formatDaysHuman(g.pace.currentDays)}</b></div>}
+              {g.pace.maxDays != null && <div>Если выйти на максимум по показателям — <b style={{ color: '#7c3aed' }}>{formatDaysHuman(g.pace.maxDays)}</b></div>}
+            </div>
+          )}
         </>
       ) : (
         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{g.target_date ? `до ${new Date(g.target_date).toLocaleDateString('ru')}` : 'без числового прогресса'}</div>
@@ -386,29 +400,42 @@ export default function GoalsPage() {
   return (
     <div className="theme-light" style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', padding: '40px 32px' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
-        <BackArrow href="/" title="Мои цели" extra={
-          globalGoals.length > 0 && (
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, maxWidth: '58%', minWidth: 0 }}>
-              <span style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>Цели компании</span>
-              <div className="global-goals-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-                {globalGoals.map(g => {
-                  const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
-                  return (
-                    <div key={g.id} style={{ flex: '0 0 118px', padding: '6px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
-                      <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{g.title}</div>
-                      <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#137a39' : '#ea580c' }} />
-                      </div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 3, textAlign: 'right' }}>{pct}%</div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        } />
+        <BackArrow href="/" title="Мои цели" />
 
         <MotivationHero />
+
+        {globalGoals.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Общий путь компании</div>
+            <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 14px' }}>То, к чему движется вся команда — и где в этом ты</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+              {globalGoals.map(g => {
+                const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
+                // Пытаемся связать текстовую цель компании с реальным
+                // показателем сотрудника по совпадению названия — не
+                // точная формула (для неё нужна была бы настоящая связь
+                // в базе, не текстовое поле), но конкретнее, чем ничего.
+                const matched = g.metric && data?.metrics?.find(m => m.name.toLowerCase().includes(g.metric.toLowerCase()) || g.metric.toLowerCase().includes(m.name.toLowerCase()))
+                const myBand = matched ? metricView(matched).band : null
+                return (
+                  <div key={g.id} style={{ padding: 16, borderRadius: 16, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-gold)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{g.title}</div>
+                    <div style={{ height: 7, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 5 }}>
+                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct >= 100 ? '#137a39' : '#ea580c', transition: 'width .8s' }} />
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: matched ? 10 : 0 }}>{g.current_value || 0}{g.unit} из {g.target_value}{g.unit} ({pct}%)</div>
+                    {matched && myBand && (
+                      <div style={{ padding: '7px 10px', borderRadius: 9, background: `${BAND_COLORS_LIGHT[myBand]}14`, border: `1px solid ${BAND_COLORS_LIGHT[myBand]}44` }}>
+                        <span style={{ fontSize: 10.5, color: 'var(--text-secondary)' }}>Твой вклад по «{matched.name}»: </span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: BAND_COLORS_LIGHT[myBand] }}>{BAND_LABELS[myBand]}</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Постоянная сетка на весь остаток страницы: основной контент
             (фильтр периода + карточки показателей) слева, узкая колонка
