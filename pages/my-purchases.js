@@ -179,7 +179,7 @@ export default function MyPurchases() {
                     {p.isWheelPrize ? (
                       <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: `${p.wheelColor}18`, color: p.wheelColor, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /></svg>
-                        Лента подарков
+                        Пушка призов
                       </span>
                     ) : (
                       <span style={{

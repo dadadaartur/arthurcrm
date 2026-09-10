@@ -104,6 +104,32 @@ function WheelAdmin() {
             </div>
 
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Призы</div>
+            {config.prizes.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 8px' }}>
+                  Вес — это «во сколько раз чаще» относительно других призов, не проценты напрямую. Пример: обычный приз с весом 10 и редкий с весом 1 — редкий выпадает примерно в 10 раз реже. Для дорогого редкого приза ставьте маленький вес (1) рядом с обычными весом побольше (5–10).
+                </p>
+                <div style={{ display: 'flex', height: 16, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+                  {config.prizes.map(p => {
+                    const total = config.prizes.reduce((s, x) => s + (Number(x.weight) || 0), 0)
+                    const pct = total > 0 ? (Number(p.weight) || 0) / total * 100 : 0
+                    return pct > 0 ? <div key={p.id} style={{ width: `${pct}%`, background: p.color }} /> : null
+                  })}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
+                  {config.prizes.map(p => {
+                    const total = config.prizes.reduce((s, x) => s + (Number(x.weight) || 0), 0)
+                    const pct = total > 0 ? Math.round((Number(p.weight) || 0) / total * 100) : 0
+                    return (
+                      <span key={p.id} style={{ fontSize: 10.5, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
+                        {p.label || 'Без названия'}: {pct}%
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginBottom: 16 }}>
               {config.prizes.map(p => (
                 <div key={p.id} style={{ borderRadius: 14, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', padding: 14 }}>

@@ -431,7 +431,7 @@ export default function GoalsPage() {
                   }
                 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 14, padding: '10px 14px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(234,88,12,0.12))', border: '1px solid var(--border-gold)', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: 12, fontWeight: 600, animation: 'pulseGlow 2s ease-in-out infinite' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" /><path d="M12 8v13M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8" /><path d="M12 8c-1.5-4-6-4-6-1s3 1 6 1M12 8c1.5-4 6-4 6-1s-3 1-6 1" /></svg>
-                  Лента подарков · {wheelSpins}
+                  Пушка призов · {wheelSpins}
                 </button>
               )}
             </div>
@@ -473,7 +473,7 @@ export default function GoalsPage() {
       {wheelOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }} onClick={() => !wheelSpinning && setWheelOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' }}>Лента подарков</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' }}>Пушка призов</h3>
             {wheelConfig === null ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Загрузка...</p>
             ) : wheelConfig.prizes?.length ? (
@@ -495,7 +495,7 @@ export default function GoalsPage() {
                 }}
               />
             ) : (
-              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Лента подарков пока не настроена</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Пушка призов пока не настроена</p>
             )}
             <button onClick={() => setWheelOpen(false)} className="btn-outline" style={{ marginTop: 24, minWidth: 120 }}>Закрыть</button>
           </div>

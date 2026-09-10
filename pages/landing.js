@@ -361,7 +361,7 @@ export default function Landing() {
 
         <div className="ldg-feature-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
           <div className="ldg-feature-visual-first" style={{ background: 'var(--ink)', borderRadius: 4, padding: 26, order: -1 }}>
-            <div style={{ fontSize: 11, color: 'rgba(251,247,238,0.5)', marginBottom: 16 }}>Лента подарков</div>
+            <div style={{ fontSize: 11, color: 'rgba(251,247,238,0.5)', marginBottom: 16 }}>Пушка призов</div>
             <div style={{ display: 'flex', gap: 12 }}>
               {[
                 { l: 'Доп. выходной', c: 'var(--gold)' },
