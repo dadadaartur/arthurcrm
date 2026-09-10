@@ -73,7 +73,7 @@ function MotivationHero() {
   }
 
   return (
-    <div style={{ borderRadius: 22, padding: 24, marginBottom: 24, maxWidth: 780, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
+    <div style={{ flex: '1 1 380px', borderRadius: 22, padding: 24, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18 }}>Что ты сейчас зарабатываешь</div>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
         {nextReward && <div style={{ flex: '0 1 220px' }}><Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} /></div>}
@@ -405,40 +405,42 @@ export default function GoalsPage() {
       <div style={{ maxWidth: 1600, margin: '0 auto' }}>
         <BackArrow href="/" title="Мои цели" />
 
-        <MotivationHero />
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28, alignItems: 'stretch' }}>
+          <MotivationHero />
 
-        {globalGoals.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Общий путь компании</div>
-            <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 14px' }}>То, к чему движется вся команда — и где в этом ты</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-              {globalGoals.map(g => {
-                const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
-                // Пытаемся связать текстовую цель компании с реальным
-                // показателем сотрудника по совпадению названия — не
-                // точная формула (для неё нужна была бы настоящая связь
-                // в базе, не текстовое поле), но конкретнее, чем ничего.
-                const matched = g.metric && data?.metrics?.find(m => m.name.toLowerCase().includes(g.metric.toLowerCase()) || g.metric.toLowerCase().includes(m.name.toLowerCase()))
-                const myBand = matched ? metricView(matched).band : null
-                return (
-                  <div key={g.id} style={{ padding: 16, borderRadius: 16, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-gold)' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{g.title}</div>
-                    <div style={{ height: 7, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 5 }}>
-                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct >= 100 ? '#137a39' : '#ea580c', transition: 'width .8s' }} />
-                    </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: matched ? 10 : 0 }}>{g.current_value || 0}{g.unit} из {g.target_value}{g.unit} ({pct}%)</div>
-                    {matched && myBand && (
-                      <div style={{ padding: '7px 10px', borderRadius: 9, background: `${BAND_COLORS_LIGHT[myBand]}14`, border: `1px solid ${BAND_COLORS_LIGHT[myBand]}44` }}>
-                        <span style={{ fontSize: 10.5, color: 'var(--text-secondary)' }}>Твой вклад по «{matched.name}»: </span>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: BAND_COLORS_LIGHT[myBand] }}>{BAND_LABELS[myBand]}</span>
+          {globalGoals.length > 0 && (
+            <div style={{ flex: '1 1 380px', borderRadius: 22, padding: 24, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Общий путь компании</div>
+              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 14px' }}>То, к чему движется вся команда — и где в этом ты</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+                {globalGoals.map(g => {
+                  const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
+                  // Пытаемся связать текстовую цель компании с реальным
+                  // показателем сотрудника по совпадению названия — не
+                  // точная формула (для неё нужна была бы настоящая связь
+                  // в базе, не текстовое поле), но конкретнее, чем ничего.
+                  const matched = g.metric && data?.metrics?.find(m => m.name.toLowerCase().includes(g.metric.toLowerCase()) || g.metric.toLowerCase().includes(m.name.toLowerCase()))
+                  const myBand = matched ? metricView(matched).band : null
+                  return (
+                    <div key={g.id} style={{ padding: 14, borderRadius: 14, background: 'var(--bg-page)', border: '1px solid var(--border-gold)' }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{g.title}</div>
+                      <div style={{ height: 7, borderRadius: 4, background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 5 }}>
+                        <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: pct >= 100 ? '#137a39' : '#ea580c', transition: 'width .8s' }} />
                       </div>
-                    )}
-                  </div>
-                )
-              })}
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: matched ? 8 : 0 }}>{g.current_value || 0}{g.unit} из {g.target_value}{g.unit} ({pct}%)</div>
+                      {matched && myBand && (
+                        <div style={{ padding: '6px 9px', borderRadius: 8, background: `${BAND_COLORS_LIGHT[myBand]}14`, border: `1px solid ${BAND_COLORS_LIGHT[myBand]}44` }}>
+                          <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Твой вклад по «{matched.name}»: </span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: BAND_COLORS_LIGHT[myBand] }}>{BAND_LABELS[myBand]}</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Постоянная сетка на весь остаток страницы: основной контент
             (фильтр периода + карточки показателей) слева, узкая колонка
@@ -454,7 +456,7 @@ export default function GoalsPage() {
               <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
               <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
               <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
-              <div style={{ width: 180 }}><DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" /></div>
+              <DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" compact />
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
             </div>
 
