@@ -200,7 +200,9 @@ function PersonalGoalsSection() {
             <div style={{ height: '100%', width: `${g.progressPct ?? Math.min(100, Math.round((g.current_value / g.target_value) * 100))}%`, borderRadius: 5, background: 'linear-gradient(90deg, #ea580c, #7c3aed)', transition: 'width .6s' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)' }}>
-            {editingProgress === g.id ? (
+            {g.auto_tracked ? (
+              <span>{g.current_value}{g.target_unit} из {g.target_value}{g.target_unit} <span style={{ color: 'var(--text-muted)' }}>— растёт само, от заработанной кармы</span></span>
+            ) : editingProgress === g.id ? (
               <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <input autoFocus type="number" className="input-field" style={{ width: 70, padding: '3px 8px', fontSize: 11 }} value={progressInput} onChange={e => setProgressInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveProgress(g.id)} />
                 <button onClick={() => saveProgress(g.id)} style={{ color: 'var(--accent-gold)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
@@ -490,6 +492,7 @@ export default function GoalsPage() {
                         {isCurrent && <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 8, padding: '1px 6px', borderRadius: 20, background: t.color, color: '#0a0e1c', fontWeight: 700, whiteSpace: 'nowrap' }}>Вы здесь</span>}
                         <div style={{ fontSize: 9, color: achieved ? t.color : '#777', fontWeight: 700, letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
                         <div style={{ fontSize: 15, color: achieved ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>{m.unit}</span></div>
+                        {t.karma > 0 && <div style={{ fontSize: 8.5, color: achieved ? t.color : 'var(--text-muted)', marginTop: 2 }}>+{t.karma} карм.</div>}
                       </div>
                     )
                   })}
@@ -517,7 +520,8 @@ export default function GoalsPage() {
                 <>
                   {dailyMetrics.length > 0 && (
                     <div style={{ marginBottom: 28 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Сегодня на смене</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 3 }}>Сегодня на смене</div>
+                      <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 12px' }}>Каждый уровень — это кармики прямо сейчас, и вклад в личные и командные цели ниже</p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
                         {dailyMetrics.map(renderCard)}
                       </div>
@@ -525,7 +529,8 @@ export default function GoalsPage() {
                   )}
                   {otherMetrics.length > 0 && (
                     <div style={{ marginBottom: 32 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Копится к премии</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 3 }}>Копится к премии</div>
+                      <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 12px' }}>Итог месяца — выше уровень, больше премия</p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
                         {otherMetrics.map(renderCard)}
                       </div>
