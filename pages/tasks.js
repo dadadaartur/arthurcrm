@@ -374,7 +374,6 @@ export default function TasksPage() {
           </Link>
         </div>
       } />
-      <MotivationCard />
 
       {activeTab !== 'history' && SECTIONS.some(s => s.items.length > 0) && (
         <div style={{ display: 'flex', gap: 8, margin: '20px 0', flexWrap: 'wrap' }}>

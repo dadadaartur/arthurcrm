@@ -43,6 +43,57 @@ const Seg = ({ active, onClick, children, color = '#FFD700' }) => (
   </button>
 )
 
+function MotivationHero() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/my-motivation', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setData(await r.json())
+      setLoading(false)
+    }
+    load()
+  }, [])
+  if (loading || !data) return null
+  const { nextReward, nextLevel, closestMetric, suggestedTask } = data
+  if (!nextReward && !nextLevel && !closestMetric) return null
+
+  const Bridge = ({ color, icon, label, current, target, hint }) => {
+    const pct = target > 0 ? Math.min(100, Math.max(4, Math.round((current / target) * 100))) : 0
+    return (
+      <div style={{ flex: 1, minWidth: 210 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+          <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 7 }}>{hint}</div>
+        <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.4)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: color, transition: 'width 1.1s cubic-bezier(0.22,1,0.36,1)' }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ borderRadius: 22, padding: 24, marginBottom: 24, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Твой путь к следующей цели</div>
+      <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Не абстрактные цифры — конкретно то, что получишь, и сколько до этого осталось</p>
+      <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
+        {nextReward && <Bridge color="#ea580c" icon={<path d="M20 12v9H4v-9M2 7h20v5H2V7zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />} label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
+        {nextLevel && <Bridge color="#7c3aed" icon={<path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21 7.5 13.5 2 9h7z" />} label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
+        {closestMetric && <Bridge color="#0e7490" icon={<path d="M3 3v18h18M7 14l4-4 4 4 5-6" />} label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target} hint={`«${closestMetric.name}» — ещё немного, и уровень станет «${closestMetric.nextBandLabel}»`} />}
+      </div>
+      {suggestedTask && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 14, background: 'var(--bg-card)', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--text-primary)' }}>Выполни «<b>{suggestedTask.title}</b>» — получишь +{suggestedTask.rewardKarma} кармиков, разрыв заметно сократится.</span>
+          <a href={`/task/${suggestedTask.taskId}`} className="btn-glass" style={{ padding: '7px 18px', fontSize: 11.5, marginLeft: 'auto', textDecoration: 'none' }}>К заданию</a>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PersonalGoalsSection() {
   const { showSuccess, showError } = useFeedback()
   const [goals, setGoals] = useState([])
@@ -51,6 +102,8 @@ function PersonalGoalsSection() {
   const [form, setForm] = useState({ goalType: 'intermediate', parentGoalId: '', title: '', description: '', targetValue: '', targetUnit: '', targetDate: '' })
   const [editingProgress, setEditingProgress] = useState(null)
   const [progressInput, setProgressInput] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [celebratingId, setCelebratingId] = useState(null)
 
   const auth = async () => { const { data: { session } } = await supabase.auth.getSession(); return { Authorization: `Bearer ${session.access_token}` } }
   const load = async () => {
@@ -74,15 +127,16 @@ function PersonalGoalsSection() {
     if (r.ok) { setEditingProgress(null); load() } else showError('Не удалось сохранить прогресс')
   }
   const markDone = async (id) => {
+    setCelebratingId(id)
     const h = await auth()
     await fetch('/api/personal-goals', { method: 'PUT', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'completed' }) })
-    showSuccess('Цель отмечена как достигнутая!')
-    load()
+    showSuccess('Цель достигнута!')
+    setTimeout(() => { setCelebratingId(null); load() }, 1400)
   }
   const remove = async (id) => {
-    if (!confirm('Удалить цель?')) return
     const h = await auth()
     await fetch('/api/personal-goals', { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    setConfirmDeleteId(null)
     load()
   }
 
@@ -90,19 +144,41 @@ function PersonalGoalsSection() {
   const intermediates = goals.filter(g => g.goal_type === 'intermediate' && g.status === 'active')
   const done = goals.filter(g => g.status === 'completed')
 
-  const GoalCard = ({ g }) => (
-    <div style={{ padding: 16, borderRadius: 14, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: g.goal_type === 'global' ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)' }}>
+  const GoalCard = ({ g }) => {
+    const celebrating = celebratingId === g.id
+    return (
+    <div style={{ position: 'relative', padding: 18, borderRadius: 16, background: g.goal_type === 'global' ? 'linear-gradient(135deg, rgba(234,88,12,0.06), var(--bg-card))' : 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: g.goal_type === 'global' ? '1px solid var(--border-gold)' : '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+      {celebrating && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(19,122,57,0.94)' }}>
+          <div className="goal-celebrate">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
+            <div style={{ color: '#fff', fontSize: 12.5, fontWeight: 700, marginTop: 6 }}>Достигнута!</div>
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => {
+            const ang = (i / 8) * Math.PI * 2
+            const dx = Math.cos(ang) * 90, dy = Math.sin(ang) * 90
+            return <span key={i} className="goal-confetti" style={{ '--dx': `${dx}px`, '--dy': `${dy}px`, background: ['#ea580c', '#7c3aed', '#0e7490', '#137a39'][i % 4] }} />
+          })}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)' }}>{g.title}</span>
-        <button onClick={() => remove(g.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-        </button>
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{g.title}</span>
+        {confirmDeleteId === g.id ? (
+          <span style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+            <button onClick={() => remove(g.id)} style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 7, padding: '3px 9px', cursor: 'pointer' }}>Удалить</button>
+            <button onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 10.5, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}>Отмена</button>
+          </span>
+        ) : (
+          <button onClick={() => setConfirmDeleteId(g.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+          </button>
+        )}
       </div>
-      {g.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px' }}>{g.description}</p>}
+      {g.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>{g.description}</p>}
       {g.target_value != null ? (
         <>
-          <div style={{ height: 8, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 4 }}>
-            <div style={{ height: '100%', width: `${g.progressPct ?? Math.min(100, Math.round((g.current_value / g.target_value) * 100))}%`, borderRadius: 4, background: 'linear-gradient(90deg, #ea580c, #7c3aed)', transition: 'width .6s' }} />
+          <div style={{ height: 9, borderRadius: 5, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 5 }}>
+            <div style={{ height: '100%', width: `${g.progressPct ?? Math.min(100, Math.round((g.current_value / g.target_value) * 100))}%`, borderRadius: 5, background: 'linear-gradient(90deg, #ea580c, #7c3aed)', transition: 'width .6s' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)' }}>
             {editingProgress === g.id ? (
@@ -113,7 +189,7 @@ function PersonalGoalsSection() {
                 </button>
               </span>
             ) : (
-              <span onClick={() => { setEditingProgress(g.id); setProgressInput(String(g.current_value)) }} style={{ cursor: 'pointer' }}>{g.current_value}{g.target_unit} из {g.target_value}{g.target_unit}</span>
+              <span onClick={() => { setEditingProgress(g.id); setProgressInput(String(g.current_value)) }} style={{ cursor: 'pointer', borderBottom: '1px dashed var(--text-muted)' }}>{g.current_value}{g.target_unit} из {g.target_value}{g.target_unit}</span>
             )}
             {g.target_date && <span>до {new Date(g.target_date).toLocaleDateString('ru')}</span>}
           </div>
@@ -121,9 +197,9 @@ function PersonalGoalsSection() {
       ) : (
         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{g.target_date ? `до ${new Date(g.target_date).toLocaleDateString('ru')}` : 'без числового прогресса'}</div>
       )}
-      <button onClick={() => markDone(g.id)} style={{ marginTop: 10, fontSize: 11, fontWeight: 600, color: '#137a39', background: 'rgba(19,122,57,0.08)', border: '1px solid rgba(19,122,57,0.25)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>Достигнута</button>
+      <button onClick={() => markDone(g.id)} style={{ marginTop: 12, fontSize: 11.5, fontWeight: 600, color: '#137a39', background: 'rgba(19,122,57,0.08)', border: '1px solid rgba(19,122,57,0.25)', borderRadius: 9, padding: '6px 14px', cursor: 'pointer' }}>Достигнута</button>
     </div>
-  )
+  )}
 
   if (loading) return null
 
@@ -185,6 +261,12 @@ function PersonalGoalsSection() {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        .goal-celebrate { text-align: center; animation: goalCelebratePop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes goalCelebratePop { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        .goal-confetti { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 2px; transform: translate(-50%,-50%); animation: goalConfettiFly 0.9s ease-out forwards; }
+        @keyframes goalConfettiFly { to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(300deg); opacity: 0; } }
+      `}</style>
     </div>
   )
 }
@@ -301,7 +383,7 @@ export default function GoalsPage() {
                 {globalGoals.map(g => {
                   const pct = g.target_value ? Math.min(100, Math.round((g.current_value || 0) / g.target_value * 100)) : 0
                   return (
-                    <div key={g.id} title={`${g.title}: ${g.current_value || 0}/${g.target_value}${g.unit || ''} (${pct}%)`} style={{ flex: '0 0 118px', padding: '6px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
+                    <div key={g.id} style={{ flex: '0 0 118px', padding: '6px 10px', borderRadius: 12, background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                       <div style={{ fontSize: 10, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{g.title}</div>
                       <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#137a39' : '#ea580c' }} />
@@ -314,6 +396,8 @@ export default function GoalsPage() {
             </div>
           )
         } />
+
+        <MotivationHero />
 
         {/* Постоянная сетка на весь остаток страницы: основной контент
             (фильтр периода + карточки показателей) слева, узкая колонка
@@ -439,29 +523,12 @@ export default function GoalsPage() {
         </div>
 
         {(myTests.length > 0 || myViews.length > 0) && (
-          <div style={{ marginTop: 40 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 14 }}>Мои результаты</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-              {myTests.filter(t => t.completed_at).map(t => (
-                <div key={t.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-card)', border: `1px solid ${t.is_passed ? 'rgba(74,222,128,0.3)' : 'rgba(244,67,54,0.3)'}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 500 }}>Тест #{t.test_id}</span>
-                    <span style={{ color: t.is_passed ? '#4ade80' : '#f87171', fontWeight: 700 }}>{t.score}%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
-                    <span>{new Date(t.completed_at).toLocaleDateString('ru')}</span>
-                    <span>{t.is_passed ? 'сдан' : 'не сдан'}</span>
-                  </div>
-                </div>
-              ))}
-              {myViews.filter(v => v.completed).map(v => (
-                <div key={v.id} style={{ padding: 14, borderRadius: 12, background: 'var(--bg-card)', border: '1px solid rgba(74,222,128,0.25)' }}>
-                  <div style={{ color: 'var(--accent-green)', fontSize: 13, fontWeight: 500 }}>Тренинг просмотрен</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>{new Date(v.created_at).toLocaleDateString('ru')}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <a href="/my-development-plan" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 40, padding: '16px 20px', borderRadius: 16, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Мой план развития — результаты тестов и тренингов, назначенные действия
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </a>
         )}
 
         <PersonalGoalsSection />
