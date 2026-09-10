@@ -73,13 +73,13 @@ function MotivationHero() {
   }
 
   return (
-    <div style={{ borderRadius: 22, padding: 24, marginBottom: 24, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Твой путь к следующей цели</div>
-      <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Ещё немного — и это твоё</p>
-      <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
-        {nextReward && <Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
-        {nextLevel && <Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
+    <div style={{ borderRadius: 22, padding: 24, marginBottom: 24, maxWidth: 780, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18 }}>Что ты сейчас зарабатываешь</div>
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
+        {nextReward && <div style={{ flex: '0 1 220px' }}><Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} /></div>}
+        {nextLevel && <div style={{ flex: '0 1 220px' }}><Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} /></div>}
         {closestMetric && (
+          <div style={{ flex: '0 1 220px' }}>
           <Bridge color="#0e7490" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target}
             hint={
               metricToReward && closestMetric.karmaReward > 0
@@ -88,6 +88,7 @@ function MotivationHero() {
                     : `Ещё ${closestMetric.gap}${closestMetric.unit} по «${closestMetric.name}» — это +${closestMetric.karmaReward} кармиков, до «${nextReward.name}» останется ${metricToReward.stillShort}`)
                 : `«${closestMetric.name}» — ещё ${closestMetric.gap}${closestMetric.unit}, и уровень станет «${closestMetric.nextBandLabel}»`
             } />
+          </div>
         )}
       </div>
       {suggestedTask && (
@@ -444,7 +445,7 @@ export default function GoalsPage() {
             энергии/уровня справа — не отдельная широкая строка сверху,
             как раньше. sticky — колонка остаётся на виду при прокрутке
             длинного списка показателей. */}
-        <div style={{ display: 'grid', gridTemplateColumns: cur ? '1fr minmax(240px, 280px)' : '1fr', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(240px, 280px)', gap: 20, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
               <Seg active={mode === 'month'} onClick={() => setMode('month')}>Текущий месяц</Seg>
@@ -520,8 +521,7 @@ export default function GoalsPage() {
                 <>
                   {dailyMetrics.length > 0 && (
                     <div style={{ marginBottom: 28 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 3 }}>Сегодня на смене</div>
-                      <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 12px' }}>Каждый уровень — это кармики прямо сейчас, и вклад в личные и командные цели ниже</p>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Сегодня на смене</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
                         {dailyMetrics.map(renderCard)}
                       </div>
@@ -529,8 +529,7 @@ export default function GoalsPage() {
                   )}
                   {otherMetrics.length > 0 && (
                     <div style={{ marginBottom: 32 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 3 }}>Копится к премии</div>
-                      <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 12px' }}>Итог месяца — выше уровень, больше премия</p>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Копится к премии</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
                         {otherMetrics.map(renderCard)}
                       </div>
@@ -547,25 +546,35 @@ export default function GoalsPage() {
               сверху страницы (пункт 6 фидбека от 31 августа 2026 — «пол
               экрана пустого») — теперь узкая постоянная колонка, не
               отбирает место у самих карточек показателей. */}
-          {cur && (
-            <div style={{ position: 'sticky', top: 20, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 18, border: `1px solid ${cur.color}33` }}>
+          <div style={{ position: 'sticky', top: 20, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 18, border: `1px solid ${cur ? cur.color : 'var(--border-subtle)'}33` }}>
               <div style={{ textAlign: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Энергия</div>
+                <div style={{ fontSize: 9, letterSpacing: 2, color: 'var(--text-muted)' }}>Энергия</div>
                 <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.15, background: 'linear-gradient(135deg, #ea580c, #0e7490)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{energy}</div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
-                <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь →</button>
-              </div>
-              {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
-              {next ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
-                  <span>ещё {remaining} до «{next.name}»</span>
-                  <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
+              {cur ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: cur.color }}>{cur.name}</span>
+                    <button onClick={() => setPathOpen(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', fontSize: 10, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>путь →</button>
+                  </div>
+                  {next && <ProgressBar3D value={energy - cur.energy_threshold} max={next.energy_threshold - cur.energy_threshold} height={8} />}
+                  {next ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
+                      <span>ещё {remaining} до «{next.name}»</span>
+                      <button onClick={() => setTipsOpen(o => !o)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-cyan)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>советы</button>
+                    </div>
+                  ) : <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Максимальный уровень достигнут</div>}
+                </>
+              ) : levels?.length > 0 ? (
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  {next && <ProgressBar3D value={energy} max={next.energy_threshold} height={8} />}
+                  <div style={{ marginTop: 6 }}>ещё {Math.max(0, (levels[0]?.energy_threshold || 0) - energy)} до «{levels[0]?.name}»</div>
                 </div>
-              ) : <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Максимальный уровень достигнут</div>}
-              {tipsOpen && next && (
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Уровни мастерства ещё не настроены</div>
+              )}
+              {cur && tipsOpen && next && (
                 <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {forecast.length === 0 && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Нет активных показателей для прогноза</p>}
                   {forecast.slice(0, 2).map((f, i) => (
@@ -590,7 +599,6 @@ export default function GoalsPage() {
                 </button>
               )}
             </div>
-          )}
         </div>
 
         <PersonalGoalsSection />
