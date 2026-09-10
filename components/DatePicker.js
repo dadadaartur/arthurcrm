@@ -44,7 +44,7 @@ function buildGrid(y, m) {
   return cells
 }
 
-export default function DatePicker({ value, onChange, placeholder = 'Выберите дату', withTime = false }) {
+export default function DatePicker({ value, onChange, placeholder = 'Выберите дату', withTime = false, compact = false }) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState('days') // days | years
   const { date: valueDate, time: valueTime } = splitValue(value)
@@ -128,7 +128,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
         ref={btnRef}
         type="button"
         onClick={openPanel}
-        style={{ cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', textAlign: 'left' }}
+        style={{ cursor: 'pointer', width: compact ? 'auto' : '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', textAlign: 'left' }}
       >
         <span style={{ opacity: value ? 1 : 0.55, fontSize: 13.5, color: 'var(--text-primary)' }}>
           {value ? fmtHuman(value) : placeholder}
