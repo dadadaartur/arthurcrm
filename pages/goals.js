@@ -59,14 +59,11 @@ function MotivationHero() {
   const { nextReward, nextLevel, closestMetric, suggestedTask } = data
   if (!nextReward && !nextLevel && !closestMetric) return null
 
-  const Bridge = ({ color, icon, label, current, target, hint }) => {
+  const Bridge = ({ color, label, current, target, hint }) => {
     const pct = target > 0 ? Math.min(100, Math.max(4, Math.round((current / target) * 100))) : 0
     return (
       <div style={{ flex: 1, minWidth: 210 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
-          <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
-        </div>
+        <div style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 6 }}>{label}</div>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 7 }}>{hint}</div>
         <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.4)', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: color, transition: 'width 1.1s cubic-bezier(0.22,1,0.36,1)' }} />
@@ -78,11 +75,11 @@ function MotivationHero() {
   return (
     <div style={{ borderRadius: 22, padding: 24, marginBottom: 24, background: 'linear-gradient(135deg, rgba(234,88,12,0.09), rgba(124,58,237,0.08), rgba(14,116,144,0.08))', border: '1px solid var(--border-gold)', boxShadow: '0 4px 24px rgba(124,58,237,0.08)' }}>
       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Твой путь к следующей цели</div>
-      <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Не абстрактные цифры — конкретно то, что получишь, и сколько до этого осталось</p>
+      <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 18px' }}>Ещё немного — и это твоё</p>
       <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
-        {nextReward && <Bridge color="#ea580c" icon={<path d="M20 12v9H4v-9M2 7h20v5H2V7zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />} label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
-        {nextLevel && <Bridge color="#7c3aed" icon={<path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21 7.5 13.5 2 9h7z" />} label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
-        {closestMetric && <Bridge color="#0e7490" icon={<path d="M3 3v18h18M7 14l4-4 4 4 5-6" />} label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target} hint={`«${closestMetric.name}» — ещё немного, и уровень станет «${closestMetric.nextBandLabel}»`} />}
+        {nextReward && <Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
+        {nextLevel && <Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
+        {closestMetric && <Bridge color="#0e7490" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target} hint={`«${closestMetric.name}» — ещё немного, и уровень станет «${closestMetric.nextBandLabel}»`} />}
       </div>
       {suggestedTask && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 14, background: 'var(--bg-card)', flexWrap: 'wrap' }}>
@@ -90,6 +87,11 @@ function MotivationHero() {
           <a href={`/task/${suggestedTask.taskId}`} className="btn-glass" style={{ padding: '7px 18px', fontSize: 11.5, marginLeft: 'auto', textDecoration: 'none' }}>К заданию</a>
         </div>
       )}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+        <a href="/championship" className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5, textDecoration: 'none' }}>Твоё место в рейтинге</a>
+        <a href="/championship" className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5, textDecoration: 'none' }}>Доска почёта</a>
+        <a href="/my-certificates" className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5, textDecoration: 'none' }}>Мои грамоты</a>
+      </div>
     </div>
   )
 }
@@ -204,7 +206,7 @@ function PersonalGoalsSection() {
   if (loading) return null
 
   return (
-    <div style={{ marginTop: 40 }}>
+    <div style={{ marginTop: 32, paddingTop: 28, borderTop: '1px solid var(--border-subtle)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Мои личные цели</h2>
         <button onClick={() => setShowCreate(true)} className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 12 }}>+ Новая цель</button>
@@ -417,7 +419,7 @@ export default function GoalsPage() {
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 18, marginBottom: 40 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16, marginBottom: 32 }}>
           {data.metrics.map(m => {
             const { value, band, thresholds } = metricView(m)
             const myRank = bandRankOf(m, band)
@@ -447,19 +449,25 @@ export default function GoalsPage() {
                     const isCurrent = t.key === band
                     return (
                       <div key={t.key} style={{ flex: 1, minWidth: 0, textAlign: 'center', padding: '10px 6px', borderRadius: 10, position: 'relative', background: achieved ? `${t.color}26` : 'var(--bg-page)', border: `1.5px solid ${achieved ? t.color : 'var(--border-subtle)'}`, boxShadow: isCurrent ? `0 0 14px ${t.color}66` : 'none', transition: 'all 0.3s' }}>
-                        {isCurrent && <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 8, padding: '1px 6px', borderRadius: 20, background: t.color, color: '#0a0e1c', fontWeight: 700, whiteSpace: 'nowrap' }}>ВЫ ЗДЕСЬ</span>}
-                        <div style={{ fontSize: 9, color: achieved ? t.color : '#777', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
+                        {isCurrent && <span style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', fontSize: 8, padding: '1px 6px', borderRadius: 20, background: t.color, color: '#0a0e1c', fontWeight: 700, whiteSpace: 'nowrap' }}>Вы здесь</span>}
+                        <div style={{ fontSize: 9, color: achieved ? t.color : '#777', fontWeight: 700, letterSpacing: 0.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</div>
                         <div style={{ fontSize: 15, color: achieved ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 700, marginTop: 2 }}>{t.value}<span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>{m.unit}</span></div>
                       </div>
                     )
                   })}
                 </div>
+                {myRank < 4 && value != null && (() => {
+                  const next = thresholds[myRank]
+                  if (!next) return null
+                  const gap = Math.round(Math.abs(next.value - value) * 10) / 10
+                  return <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 10 }}>До уровня «{next.label}» — ещё {gap}{m.unit}</div>
+                })()}
 
                 {(m.reward_image_url || m.reward_description) && (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, padding: 10, borderRadius: 12, background: 'rgba(234,88,12,0.05)', border: '1px solid var(--border-gold)' }}>
                     {m.reward_image_url && <img src={m.reward_image_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 9, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: 0.4 }}>Приз за максимум</div>
+                      <div style={{ fontSize: 9, color: 'var(--accent-gold)', letterSpacing: 0.4 }}>Приз за максимум</div>
                       <div style={{ fontSize: 12, color: 'var(--text-primary)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{m.reward_description}</div>
                     </div>
                   </div>
@@ -521,15 +529,6 @@ export default function GoalsPage() {
             </div>
           )}
         </div>
-
-        {(myTests.length > 0 || myViews.length > 0) && (
-          <a href="/my-development-plan" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 40, padding: '16px 20px', borderRadius: 16, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', border: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
-              Мой план развития — результаты тестов и тренингов, назначенные действия
-            </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </a>
-        )}
 
         <PersonalGoalsSection />
       </div>

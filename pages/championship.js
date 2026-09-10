@@ -346,6 +346,75 @@ function RulesSidebar({ tab }) {
   )
 }
 
+function HallOfFameTab() {
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(null)
+  useEffect(() => {
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const r = await fetch('/api/hall-of-fame', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      if (r.ok) setData(await r.json())
+      setLoading(false)
+    }
+    load()
+  }, [])
+  if (loading) return <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>Загружаем доску почёта…</p>
+  const MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+  const Avatar = ({ name, url, size = 40 }) => (
+    url ? <img src={url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }} /> :
+    <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg, #ea580c, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: size * 0.4, fontWeight: 700 }}>{(name || '—').charAt(0).toUpperCase()}</div>
+  )
+  const empty = (!data?.raceWinners?.length && !data?.leagueChampions?.length && !data?.topGoalAchievers?.length)
+  if (empty) return <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Доска почёта заполнится, как только появятся первые победители</div>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {data.raceWinners.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent-gold)', marginBottom: 12 }}>Победители месяца — гонка</h3>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+            {data.raceWinners.map((w, i) => (
+              <div key={i} style={{ flex: '0 0 130px', textAlign: 'center', padding: 14, borderRadius: 14, background: 'linear-gradient(135deg, rgba(234,88,12,0.08), var(--bg-card))', border: '1px solid var(--border-gold)' }}>
+                <Avatar name={w.name} url={w.avatarUrl} />
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-primary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{MONTH_NAMES[Number(w.cycle_month.slice(5, 7)) - 1]} {w.cycle_month.slice(0, 4)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.leagueChampions.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#7c3aed', marginBottom: 12 }}>Призёры квартала — лига</h3>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+            {data.leagueChampions.map((w, i) => (
+              <div key={i} style={{ flex: '0 0 130px', textAlign: 'center', padding: 14, borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.08), var(--bg-card))', border: '1px solid rgba(124,58,237,0.3)' }}>
+                <Avatar name={w.name} url={w.avatarUrl} />
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-primary)', marginTop: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{w.checkpoint_month} квартал</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {data.topGoalAchievers.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0e7490', marginBottom: 12 }}>Больше всех личных целей достигли</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {data.topGoalAchievers.map((p, i) => (
+              <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', borderRadius: 12, background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}>
+                <span style={{ width: 20, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>{i + 1}</span>
+                <Avatar name={p.name} url={p.avatarUrl} size={28} />
+                <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-primary)' }}>{p.name}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0e7490' }}>{p.count} {p.count === 1 ? 'цель' : p.count < 5 ? 'цели' : 'целей'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Championship() {
   const [tab, setTab] = useState('race')
   return (
@@ -357,6 +426,7 @@ export default function Championship() {
           <Seg active={tab === 'overall'} onClick={() => setTab('overall')}>Общий рейтинг</Seg>
           <Seg active={tab === 'league'} onClick={() => setTab('league')}>Лига</Seg>
           <Seg active={tab === 'cup'} onClick={() => setTab('cup')}>Кубок</Seg>
+          <Seg active={tab === 'hof'} onClick={() => setTab('hof')}>Доска почёта</Seg>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: tab === 'cup' ? '1fr' : 'minmax(0,1fr) 320px', gap: 28, alignItems: 'start' }}>
           <div>
@@ -364,6 +434,7 @@ export default function Championship() {
             {tab === 'overall' && <OverallTab />}
             {tab === 'league' && <LeagueTab />}
             {tab === 'cup' && <CupTab />}
+        {tab === 'hof' && <HallOfFameTab />}
           </div>
           {tab !== 'cup' && <RulesSidebar tab={tab} />}
         </div>
