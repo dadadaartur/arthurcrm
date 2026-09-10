@@ -227,6 +227,7 @@ export default function Layout({ children, autoHideHeader = false }) {
               </Link>
               <nav className="flex gap-2 flex-wrap">
                 <Link href="/goals" style={navPill}>Мои цели</Link>
+                <Link href="/my-development-plan" style={navPill}>План развития</Link>
                 {isSuperAdmin && <Link href="/admin" style={navPill}>Админ</Link>}
                 {isSuperAdmin && <Link href="/central-bank" style={navPill}>Центробанк</Link>}
                 {isPlatformStaff && <Link href="/platform-admin" style={navPill}>Модерация площадки</Link>}
@@ -234,7 +235,7 @@ export default function Layout({ children, autoHideHeader = false }) {
                 {isCompanyAdmin && <Link href="/company-admin/results" style={navPill}>Результаты</Link>}
               </nav>
             </div>
-            <div className="flex items-center gap-3 text-xs font-medium">
+            <div className="flex items-center gap-3 text-xs font-medium" style={{ paddingRight: 52 }}>
               {companyName && (
                 <Link href="/company" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
                   {companyLogo && <img src={companyLogo} alt="" style={{ width: 18, height: 18, borderRadius: 5, objectFit: 'cover' }} />}
@@ -293,6 +294,7 @@ export default function Layout({ children, autoHideHeader = false }) {
           </Link>
           <nav className="flex gap-2 flex-wrap">
             <Link href="/goals" style={navPill}>Мои цели</Link>
+            <Link href="/my-development-plan" style={navPill}>План развития</Link>
             {isSuperAdmin && <Link href="/admin" style={navPill}>Админ</Link>}
             {isSuperAdmin && <Link href="/central-bank" style={navPill}>Центробанк</Link>}
             {isPlatformStaff && <Link href="/platform-admin" style={navPill}>Модерация площадки</Link>}
