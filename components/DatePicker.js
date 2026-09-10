@@ -128,7 +128,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
         ref={btnRef}
         type="button"
         onClick={openPanel}
-        style={{ cursor: 'pointer', minHeight: 42, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', textAlign: 'left' }}
+        style={{ cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 14px', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-card)', textAlign: 'left' }}
       >
         <span style={{ opacity: value ? 1 : 0.55, fontSize: 13.5, color: 'var(--text-primary)' }}>
           {value ? fmtHuman(value) : placeholder}
