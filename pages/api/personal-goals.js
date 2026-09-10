@@ -30,10 +30,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'PUT') {
     const { id, currentValue, status, title, description, targetValue, targetDate } = req.body || {}
-    const { data: goal } = await a.from('personal_goals').select('user_id, goal_type, title').eq('id', id).maybeSingle()
+    const { data: goal } = await a.from('personal_goals').select('user_id, goal_type, title, target_unit').eq('id', id).maybeSingle()
     if (!goal || goal.user_id !== userId) return res.status(403).json({ error: 'Не ваша цель' })
+    const isAutoTracked = !goal.target_unit || /карм/i.test(goal.target_unit)
     const patch = {}
-    if (currentValue != null) patch.current_value = Number(currentValue)
+    if (currentValue != null && !isAutoTracked) patch.current_value = Number(currentValue)
     if (status) { patch.status = status; if (status === 'completed') patch.completed_at = new Date().toISOString() }
     if (title != null) patch.title = title.trim()
     if (description !== undefined) patch.description = description
@@ -57,7 +58,27 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true })
   }
 
-  const { data: goals } = await a.from('personal_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+  const { data: rawGoals } = await a.from('personal_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+
+  // Автоматический прогресс для целей в кармиках (по прямому фидбеку
+  // от 6 сентября 2026: «чтобы выполнить личную цель, нужно заработать
+  // деньги — чем выше показатели, тем выше премия, тем ближе цель» —
+  // раньше сотрудник вписывал прогресс руками, а для цели вроде
+  // «купить квартиру» оценить это число руками попросту невозможно,
+  // отсюда и ощущение пустой заглушки). Считается один раз здесь для
+  // ВСЕХ целей в кармиках сразу, не только глобальных — та же логика
+  // применима и к промежуточным.
+  const karmaGoals = (rawGoals || []).filter(g => g.status === 'active' && (!g.target_unit || /карм/i.test(g.target_unit)))
+  const autoProgressById = {}
+  if (karmaGoals.length) {
+    const earliestCreated = karmaGoals.reduce((min, g) => g.created_at < min ? g.created_at : min, karmaGoals[0].created_at)
+    const { data: allTxnsSinceEarliest } = await a.from('karma_transactions').select('amount, created_at').eq('user_id', userId).gt('amount', 0).gte('created_at', earliestCreated)
+    for (const g of karmaGoals) {
+      const earned = (allTxnsSinceEarliest || []).filter(t => t.created_at >= g.created_at).reduce((s, t) => s + Number(t.amount), 0)
+      autoProgressById[g.id] = Math.round(earned)
+    }
+  }
+  const goals = (rawGoals || []).map(g => autoProgressById[g.id] != null ? { ...g, current_value: autoProgressById[g.id], auto_tracked: true } : { ...g, auto_tracked: false })
 
   // Темп к глобальной цели (по видению от 6 сентября 2026: «важно
   // понимание, что конечная цель выполнима, для этого нужно сделать
