@@ -56,7 +56,7 @@ function MotivationHero() {
     load()
   }, [])
   if (loading || !data) return null
-  const { nextReward, nextLevel, closestMetric, suggestedTask } = data
+  const { nextReward, nextLevel, closestMetric, metricToReward, suggestedTask } = data
   if (!nextReward && !nextLevel && !closestMetric) return null
 
   const Bridge = ({ color, label, current, target, hint }) => {
@@ -79,7 +79,16 @@ function MotivationHero() {
       <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
         {nextReward && <Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} />}
         {nextLevel && <Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} />}
-        {closestMetric && <Bridge color="#0e7490" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target} hint={`«${closestMetric.name}» — ещё немного, и уровень станет «${closestMetric.nextBandLabel}»`} />}
+        {closestMetric && (
+          <Bridge color="#0e7490" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target}
+            hint={
+              metricToReward && closestMetric.karmaReward > 0
+                ? (metricToReward.willAfford
+                    ? `Ещё ${closestMetric.gap}${closestMetric.unit} по «${closestMetric.name}» — и хватит на «${nextReward.name}»!`
+                    : `Ещё ${closestMetric.gap}${closestMetric.unit} по «${closestMetric.name}» — это +${closestMetric.karmaReward} кармиков, до «${nextReward.name}» останется ${metricToReward.stillShort}`)
+                : `«${closestMetric.name}» — ещё ${closestMetric.gap}${closestMetric.unit}, и уровень станет «${closestMetric.nextBandLabel}»`
+            } />
+        )}
       </div>
       {suggestedTask && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 14, background: 'var(--bg-card)', flexWrap: 'wrap' }}>
@@ -211,7 +220,7 @@ function PersonalGoalsSection() {
         <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Мои личные цели</h2>
         <button onClick={() => setShowCreate(true)} className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 12 }}>+ Новая цель</button>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 640 }}>Это ваши личные ориентиры — не то, что назначает компания. Глобальная — большая, на месяцы вперёд; промежуточные — шаги к ней. Прогресс вносите сами.</p>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, maxWidth: 640 }}>Твои собственные ориентиры. Глобальная — большая, на месяцы вперёд. Промежуточные — шаги к ней.</p>
 
       {globals.length > 0 && (
         <div style={{ marginBottom: 18 }}>
@@ -419,11 +428,13 @@ export default function GoalsPage() {
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16, marginBottom: 32 }}>
-          {data.metrics.map(m => {
-            const { value, band, thresholds } = metricView(m)
-            const myRank = bandRankOf(m, band)
-            return (
+            {(() => {
+              const dailyMetrics = data.metrics.filter(m => (m.period || 'daily') === 'daily')
+              const otherMetrics = data.metrics.filter(m => (m.period || 'daily') !== 'daily')
+              const renderCard = m => {
+                const { value, band, thresholds } = metricView(m)
+                const myRank = bandRankOf(m, band)
+                return (
               <div key={m.id} onClick={() => setDetailsMetric(m)} style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)', borderRadius: 18, padding: 22, border: `1px solid ${BAND_COLORS_LIGHT[band]}33`, transition: 'border-color 0.25s, transform 0.25s', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = `${BAND_COLORS_LIGHT[band]}66`; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${BAND_COLORS_LIGHT[band]}33`; e.currentTarget.style.transform = 'translateY(0)' }}>
@@ -473,10 +484,30 @@ export default function GoalsPage() {
                   </div>
                 )}
               </div>
-            )
-          })}
-          {data.metrics.length === 0 && <div style={{ gridColumn: '1 / -1', background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>Руководитель ещё не задал показатели</div>}
-            </div>
+                )
+              }
+              return (
+                <>
+                  {dailyMetrics.length > 0 && (
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Сегодня на смене</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+                        {dailyMetrics.map(renderCard)}
+                      </div>
+                    </div>
+                  )}
+                  {otherMetrics.length > 0 && (
+                    <div style={{ marginBottom: 32 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Копится к премии</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+                        {otherMetrics.map(renderCard)}
+                      </div>
+                    </div>
+                  )}
+                  {data.metrics.length === 0 && <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 60, textAlign: 'center', color: 'var(--text-muted)', marginBottom: 32 }}>Руководитель ещё не задал показатели</div>}
+                </>
+              )
+            })()}
           </div>
 
           {/* Боковая колонка — энергия, уровень, путь прогресса, советы,

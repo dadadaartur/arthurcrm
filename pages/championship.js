@@ -42,11 +42,11 @@ function RaceTab() {
   useEffect(() => { const t = setTimeout(() => setMounted(true), 100); return () => clearTimeout(t) }, [])
   if (loading) return <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>Загружаем гонку…</p>
   const standings = data?.standings || []
-  const maxKarma = Math.max(1, ...standings.map(s => s.karmaEarned))
+  const maxKarma = Math.max(1, ...standings.map(s => s.energyEarned))
   return (
     <div>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, maxWidth: 620 }}>
-        Позиции — по кармикам, заработанным в этом календарном месяце. 1 числа гонка обнуляется, топ-3 получают приз и право создать до 2 шуточных заданий коллегам. До конца цикла: <b style={{ color: 'var(--accent-gold)' }}>{data?.daysLeft ?? '—'} дн.</b>
+        Позиции — по энергии, заработанной в этом календарном месяце. Энергию нельзя передать другому, в отличие от кармиков — соревнование честное. 1 числа гонка обнуляется, топ-3 получают приз и право создать до 2 шуточных заданий коллегам. До конца цикла: <b style={{ color: 'var(--accent-gold)' }}>{data?.daysLeft ?? '—'} дн.</b>
       </p>
       {data?.myAdvice && (
         <div style={{ padding: '14px 18px', borderRadius: 14, background: 'linear-gradient(135deg, rgba(124,58,237,0.06), rgba(234,88,12,0.04))', border: '1px solid rgba(124,58,237,0.25)', marginBottom: 24, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
@@ -67,7 +67,7 @@ function RaceTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {standings.map(s => {
           const isMe = s.userId === user?.id
-          const pct = mounted ? Math.max(4, (s.karmaEarned / maxKarma) * 100) : 0
+          const pct = mounted ? Math.max(4, (s.energyEarned / maxKarma) * 100) : 0
           const ps = PLACE_STYLE[s.place]
           return (
             <div key={s.userId} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -78,7 +78,7 @@ function RaceTab() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 4 }}>
                   <span style={{ color: isMe ? '#7c3aed' : 'var(--text-primary)', fontWeight: isMe ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}{isMe && ' (вы)'}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700, flexShrink: 0 }}>{s.karmaEarned}</span>
+                  <span style={{ color: '#7c3aed', fontWeight: 700, flexShrink: 0 }}>{s.energyEarned}</span>
                 </div>
                 <div style={{ height: 8, borderRadius: 4, background: 'var(--bg-page)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: s.place <= 3 ? ps.bg.replace('linear-gradient(135deg,', 'linear-gradient(90deg,') : 'linear-gradient(90deg, #0e7490, #7c3aed)', transition: 'width 1.1s cubic-bezier(0.22,1,0.36,1)' }} />
@@ -121,7 +121,7 @@ function LeagueTab() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {data.checkpointAwards.map(a => (
               <div key={a.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                {QUARTER_ROMAN[a.checkpoint_month] || a.checkpoint_month} квартал — <b style={{ color: 'var(--text-primary)' }}>{a.rank} место: {a.userName}</b> ({a.karma_at_checkpoint} кармиков)
+                {QUARTER_ROMAN[a.checkpoint_month] || a.checkpoint_month} квартал — <b style={{ color: 'var(--text-primary)' }}>{a.rank} место: {a.userName}</b> ({a.karma_at_checkpoint} энергии)
               </div>
             ))}
           </div>
@@ -134,7 +134,7 @@ function LeagueTab() {
             <div key={s.userId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, background: isMe ? 'rgba(124,58,237,0.06)' : 'var(--bg-card)', border: isMe ? '1px solid rgba(124,58,237,0.3)' : '1px solid var(--border-subtle)' }}>
               <div style={{ width: 24, textAlign: 'center', fontSize: 13, fontWeight: 700, color: s.place <= 3 ? 'var(--accent-gold)' : 'var(--text-muted)' }}>{s.place}</div>
               <span style={{ flex: 1, fontSize: 13, color: isMe ? '#7c3aed' : 'var(--text-primary)', fontWeight: isMe ? 700 : 500 }}>{s.name}{isMe && ' (вы)'}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-gold)' }}>{s.karmaEarned}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed' }}>{s.energyEarned}</span>
             </div>
           )
         })}
@@ -320,8 +320,8 @@ function RulesSidebar({ tab }) {
   const { profile } = useProfile()
   const isAdmin = profile?.is_company_admin
   const RULES = {
-    race: { title: 'Правила гонки месяца', points: ['Считаются кармики, заработанные именно в этом календарном месяце', '1 числа гонка обнуляется, счёт начинается заново', 'Топ-3 получают приз и право создать до 2 шуточных заданий коллегам', 'Заявка на шуточное задание требует подтверждения админа'] },
-    overall: { title: 'Об общем рейтинге', points: ['Общий баланс кармиков за всё время — без обнуления', 'Не участвует в призах гонки/лиги/кубка — это просто витрина'] },
+    race: { title: 'Правила гонки месяца', points: ['Считается энергия, заработанная именно в этом календарном месяце — не кармики, которые можно перевести коллеге', '1 числа гонка обнуляется, счёт начинается заново', 'Топ-3 получают приз и право создать до 2 шуточных заданий коллегам', 'Заявка на шуточное задание требует подтверждения админа'] },
+    overall: { title: 'Об общем рейтинге', points: ['Переключайтесь между тремя измерениями — кармики, энергия, показатели', 'Кармики — общий баланс за всё время, без обнуления', 'Не участвует в призах гонки/лиги/кубка — это просто витрина'] },
     league: { title: 'Правила лиги', points: ['Годовой сезон, счёт копится весь год без обнуления', 'Контрольные точки — по умолчанию конец каждого квартала', 'На контрольной точке — приз топ-3, счёт продолжает идти дальше', 'Финальный итог года — самая крупная награда'] },
   }
   const r = RULES[tab]

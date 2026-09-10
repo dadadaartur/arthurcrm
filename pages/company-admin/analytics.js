@@ -289,6 +289,7 @@ const INSIGHT_STYLE = {
   training: { color: '#0e7490', bg: 'linear-gradient(135deg, rgba(14,116,144,0.06), rgba(14,116,144,0.02))', border: 'rgba(14,116,144,0.28)', label: 'Обучение' },
   win: { color: '#137a39', bg: 'linear-gradient(135deg, rgba(19,122,57,0.06), rgba(19,122,57,0.02))', border: 'rgba(19,122,57,0.28)', label: 'Победа' },
   consistent: { color: '#ea580c', bg: 'linear-gradient(135deg, rgba(234,88,12,0.07), rgba(234,88,12,0.02))', border: 'rgba(234,88,12,0.3)', label: 'На признание' },
+  ineffective_task: { color: '#b45309', bg: 'linear-gradient(135deg, rgba(180,83,9,0.07), rgba(180,83,9,0.02))', border: 'rgba(180,83,9,0.3)', label: 'Задание не работает' },
 }
 
 function InsightCard({ insight, onCreateTask, compact }) {
@@ -350,7 +351,7 @@ function InsightsPanel({ from, to, empName }) {
     setActionDraft({ type, insight })
   }
 
-  const priority = insights.filter(i => i.type === 'risk' || i.type === 'anomaly' || i.type === 'training')
+  const priority = insights.filter(i => i.type === 'risk' || i.type === 'anomaly' || i.type === 'training' || i.type === 'ineffective_task')
   const wins = insights.filter(i => i.type === 'win' || i.type === 'consistent')
   const shownPriority = filter === 'all' ? priority : priority.filter(i => i.type === filter)
   const shownWins = filter === 'all' || filter === 'win' ? (showAllWins ? wins : wins.slice(0, 3)) : []

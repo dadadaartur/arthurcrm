@@ -29,7 +29,7 @@ export default function MyCertificates() {
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <BackArrow href="/goals" title="Мои грамоты" />
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24, maxWidth: 640 }}>
-          Признание за реальные победы — начисляется само, по факту события, не по чьему-то решению.
+          Каждая — за настоящую победу.
         </p>
 
         {certs.length === 0 ? (
