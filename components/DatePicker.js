@@ -133,13 +133,6 @@ export default function DatePicker({ value, onChange, placeholder = 'Выбер�
         <span style={{ opacity: value ? 1 : 0.55, fontSize: 13.5, color: 'var(--text-primary)' }}>
           {value ? fmtHuman(value) : placeholder}
         </span>
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-          <rect x="1.5" y="2.5" width="13" height="12" rx="3" stroke="#ea580c" strokeWidth="1.2" />
-          <path d="M1.5 6h13" stroke="#ea580c" strokeWidth="1.2" />
-          <path d="M5 1v3M11 1v3" stroke="#ea580c" strokeWidth="1.2" strokeLinecap="round" />
-          <circle cx="5.5" cy="9.5" r="1" fill="#0e7490" />
-          <circle cx="8.5" cy="9.5" r="1" fill="#7c3aed" />
-        </svg>
       </button>
 
       {open && typeof document !== 'undefined' && createPortal(
