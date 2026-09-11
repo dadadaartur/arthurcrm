@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import LoadingScreen from '../components/LoadingScreen'
 import BackArrow from '../components/BackArrow'
@@ -102,6 +102,40 @@ function MotivationHero() {
         <a href="/championship" className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5, textDecoration: 'none' }}>Доска почёта</a>
         <a href="/my-certificates" className="btn-glass-outline" style={{ padding: '7px 16px', fontSize: 11.5, textDecoration: 'none' }}>Мои грамоты</a>
       </div>
+    </div>
+  )
+}
+
+const PERIOD_PRESETS = [
+  { key: 'month', label: 'Текущий месяц' }, { key: 'today', label: 'Сегодня' }, { key: 'yesterday', label: 'Вчера' },
+  { key: '7d', label: '7 дней' }, { key: '30d', label: '30 дней' }, { key: 'all', label: 'Всё время' },
+]
+function PeriodSelector({ mode, setMode, customDay, setCustomDay }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    const onDoc = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
+  const currentLabel = mode === 'custom' ? customDay : (PERIOD_PRESETS.find(p => p.key === mode)?.label || 'Период')
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        padding: '8px 18px', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        background: 'linear-gradient(135deg, #FFD70022, #FFD7000d)', border: '1px solid #FFD70088', color: '#FFD700',
+      }}>{currentLabel}</button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 40, minWidth: 200, padding: 8, borderRadius: 14, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-card-hover)' }}>
+          {PERIOD_PRESETS.map(p => (
+            <button key={p.key} onClick={() => { setMode(p.key); setOpen(false) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 8, fontSize: 12.5, background: mode === p.key ? 'var(--bg-page)' : 'none', color: mode === p.key ? 'var(--accent-gold)' : 'var(--text-primary)', fontWeight: mode === p.key ? 600 : 400, border: 'none', cursor: 'pointer' }}>{p.label}</button>
+          ))}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '6px 0' }} />
+          <div style={{ padding: '0 4px' }}>
+            <DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom'); setOpen(false) } }} placeholder="Своя дата" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -462,13 +496,7 @@ export default function GoalsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(240px, 280px)', gap: 20, alignItems: 'start' }}>
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Seg active={mode === 'month'} onClick={() => setMode('month')}>Текущий месяц</Seg>
-              <Seg active={mode === 'today'} onClick={() => setMode('today')}>Сегодня</Seg>
-              <Seg active={mode === 'yesterday'} onClick={() => setMode('yesterday')}>Вчера</Seg>
-              <Seg active={mode === '7d'} onClick={() => setMode('7d')}>7 дней</Seg>
-              <Seg active={mode === '30d'} onClick={() => setMode('30d')}>30 дней</Seg>
-              <Seg active={mode === 'all'} onClick={() => setMode('all')}>Всё время</Seg>
-              <DatePicker value={customDay} onChange={v => { if (v) { setCustomDay(v); setMode('custom') } }} placeholder="Своя дата" compact />
+              <PeriodSelector mode={mode} setMode={setMode} customDay={customDay} setCustomDay={setCustomDay} />
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 'auto' }}>Показатели {periodLabel}</span>
             </div>
 
@@ -541,40 +569,49 @@ export default function GoalsPage() {
                     // каждый день — то, что не сделано сегодня, не
                     // наверстать завтра, это и создаёт настоящую срочность,
                     // не выдуманную.
+                    const declineKarma = n => { const n10 = n % 10, n100 = n % 100; if (n100 >= 11 && n100 <= 14) return 'кармиков'; if (n10 === 1) return 'кармик'; if (n10 >= 2 && n10 <= 4) return 'кармика'; return 'кармиков' }
                     const atRisk = dailyMetrics.map(m => {
                       const { value, band } = metricView(m)
                       const { thresholds: th } = metricView(m)
                       const rank = bandRankOf(m, band)
                       if (rank >= 4) return null // уже ультра сегодня — не под угрозой
                       const next = th[rank]
-                      if (!next) return null
-                      const gap = Math.round(Math.abs(next.value - (value || 0)) * 10) / 10
+                      if (!next || value == null) return null
+                      // Защита от той же путаницы типа «среднее/сумма», что уже
+                      // ловилась в аналитике — если разрыв больше самого порога,
+                      // это почти наверняка не честная цифра, а рассинхрон
+                      // единиц, лучше промолчать, чем показать сломанное число.
+                      const rawGap = Math.abs(next.value - value)
+                      if (next.value > 0 && rawGap > next.value * 1.5) return null
+                      const isWholeUnit = !/%|мин|час/i.test(m.unit || '')
+                      const gap = isWholeUnit ? Math.ceil(rawGap) : Math.round(rawGap * 10) / 10
+                      if (gap <= 0) return null
                       const hasTopPrize = rank < 3 && (m.reward_image_url || m.reward_description)
                       return { metric: m, gap, nextLabel: next.label, karmaLoss: next.karma || 0, hasTopPrize }
                     }).filter(Boolean)
                     if (!atRisk.length) return null
                     const nearestPersonalGoal = personalGoalsNearby?.[0]
                     return (
-                      <div style={{ marginBottom: 24, padding: 18, borderRadius: 18, background: 'linear-gradient(135deg, rgba(220,38,38,0.07), rgba(234,88,12,0.05))', border: '1px solid rgba(220,38,38,0.3)' }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#dc2626', marginBottom: 12 }}>Под угрозой сегодня</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ marginBottom: 24, padding: 18, borderRadius: 18, background: 'linear-gradient(135deg, rgba(234,88,12,0.08), rgba(234,88,12,0.02))', border: '1px solid var(--border-gold)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#ea580c', marginBottom: 12 }}>Ещё можно успеть сегодня</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
                           {atRisk.map(({ metric, gap, nextLabel, karmaLoss, hasTopPrize }) => (
-                            <div key={metric.id} style={{ fontSize: 12.5, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                              Не сделаешь ещё <b>{gap}{metric.unit}</b> по «<b>{metric.name}</b>» — потеряешь{karmaLoss > 0 ? <> <b style={{ color: '#dc2626' }}>{karmaLoss} кармиков</b></> : ''}{hasTopPrize ? <> и приз «<b>{metric.reward_description}</b>»</> : ''} за сегодня.
+                            <div key={metric.id} style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5, padding: '10px 12px', borderRadius: 12, background: 'var(--bg-card)' }}>
+                              Ещё <b>{gap}{metric.unit}</b> по «{metric.name}» — и получишь{karmaLoss > 0 ? <> <b style={{ color: '#ea580c' }}>{karmaLoss} {declineKarma(karmaLoss)}</b></> : ''}{hasTopPrize ? <> и приз «{metric.reward_description}»</> : ''}. Не успеешь сегодня — сгорит.
                             </div>
                           ))}
-                          {nearestPersonalGoal && (
-                            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, paddingTop: 10, borderTop: '1px solid rgba(220,38,38,0.15)' }}>
-                              Каждый несделанный сегодня показатель — это и шаг назад от «<b style={{ color: 'var(--text-primary)' }}>{nearestPersonalGoal.title}</b>».
-                            </div>
-                          )}
                         </div>
+                        {nearestPersonalGoal && (
+                          <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-gold)' }}>
+                            Каждый такой шаг сегодня — это и шаг к «<b style={{ color: 'var(--text-primary)' }}>{nearestPersonalGoal.title}</b>».
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
                   {dailyMetrics.length > 0 && (
                     <div style={{ marginBottom: 28 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Сегодня на смене</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Ежедневные цели</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
                         {dailyMetrics.map(renderCard)}
                       </div>
