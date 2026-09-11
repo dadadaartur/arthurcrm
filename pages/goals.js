@@ -77,7 +77,7 @@ function MotivationHero() {
       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 18 }}>Что ты сейчас зарабатываешь</div>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: suggestedTask ? 18 : 0 }}>
         {nextReward && <div style={{ flex: '0 1 220px' }}><Bridge color="#ea580c" label="До приза в пушке призов" current={data.balance} target={nextReward.cost} hint={`«${nextReward.name}» — не хватает ${nextReward.karmaNeeded} кармиков`} /></div>}
-        {nextLevel && <div style={{ flex: '0 1 220px' }}><Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={`«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} /></div>}
+        {nextLevel && <div style={{ flex: '0 1 220px' }}><Bridge color="#7c3aed" label="До следующего уровня" current={data.energy} target={nextLevel.threshold} hint={nextLevel.reward ? `«${nextLevel.name}»: ${nextLevel.reward} — не хватает ${nextLevel.energyNeeded} энергии` : `«${nextLevel.name}» — не хватает ${nextLevel.energyNeeded} энергии`} /></div>}
         {closestMetric && (
           <div style={{ flex: '0 1 220px' }}>
           <Bridge color="#0e7490" label="Ближе всего к росту" current={closestMetric.current} target={closestMetric.target}
@@ -195,6 +195,16 @@ function PersonalGoalsSection() {
         )}
       </div>
       {g.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 10px' }}>{g.description}</p>}
+      {g.goal_type === 'global' && (
+        <div style={{ marginBottom: 10 }}>
+          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 9px', borderRadius: 20, background: g.approval_status === 'approved' ? 'rgba(19,122,57,0.1)' : g.approval_status === 'needs_adjustment' ? 'rgba(220,38,38,0.1)' : 'rgba(234,88,12,0.1)', color: g.approval_status === 'approved' ? '#137a39' : g.approval_status === 'needs_adjustment' ? '#dc2626' : '#ea580c' }}>
+            {g.approval_status === 'approved' ? 'Одобрена руководителем' : g.approval_status === 'needs_adjustment' ? 'Руководитель просит поправить' : 'Ждёт одобрения руководителя'}
+          </span>
+          {g.approval_status === 'needs_adjustment' && g.manager_comment && (
+            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 6, padding: '8px 10px', borderRadius: 9, background: 'rgba(220,38,38,0.05)' }}>{g.manager_comment}</div>
+          )}
+        </div>
+      )}
       {g.target_value != null ? (
         <>
           <div style={{ height: 9, borderRadius: 5, background: 'var(--bg-page)', overflow: 'hidden', marginBottom: 5 }}>
@@ -319,6 +329,7 @@ export default function GoalsPage() {
   const [wheelOpen, setWheelOpen] = useState(false)
   const [wheelConfig, setWheelConfig] = useState(null)
   const [wheelSpinning, setWheelSpinning] = useState(false)
+  const [personalGoalsNearby, setPersonalGoalsNearby] = useState([])
   const [wheelResult, setWheelResult] = useState(null)
 
   useEffect(() => {
@@ -327,7 +338,8 @@ export default function GoalsPage() {
       if (!user) { window.location.href = '/login'; return }
       const { data: { session } } = await supabase.auth.getSession()
       const h = { Authorization: `Bearer ${session.access_token}` }
-      const [r1, r2, r3] = await Promise.all([fetch('/api/kpi/my', { headers: h }), fetch('/api/kpi/levels', { headers: h }), fetch('/api/global-goals/my', { headers: h })])
+      const [r1, r2, r3, r4] = await Promise.all([fetch('/api/kpi/my', { headers: h }), fetch('/api/kpi/levels', { headers: h }), fetch('/api/global-goals/my', { headers: h }), fetch('/api/personal-goals', { headers: h })])
+      if (r4.ok) { const d4 = await r4.json(); setPersonalGoalsNearby((d4.goals || []).filter(g => g.status === 'active' && g.goal_type === 'global')) }
       if (r1.ok) setData(await r1.json())
       if (r2.ok) setLevels(await r2.json())
       if (r3.ok) setGlobalGoals(await r3.json())
@@ -521,6 +533,45 @@ export default function GoalsPage() {
               }
               return (
                 <>
+                  {dailyMetrics.length > 0 && (() => {
+                    // «Под угрозой сегодня» — рамка потери, не приобретения
+                    // (по прямому запросу от 6 сентября 2026: «если не
+                    // прозвоню 10 звонков — потеряю приз», не абстрактная
+                    // полоска прогресса). Дневной показатель обнуляется
+                    // каждый день — то, что не сделано сегодня, не
+                    // наверстать завтра, это и создаёт настоящую срочность,
+                    // не выдуманную.
+                    const atRisk = dailyMetrics.map(m => {
+                      const { value, band } = metricView(m)
+                      const { thresholds: th } = metricView(m)
+                      const rank = bandRankOf(m, band)
+                      if (rank >= 4) return null // уже ультра сегодня — не под угрозой
+                      const next = th[rank]
+                      if (!next) return null
+                      const gap = Math.round(Math.abs(next.value - (value || 0)) * 10) / 10
+                      const hasTopPrize = rank < 3 && (m.reward_image_url || m.reward_description)
+                      return { metric: m, gap, nextLabel: next.label, karmaLoss: next.karma || 0, hasTopPrize }
+                    }).filter(Boolean)
+                    if (!atRisk.length) return null
+                    const nearestPersonalGoal = personalGoalsNearby?.[0]
+                    return (
+                      <div style={{ marginBottom: 24, padding: 18, borderRadius: 18, background: 'linear-gradient(135deg, rgba(220,38,38,0.07), rgba(234,88,12,0.05))', border: '1px solid rgba(220,38,38,0.3)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#dc2626', marginBottom: 12 }}>Под угрозой сегодня</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {atRisk.map(({ metric, gap, nextLabel, karmaLoss, hasTopPrize }) => (
+                            <div key={metric.id} style={{ fontSize: 12.5, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                              Не сделаешь ещё <b>{gap}{metric.unit}</b> по «<b>{metric.name}</b>» — потеряешь{karmaLoss > 0 ? <> <b style={{ color: '#dc2626' }}>{karmaLoss} кармиков</b></> : ''}{hasTopPrize ? <> и приз «<b>{metric.reward_description}</b>»</> : ''} за сегодня.
+                            </div>
+                          ))}
+                          {nearestPersonalGoal && (
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, paddingTop: 10, borderTop: '1px solid rgba(220,38,38,0.15)' }}>
+                              Каждый несделанный сегодня показатель — это и шаг назад от «<b style={{ color: 'var(--text-primary)' }}>{nearestPersonalGoal.title}</b>».
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
                   {dailyMetrics.length > 0 && (
                     <div style={{ marginBottom: 28 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>Сегодня на смене</div>
