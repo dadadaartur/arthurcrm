@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   // Мост 2 — следующий уровень энергии.
   let nextLevel = null
   const upcoming = (levels || []).filter(l => l.energy_threshold > energy).sort((x, y) => x.energy_threshold - y.energy_threshold)[0]
-  if (upcoming) nextLevel = { name: upcoming.name, threshold: upcoming.energy_threshold, energyNeeded: upcoming.energy_threshold - energy }
+  if (upcoming) nextLevel = { name: upcoming.name, threshold: upcoming.energy_threshold, energyNeeded: upcoming.energy_threshold - energy, reward: upcoming.description || null }
 
   // Мост 3 — показатель, ближе всего до следующего уровня (не самый
   // слабый в абсолютном выражении, а именно ближайший к переходу —

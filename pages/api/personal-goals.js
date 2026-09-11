@@ -23,8 +23,14 @@ export default async function handler(req, res) {
       parent_goal_id: parentGoalId || null, title: title.trim(), description: description || null,
       target_value: targetValue != null && targetValue !== '' ? Number(targetValue) : null,
       target_unit: targetUnit || null, target_date: targetDate || null,
+      approval_status: goalType === 'global' ? 'pending' : 'approved',
     }).select().single()
     if (error) return res.status(500).json({ error: error.message })
+    if (goalType === 'global') {
+      const { data: admins } = await a.from('profiles').select('user_id').eq('company_id', companyId).eq('is_company_admin', true)
+      const empName = [ctx.profile.first_name, ctx.profile.last_name].filter(Boolean).join(' ') || ctx.profile.display_name || ctx.profile.email
+      if (admins?.length) await a.from('notifications').insert(admins.map(a2 => ({ user_id: a2.user_id, message: `${empName} предложил(а) личную цель «${title.trim()}» — ждёт вашего одобрения`, link: '/company-admin/personal-goals-report' })))
+    }
     return res.status(200).json({ goal: data })
   }
 
